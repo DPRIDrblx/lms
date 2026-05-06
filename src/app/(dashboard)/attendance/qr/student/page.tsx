@@ -39,83 +39,106 @@ export default function QRStudentPage() {
   const startScanning = async () => {
     setPhase("scanning");
     setErrorMsg("");
+  };
 
-    try {
-      // Ensure any existing scanner is stopped
-      await stopScanner();
+  useEffect(() => {
+    if (phase !== "scanning") return;
 
-      const scanner = new Html5Qrcode("qr-reader");
-      scannerRef.current = scanner;
+    let isMounted = true;
+    const initScanner = async () => {
+      // Small delay to ensure DOM is ready
+      await new Promise(resolve => setTimeout(resolve, 500));
+      
+      if (!isMounted) return;
+      if (!document.getElementById("qr-reader")) {
+        console.error("QR Reader element not found");
+        setErrorMsg("System error: Scanner container not found.");
+        setPhase("error");
+        return;
+      }
 
-      const config = { 
-        fps: 10, 
-        qrbox: { width: 250, height: 250 },
-        aspectRatio: 1.0
-      };
+      try {
+        await stopScanner();
+        const scanner = new Html5Qrcode("qr-reader");
+        scannerRef.current = scanner;
 
-      await scanner.start(
-        { facingMode: "environment" },
-        config,
-        async (decodedText: string) => {
-          await stopScanner();
-          setScannedPayload(decodedText);
+        const config = { 
+          fps: 10, 
+          qrbox: { width: 250, height: 250 },
+          aspectRatio: 1.0
+        };
 
-          // Look up session
-          const { data } = await supabase
-            .from("attendance_sessions")
-            .select("id, subject, class_name, is_active, expires_at")
-            .eq("qr_code_payload", decodedText)
-            .single();
+        await scanner.start(
+          { facingMode: "environment" },
+          config,
+          async (decodedText: string) => {
+            if (!isMounted) return;
+            await stopScanner();
+            setScannedPayload(decodedText);
 
-          if (!data) {
-            setErrorMsg("Invalid QR code. This session does not exist.");
-            setPhase("error");
-            return;
-          }
-
-          if (!data.is_active) {
-            setErrorMsg("This session has ended.");
-            setPhase("error");
-            return;
-          }
-
-          if (new Date(data.expires_at) < new Date()) {
-            setErrorMsg("This session has expired.");
-            setPhase("error");
-            return;
-          }
-
-          // Check if already checked in
-          if (profile) {
-            const { data: existing } = await supabase
-              .from("attendance_logs")
-              .select("id")
-              .eq("session_id", data.id)
-              .eq("student_id", profile.id)
+            const { data } = await supabase
+              .from("attendance_sessions")
+              .select("id, subject, class_name, is_active, expires_at")
+              .eq("qr_code_payload", decodedText)
               .single();
 
-            if (existing) {
-              setErrorMsg("You have already checked in for this session.");
+            if (!data) {
+              setErrorMsg("Invalid QR code. This session does not exist.");
               setPhase("error");
               return;
             }
-          }
 
-          setSessionInfo({ id: data.id, subject: data.subject, class_name: data.class_name });
-          setPhase("form");
-        },
-        () => {} // Optional: success but no QR found in frame
-      );
-    } catch (err: any) {
-      console.error("QR Scanner Error:", err);
-      if (err.includes?.("NotAllowedError") || err === "NotAllowedError") {
-        setErrorMsg("Camera access denied. Please allow camera permissions and try again.");
-      } else {
-        setErrorMsg("Could not access camera. Please ensure it's not being used by another app.");
+            if (!data.is_active) {
+              setErrorMsg("This session has ended.");
+              setPhase("error");
+              return;
+            }
+
+            if (new Date(data.expires_at) < new Date()) {
+              setErrorMsg("This session has expired.");
+              setPhase("error");
+              return;
+            }
+
+            if (profile) {
+              const { data: existing } = await supabase
+                .from("attendance_logs")
+                .select("id")
+                .eq("session_id", data.id)
+                .eq("student_id", profile.id)
+                .single();
+
+              if (existing) {
+                setErrorMsg("You have already checked in for this session.");
+                setPhase("error");
+                return;
+              }
+            }
+
+            setSessionInfo({ id: data.id, subject: data.subject, class_name: data.class_name });
+            setPhase("form");
+          },
+          () => {}
+        );
+      } catch (err: any) {
+        if (!isMounted) return;
+        console.error("QR Scanner Error:", err);
+        if (err.includes?.("NotAllowedError") || err === "NotAllowedError") {
+          setErrorMsg("Camera access denied. Please allow camera permissions and try again.");
+        } else {
+          setErrorMsg("Could not access camera. Please ensure it's not being used by another app.");
+        }
+        setPhase("error");
       }
-      setPhase("error");
-    }
-  };
+    };
+
+    initScanner();
+
+    return () => {
+      isMounted = false;
+      stopScanner();
+    };
+  }, [phase, profile, stopScanner, supabase]);
 
   const handleSubmit = async () => {
     if (!profile || !sessionInfo) return;
@@ -138,10 +161,6 @@ export default function QRStudentPage() {
 
     setPhase("success");
   };
-
-  useEffect(() => {
-    return () => { stopScanner(); };
-  }, [stopScanner]);
 
   return (
     <div className="max-w-lg mx-auto space-y-6">

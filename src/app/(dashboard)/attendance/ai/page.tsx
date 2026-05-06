@@ -45,7 +45,7 @@ export default function AIAttendancePage() {
     }
   }, []);
 
-  const startVerification = async () => {
+  const startVerification = useCallback(async () => {
     setPhase("loading");
     setCurrentIdx(0);
     setHoldTimer(0);
@@ -65,33 +65,28 @@ export default function AIAttendancePage() {
       const stream = await navigator.mediaDevices.getUserMedia(constraints);
       streamRef.current = stream;
 
-      if (videoRef.current) {
-        videoRef.current.srcObject = stream;
-        // Wait for video to be ready
-        videoRef.current.onloadedmetadata = () => {
-          videoRef.current?.play().catch(e => {
-            console.error("Video play error:", e);
-            setErrorMsg("Failed to start video playback. Please try again.");
-            setPhase("error");
-          });
-        };
-      }
+      // Double assignment strategy
+      const assignStream = () => {
+        if (videoRef.current) {
+          videoRef.current.srcObject = stream;
+          videoRef.current.onloadedmetadata = () => {
+            videoRef.current?.play().catch(e => console.warn("Auto-play failed:", e));
+          };
+        }
+      };
+
+      assignStream();
+      setTimeout(assignStream, 1000); // 1s fallback assignment
 
       const newChallenges = getRandomChallenges(4);
       setChallenges(newChallenges);
       setPhase("verifying");
     } catch (err: any) {
       console.error("Camera access error:", err);
-      if (err.name === "NotAllowedError") {
-        setErrorMsg("Camera access denied. Please allow camera permissions in your browser settings and try again.");
-      } else if (err.name === "NotFoundError") {
-        setErrorMsg("No camera found on this device.");
-      } else {
-        setErrorMsg("Could not access camera. Please ensure it's not being used by another app.");
-      }
+      setErrorMsg("Could not access camera. Please check permissions.");
       setPhase("error");
     }
-  };
+  }, [profile, supabase]);
 
   // Detection loop
   useEffect(() => {
@@ -102,6 +97,12 @@ export default function AIAttendancePage() {
 
     const detect = async () => {
       if (!videoRef.current || phase !== "verifying") return;
+      
+      // Wait for video to be ready for AI
+      if (videoRef.current.readyState < 2) {
+        animFrameRef.current = requestAnimationFrame(detect);
+        return;
+      }
 
       const result = await detectFace(videoRef.current);
 
@@ -216,12 +217,23 @@ export default function AIAttendancePage() {
 
             {/* Camera */}
             <Card padding="none" className="overflow-hidden">
-              <div className="relative flex items-center justify-center bg-black aspect-[4/3]">
-                <video ref={videoRef} className="w-full h-full object-cover scale-x-[-1]" playsInline muted />
-                <canvas ref={canvasRef} className="absolute inset-0 w-full h-full" />
+              <div className="relative flex items-center justify-center bg-black aspect-[4/3] overflow-hidden">
+                <video 
+                  ref={videoRef} 
+                  autoPlay 
+                  playsInline 
+                  muted 
+                  onCanPlay={(e) => (e.target as HTMLVideoElement).play()}
+                  className="w-full h-full scale-x-[-1] z-10" 
+                  style={{ objectFit: 'cover', width: '100%', height: '100%', filter: 'none' }}
+                />
+                <canvas 
+                  ref={canvasRef} 
+                  className="absolute inset-0 w-full h-full z-20 pointer-events-none bg-transparent" 
+                />
 
                 {/* Circular frame overlay */}
-                <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
+                <div className="absolute inset-0 flex items-center justify-center pointer-events-none z-30">
                   <div className={`w-64 h-64 rounded-full border-4 transition-colors duration-300 ${
                     holdTimer > 0 ? "border-[var(--success)]" : "border-white/40"
                   }`}>

@@ -54,7 +54,7 @@ export function estimateHeadPose(landmarks: faceapi.FaceLandmarks68): { yaw: num
 }
 
 export function checkDirection(pose: { yaw: number; pitch: number }, target: Direction): boolean {
-  const threshold = 0.35;
+  const threshold = 0.25;
   switch (target) {
     case "left":
       return pose.yaw < -threshold;
