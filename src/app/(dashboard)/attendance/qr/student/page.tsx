@@ -41,12 +41,21 @@ export default function QRStudentPage() {
     setErrorMsg("");
 
     try {
+      // Ensure any existing scanner is stopped
+      await stopScanner();
+
       const scanner = new Html5Qrcode("qr-reader");
       scannerRef.current = scanner;
 
+      const config = { 
+        fps: 10, 
+        qrbox: { width: 250, height: 250 },
+        aspectRatio: 1.0
+      };
+
       await scanner.start(
         { facingMode: "environment" },
-        { fps: 10, qrbox: { width: 250, height: 250 } },
+        config,
         async (decodedText: string) => {
           await stopScanner();
           setScannedPayload(decodedText);
@@ -95,10 +104,15 @@ export default function QRStudentPage() {
           setSessionInfo({ id: data.id, subject: data.subject, class_name: data.class_name });
           setPhase("form");
         },
-        () => {}
+        () => {} // Optional: success but no QR found in frame
       );
-    } catch {
-      setErrorMsg("Could not access camera.");
+    } catch (err: any) {
+      console.error("QR Scanner Error:", err);
+      if (err.includes?.("NotAllowedError") || err === "NotAllowedError") {
+        setErrorMsg("Camera access denied. Please allow camera permissions and try again.");
+      } else {
+        setErrorMsg("Could not access camera. Please ensure it's not being used by another app.");
+      }
       setPhase("error");
     }
   };

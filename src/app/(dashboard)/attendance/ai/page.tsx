@@ -53,17 +53,42 @@ export default function AIAttendancePage() {
 
     try {
       await loadModels();
-      const stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: "user", width: 640, height: 480 } });
+      
+      const constraints = { 
+        video: { 
+          facingMode: "user", 
+          width: { ideal: 1280 }, 
+          height: { ideal: 720 } 
+        } 
+      };
+
+      const stream = await navigator.mediaDevices.getUserMedia(constraints);
       streamRef.current = stream;
+
       if (videoRef.current) {
         videoRef.current.srcObject = stream;
-        await videoRef.current.play();
+        // Wait for video to be ready
+        videoRef.current.onloadedmetadata = () => {
+          videoRef.current?.play().catch(e => {
+            console.error("Video play error:", e);
+            setErrorMsg("Failed to start video playback. Please try again.");
+            setPhase("error");
+          });
+        };
       }
+
       const newChallenges = getRandomChallenges(4);
       setChallenges(newChallenges);
       setPhase("verifying");
-    } catch {
-      setErrorMsg("Could not access camera or load face models.");
+    } catch (err: any) {
+      console.error("Camera access error:", err);
+      if (err.name === "NotAllowedError") {
+        setErrorMsg("Camera access denied. Please allow camera permissions in your browser settings and try again.");
+      } else if (err.name === "NotFoundError") {
+        setErrorMsg("No camera found on this device.");
+      } else {
+        setErrorMsg("Could not access camera. Please ensure it's not being used by another app.");
+      }
       setPhase("error");
     }
   };
