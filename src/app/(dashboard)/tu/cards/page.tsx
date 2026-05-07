@@ -41,6 +41,23 @@ export default function TUCardInventory() {
   const [selectedParent, setSelectedParent] = useState("");
   const [linking, setLinking] = useState(false);
 
+  // Auto-Link: Find parent of selected student
+  useEffect(() => {
+    const fetchLinkedParent = async () => {
+      if (!selectedStudent) return;
+      const { data } = await supabase
+        .from("parent_student_links")
+        .select("parent_id")
+        .eq("student_id", selectedStudent)
+        .single();
+      
+      if (data?.parent_id) {
+        setSelectedParent(data.parent_id);
+      }
+    };
+    fetchLinkedParent();
+  }, [selectedStudent, supabase]);
+
   const fetchData = useCallback(async () => {
     const [inv, stds, prnts] = await Promise.all([
       supabase.from("card_inventory").select(`*, student:profiles!card_inventory_student_id_fkey(full_name), parent:profiles!card_inventory_parent_id_fkey(full_name)`).order("created_at", { ascending: false }),
@@ -86,10 +103,11 @@ export default function TUCardInventory() {
 
     if (error) toast.error(error.message);
     else {
-      toast.success("Smart Linking Successful!");
+      toast.success("Joint Ownership Link Established!");
       setLinkModal(null);
       setSelectedStudent("");
       setSelectedParent("");
+      fetchData();
     }
     setLinking(false);
   };
@@ -189,8 +207,8 @@ export default function TUCardInventory() {
                     </div>
                   </td>
                   <td className="px-6 py-5">
-                    <Badge variant={card.status === 'active' ? "success" : "default"}>
-                      {card.status.toUpperCase()}
+                    <Badge variant={(card.student_id && card.parent_id) ? "success" : card.student_id ? "info" : "default"}>
+                      {(card.student_id && card.parent_id) ? "FULLY LINKED" : card.student_id ? "STUDENT ONLY" : "AVAILABLE"}
                     </Badge>
                   </td>
                   <td className="px-6 py-5">
@@ -211,8 +229,12 @@ export default function TUCardInventory() {
                   </td>
                   <td className="px-6 py-5 text-right">
                     <div className="flex items-center justify-end gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
-                      {card.status === 'available' ? (
-                        <Button size="sm" variant="secondary" onClick={() => setLinkModal(card)} icon={<Link2 className="h-3.5 w-3.5" />}>Link</Button>
+                      {(!card.student_id || !card.parent_id) ? (
+                        <Button size="sm" variant="secondary" onClick={() => {
+                          setLinkModal(card);
+                          setSelectedStudent(card.student_id || "");
+                          setSelectedParent(card.parent_id || "");
+                        }} icon={<Link2 className="h-3.5 w-3.5" />}>Link</Button>
                       ) : (
                         <Button size="sm" variant="ghost" className="text-[var(--warning)]" onClick={() => handleUnlinkCard(card.id)} icon={<Unlink className="h-3.5 w-3.5" />}>Unlink</Button>
                       )}
