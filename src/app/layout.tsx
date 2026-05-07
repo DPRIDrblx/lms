@@ -17,9 +17,12 @@ export default function RootLayout({
         <ThemeProvider>
           <AuthProvider>
             {children}
+            <Toaster position="top-right" />
           </AuthProvider>
         </ThemeProvider>
       </body>
     </html>
   );
 }
+
+import { Toaster } from "react-hot-toast";

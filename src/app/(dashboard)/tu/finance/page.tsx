@@ -53,6 +53,10 @@ export default function TUFinanceHub() {
     fetchBills();
   }, [supabase]);
 
+  const totalCollected = bills.filter(b => b.status === "paid").reduce((s, b) => s + b.amount, 0);
+  const pendingAmount = bills.filter(b => b.status === "pending").reduce((s, b) => s + b.amount, 0);
+  const unpaidCount = Array.from(new Set(bills.filter(b => b.status !== "paid").map(b => b.student_id))).length;
+
   const handleGenerate = async () => {
     setGenerating(true);
     // 1. Get all students
@@ -102,19 +106,19 @@ export default function TUFinanceHub() {
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
-         <Card className="bg-indigo-600 text-white border-none">
-            <p className="text-xs font-bold uppercase opacity-80 mb-1">Total Collections</p>
-            <p className="text-2xl font-black">Rp 45.200.000</p>
+         <Card className="bg-indigo-600 text-white border-none shadow-lg shadow-indigo-500/20">
+            <p className="text-[10px] font-bold uppercase opacity-80 mb-1">Total Collections</p>
+            <p className="text-2xl font-black">Rp {totalCollected.toLocaleString()}</p>
             <TrendingUp className="absolute top-4 right-4 h-5 w-5 opacity-40" />
          </Card>
-         <Card>
-            <p className="text-xs font-bold text-[var(--text-tertiary)] uppercase mb-1">Pending Receivables</p>
-            <p className="text-2xl font-black text-[var(--text-primary)]">Rp 12.500.000</p>
+         <Card className="bg-white border-[var(--border)]">
+            <p className="text-[10px] font-bold text-[var(--text-tertiary)] uppercase mb-1">Pending Receivables</p>
+            <p className="text-2xl font-black text-[var(--text-primary)]">Rp {pendingAmount.toLocaleString()}</p>
             <Clock className="absolute top-4 right-4 h-5 w-5 text-orange-500 opacity-40" />
          </Card>
-         <Card>
-            <p className="text-xs font-bold text-[var(--text-tertiary)] uppercase mb-1">Unpaid Students</p>
-            <p className="text-2xl font-black text-[var(--text-primary)]">25 Students</p>
+         <Card className="bg-white border-[var(--border)]">
+            <p className="text-[10px] font-bold text-[var(--text-tertiary)] uppercase mb-1">Unpaid Students</p>
+            <p className="text-2xl font-black text-[var(--text-primary)]">{unpaidCount} Students</p>
             <AlertCircle className="absolute top-4 right-4 h-5 w-5 text-red-500 opacity-40" />
          </Card>
       </div>

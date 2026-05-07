@@ -25,24 +25,50 @@ export default function TUDashboard() {
     totalStudents: 0,
     pendingBills: 0,
     upcomingEvents: 0,
-    collectionRate: "85%"
+    collectionRate: "0%"
   });
+  const [alerts, setAlerts] = useState<any[]>([
+    { id: 1, type: "warning", message: "Initial sync in progress..." }
+  ]);
+
+  const fetchStats = async () => {
+    const [stds, bills, events] = await Promise.all([
+      supabase.from("profiles").select("*", { count: "exact", head: true }).eq("role", "student"),
+      supabase.from("finance_bills").select("*").eq("status", "pending"),
+      supabase.from("school_events").select("*", { count: "exact", head: true })
+    ]);
+
+    // Calculate Collection Rate
+    const { data: allBills } = await supabase.from("finance_bills").select("status");
+    const total = allBills?.length || 0;
+    const paid = allBills?.filter(b => b.status === "paid").length || 0;
+    const rate = total > 0 ? Math.round((paid / total) * 100) : 0;
+
+    setStats({
+      totalStudents: stds.count || 0,
+      pendingBills: bills.data?.length || 0,
+      upcomingEvents: events.count || 0,
+      collectionRate: `${rate}%`
+    });
+
+    // Generate real alerts
+    const newAlerts = [];
+    if (bills.data && bills.data.length > 0) {
+      const uniqueUnpaid = Array.from(new Set(bills.data.map((b: any) => b.student_id))).length;
+      newAlerts.push({ id: 1, type: "warning", message: `${uniqueUnpaid} students have pending tuition payments.` });
+    }
+    newAlerts.push({ id: 2, type: "info", message: "Academy portal is synchronized with global database." });
+    setAlerts(newAlerts);
+  };
 
   useEffect(() => {
-    const fetchStats = async () => {
-      const { count: studentCount } = await supabase.from("profiles").select("*", { count: "exact", head: true }).eq("role", "student");
-      const { count: billCount } = await supabase.from("finance_bills").select("*", { count: "exact", head: true }).eq("status", "pending");
-      const { count: eventCount } = await supabase.from("school_events").select("*", { count: "exact", head: true });
-
-      setStats(prev => ({
-        ...prev,
-        totalStudents: studentCount || 0,
-        pendingBills: billCount || 0,
-        upcomingEvents: eventCount || 0
-      }));
-    };
-
     fetchStats();
+    const channel = supabase
+      .channel('tu-dashboard-sync')
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'finance_bills' }, () => fetchStats())
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'profiles' }, () => fetchStats())
+      .subscribe();
+    return () => { supabase.removeChannel(channel); };
   }, [supabase]);
 
   return (
@@ -90,14 +116,16 @@ export default function TUDashboard() {
             <Badge variant="info">Live Updates</Badge>
           </div>
           <div className="space-y-3">
-            <div className="flex items-center gap-3 p-3 rounded-xl bg-orange-50 dark:bg-orange-950/20 border border-orange-200 dark:border-orange-900/30">
-              <Bell className="h-4 w-4 text-orange-500" />
-              <p className="text-xs text-orange-800 dark:text-orange-200">12 students haven&apos;t paid May tuition fees.</p>
-            </div>
-            <div className="flex items-center gap-3 p-3 rounded-xl bg-indigo-50 dark:bg-indigo-950/20 border border-indigo-200 dark:border-indigo-900/30">
-              <Bell className="h-4 w-4 text-indigo-500" />
-              <p className="text-xs text-indigo-800 dark:text-indigo-200">Report cards for Chapter 1 are ready for generation.</p>
-            </div>
+            {alerts.map((alert) => (
+              <div key={alert.id} className={`flex items-center gap-3 p-3 rounded-xl border ${
+                alert.type === "warning" 
+                  ? "bg-orange-50 dark:bg-orange-950/20 border-orange-200 dark:border-orange-900/30 text-orange-800 dark:text-orange-200"
+                  : "bg-indigo-50 dark:bg-indigo-950/20 border-indigo-200 dark:border-indigo-900/30 text-indigo-800 dark:text-indigo-200"
+              }`}>
+                <Bell className={`h-4 w-4 ${alert.type === "warning" ? "text-orange-500" : "text-indigo-500"}`} />
+                <p className="text-xs">{alert.message}</p>
+              </div>
+            ))}
           </div>
         </Card>
       </div>

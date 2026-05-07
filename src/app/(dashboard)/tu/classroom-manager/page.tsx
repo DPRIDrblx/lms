@@ -19,6 +19,7 @@ import {
   Link2
 } from "lucide-react";
 import { useEffect, useState } from "react";
+import toast from "react-hot-toast";
 
 export default function TUClassroomManager() {
   const supabase = createClient();
@@ -49,38 +50,79 @@ export default function TUClassroomManager() {
     setLoading(false);
   };
 
+  useEffect(() => {
+    // Real-time listener for profile changes (assignments)
+    const channel = supabase
+      .channel('tu-roster-sync')
+      .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'profiles' }, (payload) => {
+        if (payload.new.role === 'student') {
+          fetchData();
+        }
+      })
+      .subscribe();
+
+    return () => { supabase.removeChannel(channel); };
+  }, [supabase]);
+
   const handleAssignWaliKelas = async (classId: string, teacherId: string) => {
+    const toastId = toast.loading("Assigning Wali Kelas...");
     const { error } = await supabase
       .from("classes")
       .update({ wali_kelas_id: teacherId })
       .eq("id", classId);
     
-    if (!error) {
-      // Also update the teacher's class_id for consistency
-      await supabase.from("profiles").update({ class_id: classId }).eq("id", teacherId);
-      fetchData();
+    if (error) {
+      toast.error(`Assignment failed: ${error.message}`, { id: toastId });
+      return;
     }
+
+    // Also update the teacher's class_id for consistency
+    await supabase.from("profiles").update({ class_id: classId }).eq("id", teacherId);
+    toast.success("Wali Kelas assigned successfully!", { id: toastId });
+    fetchData();
   };
 
   const handleAssignStudent = async (studentId: string) => {
-    if (!selectedClass) return;
+    if (!selectedClass) {
+      toast.error("Please select a target class first!");
+      return;
+    }
+
+    // Optimistic UI Update
+    const studentToAssign = unassignedStudents.find(s => s.id === studentId);
+    if (!studentToAssign) return;
+
+    setUnassignedStudents(prev => prev.filter(s => s.id !== studentId));
+    const toastId = toast.loading(`Assigning ${studentToAssign.full_name}...`);
+
     const { error } = await supabase
       .from("profiles")
       .update({ class_id: selectedClass.id })
       .eq("id", studentId);
     
-    if (!error) {
+    if (error) {
+      toast.error(`Database Error: ${error.message} (Code: ${error.code})`, { id: toastId });
+      // Rollback optimistic update
+      setUnassignedStudents(prev => [...prev, studentToAssign]);
+    } else {
+      toast.success(`${studentToAssign.full_name} moved to Class ${selectedClass.name}`, { id: toastId });
       fetchData();
     }
   };
 
   const handleRemoveStudent = async (studentId: string) => {
+    const toastId = toast.loading("Removing student from class...");
     const { error } = await supabase
       .from("profiles")
       .update({ class_id: null })
       .eq("id", studentId);
     
-    if (!error) fetchData();
+    if (error) {
+      toast.error(`Removal failed: ${error.message}`, { id: toastId });
+    } else {
+      toast.success("Student unassigned.", { id: toastId });
+      fetchData();
+    }
   };
 
   if (loading) return <div className="p-12 text-center text-[var(--text-tertiary)]">Synchronizing Academy Roster...</div>;

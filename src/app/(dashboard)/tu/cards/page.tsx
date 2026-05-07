@@ -42,17 +42,36 @@ export default function TUCardInventory() {
     setLoading(false);
   };
 
+  useEffect(() => {
+    fetchCards();
+    // Real-time sync for inventory
+    const channel = supabase
+      .channel('card-inventory-sync')
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'card_inventory' }, () => fetchCards())
+      .subscribe();
+    return () => { supabase.removeChannel(channel); };
+  }, [supabase]);
+
   const handleAddCard = async () => {
     if (!newSerial) return;
     const { error } = await supabase
       .from("card_inventory")
       .insert({ serial_number: newSerial, status: "available" });
     
-    if (!error) {
+    if (error) {
+      alert(error.message);
+    } else {
       setNewSerial("");
       setIsAddOpen(false);
       fetchCards();
     }
+  };
+
+  const handleDeleteCard = async (id: string) => {
+    if (!confirm("Are you sure you want to remove this card from inventory?")) return;
+    const { error } = await supabase.from("card_inventory").delete().eq("id", id);
+    if (error) alert(error.message);
+    else fetchCards();
   };
 
   const filteredCards = cards.filter(c => 
@@ -154,7 +173,12 @@ export default function TUCardInventory() {
                     {new Date(card.created_at).toLocaleDateString()}
                   </td>
                   <td className="px-6 py-4 text-right">
-                    <Button variant="ghost" size="sm" className="text-[var(--error)] hover:bg-[var(--error-light)]">
+                    <Button 
+                      variant="ghost" 
+                      size="sm" 
+                      className="text-[var(--error)] hover:bg-[var(--error-light)]"
+                      onClick={() => handleDeleteCard(card.id)}
+                    >
                       <Trash2 className="h-4 w-4" />
                     </Button>
                   </td>
