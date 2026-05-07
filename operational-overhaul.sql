@@ -108,3 +108,18 @@ CREATE POLICY "Anyone can read categories" ON public.assessment_categories FOR S
 ALTER TABLE public.student_scores ENABLE ROW LEVEL SECURITY;
 CREATE POLICY "Teachers manage all scores" ON public.student_scores FOR ALL USING (EXISTS (SELECT 1 FROM public.profiles WHERE id = auth.uid() AND role IN ('teacher', 'tu')));
 CREATE POLICY "Students read own scores" ON public.student_scores FOR SELECT USING (auth.uid() = student_id);
+-- 9. CBT SESSIONS (UNBK Style)
+CREATE TABLE IF NOT EXISTS public.exam_sessions (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    student_id UUID REFERENCES public.profiles(id) ON DELETE CASCADE,
+    quiz_id UUID REFERENCES public.quizzes(id) ON DELETE CASCADE,
+    started_at TIMESTAMPTZ DEFAULT NOW(),
+    time_left_seconds INTEGER NOT NULL,
+    current_question_id UUID REFERENCES public.questions(id),
+    status TEXT DEFAULT 'ongoing', -- 'ongoing', 'submitted'
+    metadata JSONB DEFAULT '{}'::jsonb, -- Store ragu-ragu states, etc.
+    UNIQUE(student_id, quiz_id)
+);
+
+ALTER TABLE public.exam_sessions ENABLE ROW LEVEL SECURITY;
+CREATE POLICY "Students manage own sessions" ON public.exam_sessions FOR ALL USING (auth.uid() = student_id);
