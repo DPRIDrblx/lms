@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useAuth } from "@/lib/auth-context";
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
@@ -8,8 +8,19 @@ import { motion } from "framer-motion";
 import { GraduationCap, Mail, Lock, User, Eye, EyeOff } from "lucide-react";
 
 export default function LoginPage() {
-  const { signInWithEmail, signUpWithEmail, signInWithGoogle } = useAuth();
+  const { user, profile, signInWithEmail, signUpWithEmail, signInWithGoogle } = useAuth();
   const router = useRouter();
+  
+  // Prevent immediate redirect loop, wait for session to stabilize
+  useEffect(() => {
+    if (user && profile) {
+      const timer = setTimeout(() => {
+        router.push("/dashboard");
+      }, 2000);
+      return () => clearTimeout(timer);
+    }
+  }, [user, profile, router]);
+
   const [mode, setMode] = useState<"signin" | "signup">("signin");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -26,14 +37,21 @@ export default function LoginPage() {
 
     if (mode === "signin") {
       const { error: err } = await signInWithEmail(email, password);
-      if (err) setError(err);
-      else router.push("/dashboard");
+      if (err) {
+        setError(err);
+        setLoading(false);
+      } else {
+        // Wait for session stabilization
+        setTimeout(() => {
+          router.push("/dashboard");
+        }, 1500);
+      }
     } else {
       const { error: err } = await signUpWithEmail(email, password, fullName, role);
       if (err) setError(err);
       else setError("Check your email for a confirmation link.");
+      setLoading(false);
     }
-    setLoading(false);
   };
 
   return (

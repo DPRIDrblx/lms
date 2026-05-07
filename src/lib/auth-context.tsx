@@ -60,6 +60,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           await fetchProfile(currentSession.user.id);
         }
       } finally {
+        // Wait a small bit to ensure profile state is updated if user exists
         setLoading(false);
       }
     };
@@ -72,10 +73,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         setUser(newSession?.user ?? null);
         if (newSession?.user) {
           await fetchProfile(newSession.user.id);
+          setLoading(false);
         } else {
           setProfile(null);
+          setLoading(false);
         }
-        setLoading(false);
       }
     );
 
@@ -95,6 +97,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           // User exists but profile sync is stuck
           console.error("Profile sync timeout: Redirecting to login");
           supabase.auth.signOut();
+          document.cookie = "sb-access-token=; Path=/; Expires=Thu, 01 Jan 1970 00:00:01 GMT;";
+          document.cookie = "sb-refresh-token=; Path=/; Expires=Thu, 01 Jan 1970 00:00:01 GMT;";
           window.location.href = "/login?error=sync_failed";
         }
       }, 5000);
@@ -130,7 +134,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const signOut = async () => {
     await supabase.auth.signOut();
     setProfile(null);
-    // Force clear cache and redirect
+    // Force clear cookies and cache
+    document.cookie = "sb-access-token=; Path=/; Expires=Thu, 01 Jan 1970 00:00:01 GMT;";
+    document.cookie = "sb-refresh-token=; Path=/; Expires=Thu, 01 Jan 1970 00:00:01 GMT;";
     window.location.href = "/login";
   };
 

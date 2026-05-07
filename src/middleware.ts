@@ -34,25 +34,20 @@ export async function middleware(request: NextRequest) {
     request.nextUrl.pathname.startsWith("/login") ||
     request.nextUrl.pathname.startsWith("/auth");
 
+  // Bypass if it's an auth page or static asset
+  if (isAuthPage) return supabaseResponse;
+
   // If error occurs or user is not found, and it's not an auth page, clear and redirect
-  if ((error || !user) && !isAuthPage) {
+  if (error || !user) {
     const url = request.nextUrl.clone();
     url.pathname = "/login";
-    url.searchParams.set("error", "session_expired");
+    if (error) url.searchParams.set("error", "session_expired");
     
     const response = NextResponse.redirect(url);
-    // Force clear session cookies if error exists
-    if (error) {
-      response.cookies.delete("sb-access-token");
-      response.cookies.delete("sb-refresh-token");
-    }
+    // Force clear session cookies if error or no user
+    response.cookies.delete("sb-access-token");
+    response.cookies.delete("sb-refresh-token");
     return response;
-  }
-
-  if (user && isAuthPage && request.nextUrl.pathname === "/login") {
-    const url = request.nextUrl.clone();
-    url.pathname = "/dashboard";
-    return NextResponse.redirect(url);
   }
 
   return supabaseResponse;
