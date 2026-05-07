@@ -105,6 +105,26 @@ export default function ExcelGradebookPage() {
     setSaving(false);
   };
 
+  const handleSyncCBT = async () => {
+    setSaving(true);
+    // Fetch all quiz results
+    const { data: quizScores } = await supabase.from("student_scores").select("*").eq("target_type", "quiz");
+    
+    if (quizScores) {
+      const { error } = await supabase.from("student_scores").upsert(
+        quizScores.map((s: any) => ({ ...s, target_type: "offline" })), // Map to offline grid
+        { onConflict: 'student_id,category_id' }
+      );
+      if (!error) {
+        toast.success(`Successfully synced ${quizScores.length} CBT grades into the gradebook!`);
+        fetchData();
+      } else {
+        toast.error(error.message);
+      }
+    }
+    setSaving(false);
+  };
+
   const handleAddCategory = async () => {
     if (!newCategoryName) return;
     const { data, error } = await supabase.from("assessment_categories").insert({
@@ -133,6 +153,7 @@ export default function ExcelGradebookPage() {
            <p className="text-sm text-[var(--text-secondary)] mt-1">High-performance grid for bulk grading and academic synchronization.</p>
         </div>
         <div className="flex gap-2">
+           <Button variant="secondary" onClick={handleSyncCBT} icon={<Download className="h-4 w-4" />}>Sync from CBT</Button>
            <Button variant="secondary" onClick={() => setShowAddCategory(true)} icon={<Plus className="h-4 w-4" />}>Add Column</Button>
            <Button onClick={handleSaveAll} loading={saving} icon={<Save className="h-4 w-4" />}>Save Changes</Button>
         </div>

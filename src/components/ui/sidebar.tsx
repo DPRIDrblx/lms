@@ -37,6 +37,7 @@ const studentNav = [
 const teacherNav = [
   { href: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
   { href: "/teacher/classroom", label: "Classroom", icon: Users },
+  { href: "/teacher/homeroom", label: "Homeroom Authority", icon: Award },
   { href: "/chat", label: "Communications", icon: MessageSquare },
   { href: "/teacher/courses", label: "Content Suite", icon: BookOpen },
   { href: "/teacher/quizzes", label: "CBT Builder", icon: Award },
