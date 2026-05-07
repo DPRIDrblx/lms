@@ -40,6 +40,22 @@ export default function TeacherCoursesPage() {
     fetchCourses();
   }, [profile, supabase]);
 
+  const handleTogglePublish = async (courseId: string, currentState: boolean) => {
+    // Optimistic UI Update
+    setCourses(prev => prev.map(c => c.id === courseId ? { ...c, is_published: !currentState } : c));
+    
+    const { error } = await supabase
+      .from("courses")
+      .update({ is_published: !currentState })
+      .eq("id", courseId);
+    
+    if (error) {
+      alert("Failed to update status: " + error.message);
+      // Rollback on error
+      setCourses(prev => prev.map(c => c.id === courseId ? { ...c, is_published: currentState } : c));
+    }
+  };
+
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
@@ -71,10 +87,19 @@ export default function TeacherCoursesPage() {
                       <BookOpen className="h-10 w-10" />
                     </div>
                   )}
-                  <div className="absolute top-3 left-3">
+                  <div className="absolute top-3 left-3 flex gap-2">
                     <Badge variant={course.is_published ? "success" : "default"}>
                       {course.is_published ? "Published" : "Draft"}
                     </Badge>
+                  </div>
+                  <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-2">
+                     <Button 
+                       variant={course.is_published ? "destructive" : "success"} 
+                       size="sm" 
+                       onClick={() => handleTogglePublish(course.id, course.is_published)}
+                     >
+                        {course.is_published ? "Unpublish" : "Publish Now"}
+                     </Button>
                   </div>
                 </div>
                 <div className="p-5 flex-1 flex flex-col">
