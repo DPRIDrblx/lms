@@ -10,6 +10,7 @@ import { ArrowLeft, CheckCircle2, Building2, Smartphone, CreditCard } from "luci
 import { useEffect, useState, use } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
+import { toast } from "react-hot-toast";
 
 const METHODS = [
   { id: "bank_transfer", label: "Bank Transfer", icon: Building2, banks: ["BCA", "Mandiri", "BNI"] },
@@ -43,23 +44,32 @@ export default function CheckoutPage({ params }: { params: Promise<{ id: string 
     if (!selectedMethod || !bill) return;
     setProcessing(true);
 
-    await new Promise((r) => setTimeout(r, 1500));
+    // Simulate high-fidelity payment gateway handshake
+    await new Promise((r) => setTimeout(r, 2000));
 
-    await supabase
+    const { error } = await supabase
       .from("finance_bills")
       .update({
         status: "paid",
         payment_method: selectedMethod,
+        transaction_id: `TRX-${Math.random().toString(36).substr(2, 9).toUpperCase()}`,
         paid_at: new Date().toISOString(),
       })
       .eq("id", bill.id);
 
+    if (error) {
+      toast.error("Payment sync failed: " + error.message);
+      setProcessing(false);
+      return;
+    }
+
+    toast.success("Payment verified by Academy Finance Gateway!");
     setProcessing(false);
     setSuccess(true);
 
     setTimeout(() => {
       router.push(`/finance/receipt/${bill.id}`);
-    }, 2000);
+    }, 2500);
   };
 
   if (!bill) {

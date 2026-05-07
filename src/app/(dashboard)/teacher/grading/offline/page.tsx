@@ -11,18 +11,22 @@ import {
   Save, 
   Search, 
   Loader2, 
-  ChevronRight,
-  ClipboardCheck,
+  Table as TableIcon,
   Plus,
-  Trash2
+  Trash2,
+  Filter,
+  Download,
+  AlertCircle,
+  FileSpreadsheet
 } from "lucide-react";
 import { useEffect, useState, useCallback } from "react";
-import { motion, AnimatePresence } from "framer-motion";
+import { motion } from "framer-motion";
 import { toast } from "react-hot-toast";
 
 interface Student {
   id: string;
   full_name: string;
+  scores: Record<string, number>;
 }
 
 interface Category {
@@ -30,245 +34,208 @@ interface Category {
   name: string;
 }
 
-export default function OfflineGradingPage() {
+export default function ExcelGradebookPage() {
   const supabase = createClient();
   const { profile } = useAuth();
   
   const [students, setStudents] = useState<Student[]>([]);
   const [categories, setCategories] = useState<Category[]>([]);
-  const [selectedStudent, setSelectedStudent] = useState<Student | null>(null);
-  const [selectedCategory, setSelectedCategory] = useState<string>("");
-  const [newCategoryName, setNewCategoryName] = useState("");
-  const [score, setScore] = useState(0);
+  const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [search, setSearch] = useState("");
-  const [loading, setLoading] = useState(true);
   const [showAddCategory, setShowAddCategory] = useState(false);
+  const [newCategoryName, setNewCategoryName] = useState("");
 
   const fetchData = useCallback(async () => {
-    const [stds, cats] = await Promise.all([
+    const [stdsRes, catsRes, scoresRes] = await Promise.all([
       supabase.from("profiles").select("id, full_name").eq("role", "student").order("full_name"),
-      supabase.from("assessment_categories").select("*").order("created_at")
+      supabase.from("assessment_categories").select("*").order("created_at"),
+      supabase.from("student_scores").select("*").eq("target_type", "offline")
     ]);
     
-    if (stds.data) setStudents(stds.data as Student[]);
-    if (cats.data) {
-      setCategories(cats.data as Category[]);
-      if (cats.data.length > 0 && !selectedCategory) setSelectedCategory(cats.data[0].id);
+    if (stdsRes.data && catsRes.data) {
+      const cats = catsRes.data as Category[];
+      setCategories(cats);
+      
+      const scores = scoresRes.data || [];
+      const stdData = stdsRes.data.map((s: any) => {
+        const studentScores: Record<string, number> = {};
+        scores.filter((sc: any) => sc.student_id === s.id).forEach((sc: any) => {
+          studentScores[sc.category_id] = sc.score;
+        });
+        return { ...s, scores: studentScores };
+      });
+      setStudents(stdData);
     }
     setLoading(false);
-  }, [supabase, selectedCategory]);
+  }, [supabase]);
 
   useEffect(() => {
     fetchData();
   }, [fetchData]);
 
+  const handleScoreChange = (studentId: string, categoryId: string, value: string) => {
+    const score = parseInt(value) || 0;
+    setStudents(prev => prev.map(s => {
+      if (s.id === studentId) {
+        return { ...s, scores: { ...s.scores, [categoryId]: score } };
+      }
+      return s;
+    }));
+  };
+
+  const handleSaveAll = async () => {
+    setSaving(true);
+    const updates = students.flatMap(s => 
+      Object.entries(s.scores).map(([catId, score]) => ({
+        student_id: s.id,
+        category_id: catId,
+        score,
+        target_id: "00000000-0000-0000-0000-000000000000",
+        target_type: "offline",
+        is_graded: true,
+        graded_at: new Date().toISOString()
+      }))
+    );
+
+    const { error } = await supabase.from("student_scores").upsert(updates, { onConflict: 'student_id,category_id' });
+
+    if (error) toast.error(error.message);
+    else toast.success("All grades synchronized to cloud!");
+    setSaving(false);
+  };
+
   const handleAddCategory = async () => {
     if (!newCategoryName) return;
     const { data, error } = await supabase.from("assessment_categories").insert({
       name: newCategoryName,
-      course_id: "00000000-0000-0000-0000-000000000000" // Generic for now, or link to active course
+      course_id: "00000000-0000-0000-0000-000000000000" // Generic
     }).select().single();
 
     if (error) toast.error(error.message);
     else {
       setCategories([...categories, data]);
-      setSelectedCategory(data.id);
       setNewCategoryName("");
       setShowAddCategory(false);
-      toast.success("Assessment category created!");
+      toast.success("New column added to gradebook!");
     }
-  };
-
-  const handleSave = async () => {
-    if (!selectedStudent || !selectedCategory) {
-      toast.error("Please select a student and assessment category.");
-      return;
-    }
-    setSaving(true);
-
-    const { error } = await supabase.from("student_scores").insert({
-      student_id: selectedStudent.id,
-      category_id: selectedCategory,
-      target_id: "00000000-0000-0000-0000-000000000000",
-      target_type: "offline",
-      score: score,
-      is_graded: true,
-      graded_at: new Date().toISOString()
-    });
-
-    if (error) toast.error(error.message);
-    else {
-      toast.success(`Score for ${selectedStudent.full_name} saved!`);
-      setScore(0);
-      setSelectedStudent(null);
-    }
-    setSaving(false);
   };
 
   const filteredStudents = students.filter(s => s.full_name.toLowerCase().includes(search.toLowerCase()));
 
-  return (
-    <div className="space-y-6 max-w-6xl">
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-        <div>
-          <h1 className="text-2xl font-bold text-[var(--text-primary)]">Gradebook & Multi-Assessment</h1>
-          <p className="text-sm text-[var(--text-secondary)] mt-1">Dynamically manage assessment columns and input student scores.</p>
-        </div>
-        <Button variant="secondary" onClick={() => setShowAddCategory(true)} icon={<Plus className="h-4 w-4" />}>
-          Add Column
-        </Button>
-      </div>
+  if (loading) return <div className="p-20 text-center animate-pulse">Loading Gradebook Grid...</div>;
 
-      <div className="grid grid-cols-1 lg:grid-cols-4 gap-8">
-        {/* Student Sidebar */}
-        <Card className="lg:col-span-1 h-fit">
-          <div className="relative mb-4">
+  return (
+    <div className="space-y-6 max-w-[1400px] mx-auto">
+      <header className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+        <div>
+           <h1 className="text-3xl font-black text-[var(--text-primary)]">Excel-Style Gradebook</h1>
+           <p className="text-sm text-[var(--text-secondary)] mt-1">High-performance grid for bulk grading and academic synchronization.</p>
+        </div>
+        <div className="flex gap-2">
+           <Button variant="secondary" onClick={() => setShowAddCategory(true)} icon={<Plus className="h-4 w-4" />}>Add Column</Button>
+           <Button onClick={handleSaveAll} loading={saving} icon={<Save className="h-4 w-4" />}>Save Changes</Button>
+        </div>
+      </header>
+
+      {/* Grid Controls */}
+      <Card className="p-4 border-none bg-[var(--bg-secondary)]/50 flex flex-wrap gap-4 items-center">
+         <div className="relative flex-1 min-w-[200px]">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-[var(--text-tertiary)]" />
             <input 
               type="text" 
-              placeholder="Search students..." 
+              placeholder="Filter students by name..." 
               value={search}
               onChange={e => setSearch(e.target.value)}
-              className="w-full h-10 pl-10 pr-4 rounded-xl bg-[var(--bg-secondary)] border border-[var(--border)] outline-none text-sm"
+              className="w-full h-10 pl-10 pr-4 rounded-xl bg-[var(--bg-primary)] border border-[var(--border)] text-sm outline-none focus:ring-2 focus:ring-[var(--accent)]"
             />
-          </div>
-          <div className="space-y-1 max-h-[60vh] overflow-y-auto pr-2">
-            {loading ? (
-              <div className="py-8 text-center"><Loader2 className="animate-spin h-5 w-5 mx-auto text-[var(--accent)]" /></div>
-            ) : filteredStudents.map(s => (
-              <button
-                key={s.id}
-                onClick={() => setSelectedStudent(s)}
-                className={`w-full flex items-center justify-between p-3 rounded-xl transition-all ${
-                  selectedStudent?.id === s.id ? "bg-[var(--accent)] text-white shadow-lg shadow-[var(--accent)]/20" : "hover:bg-[var(--bg-secondary)] text-[var(--text-primary)]"
-                }`}
-              >
-                <span className="text-sm font-medium truncate">{s.full_name}</span>
-                <ChevronRight size={14} className={selectedStudent?.id === s.id ? "text-white" : "text-[var(--text-tertiary)]"} />
-              </button>
-            ))}
-          </div>
-        </Card>
+         </div>
+         <Button variant="ghost" size="sm" icon={<Filter className="h-4 w-4" />}>Filters</Button>
+         <Button variant="ghost" size="sm" icon={<Download className="h-4 w-4" />}>Export CSV</Button>
+      </Card>
 
-        {/* Grading Area */}
-        <div className="lg:col-span-3">
-          {selectedStudent ? (
-            <motion.div initial={{ opacity: 0, scale: 0.98 }} animate={{ opacity: 1, scale: 1 }} className="space-y-4">
-              <Card className="p-8">
-                <div className="flex items-center justify-between mb-8 pb-6 border-b border-[var(--border)]">
-                  <div className="flex items-center gap-4">
-                    <div className="w-14 h-14 rounded-3xl bg-[var(--accent-light)] flex items-center justify-center text-[var(--accent)] shadow-inner">
-                      <ClipboardCheck className="h-7 w-7" />
-                    </div>
-                    <div>
-                      <p className="text-[10px] font-black text-[var(--accent)] uppercase tracking-widest">Active Assessment</p>
-                      <h2 className="text-2xl font-black text-[var(--text-primary)]">{selectedStudent.full_name}</h2>
-                    </div>
-                  </div>
-                  <Badge variant="info" className="px-4 py-1 rounded-full">Academic Year 2024</Badge>
-                </div>
-
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-                  <div className="space-y-6">
-                    <div>
-                      <label className="block text-xs font-black text-[var(--text-tertiary)] uppercase tracking-wider mb-2">Select Assessment Column</label>
-                      <div className="grid grid-cols-2 gap-2">
-                        {categories.map((cat) => (
-                          <button
-                            key={cat.id}
-                            onClick={() => setSelectedCategory(cat.id)}
-                            className={`p-3 rounded-xl border-2 text-xs font-bold transition-all text-center ${
-                              selectedCategory === cat.id 
-                                ? "border-[var(--accent)] bg-[var(--accent-light)] text-[var(--accent)]" 
-                                : "border-[var(--border)] text-[var(--text-secondary)] hover:border-[var(--border-hover)]"
-                            }`}
-                          >
-                            {cat.name}
-                          </button>
-                        ))}
-                      </div>
-                    </div>
-
-                    <div className="pt-4">
-                      <div className="flex justify-between items-center mb-4">
-                         <label className="block text-xs font-black text-[var(--text-tertiary)] uppercase tracking-wider">Input Score</label>
-                         <div className="px-6 py-2 rounded-2xl bg-[var(--bg-secondary)] border-2 border-[var(--accent)]/20">
-                            <span className="text-3xl font-black text-[var(--accent)]">{score}</span>
-                         </div>
-                      </div>
-                      <input 
-                        type="range" 
-                        min="0" max="100" 
-                        value={score}
-                        onChange={e => setScore(parseInt(e.target.value))}
-                        className="w-full h-3 bg-[var(--bg-tertiary)] rounded-full appearance-none cursor-pointer accent-[var(--accent)]"
-                      />
-                      <div className="flex justify-between mt-3 px-1">
-                         <span className="text-[10px] font-bold text-[var(--text-tertiary)] uppercase">Remedial</span>
-                         <span className="text-[10px] font-bold text-[var(--text-tertiary)] uppercase">Distinction</span>
-                      </div>
-                    </div>
-                  </div>
-
-                  <div className="flex flex-col justify-between">
-                    <div className="p-6 rounded-2xl bg-[var(--bg-secondary)] border-none">
-                      <h4 className="text-sm font-bold text-[var(--text-primary)] mb-2 flex items-center gap-2">
-                        <Award className="h-4 w-4 text-[var(--accent)]" /> Grading Impact
-                      </h4>
-                      <p className="text-xs text-[var(--text-secondary)] leading-relaxed">
-                        This score will be synchronized instantly to the student&apos;s portal and parent&apos;s oversight dashboard. 
-                        XP rewards will be calculated based on the achievement tier.
-                      </p>
-                    </div>
-
-                    <Button 
-                      className="w-full h-16 rounded-2xl text-lg font-black shadow-xl shadow-[var(--accent)]/20 mt-6" 
-                      onClick={handleSave} 
-                      loading={saving} 
-                      icon={<Save className="h-5 w-5" />}
-                    >
-                      Confirm Entry
-                    </Button>
-                  </div>
-                </div>
-              </Card>
-            </motion.div>
-          ) : (
-            <Card className="h-full flex flex-col items-center justify-center py-32 border-2 border-dashed bg-transparent">
-              <div className="w-20 h-20 rounded-full bg-[var(--bg-secondary)] flex items-center justify-center mb-6">
-                <Users className="h-10 w-10 text-[var(--text-tertiary)] opacity-20" />
-              </div>
-              <h3 className="text-xl font-bold text-[var(--text-primary)]">Ready to Grade</h3>
-              <p className="text-sm text-[var(--text-secondary)] mt-2">Select a student from the roster to begin evaluation.</p>
-            </Card>
-          )}
+      {/* Excel Grid */}
+      <Card className="p-0 overflow-hidden shadow-2xl border-[var(--border)]">
+        <div className="overflow-x-auto">
+          <table className="w-full border-collapse">
+            <thead>
+              <tr className="bg-[var(--bg-secondary)]/50 border-b border-[var(--border)]">
+                <th className="px-6 py-4 text-left text-[10px] font-black text-[var(--text-tertiary)] uppercase tracking-widest sticky left-0 bg-[var(--bg-secondary)] z-10 w-64">Student Profile</th>
+                {categories.map(cat => (
+                  <th key={cat.id} className="px-6 py-4 text-center text-[10px] font-black text-[var(--text-tertiary)] uppercase tracking-widest border-l border-[var(--border)] min-w-[120px]">
+                    {cat.name}
+                  </th>
+                ))}
+                <th className="px-6 py-4 text-center text-[10px] font-black text-[var(--text-tertiary)] uppercase tracking-widest border-l border-[var(--border)] bg-[var(--accent-light)] text-[var(--accent)]">Final Avg</th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-[var(--border)]">
+              {filteredStudents.map((student) => {
+                const studentScores = Object.values(student.scores);
+                const avg = studentScores.length > 0 ? Math.round(studentScores.reduce((a, b) => a + b, 0) / studentScores.length) : 0;
+                
+                return (
+                  <tr key={student.id} className="hover:bg-[var(--bg-secondary)] transition-colors group">
+                    <td className="px-6 py-4 font-bold text-sm text-[var(--text-primary)] sticky left-0 bg-[var(--bg-primary)] group-hover:bg-[var(--bg-secondary)] z-10">
+                       <div className="flex items-center gap-3">
+                          <div className="w-8 h-8 rounded-lg bg-[var(--bg-tertiary)] flex items-center justify-center text-[var(--text-tertiary)] text-[10px]">
+                             {student.full_name[0]}
+                          </div>
+                          {student.full_name}
+                       </div>
+                    </td>
+                    {categories.map(cat => (
+                      <td key={cat.id} className="p-0 border-l border-[var(--border)]">
+                        <input 
+                          type="number" 
+                          min="0" max="100"
+                          value={student.scores[cat.id] ?? ""}
+                          onChange={(e) => handleScoreChange(student.id, cat.id, e.target.value)}
+                          className="w-full h-12 px-4 bg-transparent text-center text-sm font-semibold text-[var(--text-primary)] focus:bg-white focus:outline-none focus:ring-2 focus:ring-inset focus:ring-[var(--accent)] transition-all"
+                        />
+                      </td>
+                    ))}
+                    <td className="px-6 py-4 text-center bg-[var(--accent-light)]/30">
+                       <Badge className={`${avg >= 75 ? "bg-green-500" : "bg-orange-500"} text-white border-none`}>{avg}%</Badge>
+                    </td>
+                  </tr>
+                );
+              })}
+            </tbody>
+          </table>
         </div>
+      </Card>
+
+      <div className="flex items-center gap-3 p-4 rounded-2xl bg-blue-50 border border-blue-100 text-blue-700">
+         <AlertCircle className="h-5 w-5 shrink-0" />
+         <p className="text-xs">
+            Tip: Use <strong>Tab</strong> to move between columns and <strong>Enter</strong> to jump to the next student. Grades are auto-calculated but require a "Save" action for cloud persistence.
+         </p>
       </div>
 
-      {/* New Category Modal */}
-      <AnimatePresence>
-        {showAddCategory && (
-          <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/40 backdrop-blur-sm">
-            <motion.div initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0, scale: 0.95 }} className="w-full max-w-md bg-[var(--bg-primary)] p-8 rounded-3xl shadow-2xl border border-[var(--border)]">
-              <h3 className="text-xl font-bold text-[var(--text-primary)] mb-2">New Assessment Column</h3>
-              <p className="text-sm text-[var(--text-secondary)] mb-6">Define a new evaluation type for this academic session.</p>
+      {/* New Column Modal */}
+      {showAddCategory && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-6 bg-black/40 backdrop-blur-sm">
+           <motion.div initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} className="w-full max-w-md bg-[var(--bg-primary)] p-8 rounded-3xl shadow-2xl border border-[var(--border)]">
+              <div className="flex items-center gap-3 mb-6">
+                 <div className="w-10 h-10 rounded-xl bg-[var(--accent-light)] flex items-center justify-center text-[var(--accent)]"><FileSpreadsheet /></div>
+                 <h3 className="text-xl font-bold text-[var(--text-primary)]">New Grade Column</h3>
+              </div>
               <input 
                 autoFocus
                 type="text" 
                 value={newCategoryName}
                 onChange={e => setNewCategoryName(e.target.value)}
-                placeholder="e.g. Science Quiz 2, Project A"
+                placeholder="e.g. UAS, Daily Quiz 3"
                 className="w-full h-12 px-4 rounded-xl bg-[var(--bg-secondary)] border-none mb-6 focus:ring-2 focus:ring-[var(--accent)]"
               />
               <div className="flex gap-3">
-                <Button variant="ghost" className="flex-1 rounded-xl h-12" onClick={() => setShowAddCategory(false)}>Cancel</Button>
-                <Button className="flex-1 rounded-xl h-12 font-bold" onClick={handleAddCategory}>Create Column</Button>
+                 <Button variant="secondary" className="flex-1 h-12 rounded-xl" onClick={() => setShowAddCategory(false)}>Cancel</Button>
+                 <Button className="flex-1 h-12 rounded-xl font-bold" onClick={handleAddCategory}>Add to Grid</Button>
               </div>
-            </motion.div>
-          </div>
-        )}
-      </AnimatePresence>
+           </motion.div>
+        </div>
+      )}
     </div>
   );
 }

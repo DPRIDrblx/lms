@@ -9,7 +9,7 @@ import { Button } from "@/components/ui/button";
 import { formatCurrency } from "@/lib/utils";
 import { motion } from "framer-motion";
 import { CreditCard, CheckCircle, AlertCircle, Wallet } from "lucide-react";
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 import Link from "next/link";
 
 interface Bill {
@@ -25,23 +25,45 @@ export default function FinancePage() {
   const { profile } = useAuth();
   const supabase = createClient();
   const [bills, setBills] = useState<Bill[]>([]);
+  const [wallet, setWallet] = useState<{ balance: number } | null>(null);
   const [loading, setLoading] = useState(true);
 
-  useEffect(() => {
+  const fetchData = useCallback(async () => {
     if (!profile) return;
+    
+    // 1. Fetch Bills
     const query = profile.role === "teacher"
       ? supabase.from("finance_bills").select("*").order("created_at", { ascending: false })
       : supabase.from("finance_bills").select("*").eq("student_id", profile.id).order("created_at", { ascending: false });
 
-    query.then(({ data }: { data: any }) => {
-      if (data) setBills(data as Bill[]);
-      setLoading(false);
-    });
+    const { data: billsData } = await query;
+    if (billsData) setBills(billsData as Bill[]);
+
+    // 2. Fetch Wallet
+    if (profile.role === "student" || profile.role === "parent") {
+       const studentId = profile.role === "student" ? profile.id : null; // Handle parent child lookup if needed
+       if (studentId) {
+          const { data: walletData } = await supabase.from("wallets").select("balance").eq("student_id", studentId).single();
+          if (walletData) setWallet(walletData);
+       }
+    }
+    setLoading(false);
   }, [profile, supabase]);
 
-  const totalDue = bills.reduce((s, b) => s + b.amount, 0);
-  const totalPaid = bills.filter((b: any) => b.status === "paid").reduce((s: number, b: any) => s + b.amount, 0);
-  const outstanding = totalDue - totalPaid;
+  useEffect(() => {
+    fetchData();
+    
+    // Subscribe to Realtime
+    const channel = supabase.channel('finance-updates')
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'finance_bills' }, () => fetchData())
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'wallets' }, () => fetchData())
+      .subscribe();
+    
+    return () => { supabase.removeChannel(channel); };
+  }, [fetchData, supabase]);
+
+  const totalPaid = bills.filter((b) => b.status === "paid").reduce((s, b) => s + b.amount, 0);
+  const outstanding = bills.filter((b) => b.status === "unpaid").reduce((s, b) => s + b.amount, 0);
 
   return (
     <div className="space-y-6 max-w-5xl">
@@ -50,10 +72,11 @@ export default function FinancePage() {
         <p className="text-sm text-[var(--text-secondary)] mt-1">Manage your tuition payments (SPP).</p>
       </motion.div>
 
-      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-        <StatCard label="Total Due" value={formatCurrency(totalDue)} icon={CreditCard} color="#4F46E5" />
-        <StatCard label="Total Paid" value={formatCurrency(totalPaid)} icon={CheckCircle} color="#059669" />
-        <StatCard label="Outstanding" value={formatCurrency(outstanding)} icon={AlertCircle} color={outstanding > 0 ? "#DC2626" : "#059669"} />
+      <div className="grid grid-cols-1 sm:grid-cols-4 gap-4">
+        <StatCard label="Canteen Wallet" value={formatCurrency(wallet?.balance || 0)} icon={Wallet} color="#10B981" />
+        <StatCard label="Outstanding SPP" value={formatCurrency(outstanding)} icon={AlertCircle} color={outstanding > 0 ? "#DC2626" : "#059669"} />
+        <StatCard label="Total Paid" value={formatCurrency(totalPaid)} icon={CheckCircle} color="#4F46E5" />
+        <StatCard label="Total Billing" value={formatCurrency(totalPaid + outstanding)} icon={CreditCard} color="#6366F1" />
       </div>
 
       <Card>
