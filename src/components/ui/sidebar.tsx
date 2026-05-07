@@ -19,15 +19,16 @@ import {
   Wallet,
   Calendar,
   FileText,
-  Settings
+  Settings,
+  MessageSquare
 } from "lucide-react";
 import { useState } from "react";
 
 const studentNav = [
   { href: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
   { href: "/courses", label: "Courses", icon: BookOpen },
-  { href: "/finance", label: "Finance", icon: CreditCard },
-  { href: "/finance/wallet", label: "Canteen Wallet", icon: Wallet },
+  { href: "/chat", label: "Communications", icon: MessageSquare },
+  { href: "/finance", label: "Finance & Bills", icon: CreditCard },
   { href: "/attendance/ai", label: "AI Attendance", icon: ScanFace },
   { href: "/attendance/qr/student", label: "QR Check-in", icon: QrCode },
   { href: "/settings", label: "Settings", icon: Settings },
@@ -36,10 +37,10 @@ const studentNav = [
 const teacherNav = [
   { href: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
   { href: "/teacher/classroom", label: "Classroom", icon: Users },
+  { href: "/chat", label: "Communications", icon: MessageSquare },
   { href: "/teacher/courses", label: "Content Suite", icon: BookOpen },
   { href: "/teacher/quizzes", label: "CBT Builder", icon: Award },
-  { href: "/teacher", label: "Student Stats", icon: GraduationCap },
-  { href: "/finance", label: "Finance", icon: CreditCard },
+  { href: "/teacher/grading/offline", label: "Excel Gradebook", icon: FileText },
   { href: "/attendance/qr/teacher", label: "QR Sessions", icon: QrCode },
   { href: "/settings", label: "Settings", icon: Settings },
 ];
@@ -47,17 +48,17 @@ const teacherNav = [
 const parentNav = [
   { href: "/parent/dashboard", label: "My Children", icon: Users },
   { href: "/parent/finance", label: "School Fees", icon: Wallet },
-  { href: "/dashboard", label: "News & Events", icon: LayoutDashboard },
-  { href: "/finance/wallet", label: "Child Wallet", icon: Wallet },
+  { href: "/chat", label: "Communications", icon: MessageSquare },
+  { href: "/parent/cards", label: "Child Wallet", icon: CreditCard },
   { href: "/settings", label: "Settings", icon: Settings },
 ];
 
 const tuNav = [
   { href: "/tu/dashboard", label: "Staff Portal", icon: LayoutDashboard },
   { href: "/tu/classroom-manager", label: "Classroom Manager", icon: Users },
+  { href: "/chat", label: "Communications", icon: MessageSquare },
   { href: "/tu/finance", label: "Financial Hub", icon: CreditCard },
   { href: "/tu/reports", label: "Report Cards", icon: FileText },
-  { href: "/tu/events", label: "School Events", icon: Calendar },
   { href: "/tu/cards", label: "Card Inventory", icon: CreditCard },
   { href: "/settings", label: "Settings", icon: Settings },
 ];

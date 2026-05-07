@@ -5,217 +5,172 @@ import { createClient } from "@/lib/supabase";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Wallet, CreditCard, Clock, CheckCircle2, ChevronRight, FileText } from "lucide-react";
+import { 
+  CreditCard, 
+  Wallet, 
+  ArrowRight, 
+  CheckCircle2, 
+  AlertCircle,
+  Clock,
+  ExternalLink,
+  ShieldCheck,
+  Building2,
+  Smartphone,
+  Banknote
+} from "lucide-react";
 import { useEffect, useState, useCallback } from "react";
-import Link from "next/link";
+import { motion, AnimatePresence } from "framer-motion";
 import { formatCurrency } from "@/lib/utils";
-import { motion } from "framer-motion";
+import Link from "next/link";
 
 interface Bill {
   id: string;
-  student_id: string;
   month: string;
   amount: number;
-  status: "paid" | "unpaid";
-  created_at: string;
-  profiles: { full_name: string } | null;
+  status: "pending" | "paid" | "overdue";
 }
 
 export default function ParentFinancePage() {
   const { profile } = useAuth();
   const supabase = createClient();
+  
   const [bills, setBills] = useState<Bill[]>([]);
+  const [wallet, setWallet] = useState<{ balance: number } | null>(null);
+  const [child, setChild] = useState<any>(null);
   const [loading, setLoading] = useState(true);
-  const [children, setChildren] = useState<any[]>([]);
-  const [topUpChild, setTopUpChild] = useState<any>(null);
-  const [topUpAmount, setTopUpAmount] = useState(50000);
 
-  const fetchBills = useCallback(async () => {
+  const fetchData = useCallback(async () => {
     if (!profile) return;
     
-    // Get linked children with their wallets
-    const { data: links } = await supabase
-      .from("parent_student_links")
-      .select(`
-        student_id,
-        profiles!parent_student_links_student_id_fkey(
-          full_name,
-          wallets(id, balance)
-        )
-      `)
-      .eq("parent_id", profile.id);
-    
-    if (links) {
-      setChildren(links.map((l: any) => ({
-        id: l.student_id,
-        full_name: l.profiles.full_name,
-        wallet: l.profiles.wallets[0]
-      })));
-
-      const childIds = links.map((l: any) => l.student_id);
-      const { data } = await supabase
-        .from("finance_bills")
-        .select("*, profiles!finance_bills_student_id_fkey(full_name)")
-        .in("student_id", childIds)
-        .order("created_at", { ascending: false });
-      
-      if (data) setBills(data as unknown as Bill[]);
+    // 1. Get linked child
+    const { data: link } = await supabase.from("parent_student_links").select("student_id").eq("parent_id", profile.id).single();
+    if (link) {
+       const [childRes, billsRes, walletRes] = await Promise.all([
+          supabase.from("profiles").select("full_name").eq("id", link.student_id).single(),
+          supabase.from("finance_bills").select("*").eq("student_id", link.student_id).order("created_at", { ascending: false }),
+          supabase.from("wallets").select("balance").eq("student_id", link.student_id).single()
+       ]);
+       
+       if (childRes.data) setChild(childRes.data);
+       if (billsRes.data) setBills(billsRes.data as any);
+       if (walletRes.data) setWallet(walletRes.data);
     }
     setLoading(false);
   }, [profile, supabase]);
 
-  const handleTopUpSuccess = async () => {
-    if (!topUpChild?.wallet || !profile) return;
-
-    await supabase.from("wallet_transactions").insert({
-      wallet_id: topUpChild.wallet.id,
-      amount: topUpAmount,
-      type: "topup",
-      description: `Parental Top-Up (${profile.full_name})`
-    });
-
-    fetchBills();
-    setTopUpChild(null);
-  };
-
   useEffect(() => {
-    fetchBills();
-  }, [fetchBills]);
+    fetchData();
+    const channel = supabase.channel('parent-finance-sync')
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'finance_bills' }, () => fetchData())
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'wallets' }, () => fetchData())
+      .subscribe();
+    return () => { supabase.removeChannel(channel); };
+  }, [fetchData, supabase]);
 
-  const unpaidBills = bills.filter(b => b.status === "unpaid");
-  const totalOutstanding = unpaidBills.reduce((s, b) => s + b.amount, 0);
+  if (loading) return <div className="p-20 text-center animate-pulse">Synchronizing child financial data...</div>;
+
+  const outstanding = bills.filter(b => b.status !== "paid").reduce((s, b) => s + b.amount, 0);
 
   return (
-    <div className="space-y-8 max-w-6xl mx-auto">
-      <div>
-        <h1 className="text-3xl font-bold text-[var(--text-primary)]">Financial Oversight</h1>
-        <p className="text-sm text-[var(--text-secondary)] mt-1">Manage tuition payments and canteen wallets for your children.</p>
-      </div>
+    <div className="max-w-6xl mx-auto space-y-8">
+      <header>
+         <h1 className="text-3xl font-black text-[var(--text-primary)]">Finance Oversight</h1>
+         <p className="text-[var(--text-secondary)] mt-1">Manage school fees and monitor canteen allowance for {child?.full_name}.</p>
+      </header>
 
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-        <Card className="md:col-span-2 bg-gradient-to-br from-[var(--accent)] to-[#4f46e5] text-white overflow-hidden relative shadow-xl shadow-[var(--accent)]/20 p-8">
-          <div className="relative z-10">
-            <p className="text-sm font-medium opacity-80 mb-1">Tuition Outstanding</p>
-            <h2 className="text-4xl font-black mb-10 tracking-tight">{formatCurrency(totalOutstanding)}</h2>
-            <div className="flex gap-3">
-              <Button variant="secondary" className="bg-white text-[var(--accent)] hover:bg-white/90 border-none shadow-lg h-12 px-8">
-                Pay All Dues
-              </Button>
-              <Button variant="ghost" className="text-white hover:bg-white/10 border-white/20 h-12">
-                Download Statement
-              </Button>
-            </div>
-          </div>
-          <Wallet className="absolute right-[-20px] bottom-[-20px] h-48 w-48 opacity-10 rotate-12" />
-        </Card>
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+        <div className="lg:col-span-2 space-y-6">
+           {/* Summary Cards */}
+           <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
+              <Card className="p-8 bg-indigo-600 text-white border-none shadow-xl shadow-indigo-500/20 relative overflow-hidden">
+                 <div className="absolute -right-4 -bottom-4 opacity-10"><CreditCard className="h-32 w-32" /></div>
+                 <p className="text-[10px] font-black uppercase tracking-widest opacity-80 mb-2">Total Outstanding Fees</p>
+                 <h2 className="text-3xl font-black">{formatCurrency(outstanding)}</h2>
+                 <p className="text-[10px] mt-4 font-bold bg-white/20 w-fit px-2 py-1 rounded">Next due: 15th Next Month</p>
+              </Card>
+              <Card className="p-8 bg-emerald-600 text-white border-none shadow-xl shadow-emerald-500/20 relative overflow-hidden">
+                 <div className="absolute -right-4 -bottom-4 opacity-10"><Wallet className="h-32 w-32" /></div>
+                 <p className="text-[10px] font-black uppercase tracking-widest opacity-80 mb-2">Canteen Wallet Balance</p>
+                 <h2 className="text-3xl font-black">{formatCurrency(wallet?.balance || 0)}</h2>
+                 <Button variant="secondary" className="mt-4 bg-white/20 text-white border-none hover:bg-white/30 text-[10px] h-8">Top Up Now</Button>
+              </Card>
+           </div>
 
-        <Card className="flex flex-col justify-center items-center text-center p-8">
-          <div className="w-14 h-14 rounded-2xl bg-[var(--success-light)] flex items-center justify-center text-[var(--success)] mb-4">
-            <CheckCircle2 className="h-8 w-8" />
-          </div>
-          <h3 className="text-lg font-bold text-[var(--text-primary)]">Safe-Pay Active</h3>
-          <p className="text-xs text-[var(--text-secondary)] mt-1 leading-relaxed">Auto-billing is enabled for monthly installments.</p>
-          <Button variant="ghost" size="sm" className="mt-6 text-[var(--accent)] font-bold">Configure Settings</Button>
-        </Card>
-      </div>
-
-      {/* Child Wallets Section */}
-      <div className="space-y-4">
-        <div className="flex items-center justify-between">
-          <h3 className="text-xl font-bold text-[var(--text-primary)]">Child Canteen Wallets</h3>
-          <Badge variant="success" className="px-3">Real-time Sync</Badge>
-        </div>
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-          {children.map((child) => (
-            <Card key={child.id} className="p-6 hover:shadow-lg transition-all border-[var(--border)] group">
-              <div className="flex items-center justify-between mb-4">
-                <div className="flex items-center gap-3">
-                  <div className="h-10 w-10 rounded-full bg-[var(--accent-light)] flex items-center justify-center text-[var(--accent)] font-bold">
-                    {child.full_name[0]}
-                  </div>
-                  <div>
-                    <p className="text-sm font-bold text-[var(--text-primary)]">{child.full_name}</p>
-                    <p className="text-[10px] text-[var(--text-tertiary)] uppercase tracking-widest font-black">Student ID: {child.id.substring(0,8)}</p>
-                  </div>
-                </div>
+           {/* Billing History */}
+           <Card className="p-0 overflow-hidden border-[var(--border)]">
+              <div className="p-6 border-b border-[var(--border)] bg-[var(--bg-secondary)]/50">
+                 <h3 className="text-sm font-black uppercase tracking-widest text-[var(--text-primary)]">Billing History</h3>
               </div>
-              <div className="p-4 rounded-xl bg-[var(--bg-secondary)] border border-[var(--border)] mb-6">
-                <p className="text-[10px] text-[var(--text-tertiary)] font-bold uppercase mb-1">Current Balance</p>
-                <p className="text-2xl font-black text-[var(--text-primary)]">{formatCurrency(child.wallet?.balance || 0)}</p>
+              <div className="overflow-x-auto">
+                 <table className="w-full text-left">
+                    <thead>
+                       <tr className="text-[10px] font-black text-[var(--text-tertiary)] uppercase tracking-widest border-b border-[var(--border)]">
+                          <th className="px-6 py-4">Billing Period</th>
+                          <th className="px-6 py-4">Amount</th>
+                          <th className="px-6 py-4">Status</th>
+                          <th className="px-6 py-4 text-right">Action</th>
+                       </tr>
+                    </thead>
+                    <tbody className="divide-y divide-[var(--border)]">
+                       {bills.map(bill => (
+                          <tr key={bill.id} className="hover:bg-[var(--bg-secondary)] transition-colors">
+                             <td className="px-6 py-4 text-sm font-bold text-[var(--text-primary)]">{bill.month}</td>
+                             <td className="px-6 py-4 text-sm text-[var(--text-secondary)]">{formatCurrency(bill.amount)}</td>
+                             <td className="px-6 py-4">
+                                <Badge variant={bill.status === "paid" ? "success" : "warning"} className="font-bold">
+                                   {bill.status}
+                                </Badge>
+                             </td>
+                             <td className="px-6 py-4 text-right">
+                                {bill.status !== "paid" ? (
+                                   <Link href={`/finance/checkout/${bill.id}`}>
+                                      <Button size="sm" icon={<ArrowRight className="h-4 w-4" />}>Pay Now</Button>
+                                   </Link>
+                                ) : (
+                                   <Button variant="ghost" size="sm" icon={<CheckCircle2 className="h-4 w-4" />}>Receipt</Button>
+                                )}
+                             </td>
+                          </tr>
+                       ))}
+                    </tbody>
+                 </table>
               </div>
-              <Button 
-                variant="secondary" 
-                className="w-full h-11 font-bold group-hover:bg-[var(--accent)] group-hover:text-white transition-all"
-                onClick={() => setTopUpChild(child)}
-              >
-                Instant Top-Up
-              </Button>
-            </Card>
-          ))}
+           </Card>
+        </div>
+
+        <div className="space-y-6">
+           <Card className="p-6 bg-[var(--bg-secondary)] border-none">
+              <h4 className="text-xs font-black uppercase tracking-widest text-[var(--text-primary)] mb-4 flex items-center gap-2">
+                 <ShieldCheck className="h-4 w-4 text-indigo-500" /> Secure Payments
+              </h4>
+              <p className="text-[10px] text-[var(--text-secondary)] leading-relaxed mb-6">
+                 All school fee payments are processed via our encrypted Academy Gateway. We support Virtual Accounts, E-Wallets, and Credit Cards.
+              </p>
+              <div className="space-y-3">
+                 <div className="flex items-center gap-3 p-3 rounded-xl bg-[var(--bg-primary)] border border-[var(--border)]">
+                    <Building2 className="h-4 w-4 text-[var(--text-tertiary)]" />
+                    <span className="text-[10px] font-bold text-[var(--text-secondary)]">Bank Virtual Accounts</span>
+                 </div>
+                 <div className="flex items-center gap-3 p-3 rounded-xl bg-[var(--bg-primary)] border border-[var(--border)]">
+                    <Smartphone className="h-4 w-4 text-[var(--text-tertiary)]" />
+                    <span className="text-[10px] font-bold text-[var(--text-secondary)]">OVO, GoPay & QRIS</span>
+                 </div>
+                 <div className="flex items-center gap-3 p-3 rounded-xl bg-[var(--bg-primary)] border border-[var(--border)]">
+                    <Banknote className="h-4 w-4 text-[var(--text-tertiary)]" />
+                    <span className="text-[10px] font-bold text-[var(--text-secondary)]">Instant Over-the-Counter</span>
+                 </div>
+              </div>
+           </Card>
+
+           <Card className="p-6 bg-slate-900 text-white border-none shadow-xl">
+              <h4 className="text-sm font-bold mb-2">Automated Billing</h4>
+              <p className="text-xs opacity-60 leading-relaxed mb-4">
+                 Enable auto-debit from your child's canteen wallet for seamless monthly fee settlements.
+              </p>
+              <Button className="w-full bg-[var(--accent)] hover:bg-[var(--accent)]/90 border-none">Enable Auto-Pay</Button>
+           </Card>
         </div>
       </div>
-
-      <div className="space-y-4">
-        <h3 className="font-bold text-[var(--text-primary)] px-1">Payment History</h3>
-        {loading ? (
-          <div className="space-y-3">
-            {[1, 2, 3].map(i => (
-              <div key={i} className="h-20 rounded-2xl bg-[var(--bg-tertiary)] animate-pulse" />
-            ))}
-          </div>
-        ) : bills.length > 0 ? (
-          <div className="space-y-3">
-            {bills.map((bill) => (
-              <motion.div key={bill.id} initial={{ opacity: 0, x: -10 }} animate={{ opacity: 1, x: 0 }}>
-                <Card className="hover:border-[var(--accent)]/30 transition-all group">
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-4">
-                      <div className={`w-10 h-10 rounded-xl flex items-center justify-center ${
-                        bill.status === "paid" ? "bg-[var(--success-light)] text-[var(--success)]" : "bg-[var(--warning-light)] text-[var(--warning)]"
-                      }`}>
-                        {bill.status === "paid" ? <CheckCircle2 className="h-5 w-5" /> : <Clock className="h-5 w-5" />}
-                      </div>
-                      <div>
-                        <div className="flex items-center gap-2">
-                          <p className="font-bold text-[var(--text-primary)]">{bill.month}</p>
-                          <Badge variant="info" className="text-[9px] py-0">{bill.profiles?.full_name}</Badge>
-                        </div>
-                        <p className="text-xs text-[var(--text-tertiary)]">{formatCurrency(bill.amount)}</p>
-                      </div>
-                    </div>
-                    <div className="flex items-center gap-3">
-                      <Badge variant={bill.status === "paid" ? "success" : "warning"}>
-                        {bill.status.toUpperCase()}
-                      </Badge>
-                      {bill.status === "unpaid" ? (
-                        <Link href={`/finance/checkout/${bill.id}`}>
-                          <Button size="sm" icon={<ChevronRight className="h-3.5 w-3.5" />}>Pay Now</Button>
-                        </Link>
-                      ) : (
-                        <Link href={`/finance/receipt/${bill.id}`}>
-                          <Button variant="ghost" size="sm" icon={<FileText className="h-3.5 w-3.5" />}>Receipt</Button>
-                        </Link>
-                      )}
-                    </div>
-                  </div>
-                </Card>
-              </motion.div>
-            ))}
-          </div>
-        ) : (
-          <p className="text-sm text-[var(--text-tertiary)] text-center py-12">No billing records found.</p>
-        )}
-      </div>
-
-      <MockPaymentModal 
-        isOpen={!!topUpChild}
-        onClose={() => setTopUpChild(null)}
-        amount={topUpAmount}
-        onSuccess={handleTopUpSuccess}
-        title={`Top-up for ${topUpChild?.full_name}`}
-      />
     </div>
   );
 }
-
-import { MockPaymentModal } from "@/components/finance/MockPaymentModal";

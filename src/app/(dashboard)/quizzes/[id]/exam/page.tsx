@@ -193,6 +193,58 @@ export default function CBTExamPage({ params }: { params: Promise<{ id: string }
                         </button>
                      ))}
 
+                     {currentQ.question_type === 'complex-mcq' && currentQ.options?.map((opt: any, i: number) => {
+                        const currentResp = responses[currentQ.id] || [];
+                        const isSelected = currentResp.includes(opt.text);
+                        return (
+                          <button
+                            key={i}
+                            onClick={() => {
+                               const next = isSelected ? currentResp.filter((r: string) => r !== opt.text) : [...currentResp, opt.text];
+                               handleResponseChange(currentQ.id, next);
+                            }}
+                            className={`w-full flex items-center gap-4 p-5 rounded-2xl border-2 transition-all text-left ${
+                              isSelected 
+                              ? "border-[var(--accent)] bg-[var(--accent-light)]/50" 
+                              : "border-[var(--border)] hover:border-[var(--border-hover)] bg-[var(--bg-primary)]"
+                            }`}
+                          >
+                             <div className={`w-6 h-6 rounded border-2 flex items-center justify-center transition-all ${
+                                isSelected ? "bg-[var(--accent)] border-[var(--accent)] text-white" : "border-[var(--border)]"
+                             }`}>
+                                {isSelected && <CheckCircle2 className="h-4 w-4" />}
+                             </div>
+                             <span className="text-sm font-medium text-[var(--text-primary)]">{opt.text}</span>
+                          </button>
+                        );
+                     })}
+
+                     {currentQ.question_type === 'matching' && (
+                        <div className="space-y-4">
+                           {currentQ.metadata?.pairs?.map((pair: any, i: number) => (
+                              <div key={i} className="flex items-center gap-4">
+                                 <div className="flex-1 p-4 rounded-xl bg-[var(--bg-secondary)] border border-[var(--border)] text-sm font-bold">
+                                    {pair.left}
+                                 </div>
+                                 <div className="flex-none text-[var(--text-tertiary)]">→</div>
+                                 <select 
+                                   value={responses[currentQ.id]?.[pair.left] || ""}
+                                   onChange={(e) => {
+                                      const prev = responses[currentQ.id] || {};
+                                      handleResponseChange(currentQ.id, { ...prev, [pair.left]: e.target.value });
+                                   }}
+                                   className="flex-1 h-12 px-4 rounded-xl bg-[var(--bg-primary)] border-2 border-[var(--border)] text-sm outline-none focus:border-[var(--accent)]"
+                                 >
+                                    <option value="">Select Match...</option>
+                                    {currentQ.metadata?.options?.map((opt: string) => (
+                                       <option key={opt} value={opt}>{opt}</option>
+                                    ))}
+                                 </select>
+                              </div>
+                           ))}
+                        </div>
+                     )}
+
                      {currentQ.question_type === 'essay' && (
                         <textarea
                           value={responses[currentQ.id] || ""}

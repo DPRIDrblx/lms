@@ -6,7 +6,7 @@ import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { formatCurrency } from "@/lib/utils";
 import { motion, AnimatePresence } from "framer-motion";
-import { ArrowLeft, CheckCircle2, Building2, Smartphone, CreditCard } from "lucide-react";
+import { ArrowLeft, CheckCircle2, Building2, Smartphone, CreditCard, ShieldCheck, AlertCircle } from "lucide-react";
 import { useEffect, useState, use } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
@@ -191,15 +191,31 @@ export default function CheckoutPage({ params }: { params: Promise<{ id: string 
               </motion.div>
             )}
 
-            <Button
-              size="lg"
-              className="w-full"
-              disabled={!selectedMethod}
-              loading={processing}
-              onClick={handlePay}
-            >
-              Pay {formatCurrency(bill.amount)}
-            </Button>
+            {selectedMethod && !processing && !success && (
+               <div className="p-4 rounded-xl bg-blue-50 border border-blue-100 flex gap-3 mb-6">
+                  <AlertCircle className="h-5 w-5 text-blue-500 shrink-0" />
+                  <p className="text-xs text-blue-700 leading-relaxed">
+                     Tip: You are in **Sandbox Mode**. Click the button below to simulate a real payment confirmation through our Academy Gateway.
+                  </p>
+               </div>
+            )}
+
+            <div className="flex flex-col gap-3">
+               <Button
+                 size="lg"
+                 className="w-full h-14 text-base font-bold shadow-xl shadow-[var(--accent)]/20"
+                 disabled={!selectedMethod}
+                 loading={processing}
+                 onClick={handlePay}
+                 icon={<ShieldCheck className="h-5 w-5" />}
+               >
+                 {processing ? "Verifying Transaction..." : `Confirm Payment Simulation — ${formatCurrency(bill.amount)}`}
+               </Button>
+               
+               <p className="text-[10px] text-center text-[var(--text-tertiary)] uppercase font-black tracking-widest">
+                  Secure Payment Powered by Academy Finance Gateway
+               </p>
+            </div>
           </motion.div>
         )}
       </AnimatePresence>
