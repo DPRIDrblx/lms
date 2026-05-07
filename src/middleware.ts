@@ -27,16 +27,26 @@ export async function middleware(request: NextRequest) {
 
   const {
     data: { user },
+    error,
   } = await supabase.auth.getUser();
 
   const isAuthPage =
     request.nextUrl.pathname.startsWith("/login") ||
     request.nextUrl.pathname.startsWith("/auth");
 
-  if (!user && !isAuthPage) {
+  // If error occurs or user is not found, and it's not an auth page, clear and redirect
+  if ((error || !user) && !isAuthPage) {
     const url = request.nextUrl.clone();
     url.pathname = "/login";
-    return NextResponse.redirect(url);
+    url.searchParams.set("error", "session_expired");
+    
+    const response = NextResponse.redirect(url);
+    // Force clear session cookies if error exists
+    if (error) {
+      response.cookies.delete("sb-access-token");
+      response.cookies.delete("sb-refresh-token");
+    }
+    return response;
   }
 
   if (user && isAuthPage && request.nextUrl.pathname === "/login") {

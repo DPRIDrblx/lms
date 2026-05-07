@@ -51,13 +51,16 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   useEffect(() => {
     const getSession = async () => {
-      const { data: { session: currentSession } } = await supabase.auth.getSession();
-      setSession(currentSession);
-      setUser(currentSession?.user ?? null);
-      if (currentSession?.user) {
-        await fetchProfile(currentSession.user.id);
+      try {
+        const { data: { session: currentSession } } = await supabase.auth.getSession();
+        setSession(currentSession);
+        setUser(currentSession?.user ?? null);
+        if (currentSession?.user) {
+          await fetchProfile(currentSession.user.id);
+        }
+      } finally {
+        setLoading(false);
       }
-      setLoading(false);
     };
 
     getSession();
@@ -77,6 +80,26 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
     return () => subscription.unsubscribe();
   }, [supabase, fetchProfile]);
+
+  // Loading Timeout Logic
+  useEffect(() => {
+    let timeout: NodeJS.Timeout;
+    if (loading) {
+      timeout = setTimeout(() => {
+        // If still loading after 5s, something is wrong
+        if (loading && !user) {
+          console.error("Auth timeout: Redirecting to login");
+          window.location.href = "/login?error=timeout";
+        } else if (loading && user && !profile) {
+          // User exists but profile sync is stuck
+          console.error("Profile sync timeout: Redirecting to login");
+          supabase.auth.signOut();
+          window.location.href = "/login?error=sync_failed";
+        }
+      }, 5000);
+    }
+    return () => clearTimeout(timeout);
+  }, [loading, user, profile, supabase.auth]);
 
   const signInWithEmail = async (email: string, password: string) => {
     const { error } = await supabase.auth.signInWithPassword({ email, password });
@@ -106,6 +129,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const signOut = async () => {
     await supabase.auth.signOut();
     setProfile(null);
+    // Force clear cache and redirect
+    window.location.href = "/login";
   };
 
   return (
