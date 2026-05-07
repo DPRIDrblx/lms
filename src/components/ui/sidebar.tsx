@@ -2,6 +2,7 @@
 
 import { cn, getInitials } from "@/lib/utils";
 import { useAuth } from "@/lib/auth-context";
+import { createClient } from "@/lib/supabase";
 import { usePathname } from "next/navigation";
 import Link from "next/link";
 import { motion, AnimatePresence } from "framer-motion";
@@ -22,7 +23,7 @@ import {
   Settings,
   MessageSquare
 } from "lucide-react";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 
 const studentNav = [
   { href: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
@@ -67,10 +68,19 @@ const tuNav = [
 export function Sidebar() {
   const { profile } = useAuth();
   const pathname = usePathname();
+  const supabase = createClient();
   const [mobileOpen, setMobileOpen] = useState(false);
+  const [isHomeroom, setIsHomeroom] = useState(false);
+
+  useEffect(() => {
+    if (profile?.role === 'teacher') {
+      supabase.from("classes").select("id").eq("homeroom_teacher_id", profile.id).single()
+        .then(({ data }: any) => { if (data) setIsHomeroom(true); });
+    }
+  }, [profile, supabase]);
 
   const navItems = 
-    profile?.role === "teacher" ? teacherNav : 
+    profile?.role === "teacher" ? teacherNav.filter(item => item.href !== "/teacher/homeroom" || isHomeroom) : 
     profile?.role === "parent" ? parentNav : 
     profile?.role === "tu" ? tuNav :
     studentNav;

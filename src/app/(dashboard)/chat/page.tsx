@@ -60,15 +60,25 @@ export default function AdvancedChatPortal() {
   }, [profile, supabase]);
 
   const fetchDirectory = useCallback(async () => {
-    const { data: allProfiles } = await supabase.from("profiles").select("id, full_name, role, avatar_url");
+    // Determine class context
+    let classId = profile?.class_id;
+    if (profile?.role === 'parent') {
+       const { data: link } = await supabase.from("parent_student_links").select("student_id").eq("parent_id", profile.id).single();
+       if (link) {
+          const { data: std } = await supabase.from("profiles").select("class_id").eq("id", link.student_id).single();
+          classId = std?.class_id;
+       }
+    }
+
+    const { data: allProfiles } = await supabase.from("profiles").select("id, full_name, role, avatar_url, class_id");
     if (allProfiles) {
       setDirectory({
-        students: allProfiles.filter((p: any) => p.role === 'student'),
-        teachers: allProfiles.filter((p: any) => p.role === 'teacher'),
-        parents: allProfiles.filter((p: any) => p.role === 'parent')
+        students: allProfiles.filter((p: any) => p.role === 'student' && (profile?.role === 'teacher' || p.class_id === classId)),
+        teachers: allProfiles.filter((p: any) => p.role === 'teacher'), // Teachers are always visible
+        parents: allProfiles.filter((p: any) => p.role === 'parent' && (profile?.role === 'teacher' || p.class_id === classId))
       });
     }
-  }, [supabase]);
+  }, [supabase, profile]);
 
   useEffect(() => {
     fetchGroups();

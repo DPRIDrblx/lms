@@ -1,13 +1,16 @@
 "use client";
 
 import { createClient } from "@/lib/supabase";
+import { useAuth } from "@/lib/auth-context";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 import { COURSES } from "@/lib/courses-data";
 import { getRank } from "@/lib/utils";
 import { motion } from "framer-motion";
-import { Users, BookOpen, Trophy, Search } from "lucide-react";
-import { useEffect, useState } from "react";
+import { Users, BookOpen, Trophy, Search, Award, ArrowRight } from "lucide-react";
+import { useEffect, useState, useCallback } from "react";
+import Link from "next/link";
 
 interface StudentRow {
   id: string;
@@ -18,19 +21,34 @@ interface StudentRow {
 
 export default function TeacherPage() {
   const supabase = createClient();
+  const { profile } = useAuth();
   const [students, setStudents] = useState<StudentRow[]>([]);
   const [search, setSearch] = useState("");
+  const [homeroomClass, setHomeroomClass] = useState<any>(null);
 
-  useEffect(() => {
-    supabase
+  const fetchData = useCallback(async () => {
+    // Fetch students
+    const { data: stds } = await supabase
       .from("profiles")
       .select("id, full_name, xp, avatar_url")
       .eq("role", "student")
-      .order("xp", { ascending: false })
-      .then(({ data }: { data: any }) => {
-        if (data) setStudents(data);
-      });
-  }, [supabase]);
+      .order("xp", { ascending: false });
+    if (stds) setStudents(stds);
+
+    // Fetch homeroom status
+    if (profile) {
+      const { data: cls } = await supabase
+        .from("classes")
+        .select("*")
+        .eq("homeroom_teacher_id", profile.id)
+        .single();
+      if (cls) setHomeroomClass(cls);
+    }
+  }, [supabase, profile]);
+
+  useEffect(() => {
+    fetchData();
+  }, [fetchData]);
 
   const filtered = students.filter((s: any) =>
     s.full_name?.toLowerCase().includes(search.toLowerCase())
@@ -38,10 +56,35 @@ export default function TeacherPage() {
 
   return (
     <div className="space-y-6 max-w-6xl">
-      <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }}>
-        <h1 className="text-2xl font-bold text-[var(--text-primary)]">Teacher Hub</h1>
-        <p className="text-sm text-[var(--text-secondary)] mt-1">Manage content and track student performance.</p>
+      <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} className="flex items-center justify-between">
+        <div>
+           <h1 className="text-2xl font-black text-[var(--text-primary)] uppercase tracking-tight">Academic Command Center</h1>
+           <p className="text-sm text-[var(--text-secondary)] mt-1">Institutional management portal for teacher-led digital learning.</p>
+        </div>
+        {homeroomClass && (
+           <Badge className="bg-[var(--accent)] text-white border-none py-1.5 px-4 rounded-lg font-black uppercase text-[10px] tracking-widest shadow-lg shadow-[var(--accent)]/20 animate-pulse">
+              Homeroom Teacher: {homeroomClass.name}
+           </Badge>
+        )}
       </motion.div>
+
+      {/* Homeroom CTA */}
+      {homeroomClass && (
+         <Card className="p-0 overflow-hidden border-none shadow-2xl bg-indigo-600 group">
+            <div className="p-8 flex flex-col md:flex-row items-center justify-between gap-6 relative">
+               <div className="absolute right-0 top-0 p-8 opacity-10 group-hover:scale-110 transition-transform"><Award className="h-40 w-40" /></div>
+               <div className="z-10">
+                  <h3 className="text-xl font-black text-white uppercase tracking-tight">Homeroom Authority: {homeroomClass.name}</h3>
+                  <p className="text-indigo-100 text-sm mt-1 font-medium">You have administrative control over this class. Manage official report cards and academic standing.</p>
+               </div>
+               <Link href="/teacher/homeroom">
+                  <Button className="h-12 px-8 bg-white text-indigo-600 hover:bg-white/90 font-black rounded-xl z-10" icon={<ArrowRight className="h-4 w-4" />}>
+                     Manage Class {homeroomClass.name}
+                  </Button>
+               </Link>
+            </div>
+         </Card>
+      )}
 
       {/* Stats */}
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
