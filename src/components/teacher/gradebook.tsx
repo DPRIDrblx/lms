@@ -4,6 +4,7 @@ import { createClient } from "@/lib/supabase";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { Profile } from "@/lib/auth-context";
 import { 
   Users, 
   Search, 
@@ -47,9 +48,9 @@ export function Gradebook({ courseId, classId }: GradebookProps) {
       .eq("course_id", courseId);
 
     if (stds) {
-      const merged = stds.map(s => ({
+      const merged = stds.map((s: Profile) => ({
         ...s,
-        grade: scores?.find(sc => sc.student_id === s.id) || null
+        grade: scores?.find((sc: any) => sc.student_id === s.id) || null
       }));
       setStudents(merged);
     }
@@ -166,11 +167,11 @@ export function Gradebook({ courseId, classId }: GradebookProps) {
                         autoFocus
                         type="number" 
                         max="100" min="0"
-                        value={editingGrade.score}
-                        onChange={(e) => setEditingGrade({ ...editingGrade, score: e.target.value })}
+                        value={editingGrade?.score || ""}
+                        onChange={(e) => editingGrade && setEditingGrade({ ...editingGrade, score: e.target.value })}
                         className="w-16 px-2 py-1 rounded-lg bg-white border border-[var(--accent)] text-center font-black text-[var(--accent)]"
                       />
-                      <button onClick={() => handleUpdateGrade(student.id, editingGrade.score)} className="p-1 rounded bg-[var(--success)] text-white shadow-sm hover:scale-110 transition-transform">
+                      <button onClick={() => editingGrade && handleUpdateGrade(student.id, editingGrade.score)} className="p-1 rounded bg-[var(--success)] text-white shadow-sm hover:scale-110 transition-transform">
                         <Check className="h-3 w-3" />
                       </button>
                       <button onClick={() => setEditingGrade(null)} className="p-1 rounded bg-[var(--error)] text-white shadow-sm hover:scale-110 transition-transform">

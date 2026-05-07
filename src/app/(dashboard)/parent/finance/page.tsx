@@ -24,6 +24,8 @@ interface Bill {
 export default function ParentFinancePage() {
   const { profile } = useAuth();
   const supabase = createClient();
+  const [bills, setBills] = useState<Bill[]>([]);
+  const [loading, setLoading] = useState(true);
   const [children, setChildren] = useState<any[]>([]);
   const [topUpChild, setTopUpChild] = useState<any>(null);
   const [topUpAmount, setTopUpAmount] = useState(50000);

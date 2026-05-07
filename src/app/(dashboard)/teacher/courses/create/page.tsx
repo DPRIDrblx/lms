@@ -8,7 +8,7 @@ import { motion } from "framer-motion";
 import { ChevronLeft, Save, Image as ImageIcon, Loader2 } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 
 export default function CreateCoursePage() {
   const { profile } = useAuth();

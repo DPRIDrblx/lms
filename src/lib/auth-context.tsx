@@ -11,6 +11,7 @@ export interface Profile {
   xp: number;
   rank: string;
   avatar_url: string | null;
+  class_id: string | null;
   face_descriptor: number[] | null;
 }
 

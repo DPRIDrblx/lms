@@ -80,9 +80,11 @@ export default function QRTeacherPage() {
   useEffect(() => {
     fetchSessions();
     fetchTeacherCourses();
-    supabase.from("profiles").select("id, full_name, avatar_url").eq("role", "student").then(({ data }) => {
+    const fetchStudents = async () => {
+      const { data } = await supabase.from("profiles").select("id, full_name, avatar_url").eq("role", "student");
       if (data) setAllStudents(data as any);
-    });
+    };
+    fetchStudents();
   }, [fetchSessions, fetchTeacherCourses, supabase]);
 
   useEffect(() => {
