@@ -37,14 +37,50 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const supabase = createClient();
 
+  const clearSessionAndLogout = useCallback(async (errorType?: string) => {
+    console.error(`Forcing logout due to ${errorType || 'manual trigger'}`);
+    
+    // 1. Supabase SignOut
+    await supabase.auth.signOut();
+    
+    // 2. Clear all local storage
+    localStorage.clear();
+    
+    // 3. Clear auth cookies
+    document.cookie = "sb-access-token=; Path=/; Expires=Thu, 01 Jan 1970 00:00:01 GMT;";
+    document.cookie = "sb-refresh-token=; Path=/; Expires=Thu, 01 Jan 1970 00:00:01 GMT;";
+    
+    // 4. Reset local states
+    setUser(null);
+    setProfile(null);
+    setSession(null);
+    
+    // 5. Redirect
+    window.location.href = `/login${errorType ? `?error=${errorType}` : ''}`;
+  }, [supabase]);
+
   const fetchProfile = useCallback(async (userId: string) => {
-    const { data } = await supabase
+    const { data, error } = await supabase
       .from("profiles")
       .select("*")
       .eq("id", userId)
       .single();
-    if (data) setProfile(data as Profile);
-  }, [supabase]);
+    
+    if (error || !data) {
+      console.error("Profile fetch failed or profile missing");
+      await clearSessionAndLogout('sync_failed');
+      return;
+    }
+
+    // Strict ID Binding Check
+    if (data.id !== userId) {
+      console.error("Critical Security Error: ID Mismatch detected!");
+      await clearSessionAndLogout('security_mismatch');
+      return;
+    }
+
+    setProfile(data as Profile);
+  }, [supabase, clearSessionAndLogout]);
 
   const refreshProfile = useCallback(async () => {
     if (user) await fetchProfile(user.id);
@@ -94,17 +130,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           console.error("Auth timeout: Redirecting to login");
           window.location.href = "/login?error=timeout";
         } else if (loading && user && !profile) {
-          // User exists but profile sync is stuck
-          console.error("Profile sync timeout: Redirecting to login");
-          supabase.auth.signOut();
-          document.cookie = "sb-access-token=; Path=/; Expires=Thu, 01 Jan 1970 00:00:01 GMT;";
-          document.cookie = "sb-refresh-token=; Path=/; Expires=Thu, 01 Jan 1970 00:00:01 GMT;";
-          window.location.href = "/login?error=sync_failed";
+          // User exists but profile sync is stuck or mismatched
+          console.error("Profile sync timeout: Force clearing session");
+          clearSessionAndLogout('sync_failed');
         }
       }, 5000);
     }
     return () => clearTimeout(timeout);
-  }, [loading, user, profile, supabase.auth]);
+  }, [loading, user, profile, clearSessionAndLogout]);
 
   const signInWithEmail = async (email: string, password: string) => {
     const { error } = await supabase.auth.signInWithPassword({ email, password });
@@ -132,12 +165,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   };
 
   const signOut = async () => {
-    await supabase.auth.signOut();
-    setProfile(null);
-    // Force clear cookies and cache
-    document.cookie = "sb-access-token=; Path=/; Expires=Thu, 01 Jan 1970 00:00:01 GMT;";
-    document.cookie = "sb-refresh-token=; Path=/; Expires=Thu, 01 Jan 1970 00:00:01 GMT;";
-    window.location.href = "/login";
+    await clearSessionAndLogout();
   };
 
   return (

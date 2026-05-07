@@ -35,5 +35,12 @@ export function createClient() {
     return new Proxy({}, handler) as ReturnType<typeof createBrowserClient>;
   }
 
-  return createBrowserClient(url, key);
+  return createBrowserClient(url, key, {
+    auth: {
+      storageKey: 'academy-auth-v2',
+      persistSession: true,
+      autoRefreshToken: true,
+      detectSessionInUrl: true,
+    }
+  });
 }
