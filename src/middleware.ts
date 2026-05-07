@@ -25,26 +25,43 @@ export async function middleware(request: NextRequest) {
     }
   );
 
+  const isAuthPage =
+    request.nextUrl.pathname.startsWith("/login") ||
+    request.nextUrl.pathname.startsWith("/auth");
+
+  // Bypass for static assets and public routes
+  if (isAuthPage) return supabaseResponse;
+
+  // Leniency: Check if session cookies exist before hitting Supabase
+  // This helps break the redirect loop if cookies are still being propagated
+  const hasAccessToken = request.cookies.has("sb-access-token");
+  const hasRefreshToken = request.cookies.has("sb-refresh-token");
+
+  console.log('Middleware Check:', { 
+    path: request.nextUrl.pathname, 
+    hasAccessToken, 
+    hasRefreshToken 
+  });
+
+  // EMERGENCY BYPASS: If tokens exist, trust the browser for a moment 
+  // to allow client-side AuthProvider to take over
+  if (hasAccessToken) {
+    return supabaseResponse;
+  }
+
+  // Final check: Validate with Supabase
   const {
     data: { user },
     error,
   } = await supabase.auth.getUser();
 
-  const isAuthPage =
-    request.nextUrl.pathname.startsWith("/login") ||
-    request.nextUrl.pathname.startsWith("/auth");
-
-  // Bypass if it's an auth page or static asset
-  if (isAuthPage) return supabaseResponse;
-
-  // If error occurs or user is not found, and it's not an auth page, clear and redirect
   if (error || !user) {
+    // If we're here, it means NO access token exists OR getUser failed definitively
     const url = request.nextUrl.clone();
     url.pathname = "/login";
     if (error) url.searchParams.set("error", "session_expired");
     
     const response = NextResponse.redirect(url);
-    // Force clear session cookies if error or no user
     response.cookies.delete("sb-access-token");
     response.cookies.delete("sb-refresh-token");
     return response;

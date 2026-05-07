@@ -104,7 +104,16 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         setSession(newSession);
         setUser(newSession?.user ?? null);
         
-        if (newSession?.user) {
+        if (newSession) {
+          // Explicitly set cookies with proper attributes for Middleware
+          const expires = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toUTCString();
+          if (newSession.access_token) {
+            document.cookie = `sb-access-token=${newSession.access_token}; Path=/; Secure; SameSite=Lax; Expires=${expires}`;
+          }
+          if (newSession.refresh_token) {
+            document.cookie = `sb-refresh-token=${newSession.refresh_token}; Path=/; Secure; SameSite=Lax; Expires=${expires}`;
+          }
+          
           fetchProfile(newSession.user.id);
           setLoading(false);
         } else {
