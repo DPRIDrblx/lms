@@ -2,6 +2,7 @@
 
 import { Sidebar } from "@/components/ui/sidebar";
 import { TopBar } from "@/components/ui/top-bar";
+import { ClassGuard } from "./class-guard";
 
 export function AppShell({ children }: { children: React.ReactNode }) {
   return (
@@ -10,7 +11,9 @@ export function AppShell({ children }: { children: React.ReactNode }) {
       <div className="lg:pl-[260px] flex flex-col min-h-screen">
         <TopBar />
         <main className="flex-1 p-4 sm:p-6 lg:p-8">
-          {children}
+          <ClassGuard>
+            {children}
+          </ClassGuard>
         </main>
       </div>
     </div>

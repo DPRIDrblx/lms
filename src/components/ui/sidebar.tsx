@@ -54,6 +54,7 @@ const parentNav = [
 
 const tuNav = [
   { href: "/tu/dashboard", label: "Staff Portal", icon: LayoutDashboard },
+  { href: "/tu/classroom-manager", label: "Classroom Manager", icon: Users },
   { href: "/tu/finance", label: "Financial Hub", icon: CreditCard },
   { href: "/tu/reports", label: "Report Cards", icon: FileText },
   { href: "/tu/events", label: "School Events", icon: Calendar },

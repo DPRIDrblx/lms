@@ -39,10 +39,10 @@ export default function QRTeacherPage() {
   const [activeSession, setActiveSession] = useState<Session | null>(null);
   const [logs, setLogs] = useState<LogEntry[]>([]);
   const [showCreate, setShowCreate] = useState(false);
-  const [subject, setSubject] = useState("");
-  const [className, setClassName] = useState("");
   const [creating, setCreating] = useState(false);
   const [allStudents, setAllStudents] = useState<{ id: string; full_name: string; avatar_url: string | null }[]>([]);
+  const [courses, setCourses] = useState<any[]>([]);
+  const [selectedCourse, setSelectedCourse] = useState<any>(null);
 
   const fetchSessions = useCallback(async () => {
     if (!profile) return;
@@ -59,6 +59,15 @@ export default function QRTeacherPage() {
     }
   }, [profile, supabase]);
 
+  const fetchTeacherCourses = useCallback(async () => {
+    if (!profile) return;
+    const { data } = await supabase
+      .from("courses")
+      .select("*, classes(name)")
+      .eq("teacher_id", profile.id);
+    setCourses(data || []);
+  }, [profile, supabase]);
+
   const fetchLogs = useCallback(async (sessionId: string) => {
     const { data } = await supabase
       .from("attendance_logs")
@@ -70,10 +79,11 @@ export default function QRTeacherPage() {
 
   useEffect(() => {
     fetchSessions();
-    supabase.from("profiles").select("id, full_name, avatar_url").eq("role", "student").then(({ data }: { data: { id: string; full_name: string; avatar_url: string | null }[] | null }) => {
-      if (data) setAllStudents(data);
+    fetchTeacherCourses();
+    supabase.from("profiles").select("id, full_name, avatar_url").eq("role", "student").then(({ data }) => {
+      if (data) setAllStudents(data as any);
     });
-  }, [fetchSessions, supabase]);
+  }, [fetchSessions, fetchTeacherCourses, supabase]);
 
   useEffect(() => {
     if (!activeSession) return;
@@ -102,17 +112,26 @@ export default function QRTeacherPage() {
   }, [activeSession, supabase, fetchLogs]);
 
   const createSession = async () => {
-    if (!profile || !subject) return;
+    if (!profile || !selectedCourse) return;
     setCreating(true);
-    const payload = generateQRPayload();
+    
+    const sessionId = crypto.randomUUID();
+    const payload = JSON.stringify({
+      s: sessionId,
+      c: selectedCourse.id,
+      t: Date.now()
+    });
+    
     const expiresAt = new Date(Date.now() + 2 * 60 * 60 * 1000).toISOString();
 
     const { data } = await supabase
       .from("attendance_sessions")
       .insert({
+        id: sessionId,
         teacher_id: profile.id,
-        subject,
-        class_name: className,
+        course_id: selectedCourse.id,
+        subject: selectedCourse.title,
+        class_name: selectedCourse.classes?.name || "Unknown",
         qr_code_payload: payload,
         expires_at: expiresAt,
       })
@@ -125,8 +144,7 @@ export default function QRTeacherPage() {
     }
     setCreating(false);
     setShowCreate(false);
-    setSubject("");
-    setClassName("");
+    setSelectedCourse(null);
   };
 
   const endSession = async () => {
@@ -278,24 +296,32 @@ export default function QRTeacherPage() {
       <Modal isOpen={showCreate} onClose={() => setShowCreate(false)} title="New Attendance Session">
         <div className="space-y-4">
           <div>
-            <label className="block text-sm font-medium text-[var(--text-primary)] mb-1.5">Subject</label>
-            <input
-              value={subject}
-              onChange={(e) => setSubject(e.target.value)}
-              placeholder="e.g. Mathematics"
-              className="w-full h-10 px-4 rounded-xl bg-[var(--bg-secondary)] border border-[var(--border)] text-sm text-[var(--text-primary)] placeholder:text-[var(--text-tertiary)] focus:outline-none focus:ring-2 focus:ring-[var(--accent)] transition-all"
-            />
+            <label className="block text-sm font-medium text-[var(--text-primary)] mb-1.5">Select Course</label>
+            <select
+              required
+              value={selectedCourse?.id || ""}
+              onChange={(e) => {
+                const course = courses.find(c => c.id === e.target.value);
+                setSelectedCourse(course);
+              }}
+              className="w-full h-11 px-4 rounded-xl bg-[var(--bg-secondary)] border border-[var(--border)] text-sm text-[var(--text-primary)] focus:outline-none focus:ring-2 focus:ring-[var(--accent)] transition-all"
+            >
+              <option value="">Choose your course...</option>
+              {courses.map(c => (
+                <option key={c.id} value={c.id}>{c.title} (Class {c.classes?.name})</option>
+              ))}
+            </select>
           </div>
-          <div>
-            <label className="block text-sm font-medium text-[var(--text-primary)] mb-1.5">Class Name</label>
-            <input
-              value={className}
-              onChange={(e) => setClassName(e.target.value)}
-              placeholder="e.g. 8A"
-              className="w-full h-10 px-4 rounded-xl bg-[var(--bg-secondary)] border border-[var(--border)] text-sm text-[var(--text-primary)] placeholder:text-[var(--text-tertiary)] focus:outline-none focus:ring-2 focus:ring-[var(--accent)] transition-all"
-            />
-          </div>
-          <Button className="w-full" onClick={createSession} loading={creating} disabled={!subject}>
+          {selectedCourse && (
+            <div className="p-4 rounded-xl bg-[var(--accent-light)] border border-[var(--accent)]/10 space-y-2">
+              <p className="text-[10px] font-bold text-[var(--accent)] uppercase tracking-wider">Session Preview</p>
+              <div className="flex items-center justify-between">
+                <span className="text-sm font-bold text-[var(--text-primary)]">{selectedCourse.title}</span>
+                <Badge variant="info">Class {selectedCourse.classes?.name}</Badge>
+              </div>
+            </div>
+          )}
+          <Button className="w-full h-12 shadow-lg" onClick={createSession} loading={creating} disabled={!selectedCourse}>
             Generate QR Code
           </Button>
         </div>

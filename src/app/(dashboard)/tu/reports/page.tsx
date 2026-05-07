@@ -76,16 +76,20 @@ export default function ReportGeneratorPage() {
     return Math.round(total / scores.length);
   };
 
+  const printReport = () => {
+    window.print();
+  };
+
   return (
     <div className="space-y-6 max-w-6xl">
-      <div>
+      <div className="print:hidden">
         <h1 className="text-2xl font-bold text-[var(--text-primary)]">Report Card Generator</h1>
         <p className="text-sm text-[var(--text-secondary)] mt-1">Generate and print digital student reports based on academic performance.</p>
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-        {/* Student Sidebar */}
-        <Card className="lg:col-span-1 h-fit">
+        {/* Student Sidebar - Hidden on print */}
+        <Card className="lg:col-span-1 h-fit print:hidden">
           <div className="relative mb-4">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-[var(--text-tertiary)]" />
             <input 
@@ -119,8 +123,8 @@ export default function ReportGeneratorPage() {
           </div>
         </Card>
 
-        {/* Report Preview */}
-        <div className="lg:col-span-2">
+        {/* Report Preview / Print Area */}
+        <div className="lg:col-span-2 print:col-span-3">
           <AnimatePresence mode="wait">
             {selectedStudent ? (
               <motion.div
@@ -130,57 +134,79 @@ export default function ReportGeneratorPage() {
                 exit={{ opacity: 0, x: -20 }}
                 className="space-y-6"
               >
-                <Card className="border-t-4 border-t-[var(--accent)]">
+                {/* Formal Report Card Template */}
+                <Card className="border-t-8 border-t-[var(--accent)] print:border-none print:shadow-none print:p-0 overflow-hidden bg-white">
+                  {/* School Header (Print Only) */}
+                  <div className="hidden print:flex items-center justify-between mb-12 pb-8 border-b-2 border-[var(--accent)]">
+                    <div className="flex items-center gap-4">
+                      <div className="w-16 h-16 rounded-2xl bg-[var(--accent)] flex items-center justify-center text-white">
+                        <GraduationCap className="h-10 w-10" />
+                      </div>
+                      <div>
+                        <h1 className="text-2xl font-black text-black tracking-tight">NUSANTARA</h1>
+                        <p className="text-xs font-bold text-gray-500 uppercase tracking-widest">International Academy</p>
+                      </div>
+                    </div>
+                    <div className="text-right">
+                      <p className="text-xs font-bold text-gray-500">OFFICIAL TRANSCRIPT</p>
+                      <p className="text-sm font-black text-black">#REP-{selectedStudent.id.substring(0, 8)}</p>
+                      <p className="text-[10px] text-gray-400 mt-1">{new Date().toLocaleDateString()}</p>
+                    </div>
+                  </div>
+
                   <div className="flex items-center justify-between mb-8">
                     <div className="flex items-center gap-4">
-                      <div className="w-16 h-16 rounded-2xl bg-[var(--bg-tertiary)] flex items-center justify-center text-[var(--accent)]">
+                      <div className="w-16 h-16 rounded-2xl bg-[var(--bg-tertiary)] flex items-center justify-center text-[var(--accent)] print:hidden">
                         <GraduationCap className="h-8 w-8" />
                       </div>
                       <div>
-                        <h2 className="text-xl font-bold text-[var(--text-primary)]">{selectedStudent.full_name}</h2>
+                        <h2 className="text-xl font-bold text-[var(--text-primary)] print:text-2xl print:text-black">{selectedStudent.full_name}</h2>
                         <p className="text-xs text-[var(--text-tertiary)] uppercase tracking-widest font-bold mt-1">Student Academic Record</p>
+                        <p className="hidden print:block text-[10px] text-gray-500 mt-1 font-mono">{selectedStudent.id}</p>
                       </div>
                     </div>
                     <div className="text-right">
                       <p className="text-[10px] text-[var(--text-tertiary)] font-bold uppercase">Average Score</p>
-                      <p className="text-3xl font-black text-[var(--accent)]">{calculateGPA()}%</p>
+                      <p className="text-3xl font-black text-[var(--accent)] print:text-4xl">{calculateGPA()}%</p>
                     </div>
                   </div>
 
                   <div className="grid grid-cols-2 gap-4 mb-8">
-                    <div className="p-4 rounded-2xl bg-[var(--bg-secondary)] border border-[var(--border)]">
+                    <div className="p-4 rounded-2xl bg-[var(--bg-secondary)] border border-[var(--border)] print:bg-white print:border-gray-200">
                       <p className="text-[10px] text-[var(--text-tertiary)] font-bold uppercase mb-1">Total Assessments</p>
-                      <p className="text-lg font-bold text-[var(--text-primary)]">{scores.length}</p>
+                      <p className="text-lg font-bold text-[var(--text-primary)] print:text-black">{scores.length}</p>
                     </div>
-                    <div className="p-4 rounded-2xl bg-[var(--bg-secondary)] border border-[var(--border)]">
+                    <div className="p-4 rounded-2xl bg-[var(--bg-secondary)] border border-[var(--border)] print:bg-white print:border-gray-200">
                       <p className="text-[10px] text-[var(--text-tertiary)] font-bold uppercase mb-1">Gamified Rank</p>
                       <p className="text-lg font-bold text-[var(--accent)]">{selectedStudent.rank}</p>
                     </div>
                   </div>
 
                   <div className="space-y-3">
-                    <h3 className="text-sm font-bold text-[var(--text-primary)] mb-2">Detailed Results</h3>
+                    <h3 className="text-sm font-bold text-[var(--text-primary)] mb-2 print:text-black print:uppercase print:tracking-wider">Detailed Academic Results</h3>
                     {fetchingScores ? (
                       <div className="flex items-center justify-center py-12"><Loader2 className="animate-spin text-[var(--accent)]" /></div>
                     ) : scores.length > 0 ? (
-                      <table className="w-full text-left">
-                        <thead>
-                          <tr className="text-[10px] text-[var(--text-tertiary)] uppercase border-b border-[var(--border)]">
-                            <th className="pb-2">Assessment / Task</th>
-                            <th className="pb-2">Type</th>
-                            <th className="pb-2 text-right">Score</th>
-                          </tr>
-                        </thead>
-                        <tbody className="divide-y divide-[var(--border)]">
-                          {scores.map(s => (
-                            <tr key={s.id} className="text-sm">
-                              <td className="py-3 font-medium text-[var(--text-primary)]">{s.task_name || `Exam #${s.id.slice(0, 4)}`}</td>
-                              <td className="py-3 capitalize text-[var(--text-secondary)]">{s.target_type}</td>
-                              <td className="py-3 text-right font-bold text-[var(--accent)]">{s.score}%</td>
+                      <div className="overflow-hidden rounded-xl border border-[var(--border)] print:border-gray-300">
+                        <table className="w-full text-left border-collapse">
+                          <thead>
+                            <tr className="text-[10px] text-[var(--text-tertiary)] uppercase bg-[var(--bg-secondary)]/50 print:bg-gray-100">
+                              <th className="px-4 py-3 font-black">Assessment / Task</th>
+                              <th className="px-4 py-3 font-black">Type</th>
+                              <th className="px-4 py-3 font-black text-right">Score</th>
                             </tr>
-                          ))}
-                        </tbody>
-                      </table>
+                          </thead>
+                          <tbody className="divide-y divide-[var(--border)] print:divide-gray-200">
+                            {scores.map(s => (
+                              <tr key={s.id} className="text-sm hover:bg-[var(--bg-secondary)] transition-colors print:hover:bg-transparent">
+                                <td className="px-4 py-3 font-medium text-[var(--text-primary)] print:text-black">{s.task_name || `Exam #${s.id.slice(0, 4)}`}</td>
+                                <td className="px-4 py-3 capitalize text-[var(--text-secondary)] print:text-gray-600">{s.target_type}</td>
+                                <td className="px-4 py-3 text-right font-black text-[var(--accent)] print:text-black">{s.score}%</td>
+                              </tr>
+                            ))}
+                          </tbody>
+                        </table>
+                      </div>
                     ) : (
                       <div className="text-center py-12 bg-[var(--bg-secondary)] rounded-2xl border-2 border-dashed border-[var(--border)]">
                         <Trophy className="h-8 w-8 text-[var(--text-tertiary)] mx-auto mb-2 opacity-20" />
@@ -189,11 +215,27 @@ export default function ReportGeneratorPage() {
                     )}
                   </div>
 
-                  <div className="mt-12 flex gap-3">
-                    <Button variant="secondary" className="flex-1" icon={<Printer className="h-4 w-4" />}>Print Report</Button>
-                    <Button className="flex-1" icon={<Download className="h-4 w-4" />}>Download PDF</Button>
+                  {/* Print Footer */}
+                  <div className="hidden print:grid grid-cols-2 gap-12 mt-20 pt-12 border-t border-gray-100">
+                    <div className="text-center">
+                      <div className="h-px bg-gray-400 w-48 mx-auto mb-2" />
+                      <p className="text-[10px] font-bold text-gray-500 uppercase tracking-widest">Wali Kelas / Teacher</p>
+                    </div>
+                    <div className="text-center">
+                      <div className="h-px bg-gray-400 w-48 mx-auto mb-2" />
+                      <p className="text-[10px] font-bold text-gray-500 uppercase tracking-widest">Academy Director</p>
+                    </div>
+                  </div>
+
+                  <div className="mt-12 flex gap-3 print:hidden">
+                    <Button variant="secondary" className="flex-1 h-12 rounded-xl" onClick={printReport} icon={<Printer className="h-4 w-4" />}>Print Report</Button>
+                    <Button className="flex-1 h-12 rounded-xl" onClick={printReport} icon={<Download className="h-4 w-4" />}>Save as PDF</Button>
                   </div>
                 </Card>
+
+                <p className="text-center text-[10px] text-[var(--text-tertiary)] font-bold uppercase tracking-[0.3em] mt-8 print:block hidden">
+                  NUSANTARA INTERNATIONAL ACADEMY • OFFICIAL DOCUMENT • VALID WITHOUT SIGNATURE
+                </p>
               </motion.div>
             ) : (
               <Card className="h-full flex flex-col items-center justify-center py-20 border-2 border-dashed">
@@ -204,6 +246,32 @@ export default function ReportGeneratorPage() {
           </AnimatePresence>
         </div>
       </div>
+      
+      {/* Global Print Styles */}
+      <style jsx global>{`
+        @media print {
+          body {
+            background: white !important;
+            padding: 0 !important;
+            margin: 0 !important;
+          }
+          .dashboard-layout-main {
+            padding: 0 !important;
+            margin: 0 !important;
+          }
+          nav, header, .sidebar, .print\\:hidden {
+            display: none !important;
+          }
+          .card {
+            border: none !important;
+            box-shadow: none !important;
+          }
+          @page {
+            size: A4;
+            margin: 2cm;
+          }
+        }
+      `}</style>
     </div>
   );
 }

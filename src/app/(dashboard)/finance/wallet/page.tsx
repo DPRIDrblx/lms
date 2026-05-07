@@ -40,8 +40,22 @@ export default function WalletPage() {
     if (profile) {
       fetchWalletData();
       fetchCardData();
+
+      // Real-time wallet sync
+      const channel = supabase
+        .channel(`wallet-${profile.id}`)
+        .on(
+          'postgres_changes', 
+          { event: '*', schema: 'public', table: 'wallets', filter: `student_id=eq.${profile.id}` }, 
+          () => fetchWalletData()
+        )
+        .subscribe();
+
+      return () => {
+        supabase.removeChannel(channel);
+      };
     }
-  }, [profile]);
+  }, [profile, supabase]);
 
   const fetchWalletData = async () => {
     if (!profile) return;

@@ -31,8 +31,7 @@ export default function CoursesPage() {
 
   useEffect(() => {
     const fetchCourses = async () => {
-      // Fetch courses with teacher name and lesson count
-      const { data: coursesData } = await supabase
+      const query = supabase
         .from("courses")
         .select(`
           *,
@@ -40,6 +39,12 @@ export default function CoursesPage() {
           lessons_count:lessons(count)
         `)
         .eq("is_published", true);
+
+      if (profile?.role === "student" && profile.class_id) {
+        query.eq("class_id", profile.class_id);
+      }
+
+      const { data: coursesData } = await query;
 
       if (coursesData) {
         setCourses(coursesData.map((c: any) => ({

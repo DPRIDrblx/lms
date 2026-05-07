@@ -68,23 +68,33 @@ export default function QRStudentPage() {
           { fps: 10, qrbox: { width: 250, height: 250 } },
           async (decodedText: string) => {
             if (!isMounted) return;
-            // Capture payload first
             setScannedPayload(decodedText);
+
+            let sessionId = "";
+            let courseId = "";
+
+            try {
+              const parsed = JSON.parse(decodedText);
+              sessionId = parsed.s;
+              courseId = parsed.c;
+            } catch (e) {
+              // Fallback for old simple payloads if any
+              sessionId = decodedText;
+            }
 
             const { data: session } = await supabase
               .from("attendance_sessions")
               .select("*")
-              .eq("qr_code_payload", decodedText)
+              .eq("id", sessionId)
               .single();
 
             if (!session) {
-              setErrorMsg("Invalid QR code.");
+              setErrorMsg("Invalid or Expired Session.");
               setPhase("error");
               return;
             }
 
             // Determine if Pre or Post lesson
-            // Logic: if current time is > 45 mins since creation, or session expires soon
             const createdAt = new Date(session.created_at).getTime();
             const now = new Date().getTime();
             const durationMs = now - createdAt;
@@ -96,9 +106,13 @@ export default function QRStudentPage() {
               setFormType("checkin");
             }
 
-            setSessionInfo({ id: session.id, subject: session.subject, class_name: session.class_name });
+            setSessionInfo({ 
+              id: session.id, 
+              subject: session.subject, 
+              class_name: session.class_name,
+              course_id: session.course_id 
+            } as any);
             
-            // STOP scanner LAST to avoid UI jitter
             await stopScanner();
             setPhase("form");
           },
