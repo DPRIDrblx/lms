@@ -93,7 +93,7 @@ export default function EventsManagementPage() {
       ) : events.length > 0 ? (
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <AnimatePresence>
-            {events.map((event) => (
+            {events.map((event: any) => (
               <motion.div key={event.id} initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0, scale: 0.95 }}>
                 <Card className="relative overflow-hidden group">
                   <div className="flex items-start gap-4">

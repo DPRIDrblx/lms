@@ -53,9 +53,9 @@ export default function TUFinanceHub() {
     fetchBills();
   }, [supabase]);
 
-  const totalCollected = bills.filter(b => b.status === "paid").reduce((s, b) => s + b.amount, 0);
-  const pendingAmount = bills.filter(b => b.status === "pending").reduce((s, b) => s + b.amount, 0);
-  const unpaidCount = Array.from(new Set(bills.filter(b => b.status !== "paid").map(b => b.student_id))).length;
+  const totalCollected = bills.filter((b: any) => b.status === "paid").reduce((s: number, b: any) => s + b.amount, 0);
+  const pendingAmount = bills.filter((b: any) => b.status === "pending").reduce((s: number, b: any) => s + b.amount, 0);
+  const unpaidCount = Array.from(new Set(bills.filter((b: any) => b.status !== "paid").map((b: any) => b.student_id))).length;
 
   const handleGenerate = async () => {
     setGenerating(true);
@@ -86,7 +86,7 @@ export default function TUFinanceHub() {
     if (!error) fetchBills();
   };
 
-  const filteredBills = bills.filter(b => 
+  const filteredBills = bills.filter((b: any) => 
     b.profiles?.full_name.toLowerCase().includes(search.toLowerCase()) ||
     b.month.toLowerCase().includes(search.toLowerCase())
   );
@@ -153,7 +153,7 @@ export default function TUFinanceHub() {
               {loading ? (
                 <tr><td colSpan={5} className="py-20 text-center"><Loader2 className="animate-spin text-[var(--accent)] mx-auto" /></td></tr>
               ) : filteredBills.length > 0 ? (
-                filteredBills.map((bill) => (
+                filteredBills.map((bill: any) => (
                   <tr key={bill.id} className="group hover:bg-[var(--bg-secondary)] transition-colors">
                     <td className="px-6 py-4">
                       <p className="text-sm font-bold text-[var(--text-primary)]">{bill.profiles?.full_name}</p>

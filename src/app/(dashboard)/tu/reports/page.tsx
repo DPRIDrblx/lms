@@ -66,7 +66,7 @@ export default function ReportGeneratorPage() {
     setFetchingScores(false);
   };
 
-  const filteredStudents = students.filter(s => 
+  const filteredStudents = students.filter((s: any) => 
     s.full_name.toLowerCase().includes(searching.toLowerCase())
   );
 
@@ -103,7 +103,7 @@ export default function ReportGeneratorPage() {
           <div className="space-y-1 max-h-[500px] overflow-y-auto pr-2">
             {loading ? (
               <div className="py-8 text-center text-xs text-[var(--text-tertiary)] animate-pulse">Loading students...</div>
-            ) : filteredStudents.map(student => (
+            ) : filteredStudents.map((student: any) => (
               <button
                 key={student.id}
                 onClick={() => {
@@ -197,7 +197,7 @@ export default function ReportGeneratorPage() {
                             </tr>
                           </thead>
                           <tbody className="divide-y divide-[var(--border)] print:divide-gray-200">
-                            {scores.map(s => (
+                            {scores.map((s: any) => (
                               <tr key={s.id} className="text-sm hover:bg-[var(--bg-secondary)] transition-colors print:hover:bg-transparent">
                                 <td className="px-4 py-3 font-medium text-[var(--text-primary)] print:text-black">{s.task_name || `Exam #${s.id.slice(0, 4)}`}</td>
                                 <td className="px-4 py-3 capitalize text-[var(--text-secondary)] print:text-gray-600">{s.target_type}</td>

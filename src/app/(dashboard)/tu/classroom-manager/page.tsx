@@ -89,10 +89,10 @@ export default function TUClassroomManager() {
     }
 
     // Optimistic UI Update
-    const studentToAssign = unassignedStudents.find(s => s.id === studentId);
+    const studentToAssign = unassignedStudents.find((s: any) => s.id === studentId);
     if (!studentToAssign) return;
 
-    setUnassignedStudents(prev => prev.filter(s => s.id !== studentId));
+    setUnassignedStudents((prev: any[]) => prev.filter((s: any) => s.id !== studentId));
     const toastId = toast.loading(`Assigning ${studentToAssign.full_name}...`);
 
     const { error } = await supabase
@@ -103,7 +103,7 @@ export default function TUClassroomManager() {
     if (error) {
       toast.error(`Database Error: ${error.message} (Code: ${error.code})`, { id: toastId });
       // Rollback optimistic update
-      setUnassignedStudents(prev => [...prev, studentToAssign]);
+      setUnassignedStudents((prev: any[]) => [...prev, studentToAssign]);
     } else {
       toast.success(`${studentToAssign.full_name} moved to Class ${selectedClass.name}`, { id: toastId });
       fetchData();
@@ -144,7 +144,7 @@ export default function TUClassroomManager() {
         <div className="lg:col-span-1 space-y-4">
           <h3 className="text-sm font-bold text-[var(--text-tertiary)] uppercase tracking-widest px-1">Active Classes</h3>
           <div className="space-y-3">
-            {classes.map((cls) => (
+            {classes.map((cls: any) => (
               <Card 
                 key={cls.id}
                 onClick={() => setSelectedClass(cls)}
@@ -220,7 +220,7 @@ export default function TUClassroomManager() {
                         className="bg-white border border-[var(--border)] rounded-xl px-4 py-2 text-sm font-bold focus:ring-2 focus:ring-[var(--accent)]"
                       >
                         <option value="">Select Teacher...</option>
-                        {teachers.map(t => (
+                        {teachers.map((t: any) => (
                           <option key={t.id} value={t.id}>{t.full_name}</option>
                         ))}
                       </select>
@@ -248,7 +248,7 @@ export default function TUClassroomManager() {
                           className="w-full pl-9 pr-4 py-2 rounded-lg bg-[var(--bg-secondary)] border-none text-[10px] focus:ring-1 focus:ring-[var(--accent)]"
                         />
                       </div>
-                      {unassignedStudents.filter(s => s.full_name?.toLowerCase().includes(searchQuery.toLowerCase())).map((student) => (
+                      {unassignedStudents.filter((s: any) => s.full_name?.toLowerCase().includes(searchQuery.toLowerCase())).map((student: any) => (
                         <div key={student.id} className="p-3 rounded-xl bg-white border border-[var(--border)] flex items-center justify-between group hover:border-[var(--accent)] transition-all">
                           <div className="flex items-center gap-3">
                             <div className="h-8 w-8 rounded-full bg-[var(--bg-tertiary)] flex items-center justify-center text-[10px] font-bold">
@@ -317,7 +317,7 @@ function ClassStudentsList({ classId, onRemove }: { classId: string; onRemove: (
 
   return (
     <div className="space-y-2">
-      {students.map((student) => (
+      {students.map((student: any) => (
         <div key={student.id} className="p-3 rounded-xl bg-[var(--bg-secondary)]/50 flex items-center justify-between group">
           <div className="flex items-center gap-3">
             <div className="h-8 w-8 rounded-full bg-[var(--accent-light)] flex items-center justify-center text-[10px] font-bold text-[var(--accent)]">

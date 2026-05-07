@@ -74,7 +74,7 @@ export default function TUCardInventory() {
     else fetchCards();
   };
 
-  const filteredCards = cards.filter(c => 
+  const filteredCards = cards.filter((c: any) => 
     c.serial_number.toLowerCase().includes(search.toLowerCase()) ||
     c.profiles?.full_name?.toLowerCase().includes(search.toLowerCase())
   );
@@ -103,14 +103,14 @@ export default function TUCardInventory() {
         <Card className="p-6 bg-[var(--bg-secondary)] border-none">
           <p className="text-xs font-bold text-[var(--text-tertiary)] uppercase tracking-widest mb-2">Active Cards</p>
           <div className="flex items-end justify-between">
-            <h4 className="text-3xl font-black text-[var(--success)]">{cards.filter(c => c.status === 'active').length}</h4>
+            <h4 className="text-3xl font-black text-[var(--success)]">{cards.filter((c: any) => c.status === 'active').length}</h4>
             <CheckCircle2 className="h-8 w-8 text-[var(--success)] opacity-20" />
           </div>
         </Card>
         <Card className="p-6 bg-[var(--bg-secondary)] border-none">
           <p className="text-xs font-bold text-[var(--text-tertiary)] uppercase tracking-widest mb-2">Available</p>
           <div className="flex items-end justify-between">
-            <h4 className="text-3xl font-black text-[var(--accent)]">{cards.filter(c => c.status === 'available').length}</h4>
+            <h4 className="text-3xl font-black text-[var(--accent)]">{cards.filter((c: any) => c.status === 'available').length}</h4>
             <CreditCard className="h-8 w-8 text-[var(--accent)] opacity-20" />
           </div>
         </Card>
@@ -147,7 +147,7 @@ export default function TUCardInventory() {
               </tr>
             </thead>
             <tbody className="divide-y divide-[var(--border)]">
-              {filteredCards.map((card) => (
+              {filteredCards.map((card: any) => (
                 <tr key={card.id} className="hover:bg-[var(--bg-secondary)]/50 transition-colors">
                   <td className="px-6 py-4">
                     <div className="flex items-center gap-3">

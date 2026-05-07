@@ -41,7 +41,7 @@ export default function TUDashboard() {
     // Calculate Collection Rate
     const { data: allBills } = await supabase.from("finance_bills").select("status");
     const total = allBills?.length || 0;
-    const paid = allBills?.filter(b => b.status === "paid").length || 0;
+    const paid = allBills?.filter((b: any) => b.status === "paid").length || 0;
     const rate = total > 0 ? Math.round((paid / total) * 100) : 0;
 
     setStats({
@@ -116,7 +116,7 @@ export default function TUDashboard() {
             <Badge variant="info">Live Updates</Badge>
           </div>
           <div className="space-y-3">
-            {alerts.map((alert) => (
+            {alerts.map((alert: any) => (
               <div key={alert.id} className={`flex items-center gap-3 p-3 rounded-xl border ${
                 alert.type === "warning" 
                   ? "bg-orange-50 dark:bg-orange-950/20 border-orange-200 dark:border-orange-900/30 text-orange-800 dark:text-orange-200"
