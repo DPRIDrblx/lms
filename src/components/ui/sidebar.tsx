@@ -18,7 +18,8 @@ import {
   Award,
   Wallet,
   Calendar,
-  FileText
+  FileText,
+  Settings
 } from "lucide-react";
 import { useState } from "react";
 
@@ -26,23 +27,29 @@ const studentNav = [
   { href: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
   { href: "/courses", label: "Courses", icon: BookOpen },
   { href: "/finance", label: "Finance", icon: CreditCard },
+  { href: "/finance/wallet", label: "Canteen Wallet", icon: Wallet },
   { href: "/attendance/ai", label: "AI Attendance", icon: ScanFace },
   { href: "/attendance/qr/student", label: "QR Check-in", icon: QrCode },
+  { href: "/settings", label: "Settings", icon: Settings },
 ];
 
 const teacherNav = [
   { href: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
+  { href: "/teacher/classroom", label: "Classroom", icon: Users },
   { href: "/teacher/courses", label: "Content Suite", icon: BookOpen },
   { href: "/teacher/quizzes", label: "CBT Builder", icon: Award },
-  { href: "/teacher", label: "Student Stats", icon: Users },
+  { href: "/teacher", label: "Student Stats", icon: GraduationCap },
   { href: "/finance", label: "Finance", icon: CreditCard },
   { href: "/attendance/qr/teacher", label: "QR Sessions", icon: QrCode },
+  { href: "/settings", label: "Settings", icon: Settings },
 ];
 
 const parentNav = [
   { href: "/parent/dashboard", label: "My Children", icon: Users },
   { href: "/parent/finance", label: "School Fees", icon: Wallet },
   { href: "/dashboard", label: "News & Events", icon: LayoutDashboard },
+  { href: "/finance/wallet", label: "Child Wallet", icon: Wallet },
+  { href: "/settings", label: "Settings", icon: Settings },
 ];
 
 const tuNav = [
@@ -50,6 +57,8 @@ const tuNav = [
   { href: "/tu/finance", label: "Financial Hub", icon: CreditCard },
   { href: "/tu/reports", label: "Report Cards", icon: FileText },
   { href: "/tu/events", label: "School Events", icon: Calendar },
+  { href: "/tu/cards", label: "Card Inventory", icon: CreditCard },
+  { href: "/settings", label: "Settings", icon: Settings },
 ];
 
 export function Sidebar() {
