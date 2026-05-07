@@ -54,7 +54,7 @@ export default function TUClassroomManager() {
     // Real-time listener for profile changes (assignments)
     const channel = supabase
       .channel('tu-roster-sync')
-      .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'profiles' }, (payload) => {
+      .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'profiles' }, (payload: any) => {
         if (payload.new.role === 'student') {
           fetchData();
         }
