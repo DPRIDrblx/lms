@@ -13,13 +13,14 @@ import {
   TrendingUp, 
   Bell,
   ArrowRight,
-  Plus
+  Plus,
+  Loader2
 } from "lucide-react";
 import { useEffect, useState } from "react";
 import Link from "next/link";
 
 export default function TUDashboard() {
-  const { profile } = useAuth();
+  const { profile, user } = useAuth();
   const supabase = createClient();
   const [stats, setStats] = useState({
     totalStudents: 0,
@@ -79,6 +80,13 @@ export default function TUDashboard() {
         </h1>
         <p className="text-sm text-[var(--text-secondary)] mt-1">Nusantara School Operational Overview</p>
       </motion.div>
+
+      {user && !profile && (
+        <div className="flex items-center gap-2 p-2 rounded-lg bg-[var(--accent-light)] text-[var(--accent)] w-fit">
+          <Loader2 className="h-3 w-3 animate-spin" />
+          <span className="text-[10px] font-bold uppercase tracking-widest">Hydrating Profile...</span>
+        </div>
+      )}
 
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         <StatCard label="Total Students" value={stats.totalStudents} icon={Users} color="#4F46E5" />

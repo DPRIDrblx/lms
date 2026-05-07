@@ -94,9 +94,17 @@ export default function DashboardPage() {
     return () => { supabase.removeChannel(channel); };
   }, [fetchData, profile?.id, supabase]);
 
-  if (!profile) return null;
+  if (!profile) {
+    return (
+      <div className="h-[60vh] flex flex-col items-center justify-center space-y-4">
+        <Loader2 className="h-10 w-10 animate-spin text-[var(--accent)]" />
+        <p className="text-sm text-[var(--text-secondary)] animate-pulse">Hydrating your Academy Profile...</p>
+      </div>
+    );
+  }
+
   if (profile.role === "teacher") return <TeacherDashboard />;
-  if (profile.role === "tu") return null; // Should be handled by layout/sidebar or separate route
+  if (profile.role === "tu") return null;
 
   const xp = profile.xp || 0;
   const rank = getRank(xp);

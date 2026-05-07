@@ -1,12 +1,14 @@
 import { createBrowserClient } from "@supabase/ssr";
 
+let supabaseClient: any = null;
+
 export function createClient() {
+  if (supabaseClient) return supabaseClient;
+
   const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
   const key = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
 
   if (!url || !key || url === "your-supabase-project-url") {
-    // Return a proxy that throws helpful errors when methods are called
-    // This prevents crashes during build/prerender
     const handler: ProxyHandler<object> = {
       get: (_target, prop) => {
         if (prop === "auth") {
@@ -35,7 +37,7 @@ export function createClient() {
     return new Proxy({}, handler) as ReturnType<typeof createBrowserClient>;
   }
 
-  return createBrowserClient(url, key, {
+  supabaseClient = createBrowserClient(url, key, {
     auth: {
       storageKey: 'academy-auth-v2',
       persistSession: true,
@@ -43,4 +45,6 @@ export function createClient() {
       detectSessionInUrl: true,
     }
   });
+
+  return supabaseClient;
 }

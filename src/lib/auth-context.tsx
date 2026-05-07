@@ -39,27 +39,18 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const clearSessionAndLogout = useCallback(async (errorType?: string) => {
     console.error(`Forcing logout due to ${errorType || 'manual trigger'}`);
-    
-    // 1. Supabase SignOut
     await supabase.auth.signOut();
-    
-    // 2. Clear all local storage
     localStorage.clear();
-    
-    // 3. Clear auth cookies
     document.cookie = "sb-access-token=; Path=/; Expires=Thu, 01 Jan 1970 00:00:01 GMT;";
     document.cookie = "sb-refresh-token=; Path=/; Expires=Thu, 01 Jan 1970 00:00:01 GMT;";
-    
-    // 4. Reset local states
     setUser(null);
     setProfile(null);
     setSession(null);
-    
-    // 5. Redirect
     window.location.href = `/login${errorType ? `?error=${errorType}` : ''}`;
   }, [supabase]);
 
   const fetchProfile = useCallback(async (userId: string) => {
+    console.time('profile-hydration');
     const { data, error } = await supabase
       .from("profiles")
       .select("*")
@@ -67,48 +58,54 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       .single();
     
     if (error || !data) {
-      console.error("Profile fetch failed or profile missing");
-      await clearSessionAndLogout('sync_failed');
+      console.warn("Profile hydration delayed or missing profile record.");
+      // We don't force logout anymore, let the user stay with partial data
+      console.timeEnd('profile-hydration');
       return;
     }
 
-    // Strict ID Binding Check
-    if (data.id !== userId) {
-      console.error("Critical Security Error: ID Mismatch detected!");
-      await clearSessionAndLogout('security_mismatch');
-      return;
+    if (data.id === userId) {
+      setProfile(data as Profile);
     }
-
-    setProfile(data as Profile);
-  }, [supabase, clearSessionAndLogout]);
+    console.timeEnd('profile-hydration');
+  }, [supabase]);
 
   const refreshProfile = useCallback(async () => {
     if (user) await fetchProfile(user.id);
   }, [user, fetchProfile]);
 
   useEffect(() => {
-    const getSession = async () => {
-      try {
-        const { data: { session: currentSession } } = await supabase.auth.getSession();
+    console.time('login-flow');
+    
+    const initializeAuth = async () => {
+      // FAST-PASS: Get session and immediately set user to unlock UI
+      const { data: { session: currentSession } } = await supabase.auth.getSession();
+      
+      if (currentSession) {
         setSession(currentSession);
-        setUser(currentSession?.user ?? null);
-        if (currentSession?.user) {
-          await fetchProfile(currentSession.user.id);
-        }
-      } finally {
-        // Wait a small bit to ensure profile state is updated if user exists
+        setUser(currentSession.user);
+        // UNLOCK UI: Don't wait for profile
         setLoading(false);
+        console.timeEnd('login-flow');
+        
+        // ASYNC HYDRATION: Fetch profile in background
+        fetchProfile(currentSession.user.id);
+      } else {
+        setLoading(false);
+        console.timeEnd('login-flow');
       }
     };
 
-    getSession();
+    initializeAuth();
 
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      async (_event: any, newSession: any) => {
+      async (event: any, newSession: any) => {
+        console.log('Auth State Change:', event);
         setSession(newSession);
         setUser(newSession?.user ?? null);
+        
         if (newSession?.user) {
-          await fetchProfile(newSession.user.id);
+          fetchProfile(newSession.user.id);
           setLoading(false);
         } else {
           setProfile(null);
@@ -119,25 +116,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
     return () => subscription.unsubscribe();
   }, [supabase, fetchProfile]);
-
-  // Loading Timeout Logic
-  useEffect(() => {
-    let timeout: NodeJS.Timeout;
-    if (loading) {
-      timeout = setTimeout(() => {
-        // If still loading after 5s, something is wrong
-        if (loading && !user) {
-          console.error("Auth timeout: Redirecting to login");
-          window.location.href = "/login?error=timeout";
-        } else if (loading && user && !profile) {
-          // User exists but profile sync is stuck or mismatched
-          console.error("Profile sync timeout: Force clearing session");
-          clearSessionAndLogout('sync_failed');
-        }
-      }, 5000);
-    }
-    return () => clearTimeout(timeout);
-  }, [loading, user, profile, clearSessionAndLogout]);
 
   const signInWithEmail = async (email: string, password: string) => {
     const { error } = await supabase.auth.signInWithPassword({ email, password });
