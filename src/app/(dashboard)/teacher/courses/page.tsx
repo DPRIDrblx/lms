@@ -94,7 +94,8 @@ export default function TeacherCoursesPage() {
                   </div>
                   <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-2">
                      <Button 
-                       variant={course.is_published ? "destructive" : "success"} 
+                       variant={course.is_published ? "danger" : "primary"} 
+                       className={!course.is_published ? "bg-green-500 hover:bg-green-600 text-white border-none" : ""}
                        size="sm" 
                        onClick={() => handleTogglePublish(course.id, course.is_published)}
                      >

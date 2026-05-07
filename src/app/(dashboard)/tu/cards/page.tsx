@@ -189,7 +189,7 @@ export default function TUCardInventory() {
                     </div>
                   </td>
                   <td className="px-6 py-5">
-                    <Badge variant={card.status === 'active' ? "success" : "default"} className="rounded-full px-3">
+                    <Badge variant={card.status === 'active' ? "success" : "default"}>
                       {card.status.toUpperCase()}
                     </Badge>
                   </td>
