@@ -47,7 +47,7 @@ export default function AdvancedChatPortal() {
     // If student/parent, get class groups
     let classId = profile?.class_id;
     if (profile?.role === 'parent') {
-       const { data: link } = await supabase.from("family_members").select("student_id").eq("parent_id", profile.id).limit(1).maybeSingle();
+       const { data: link } = await supabase.from("parent_student_links").select("student_id").eq("parent_id", profile.id).limit(1).maybeSingle();
        if (link) {
           const { data: std } = await supabase.from("profiles").select("class_id").eq("id", link.student_id).single();
           classId = std?.class_id;
@@ -63,7 +63,7 @@ export default function AdvancedChatPortal() {
     // Determine class context
     let classId = profile?.class_id;
     if (profile?.role === 'parent') {
-       const { data: link } = await supabase.from("family_members").select("student_id").eq("parent_id", profile.id).limit(1).maybeSingle();
+       const { data: link } = await supabase.from("parent_student_links").select("student_id").eq("parent_id", profile.id).limit(1).maybeSingle();
        if (link) {
           const { data: std } = await supabase.from("profiles").select("class_id").eq("id", link.student_id).single();
           classId = std?.class_id;

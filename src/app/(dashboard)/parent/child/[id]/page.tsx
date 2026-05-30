@@ -22,15 +22,15 @@ export default function ChildReportPage({ params }: { params: Promise<{ id: stri
   useEffect(() => {
     const fetchChildData = async () => {
       // Security check: Make sure this parent actually owns this child
-      const { data: family } = await supabase
-        .from("family_members")
+      const { data: link } = await supabase
+        .from("parent_student_links")
         .select("student_id")
         .eq("parent_id", profile?.id)
         .eq("student_id", childId)
         .limit(1)
         .maybeSingle();
         
-      if (!family) {
+      if (!link) {
         setLoading(false);
         return; // Unauthorized or not found
       }

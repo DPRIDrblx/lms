@@ -168,8 +168,8 @@ export default function ParentDashboard() {
 
       // 2. Insert the link
       const { error: linkError } = await supabase
-        .from("family_members")
-        .insert({ parent_id: profile.id, student_id: childId, relationship: 'Parent' });
+        .from("parent_student_links")
+        .insert({ parent_id: profile.id, student_id: childId });
 
       if (linkError) {
         if (linkError.code === "23505") {
