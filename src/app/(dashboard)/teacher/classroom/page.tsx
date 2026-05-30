@@ -25,49 +25,74 @@ export default function TeacherClassroomPage() {
   const supabase = createClient();
   
   const [students, setStudents] = useState<any[]>([]);
+  const [staff, setStaff] = useState<any[]>([]);
+  const [managedClass, setManagedClass] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState<"students" | "chat" | "leadership">("students");
   const [chatMessage, setChatMessage] = useState("");
-  const [leadership, setLeadership] = useState<any[]>([]);
 
   useEffect(() => {
     fetchClassData();
   }, [profile]);
 
   const fetchClassData = async () => {
-    if (!profile?.class_id) {
-       setLoading(false);
-       return;
-    }
-    // 1. Get students in the teacher's class
-    const { data: stds } = await supabase
-      .from("profiles")
-      .select(`
-        *,
-        wallets (balance, updated_at)
-      `)
-      .eq("role", "student")
-      .eq("class_id", profile.class_id)
-      .limit(50);
+    if (!profile) return;
     
-    // 2. Get leadership
-    const { data: lds } = await supabase
-      .from("class_leadership")
-      .select("*, profiles(full_name, avatar_url, role)")
-      .eq("class_id", profile.class_id);
+    // 1. Get class where teacher is homeroom, co-homeroom, or supervisor
+    const { data: cls } = await supabase
+      .from("classes")
+      .select("*")
+      .or(`homeroom_teacher_id.eq.${profile.id},co_homeroom_id.eq.${profile.id},supervisor_id.eq.${profile.id}`)
+      .limit(1)
+      .single();
 
-    setStudents(stds || []);
-    setLeadership(lds || []);
+    if (cls) {
+      setManagedClass(cls);
+      
+      const { data: stds } = await supabase
+        .from("profiles")
+        .select(`
+          *,
+          wallets (balance, updated_at)
+        `)
+        .eq("role", "student")
+        .eq("class_id", cls.id)
+        .limit(50);
+        
+      setStudents(stds || []);
+      
+      const staffIds = [cls.homeroom_teacher_id, cls.co_homeroom_id, cls.supervisor_id].filter(Boolean);
+      if (staffIds.length > 0) {
+         const { data: staffData } = await supabase.from("profiles").select("id, full_name, role").in("id", staffIds);
+         if (staffData) setStaff(staffData);
+      }
+    }
+    
     setLoading(false);
   };
+
+  const isReadOnly = managedClass?.supervisor_id === profile?.id;
+  const isHomeroom = managedClass?.homeroom_teacher_id === profile?.id;
+
+  const ROLES = [
+    { title: "Wali Kelas", id: managedClass?.homeroom_teacher_id, isStaff: true },
+    { title: "Pendamping (Co-Homeroom)", id: managedClass?.co_homeroom_id, isStaff: true },
+    { title: "Pengawas (Supervisor)", id: managedClass?.supervisor_id, isStaff: true },
+    { title: "Ketua Kelas", id: managedClass?.president_id, isStaff: false },
+    { title: "Wakil Ketua", id: managedClass?.vice_president_id, isStaff: false },
+    { title: "Sekretaris 1", id: managedClass?.secretary_1_id, isStaff: false },
+    { title: "Sekretaris 2", id: managedClass?.secretary_2_id, isStaff: false },
+    { title: "Bendahara 1", id: managedClass?.treasurer_1_id, isStaff: false },
+    { title: "Bendahara 2", id: managedClass?.treasurer_2_id, isStaff: false },
+  ];
 
   return (
     <div className="max-w-7xl mx-auto space-y-8 p-4 sm:p-6 pb-24">
       <header className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
           <h1 className="text-3xl font-bold text-[var(--text-primary)]">Classroom Management</h1>
-          <p className="text-[var(--text-secondary)] mt-1">
-             {profile?.class_id ? "Wali Kelas Dashboard" : "Anda bukan wali kelas aktif."}
+          <p className="text-[var(--text-secondary)] mt-1 font-medium">
+             {managedClass ? (isReadOnly ? "Pengawas Dashboard (Read-Only)" : (isHomeroom ? "Wali Kelas Dashboard" : "Pendamping Dashboard")) : "Anda tidak memiliki kelas."}
           </p>
         </div>
         <div className="flex bg-[var(--bg-secondary)] p-1 rounded-xl border border-[var(--border)] overflow-x-auto">
@@ -195,36 +220,43 @@ export default function TeacherClassroomPage() {
                </Card>
                
                {/* We map predefined roles to UI block */}
-               {["Ketua Kelas", "Wakil Ketua", "Sekretaris 1", "Sekretaris 2", "Pendamping Wali Kelas (Teacher)", "Pengawas Kelas (Teacher)"].map((roleTitle) => {
-                 const leader = leadership.find(l => l.role_title === roleTitle);
+               {ROLES.map((role) => {
+                 const person = role.isStaff 
+                    ? staff.find(s => s.id === role.id)
+                    : students.find(s => s.id === role.id);
+                 
                  return (
-                   <Card key={roleTitle} className="p-0 overflow-hidden flex flex-col">
+                   <Card key={role.title} className="p-0 overflow-hidden flex flex-col">
                      <div className="p-4 bg-[var(--bg-secondary)] border-b border-[var(--border)] flex items-center justify-between">
-                       <h4 className="font-bold text-[var(--text-primary)] text-sm">{roleTitle}</h4>
+                       <h4 className="font-bold text-[var(--text-primary)] text-sm">{role.title}</h4>
                        <Badge variant="default" className="text-[10px] uppercase">
-                          {leader ? "Terisi" : "Kosong"}
+                          {person ? "Terisi" : "Kosong"}
                        </Badge>
                      </div>
                      <div className="p-6 flex items-center gap-4">
-                        {leader ? (
+                        {person ? (
                            <>
-                             <div className="h-12 w-12 rounded-full bg-[var(--accent-light)] flex items-center justify-center font-bold text-[var(--accent)] text-lg border-2 border-[var(--accent)]">
-                               {leader.profiles?.full_name?.split(' ').map((n: string) => n[0]).join('').substring(0, 2)}
+                             <div className="h-12 w-12 rounded-full bg-[var(--accent-light)] flex items-center justify-center font-bold text-[var(--accent)] text-lg border-2 border-[var(--accent)] uppercase">
+                               {person.full_name?.split(' ').map((n: string) => n[0]).join('').substring(0, 2)}
                              </div>
                              <div>
-                               <p className="font-bold text-[var(--text-primary)]">{leader.profiles?.full_name}</p>
-                               <p className="text-xs text-[var(--text-tertiary)] uppercase font-medium mt-1">{leader.profiles?.role}</p>
+                               <p className="font-bold text-[var(--text-primary)]">{person.full_name}</p>
+                               <p className="text-xs text-[var(--text-tertiary)] uppercase font-medium mt-1">{role.isStaff ? "Staff" : "Student"}</p>
                              </div>
-                             <Button variant="ghost" size="sm" className="ml-auto text-[var(--error)] hover:bg-red-50 hover:text-red-600">
-                                Copot
-                             </Button>
+                             {!isReadOnly && !role.isStaff && (
+                                <Button variant="ghost" size="sm" className="ml-auto text-[var(--error)] hover:bg-red-50 hover:text-red-600">
+                                   Copot
+                                </Button>
+                             )}
                            </>
                         ) : (
                            <div className="flex flex-col w-full gap-3">
                              <p className="text-sm text-[var(--text-secondary)] italic">Belum ada yang ditugaskan.</p>
-                             <Button variant="secondary" size="sm" className="w-fit text-xs h-8">
-                               + Tunjuk Seseorang
-                             </Button>
+                             {!isReadOnly && !role.isStaff && (
+                                <Button variant="secondary" size="sm" className="w-fit text-xs h-8">
+                                  + Tunjuk Seseorang
+                                </Button>
+                             )}
                            </div>
                         )}
                      </div>
