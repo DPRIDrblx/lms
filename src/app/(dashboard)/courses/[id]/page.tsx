@@ -164,7 +164,7 @@ export default function CourseDetailPage({ params }: { params: Promise<{ id: str
                 <img src={course.cover_image} alt="" className="absolute inset-0 w-full h-full object-cover blur-[2px]" />
               </>
             ) : (
-              <div className="absolute inset-0 bg-gradient-to-br from-[var(--bg-secondary)] to-[var(--bg-primary)] z-10" />
+              <div className="absolute inset-0 bg-gradient-to-br from-[var(--accent)] to-slate-900 z-10" />
             )}
             <div className="relative z-20">
               <Badge variant="info" className="mb-3 backdrop-blur-md bg-white/20 border-white/30 text-white shadow-lg">{course.category}</Badge>
@@ -190,33 +190,125 @@ export default function CourseDetailPage({ params }: { params: Promise<{ id: str
         </h2>
         
         {course.chapters.length > 0 ? (
-          course.chapters.map(chapter => {
-            const chapterMissions = missions
-              .filter(m => m.chapter_id === chapter.id)
-              .sort((a, b) => a.order_index - b.order_index);
-            const isExpanded = expandedChapters.has(chapter.id);
-            const chapterDoneCount = chapterMissions.filter(m => completedIds.has(m.id)).length;
+          <>
+            {course.chapters.map(chapter => {
+              const chapterMissions = missions
+                .filter(m => m.chapter_id === chapter.id)
+                .sort((a, b) => a.order_index - b.order_index);
+              const isExpanded = expandedChapters.has(chapter.id);
+              const chapterDoneCount = chapterMissions.filter(m => completedIds.has(m.id)).length;
+              
+              return (
+                <div key={chapter.id} className="space-y-3">
+                  <div 
+                    className="flex items-center justify-between p-4 bg-white border border-[var(--border)] rounded-2xl cursor-pointer hover:border-[var(--accent)]/50 hover:shadow-md transition-all group"
+                    onClick={() => toggleChapter(chapter.id)}
+                  >
+                    <div className="flex items-center gap-4">
+                      <div className="h-8 w-8 rounded-full bg-[var(--bg-secondary)] flex items-center justify-center text-[var(--text-tertiary)] group-hover:text-[var(--accent)] group-hover:bg-[var(--accent-light)] transition-colors">
+                        {isExpanded ? <ChevronUp className="h-5 w-5" /> : <ChevronDown className="h-5 w-5" />}
+                      </div>
+                      <div>
+                        <h3 className="font-bold text-[var(--text-primary)] text-lg">{chapter.title}</h3>
+                        <p className="text-xs font-medium text-[var(--text-tertiary)] mt-0.5">{chapterDoneCount}/{chapterMissions.length} completed</p>
+                      </div>
+                    </div>
+                    <ProgressBar value={chapterDoneCount} max={chapterMissions.length || 1} className="w-24 hidden sm:block" />
+                  </div>
+
+                  <AnimatePresence>
+                    {isExpanded && (
+                      <motion.div 
+                        initial={{ opacity: 0, height: 0 }}
+                        animate={{ opacity: 1, height: "auto" }}
+                        exit={{ opacity: 0, height: 0 }}
+                        className="pl-6 space-y-3 overflow-hidden relative"
+                      >
+                        <div className="absolute left-[38px] top-2 bottom-2 w-px bg-[var(--border)] -z-10" />
+                        {chapterMissions.map((m, i) => {
+                          const isQuiz = (m as any).type === "quiz";
+                          const done = completedIds.has(m.id);
+                          const TypeIcon = isQuiz ? HelpCircle : (TYPE_ICONS[m.content_type] || FileText);
+                          const btnLabel = isQuiz ? "Kerjakan" : (BUTTON_LABELS[m.content_type] || "Buka");
+                          
+                          return (
+                            <div key={m.id} className="relative flex items-center pt-2">
+                              <div className="absolute -left-1.5 top-1/2 -translate-y-1/2 z-10 bg-[var(--bg-primary)] p-1">
+                                {done ? (
+                                  <CheckCircle2 className="h-6 w-6 text-[var(--success)]" />
+                                ) : (
+                                  <Circle className="h-6 w-6 text-[var(--border)]" />
+                                )}
+                              </div>
+                              
+                              <Card className={`ml-10 w-full border ${done ? "border-[var(--success)]/30 bg-[var(--success-light)]/5" : "hover:border-[var(--accent)]/30 hover:shadow-sm transition-all"}`}>
+                                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                                  <div className="flex-1 min-w-0">
+                                    <div className="flex items-center gap-2 mb-1">
+                                      <TypeIcon className="h-4 w-4 text-[var(--text-tertiary)]" />
+                                      <span className="text-[10px] font-bold text-[var(--text-tertiary)] uppercase tracking-wider">
+                                        {isQuiz ? "Assessment" : m.content_type}
+                                      </span>
+                                    </div>
+                                    <h3 className={`text-base font-bold ${done ? "text-[var(--text-secondary)] line-through opacity-70" : "text-[var(--text-primary)]"}`}>{m.title}</h3>
+                                    <div className="flex items-center gap-1 mt-1">
+                                      <Trophy className="h-3.5 w-3.5 text-[var(--warning)]" />
+                                      <span className="text-xs font-bold text-[var(--warning)]">+{m.xp_reward} XP</span>
+                                    </div>
+                                  </div>
+
+                                  {profile?.role === "student" && (
+                                    isQuiz ? (
+                                      <Link href={`/quizzes/${m.id}`}>
+                                        <Button size="sm" variant={done ? "secondary" : "primary"} icon={<ChevronRight className="h-4 w-4" />}>
+                                          {done ? "Lihat Nilai" : "Mulai Ujian"}
+                                        </Button>
+                                      </Link>
+                                    ) : (
+                                      <Link href={`/courses/${id}/lessons/${m.id}`}>
+                                        <Button size="sm" variant={done ? "secondary" : "primary"} icon={<ChevronRight className="h-4 w-4" />}>
+                                          {done ? "Pelajari Ulang" : btnLabel}
+                                        </Button>
+                                      </Link>
+                                    )
+                                  )}
+                                </div>
+                              </Card>
+                            </div>
+                          );
+                        })}
+                        {chapterMissions.length === 0 && (
+                          <div className="ml-10 p-4 border-2 border-dashed border-[var(--border)] rounded-xl text-center text-[var(--text-tertiary)] text-xs font-medium">
+                            Belum ada materi di bab ini.
+                          </div>
+                        )}
+                      </motion.div>
+                    )}
+                  </AnimatePresence>
+                </div>
+              );
+            })}
             
-            return (
-              <div key={chapter.id} className="space-y-3">
+            {/* Pseudo-chapter for unassigned missions (e.g. Quizzes without chapter_id) */}
+            {missions.filter(m => !m.chapter_id).length > 0 && (
+              <div className="space-y-3 mt-6">
                 <div 
-                  className="flex items-center justify-between p-4 bg-white border border-[var(--border)] rounded-2xl cursor-pointer hover:border-[var(--accent)]/50 hover:shadow-md transition-all group"
-                  onClick={() => toggleChapter(chapter.id)}
+                  className="flex items-center justify-between p-4 bg-white border border-[var(--warning)]/30 rounded-2xl cursor-pointer hover:border-[var(--warning)]/50 hover:shadow-md transition-all group"
+                  onClick={() => toggleChapter("assessments")}
                 >
                   <div className="flex items-center gap-4">
-                    <div className="h-8 w-8 rounded-full bg-[var(--bg-secondary)] flex items-center justify-center text-[var(--text-tertiary)] group-hover:text-[var(--accent)] group-hover:bg-[var(--accent-light)] transition-colors">
-                      {isExpanded ? <ChevronUp className="h-5 w-5" /> : <ChevronDown className="h-5 w-5" />}
+                    <div className="h-8 w-8 rounded-full bg-[var(--warning)]/10 flex items-center justify-center text-[var(--warning)] group-hover:bg-[var(--warning)]/20 transition-colors">
+                      {expandedChapters.has("assessments") ? <ChevronUp className="h-5 w-5" /> : <ChevronDown className="h-5 w-5" />}
                     </div>
                     <div>
-                      <h3 className="font-bold text-[var(--text-primary)] text-lg">{chapter.title}</h3>
-                      <p className="text-xs font-medium text-[var(--text-tertiary)] mt-0.5">{chapterDoneCount}/{chapterMissions.length} completed</p>
+                      <h3 className="font-bold text-[var(--text-primary)] text-lg">Ujian & Asesmen (CBT)</h3>
+                      <p className="text-xs font-medium text-[var(--text-tertiary)] mt-0.5">Ujian kompetensi akhir</p>
                     </div>
                   </div>
-                  <ProgressBar value={chapterDoneCount} max={chapterMissions.length || 1} className="w-24 hidden sm:block" />
                 </div>
 
                 <AnimatePresence>
-                  {isExpanded && (
+                  {expandedChapters.has("assessments") && (
                     <motion.div 
                       initial={{ opacity: 0, height: 0 }}
                       animate={{ opacity: 1, height: "auto" }}
@@ -224,7 +316,7 @@ export default function CourseDetailPage({ params }: { params: Promise<{ id: str
                       className="pl-6 space-y-3 overflow-hidden relative"
                     >
                       <div className="absolute left-[38px] top-2 bottom-2 w-px bg-[var(--border)] -z-10" />
-                      {chapterMissions.map((m, i) => {
+                      {missions.filter(m => !m.chapter_id).map((m, i) => {
                         const isQuiz = (m as any).type === "quiz";
                         const done = completedIds.has(m.id);
                         const TypeIcon = isQuiz ? HelpCircle : (TYPE_ICONS[m.content_type] || FileText);
@@ -246,7 +338,7 @@ export default function CourseDetailPage({ params }: { params: Promise<{ id: str
                                   <div className="flex items-center gap-2 mb-1">
                                     <TypeIcon className="h-4 w-4 text-[var(--text-tertiary)]" />
                                     <span className="text-[10px] font-bold text-[var(--text-tertiary)] uppercase tracking-wider">
-                                      {isQuiz ? "Assessment" : m.content_type}
+                                      {isQuiz ? "Assessment CBT" : m.content_type}
                                     </span>
                                   </div>
                                   <h3 className={`text-base font-bold ${done ? "text-[var(--text-secondary)] line-through opacity-70" : "text-[var(--text-primary)]"}`}>{m.title}</h3>
@@ -276,17 +368,12 @@ export default function CourseDetailPage({ params }: { params: Promise<{ id: str
                           </div>
                         );
                       })}
-                      {chapterMissions.length === 0 && (
-                        <div className="ml-10 p-4 border-2 border-dashed border-[var(--border)] rounded-xl text-center text-[var(--text-tertiary)] text-xs font-medium">
-                          Belum ada materi di bab ini.
-                        </div>
-                      )}
                     </motion.div>
                   )}
                 </AnimatePresence>
               </div>
-            );
-          })
+            )}
+          </>
         ) : (
           <div className="relative pl-8">
             <div className="absolute left-3.5 top-2 bottom-2 w-px bg-[var(--border)]" />
