@@ -19,7 +19,8 @@ import {
   Loader2,
   ChevronRight,
   ChevronDown,
-  ChevronUp
+  ChevronUp,
+  Presentation
 } from "lucide-react";
 import { useEffect, useState, use } from "react";
 import Link from "next/link";
@@ -30,13 +31,15 @@ const TYPE_ICONS: Record<string, React.ElementType> = {
   video: Play,
   reading: FileText,
   quiz: HelpCircle,
+  canva: Presentation,
 };
 
 const BUTTON_LABELS: Record<string, string> = {
   text: "Baca",
   pdf: "Buka PDF",
   video: "Tonton",
-  quiz: "Kerjakan Kuis"
+  quiz: "Kerjakan Kuis",
+  canva: "Lihat"
 };
 
 interface Lesson {
@@ -247,7 +250,7 @@ export default function CourseDetailPage({ params }: { params: Promise<{ id: str
                                     <div className="flex items-center gap-2 mb-1">
                                       <TypeIcon className="h-4 w-4 text-[var(--text-tertiary)]" />
                                       <span className="text-[10px] font-bold text-[var(--text-tertiary)] uppercase tracking-wider">
-                                        {isQuiz ? "Assessment" : m.content_type}
+                                        {isQuiz ? "Assessment" : (m.content_type === "canva" ? "presentasi" : m.content_type)}
                                       </span>
                                     </div>
                                     <h3 className={`text-base font-bold ${done ? "text-[var(--text-secondary)] line-through opacity-70" : "text-[var(--text-primary)]"}`}>{m.title}</h3>
@@ -338,7 +341,7 @@ export default function CourseDetailPage({ params }: { params: Promise<{ id: str
                                   <div className="flex items-center gap-2 mb-1">
                                     <TypeIcon className="h-4 w-4 text-[var(--text-tertiary)]" />
                                     <span className="text-[10px] font-bold text-[var(--text-tertiary)] uppercase tracking-wider">
-                                      {isQuiz ? "Assessment CBT" : m.content_type}
+                                      {isQuiz ? "Assessment CBT" : (m.content_type === "canva" ? "presentasi" : m.content_type)}
                                     </span>
                                   </div>
                                   <h3 className={`text-base font-bold ${done ? "text-[var(--text-secondary)] line-through opacity-70" : "text-[var(--text-primary)]"}`}>{m.title}</h3>
@@ -400,7 +403,7 @@ export default function CourseDetailPage({ params }: { params: Promise<{ id: str
                           <div className="flex items-center gap-2 mb-1">
                             <TypeIcon className="h-4 w-4 text-[var(--text-tertiary)]" />
                             <span className="text-[10px] font-semibold text-[var(--text-tertiary)] uppercase tracking-wider">
-                              {isQuiz ? "Assessment" : m.content_type}
+                              {isQuiz ? "Assessment" : (m.content_type === "canva" ? "presentasi" : m.content_type)}
                             </span>
                           </div>
                           <h3 className={`text-base font-semibold ${done ? "text-[var(--text-secondary)] line-through opacity-70" : "text-[var(--text-primary)]"}`}>{m.title}</h3>
