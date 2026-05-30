@@ -37,25 +37,30 @@ export default function TeacherQuizGradingPage({ params }: { params: Promise<{ i
       if (quizRes.data) setQuiz(quizRes.data);
       if (qRes.data) setQuestions(qRes.data);
       
+      let answersFromScore = {};
       if (scoreRes.data) {
          setScoreRecord(scoreRes.data);
-         // Initialize essayGrades with previously saved values if available
-         // For now, we store manual grading in the submission_url json as { essayGrades: {...} } or recalculate
          let savedGrades = {};
          try {
-            const metadata = JSON.parse(scoreRes.data.submission_url || "{}");
+            const metadata = scoreRes.data.metadata || {};
             if (metadata.essayGrades) savedGrades = metadata.essayGrades;
+            if (metadata.responses) answersFromScore = metadata.responses;
+            if (metadata.rawResponses) answersFromScore = metadata.rawResponses;
          } catch(e) {}
          setEssayGrades(savedGrades);
       }
       
-      if (respRes.data) {
-         const respMap: Record<string, any> = {};
+      let respMap: Record<string, any> = {};
+      if (respRes.data && respRes.data.length > 0) {
          respRes.data.forEach((r: any) => {
-            respMap[r.question_id] = r.metadata?.answer;
+            if (r.metadata?.answer) {
+              respMap[r.question_id] = r.metadata.answer;
+            }
          });
-         setResponses(respMap);
       }
+      
+      // Fallback to answers from score metadata if quiz_responses is empty
+      setResponses(Object.keys(respMap).length > 0 ? respMap : answersFromScore);
       
       setLoading(false);
     };
@@ -102,7 +107,7 @@ export default function TeacherQuizGradingPage({ params }: { params: Promise<{ i
     await supabase.from("student_scores").update({
       score: finalPercentage,
       is_graded: true,
-      submission_url: JSON.stringify(submissionMeta),
+      metadata: submissionMeta,
       graded_at: new Date().toISOString()
     }).eq("id", scoreRecord.id);
 
