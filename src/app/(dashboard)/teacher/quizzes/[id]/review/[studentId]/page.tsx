@@ -42,11 +42,22 @@ export default function TeacherQuizGradingPage({ params }: { params: Promise<{ i
          setScoreRecord(scoreRes.data);
          let savedGrades = {};
          try {
-            const metadata = scoreRes.data.metadata || {};
+            let metadata = scoreRes.data.metadata || {};
+            if (typeof metadata === 'string') {
+               metadata = JSON.parse(metadata);
+            }
+            
+            // Extreme fallback check
             if (metadata.essayGrades) savedGrades = metadata.essayGrades;
-            if (metadata.responses) answersFromScore = metadata.responses;
-            if (metadata.rawResponses) answersFromScore = metadata.rawResponses;
-         } catch(e) {}
+            
+            if (metadata.responses) {
+               answersFromScore = typeof metadata.responses === 'string' ? JSON.parse(metadata.responses) : metadata.responses;
+            } else if (metadata.rawResponses) {
+               answersFromScore = typeof metadata.rawResponses === 'string' ? JSON.parse(metadata.rawResponses) : metadata.rawResponses;
+            }
+         } catch(e) {
+            console.error("Error parsing metadata:", e);
+         }
          setEssayGrades(savedGrades);
       }
       
@@ -61,6 +72,7 @@ export default function TeacherQuizGradingPage({ params }: { params: Promise<{ i
       
       // Fallback to answers from score metadata if quiz_responses is empty
       setResponses(Object.keys(respMap).length > 0 ? respMap : answersFromScore);
+
       
       setLoading(false);
     };
