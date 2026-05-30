@@ -184,7 +184,7 @@ export default function ExamPage({ params }: { params: Promise<{ id: string }> }
       target_type: "quiz",
       score: finalPercentage,
       is_graded: !hasEssay,
-      submission_url: JSON.stringify(responses), 
+      metadata: { responses }, 
       graded_at: hasEssay ? null : new Date().toISOString()
     });
 
