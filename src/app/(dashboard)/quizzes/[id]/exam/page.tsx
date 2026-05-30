@@ -23,6 +23,8 @@ export default function ExamPage({ params }: { params: Promise<{ id: string }> }
   const [loading, setLoading] = useState(true);
   const [isFinished, setIsFinished] = useState(false);
   const [session, setSession] = useState<any>(null);
+  const [finalScore, setFinalScore] = useState<number | null>(null);
+  const [needsManualGrading, setNeedsManualGrading] = useState(false);
 
   // Drag and drop state for matching
   const [draggedItem, setDraggedItem] = useState<string | null>(null);
@@ -46,7 +48,7 @@ export default function ExamPage({ params }: { params: Promise<{ id: string }> }
         // SAFETY CHECK: Did the score actually save? (due to previous RLS bugs it might have failed)
         const { data: scoreCheck } = await supabase
           .from("student_scores")
-          .select("id")
+          .select("score, is_graded")
           .eq("student_id", profile.id)
           .eq("target_id", id)
           .eq("target_type", "quiz")
@@ -59,6 +61,8 @@ export default function ExamPage({ params }: { params: Promise<{ id: string }> }
           return;
         }
 
+        setFinalScore(scoreCheck.score);
+        setNeedsManualGrading(!scoreCheck.is_graded);
         setIsFinished(true); 
         setLoading(false); 
         return; 
@@ -188,6 +192,19 @@ export default function ExamPage({ params }: { params: Promise<{ id: string }> }
       graded_at: hasEssay ? null : new Date().toISOString()
     });
 
+    // Mark as completed in course progress
+    if (quiz?.course_id) {
+       await supabase.from("course_progress").upsert({
+          student_id: profile?.id,
+          course_id: quiz.course_id,
+          lesson_id: id,
+          completed: true,
+          completed_at: new Date().toISOString()
+       }, { onConflict: "student_id,lesson_id" });
+    }
+
+    setFinalScore(finalPercentage);
+    setNeedsManualGrading(hasEssay);
     setIsFinished(true);
   };
 
@@ -204,17 +221,29 @@ export default function ExamPage({ params }: { params: Promise<{ id: string }> }
   if (isFinished) {
     return (
       <div style={{height: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', backgroundColor: '#e2e8f0', fontFamily: 'Arial, sans-serif'}}>
-         <div style={{backgroundColor: '#fff', padding: '40px', border: '1px solid #ccc', maxWidth: '500px', textAlign: 'center'}}>
-            <h1 style={{fontSize: '24px', fontWeight: 'bold', color: '#1e3a8a', marginBottom: '10px'}}>UJIAN SELESAI</h1>
-            <p style={{fontSize: '14px', color: '#475569', marginBottom: '20px'}}>Jawaban Anda telah disinkronisasikan dengan server.</p>
-            <p style={{fontSize: '14px', color: '#475569', marginBottom: '30px'}}>
-              Silakan kembali ke Dashboard. Jika terdapat soal Essay, nilai Anda berstatus <strong>Menunggu Penilaian Guru</strong>.
-            </p>
+         <div style={{backgroundColor: '#fff', padding: '40px', border: '1px solid #ccc', maxWidth: '500px', textAlign: 'center', borderRadius: '8px', boxShadow: '0 4px 6px rgba(0,0,0,0.1)'}}>
+            <h1 style={{fontSize: '28px', fontWeight: 'bold', color: '#1e3a8a', marginBottom: '10px'}}>UJIAN SELESAI</h1>
+            <p style={{fontSize: '15px', color: '#475569', marginBottom: '30px'}}>Jawaban Anda telah berhasil disimpan di server.</p>
+            
+            <div style={{backgroundColor: '#f8fafc', padding: '20px', borderRadius: '8px', border: '1px solid #e2e8f0', marginBottom: '30px'}}>
+               <p style={{fontSize: '12px', fontWeight: 'bold', color: '#64748b', textTransform: 'uppercase', letterSpacing: '1px', marginBottom: '5px'}}>Nilai Anda</p>
+               {needsManualGrading ? (
+                  <div>
+                    <div style={{fontSize: '36px', fontWeight: 'bold', color: '#eab308'}}>{finalScore !== null ? finalScore : "?"} <span style={{fontSize: '18px', color: '#94a3b8'}}>/ 100</span></div>
+                    <p style={{fontSize: '13px', color: '#b45309', marginTop: '10px', fontWeight: 'bold'}}>Menunggu Penilaian Guru (Ada Soal Essay)</p>
+                  </div>
+               ) : (
+                  <div>
+                    <div style={{fontSize: '48px', fontWeight: 'black', color: finalScore !== null && finalScore >= (quiz?.passing_score || 0) ? '#16a34a' : '#ef4444'}}>{finalScore} <span style={{fontSize: '20px', color: '#94a3b8'}}>/ 100</span></div>
+                  </div>
+               )}
+            </div>
+
             <button 
-              onClick={() => router.push('/dashboard')}
-              style={{padding: '10px 20px', backgroundColor: '#1e3a8a', color: 'white', border: 'none', cursor: 'pointer', fontWeight: 'bold'}}
+              onClick={() => router.push(quiz?.course_id ? `/courses/${quiz.course_id}` : '/dashboard')}
+              style={{padding: '12px 24px', backgroundColor: '#1e3a8a', color: 'white', border: 'none', cursor: 'pointer', fontWeight: 'bold', borderRadius: '6px', width: '100%'}}
             >
-              KEMBALI KE DASHBOARD
+              KEMBALI KE KURSUS
             </button>
          </div>
       </div>
