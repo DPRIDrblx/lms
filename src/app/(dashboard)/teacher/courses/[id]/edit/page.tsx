@@ -407,7 +407,7 @@ export default function EditCoursePage() {
                   onClick={() => setEditingLesson({ ...editingLesson, content_type: t })}
                   className={`p-3 rounded-xl border-2 transition-all flex flex-col items-center gap-1 ${editingLesson?.content_type === t ? "border-[var(--accent)] bg-[var(--accent-light)] text-[var(--accent)]" : "border-[var(--border)]"}`}
                 >
-                  <span className="text-[10px] font-bold uppercase">{t}</span>
+                  <span className="text-[10px] font-bold uppercase">{t === "canva" ? "presentasi" : t}</span>
                 </button>
               ))}
             </div>
@@ -441,17 +441,17 @@ export default function EditCoursePage() {
 
           {editingLesson?.content_type === "canva" && (
             <div>
-              <label className="block text-sm font-medium mb-1.5">Canva Embed Link / HTML Code</label>
+              <label className="block text-sm font-medium mb-1.5">Link Presentasi Canva / HTML Code</label>
               <input 
                 type="text" 
                 value={editingLesson?.video_url || ""} 
                 onChange={e => setEditingLesson({ ...editingLesson, video_url: e.target.value })}
                 className="w-full h-11 px-4 rounded-xl bg-[var(--bg-secondary)] border border-[var(--border)] outline-none"
-                placeholder="Paste link desain Canva atau seluruh Kode Embed HTML..."
+                placeholder="Paste link presentasi Canva atau seluruh Kode Embed HTML..."
               />
               {editingLesson?.video_url?.includes('canva.link') && (
-                <p className="text-xs text-[var(--warning)] mt-1.5 font-medium">
-                  ⚠️ Link pendek (canva.link) tidak dapat di-embed langsung. Siswa akan diarahkan untuk membuka di tab baru. Gunakan URL panjang atau Kode Embed HTML jika ingin tampil langsung di halaman ini.
+                <p className="text-xs text-[var(--text-secondary)] mt-1.5 font-medium">
+                  ℹ️ Menggunakan link pendek. Siswa akan melihat tombol "Lihat" untuk membuka presentasi.
                 </p>
               )}
             </div>

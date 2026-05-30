@@ -118,7 +118,7 @@ export default function LessonViewerPage({ params }: { params: Promise<{ id: str
           <ArrowLeft className="h-4 w-4" /> Kembali ke Daftar Bab
         </Link>
         <div className="flex items-center gap-2 text-[var(--text-tertiary)] bg-[var(--bg-secondary)] px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider">
-          <TypeIcon className="h-3.5 w-3.5" /> {lesson.content_type}
+          <TypeIcon className="h-3.5 w-3.5" /> {lesson.content_type === 'canva' ? 'presentasi' : lesson.content_type}
         </div>
       </header>
 
@@ -169,12 +169,12 @@ export default function LessonViewerPage({ params }: { params: Promise<{ id: str
                 lesson.video_url.includes('canva.link') ? (
                   <div className="absolute inset-0 flex flex-col items-center justify-center text-center p-8 bg-[var(--bg-secondary)]/50">
                     <Presentation className="h-16 w-16 text-[var(--accent)] mb-4" />
-                    <h3 className="text-lg font-bold text-[var(--text-primary)] mb-2">Link Pendek Canva</h3>
+                    <h3 className="text-xl font-bold text-[var(--text-primary)] mb-2">Materi Presentasi</h3>
                     <p className="text-sm text-[var(--text-secondary)] mb-6 max-w-md">
-                      Link pendek (canva.link) tidak dapat di-embed langsung karena batasan keamanan dari Canva. Silakan buka di tab baru atau ubah materinya menggunakan Kode Embed asli.
+                      Klik tombol di bawah ini untuk melihat presentasi materi.
                     </p>
-                    <a href={lesson.video_url} target="_blank" rel="noopener noreferrer" className="px-6 py-2.5 bg-[var(--accent)] text-white text-sm font-bold rounded-xl hover:bg-[var(--accent-hover)] transition-all">
-                      Buka di Tab Baru
+                    <a href={lesson.video_url} target="_blank" rel="noopener noreferrer" className="px-8 py-3 bg-[var(--accent)] text-white font-bold rounded-xl hover:bg-[var(--accent-hover)] transition-all shadow-lg shadow-[var(--accent)]/30">
+                      Lihat
                     </a>
                   </div>
                 ) : (
@@ -189,7 +189,7 @@ export default function LessonViewerPage({ params }: { params: Promise<{ id: str
               ) : (
                 <div className="w-full h-full flex flex-col items-center justify-center text-[var(--text-tertiary)]">
                   <Presentation className="h-12 w-12 opacity-20 mb-2" />
-                  <p className="font-bold">Desain Canva tidak tersedia</p>
+                  <p className="font-bold">Presentasi tidak tersedia</p>
                 </div>
               )}
             </div>
