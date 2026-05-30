@@ -25,6 +25,7 @@ export default function HomeroomTeacherDashboard() {
   
   const [managedClass, setManagedClass] = useState<any>(null);
   const [students, setStudents] = useState<any[]>([]);
+  const [staff, setStaff] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
 
   const fetchClassData = useCallback(async () => {
@@ -38,11 +39,18 @@ export default function HomeroomTeacherDashboard() {
       .limit(1)
       .single();
     
-    if (cls) {
+      if (cls) {
       setManagedClass(cls);
       // 2. Get students in this class
       const { data: stds } = await supabase.from("profiles").select("*").eq("class_id", cls.id).order("full_name");
       if (stds) setStudents(stds);
+      
+      // 3. Get staff
+      const staffIds = [cls.homeroom_teacher_id, cls.co_homeroom_id, cls.supervisor_id].filter(Boolean);
+      if (staffIds.length > 0) {
+         const { data: staffData } = await supabase.from("profiles").select("id, full_name").in("id", staffIds);
+         if (staffData) setStaff(staffData);
+      }
     }
     setLoading(false);
   }, [profile, supabase]);
@@ -67,23 +75,33 @@ export default function HomeroomTeacherDashboard() {
     );
   }
 
+  const isReadOnly = managedClass.supervisor_id === profile?.id;
+  const isHomeroom = managedClass.homeroom_teacher_id === profile?.id;
+
+  const getStudentName = (id: string) => students.find(s => s.id === id)?.full_name || "Belum Ditentukan";
+  const getStaffName = (id: string) => staff.find(s => s.id === id)?.full_name || "Belum Ditentukan";
+
   return (
-    <div className="space-y-8 max-w-6xl mx-auto">
+    <div className="space-y-8 max-w-6xl mx-auto pb-20">
       <header className="flex flex-col md:flex-row md:items-center justify-between gap-6">
          <div>
             <div className="flex items-center gap-2 mb-1">
-               <Badge className="bg-[var(--accent)] text-white border-none uppercase text-[10px] font-black">Homeroom Authority</Badge>
+               <Badge className={`text-white border-none uppercase text-[10px] font-black ${isReadOnly ? 'bg-[var(--warning)]' : 'bg-[var(--accent)]'}`}>
+                  {isReadOnly ? "Pengawas (Read-Only)" : (isHomeroom ? "Wali Kelas" : "Pendamping")}
+               </Badge>
             </div>
             <h1 className="text-3xl font-black text-[var(--text-primary)]">Class {managedClass.name} Dashboard</h1>
             <p className="text-sm text-[var(--text-secondary)] mt-1">Unified management portal for student performance and official report cards.</p>
          </div>
-         <div className="flex gap-2">
-            <Link href="/teacher/homeroom/rapot">
-               <Button className="h-12 px-6 rounded-xl font-bold shadow-lg shadow-[var(--accent)]/20" icon={<FileText className="h-4 w-4" />}>
-                  Manage Report Cards
-               </Button>
-            </Link>
-         </div>
+         {!isReadOnly && (
+            <div className="flex gap-2">
+               <Link href="/teacher/homeroom/rapot">
+                  <Button className="h-12 px-6 rounded-xl font-bold shadow-lg shadow-[var(--accent)]/20" icon={<FileText className="h-4 w-4" />}>
+                     Manage Report Cards
+                  </Button>
+               </Link>
+            </div>
+         )}
       </header>
 
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
@@ -108,6 +126,61 @@ export default function HomeroomTeacherDashboard() {
          </Card>
       </div>
 
+      <div className="mb-8">
+         <Card className="p-6 bg-white border border-[var(--border)]">
+            <h3 className="text-sm font-black uppercase tracking-widest text-[var(--text-primary)] mb-6 flex items-center gap-2">
+               <Users className="h-4 w-4 text-[var(--accent)]" /> Kepengurusan Kelas
+            </h3>
+            
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+               <div className="space-y-4">
+                  <div className="p-4 bg-slate-50 rounded-xl border border-slate-100">
+                     <p className="text-[10px] font-bold text-slate-500 uppercase mb-1">Wali Kelas</p>
+                     <p className="font-bold text-slate-800">{getStaffName(managedClass.homeroom_teacher_id)}</p>
+                  </div>
+                  <div className="p-4 bg-slate-50 rounded-xl border border-slate-100">
+                     <p className="text-[10px] font-bold text-slate-500 uppercase mb-1">Ketua Kelas</p>
+                     <p className="font-bold text-slate-800">{getStudentName(managedClass.president_id)}</p>
+                  </div>
+                  <div className="p-4 bg-slate-50 rounded-xl border border-slate-100">
+                     <p className="text-[10px] font-bold text-slate-500 uppercase mb-1">Sekretaris 1</p>
+                     <p className="font-bold text-slate-800">{getStudentName(managedClass.secretary_1_id)}</p>
+                  </div>
+                  <div className="p-4 bg-slate-50 rounded-xl border border-slate-100">
+                     <p className="text-[10px] font-bold text-slate-500 uppercase mb-1">Bendahara 1</p>
+                     <p className="font-bold text-slate-800">{getStudentName(managedClass.treasurer_1_id)}</p>
+                  </div>
+               </div>
+               
+               <div className="space-y-4">
+                  <div className="p-4 bg-slate-50 rounded-xl border border-slate-100">
+                     <p className="text-[10px] font-bold text-slate-500 uppercase mb-1">Pendamping (Co-Homeroom)</p>
+                     <p className="font-bold text-slate-800">{getStaffName(managedClass.co_homeroom_id)}</p>
+                  </div>
+                  <div className="p-4 bg-slate-50 rounded-xl border border-slate-100">
+                     <p className="text-[10px] font-bold text-slate-500 uppercase mb-1">Wakil Ketua Kelas</p>
+                     <p className="font-bold text-slate-800">{getStudentName(managedClass.vice_president_id)}</p>
+                  </div>
+                  <div className="p-4 bg-slate-50 rounded-xl border border-slate-100">
+                     <p className="text-[10px] font-bold text-slate-500 uppercase mb-1">Sekretaris 2</p>
+                     <p className="font-bold text-slate-800">{getStudentName(managedClass.secretary_2_id)}</p>
+                  </div>
+                  <div className="p-4 bg-slate-50 rounded-xl border border-slate-100">
+                     <p className="text-[10px] font-bold text-slate-500 uppercase mb-1">Bendahara 2</p>
+                     <p className="font-bold text-slate-800">{getStudentName(managedClass.treasurer_2_id)}</p>
+                  </div>
+               </div>
+
+               <div className="space-y-4">
+                  <div className="p-4 bg-slate-50 rounded-xl border border-slate-100">
+                     <p className="text-[10px] font-bold text-slate-500 uppercase mb-1">Pengawas (Supervisor)</p>
+                     <p className="font-bold text-slate-800">{getStaffName(managedClass.supervisor_id)}</p>
+                  </div>
+               </div>
+            </div>
+         </Card>
+      </div>
+
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
          <div className="lg:col-span-2">
             <Card padding="none" className="overflow-hidden border-[var(--border)] shadow-xl">
@@ -122,7 +195,7 @@ export default function HomeroomTeacherDashboard() {
                            <th className="px-6 py-4">Student Name</th>
                            <th className="px-6 py-4">Avg. Score</th>
                            <th className="px-6 py-4">Status</th>
-                           <th className="px-6 py-4 text-right">Action</th>
+                           {!isReadOnly && <th className="px-6 py-4 text-right">Action</th>}
                         </tr>
                      </thead>
                      <tbody className="divide-y divide-[var(--border)]">
@@ -142,11 +215,13 @@ export default function HomeroomTeacherDashboard() {
                               <td className="px-6 py-4">
                                  <Badge variant="success" className="font-bold">Active</Badge>
                               </td>
-                              <td className="px-6 py-4 text-right">
-                                 <Link href={`/teacher/homeroom/rapot?student=${student.id}`}>
-                                    <Button variant="ghost" size="sm" icon={<ArrowRight className="h-4 w-4" />}>Input Data</Button>
-                                 </Link>
-                              </td>
+                              {!isReadOnly && (
+                                 <td className="px-6 py-4 text-right">
+                                    <Link href={`/teacher/homeroom/rapot?student=${student.id}`}>
+                                       <Button variant="ghost" size="sm" icon={<ArrowRight className="h-4 w-4" />}>Input Data</Button>
+                                    </Link>
+                                 </td>
+                              )}
                            </tr>
                         ))}
                      </tbody>
@@ -180,7 +255,9 @@ export default function HomeroomTeacherDashboard() {
                <p className="text-xs text-amber-700 leading-relaxed mb-4 font-medium">
                   Rapot finalization deadline is in **4 days**. 12/28 students still have missing attitude scores.
                </p>
-               <Button variant="secondary" className="w-full bg-amber-100 text-amber-900 border-amber-200">Notify Parents</Button>
+               {!isReadOnly && (
+                  <Button variant="secondary" className="w-full bg-amber-100 text-amber-900 border-amber-200">Notify Parents</Button>
+               )}
             </Card>
          </div>
       </div>
