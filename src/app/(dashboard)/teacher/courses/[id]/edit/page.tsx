@@ -88,7 +88,7 @@ export default function EditCoursePage() {
       setExpandedChapters(new Set(chapterData.map((c: any) => c.id)));
     }
     if (lessonData) {
-      const parsed = lessonData.map(l => ({
+      const parsed = lessonData.map((l: any) => ({
         ...l,
         content_type: (l.content_type === 'video' && l.video_url?.includes('canva.com')) ? 'canva' : l.content_type
       }));
