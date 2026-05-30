@@ -106,7 +106,11 @@ export default function CourseDetailPage({ params }: { params: Promise<{ id: str
         setCourse({
           ...courseData,
           chapters: (courseData.chapters || []).sort((a: any, b: any) => a.order_index - b.order_index),
-          lessons: (courseData.lessons || []).map((l: any) => ({ ...l, type: "lesson" })),
+          lessons: (courseData.lessons || []).map((l: any) => ({ 
+            ...l, 
+            type: "lesson",
+            content_type: (l.content_type === 'video' && l.video_url?.toLowerCase().includes('canva')) ? 'canva' : l.content_type 
+          })),
           quizzes: (courseData.quizzes || []).map((q: any) => ({ ...q, type: "quiz" }))
         } as unknown as Course);
         
