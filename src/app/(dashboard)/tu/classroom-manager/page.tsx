@@ -284,6 +284,50 @@ export default function TUClassroomManager() {
                           {classStudents.map((s: any) => <option key={s.id} value={s.id}>{s.full_name}</option>)}
                         </select>
                       </div>
+                      <div className="flex flex-col gap-1">
+                        <label className="text-[10px] font-bold text-[var(--text-tertiary)] uppercase">Sekretaris 1</label>
+                        <select 
+                          value={selectedClass.secretary_1_id || ""}
+                          onChange={(e) => handleAssignRole(selectedClass.id, "secretary_1_id", e.target.value)}
+                          className="bg-white border border-[var(--border)] rounded-xl px-3 py-1.5 text-xs font-bold"
+                        >
+                          <option value="">Select Student...</option>
+                          {classStudents.map((s: any) => <option key={s.id} value={s.id}>{s.full_name}</option>)}
+                        </select>
+                      </div>
+                      <div className="flex flex-col gap-1">
+                        <label className="text-[10px] font-bold text-[var(--text-tertiary)] uppercase">Sekretaris 2</label>
+                        <select 
+                          value={selectedClass.secretary_2_id || ""}
+                          onChange={(e) => handleAssignRole(selectedClass.id, "secretary_2_id", e.target.value)}
+                          className="bg-white border border-[var(--border)] rounded-xl px-3 py-1.5 text-xs font-bold"
+                        >
+                          <option value="">Select Student...</option>
+                          {classStudents.map((s: any) => <option key={s.id} value={s.id}>{s.full_name}</option>)}
+                        </select>
+                      </div>
+                      <div className="flex flex-col gap-1">
+                        <label className="text-[10px] font-bold text-[var(--text-tertiary)] uppercase">Bendahara 1</label>
+                        <select 
+                          value={selectedClass.treasurer_1_id || ""}
+                          onChange={(e) => handleAssignRole(selectedClass.id, "treasurer_1_id", e.target.value)}
+                          className="bg-white border border-[var(--border)] rounded-xl px-3 py-1.5 text-xs font-bold"
+                        >
+                          <option value="">Select Student...</option>
+                          {classStudents.map((s: any) => <option key={s.id} value={s.id}>{s.full_name}</option>)}
+                        </select>
+                      </div>
+                      <div className="flex flex-col gap-1">
+                        <label className="text-[10px] font-bold text-[var(--text-tertiary)] uppercase">Bendahara 2</label>
+                        <select 
+                          value={selectedClass.treasurer_2_id || ""}
+                          onChange={(e) => handleAssignRole(selectedClass.id, "treasurer_2_id", e.target.value)}
+                          className="bg-white border border-[var(--border)] rounded-xl px-3 py-1.5 text-xs font-bold"
+                        >
+                          <option value="">Select Student...</option>
+                          {classStudents.map((s: any) => <option key={s.id} value={s.id}>{s.full_name}</option>)}
+                        </select>
+                      </div>
                     </div>
                   </div>
                 </Card>
