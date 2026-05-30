@@ -3,11 +3,21 @@
 import { Sidebar } from "@/components/ui/sidebar";
 import { TopBar } from "@/components/ui/top-bar";
 import { ClassGuard } from "./class-guard";
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
+import { useAuth } from "@/lib/auth-context";
+import { useEffect } from "react";
 
 export function AppShell({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
+  const router = useRouter();
+  const { profile, loading } = useAuth();
   const isExam = pathname?.includes("/exam");
+
+  useEffect(() => {
+    if (!loading && profile?.force_password_change) {
+      router.push("/auth/change-password");
+    }
+  }, [profile, loading, router]);
 
   if (isExam) {
     return (

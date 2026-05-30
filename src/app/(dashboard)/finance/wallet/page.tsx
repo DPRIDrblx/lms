@@ -93,26 +93,53 @@ export default function WalletPage() {
     setActivationError("");
     setActivationSuccess(false);
 
-    // 1. Find available card
+    // 1. Find the card by serial number
     const { data: card, error } = await supabase
       .from("card_inventory")
       .select("*")
       .eq("serial_number", serialInput)
-      .eq("status", "available")
       .single();
 
     if (error || !card) {
-      setActivationError("Invalid serial number or card already active.");
+      setActivationError("Invalid serial number.");
       return;
     }
 
-    // 2. Link card to student
+    // 2. Validate Joint Ownership logic
+    const isStudent = profile.role === "student";
+    const isParent = profile.role === "parent";
+
+    if (isStudent) {
+       if (card.student_id && card.student_id !== profile.id) {
+          setActivationError("Card already active for another student.");
+          return;
+       }
+       if (card.student_id === profile.id) {
+          setActivationError("You have already activated this card.");
+          return;
+       }
+    } else if (isParent) {
+       if (card.parent_id && card.parent_id !== profile.id) {
+          setActivationError("Card already active for another parent.");
+          return;
+       }
+       if (card.parent_id === profile.id) {
+          setActivationError("You have already activated this card.");
+          return;
+       }
+    } else {
+       setActivationError("Only students and parents can activate cards.");
+       return;
+    }
+
+    // 3. Update the link
+    const updatePayload: any = { status: "active" };
+    if (isStudent) updatePayload.student_id = profile.id;
+    if (isParent) updatePayload.parent_id = profile.id;
+
     const { error: updateErr } = await supabase
       .from("card_inventory")
-      .update({
-        status: "active",
-        student_id: profile.id
-      })
+      .update(updatePayload)
       .eq("id", card.id);
 
     if (updateErr) {
@@ -121,7 +148,7 @@ export default function WalletPage() {
     }
 
     setActivationSuccess(true);
-    setCardInfo({ ...card, status: "active", student_id: profile.id });
+    setCardInfo({ ...card, ...updatePayload });
   };
 
   const handleTopUpSuccess = async () => {

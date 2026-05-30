@@ -26,6 +26,7 @@ export default function TUClassroomManager() {
   const [classes, setClasses] = useState<any[]>([]);
   const [teachers, setTeachers] = useState<any[]>([]);
   const [unassignedStudents, setUnassignedStudents] = useState<any[]>([]);
+  const [classStudents, setClassStudents] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   
   const [selectedClass, setSelectedClass] = useState<any>(null);
@@ -35,6 +36,16 @@ export default function TUClassroomManager() {
   useEffect(() => {
     fetchData();
   }, []);
+
+  useEffect(() => {
+    if (selectedClass) {
+      supabase.from("profiles").select("*").eq("class_id", selectedClass.id).eq("role", "student").then(({data}: {data: any}) => {
+        if (data) setClassStudents(data);
+      });
+    } else {
+      setClassStudents([]);
+    }
+  }, [selectedClass, supabase]);
 
   const fetchData = async () => {
     setLoading(true);
@@ -65,21 +76,26 @@ export default function TUClassroomManager() {
   }, [supabase]);
 
   const handleAssignWaliKelas = async (classId: string, teacherId: string) => {
-    const toastId = toast.loading("Assigning Wali Kelas...");
-    const { error } = await supabase
-      .from("classes")
-      .update({ wali_kelas_id: teacherId })
-      .eq("id", classId);
+    await handleAssignRole(classId, "wali_kelas_id", teacherId);
+    if (teacherId) {
+      await supabase.from("profiles").update({ class_id: classId }).eq("id", teacherId);
+    }
+  };
+
+  const handleAssignRole = async (classId: string, column: string, userId: string) => {
+    const toastId = toast.loading(`Assigning role...`);
+    const updateData = { [column]: userId || null };
+    const { error } = await supabase.from("classes").update(updateData).eq("id", classId);
     
     if (error) {
       toast.error(`Assignment failed: ${error.message}`, { id: toastId });
-      return;
+    } else {
+      toast.success("Role assigned successfully!", { id: toastId });
+      fetchData();
+      
+      // Update local state for selected class
+      setSelectedClass((prev: any) => ({ ...prev, [column]: userId || null }));
     }
-
-    // Also update the teacher's class_id for consistency
-    await supabase.from("profiles").update({ class_id: classId }).eq("id", teacherId);
-    toast.success("Wali Kelas assigned successfully!", { id: toastId });
-    fetchData();
   };
 
   const handleAssignStudent = async (studentId: string) => {
@@ -212,18 +228,62 @@ export default function TUClassroomManager() {
                         </div>
                       </div>
                     </div>
-                    <div className="flex flex-col gap-2">
-                      <p className="text-[10px] font-bold text-[var(--text-tertiary)] uppercase text-center md:text-right">Assign Wali Kelas</p>
-                      <select 
-                        value={selectedClass.wali_kelas_id || ""}
-                        onChange={(e) => handleAssignWaliKelas(selectedClass.id, e.target.value)}
-                        className="bg-white border border-[var(--border)] rounded-xl px-4 py-2 text-sm font-bold focus:ring-2 focus:ring-[var(--accent)]"
-                      >
-                        <option value="">Select Teacher...</option>
-                        {teachers.map((t: any) => (
-                          <option key={t.id} value={t.id}>{t.full_name}</option>
-                        ))}
-                      </select>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4 w-full">
+                      <div className="flex flex-col gap-1">
+                        <label className="text-[10px] font-bold text-[var(--text-tertiary)] uppercase">Wali Kelas</label>
+                        <select 
+                          value={selectedClass.wali_kelas_id || ""}
+                          onChange={(e) => handleAssignRole(selectedClass.id, "wali_kelas_id", e.target.value)}
+                          className="bg-white border border-[var(--border)] rounded-xl px-3 py-1.5 text-xs font-bold"
+                        >
+                          <option value="">Select Teacher...</option>
+                          {teachers.map((t: any) => <option key={t.id} value={t.id}>{t.full_name}</option>)}
+                        </select>
+                      </div>
+                      <div className="flex flex-col gap-1">
+                        <label className="text-[10px] font-bold text-[var(--text-tertiary)] uppercase">Pendamping (Co-Homeroom)</label>
+                        <select 
+                          value={selectedClass.co_homeroom_id || ""}
+                          onChange={(e) => handleAssignRole(selectedClass.id, "co_homeroom_id", e.target.value)}
+                          className="bg-white border border-[var(--border)] rounded-xl px-3 py-1.5 text-xs font-bold"
+                        >
+                          <option value="">Select Teacher...</option>
+                          {teachers.map((t: any) => <option key={t.id} value={t.id}>{t.full_name}</option>)}
+                        </select>
+                      </div>
+                      <div className="flex flex-col gap-1">
+                        <label className="text-[10px] font-bold text-[var(--text-tertiary)] uppercase">Pengawas (Supervisor)</label>
+                        <select 
+                          value={selectedClass.supervisor_id || ""}
+                          onChange={(e) => handleAssignRole(selectedClass.id, "supervisor_id", e.target.value)}
+                          className="bg-white border border-[var(--border)] rounded-xl px-3 py-1.5 text-xs font-bold"
+                        >
+                          <option value="">Select Teacher...</option>
+                          {teachers.map((t: any) => <option key={t.id} value={t.id}>{t.full_name}</option>)}
+                        </select>
+                      </div>
+                      <div className="flex flex-col gap-1">
+                        <label className="text-[10px] font-bold text-[var(--text-tertiary)] uppercase">Ketua Kelas</label>
+                        <select 
+                          value={selectedClass.president_id || ""}
+                          onChange={(e) => handleAssignRole(selectedClass.id, "president_id", e.target.value)}
+                          className="bg-white border border-[var(--border)] rounded-xl px-3 py-1.5 text-xs font-bold"
+                        >
+                          <option value="">Select Student...</option>
+                          {classStudents.map((s: any) => <option key={s.id} value={s.id}>{s.full_name}</option>)}
+                        </select>
+                      </div>
+                      <div className="flex flex-col gap-1">
+                        <label className="text-[10px] font-bold text-[var(--text-tertiary)] uppercase">Wakil Ketua</label>
+                        <select 
+                          value={selectedClass.vice_president_id || ""}
+                          onChange={(e) => handleAssignRole(selectedClass.id, "vice_president_id", e.target.value)}
+                          className="bg-white border border-[var(--border)] rounded-xl px-3 py-1.5 text-xs font-bold"
+                        >
+                          <option value="">Select Student...</option>
+                          {classStudents.map((s: any) => <option key={s.id} value={s.id}>{s.full_name}</option>)}
+                        </select>
+                      </div>
                     </div>
                   </div>
                 </Card>

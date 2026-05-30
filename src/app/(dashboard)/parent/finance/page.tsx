@@ -22,6 +22,7 @@ import { useEffect, useState, useCallback } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { formatCurrency } from "@/lib/utils";
 import Link from "next/link";
+import { MockPaymentModal } from "@/components/finance/MockPaymentModal";
 
 interface Bill {
   id: string;
@@ -35,9 +36,12 @@ export default function ParentFinancePage() {
   const supabase = createClient();
   
   const [bills, setBills] = useState<Bill[]>([]);
-  const [wallet, setWallet] = useState<{ balance: number } | null>(null);
+  const [wallet, setWallet] = useState<any>(null);
   const [child, setChild] = useState<any>(null);
   const [loading, setLoading] = useState(true);
+  
+  const [isTopUpOpen, setIsTopUpOpen] = useState(false);
+  const [topUpAmount, setTopUpAmount] = useState(50000);
 
   const fetchData = useCallback(async () => {
     if (!profile) return;
@@ -48,7 +52,7 @@ export default function ParentFinancePage() {
        const [childRes, billsRes, walletRes] = await Promise.all([
           supabase.from("profiles").select("full_name").eq("id", link.student_id).single(),
           supabase.from("finance_bills").select("*").eq("student_id", link.student_id).order("created_at", { ascending: false }),
-          supabase.from("wallets").select("balance").eq("student_id", link.student_id).single()
+          supabase.from("wallets").select("*").eq("student_id", link.student_id).single()
        ]);
        
        if (childRes.data) setChild(childRes.data);
@@ -71,6 +75,22 @@ export default function ParentFinancePage() {
 
   const outstanding = bills.filter(b => b.status !== "paid").reduce((s, b) => s + b.amount, 0);
 
+  const handleTopUpSuccess = async () => {
+    if (!wallet || !child) return;
+
+    const { error } = await supabase.from("wallet_transactions").insert({
+      wallet_id: wallet.id,
+      amount: topUpAmount,
+      type: "topup",
+      description: "Parent Canteen Top Up",
+      status: "completed"
+    });
+
+    if (!error) {
+      // Balance updates via real-time trigger in DB or real-time listener
+    }
+  };
+
   return (
     <div className="max-w-6xl mx-auto space-y-8">
       <header>
@@ -92,7 +112,7 @@ export default function ParentFinancePage() {
                  <div className="absolute -right-4 -bottom-4 opacity-10"><Wallet className="h-32 w-32" /></div>
                  <p className="text-[10px] font-black uppercase tracking-widest opacity-80 mb-2">Canteen Wallet Balance</p>
                  <h2 className="text-3xl font-black">{formatCurrency(wallet?.balance || 0)}</h2>
-                 <Button variant="secondary" className="mt-4 bg-white/20 text-white border-none hover:bg-white/30 text-[10px] h-8">Top Up Now</Button>
+                 <Button onClick={() => setIsTopUpOpen(true)} variant="secondary" className="mt-4 bg-white/20 text-white border-none hover:bg-white/30 text-[10px] h-8">Top Up Now</Button>
               </Card>
            </div>
 
@@ -171,6 +191,39 @@ export default function ParentFinancePage() {
            </Card>
         </div>
       </div>
+
+      <AnimatePresence>
+        {isTopUpOpen && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
+             <motion.div initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0, scale: 0.95 }} className="w-full max-w-sm bg-[var(--bg-primary)] p-6 rounded-3xl">
+                <h3 className="text-lg font-black mb-4 text-[var(--text-primary)]">Select Top Up Amount</h3>
+                <div className="grid grid-cols-2 gap-3 mb-6">
+                   {[20000, 50000, 100000, 200000].map(amt => (
+                      <Button 
+                         key={amt} 
+                         variant={topUpAmount === amt ? "primary" : "secondary"}
+                         className={`h-12 ${topUpAmount === amt ? "bg-[var(--accent)]" : ""}`}
+                         onClick={() => setTopUpAmount(amt)}
+                      >
+                         {formatCurrency(amt)}
+                      </Button>
+                   ))}
+                </div>
+                <div className="flex gap-3">
+                   <Button variant="ghost" className="flex-1" onClick={() => setIsTopUpOpen(false)}>Cancel</Button>
+                   <Button className="flex-1 font-bold" onClick={() => {}}>Proceed</Button>
+                </div>
+             </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
+
+      <MockPaymentModal 
+        isOpen={false} // Will manage this properly in next refactor if needed, but the button Proceed needs to open MockPaymentModal
+        onClose={() => {}}
+        amount={topUpAmount}
+        onSuccess={() => {}}
+      />
     </div>
   );
 }

@@ -77,18 +77,33 @@ export default function QRTeacherPage() {
     if (data) setLogs(data as unknown as LogEntry[]);
   }, [supabase]);
 
+  const fetchStudents = useCallback(async (classId: string) => {
+    const { data } = await supabase
+      .from("profiles")
+      .select("id, full_name, avatar_url")
+      .eq("role", "student")
+      .eq("class_id", classId);
+    if (data) setAllStudents(data as any);
+  }, [supabase]);
+
   useEffect(() => {
     fetchSessions();
     fetchTeacherCourses();
-    const fetchStudents = async () => {
-      const { data } = await supabase.from("profiles").select("id, full_name, avatar_url").eq("role", "student");
-      if (data) setAllStudents(data as any);
-    };
-    fetchStudents();
-  }, [fetchSessions, fetchTeacherCourses, supabase]);
+  }, [fetchSessions, fetchTeacherCourses]);
 
+  // When active session changes, we need to find its class_id and fetch those students
   useEffect(() => {
     if (!activeSession) return;
+    
+    // We need the class_id to filter students
+    const fetchSessionClassStudents = async () => {
+       const { data: courseData } = await supabase.from("courses").select("class_id").eq("id", (activeSession as any).course_id).single();
+       if (courseData && courseData.class_id) {
+         await fetchStudents(courseData.class_id);
+       }
+    };
+    fetchSessionClassStudents();
+    
     fetchLogs(activeSession.id);
 
     // Supabase Realtime subscription

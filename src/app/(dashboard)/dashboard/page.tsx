@@ -48,6 +48,7 @@ export default function DashboardPage() {
   const [courses, setCourses] = useState<CourseRecord[]>([]);
   const [progressData, setProgressData] = useState<any[]>([]);
   const [events, setEvents] = useState<SchoolEvent[]>([]);
+  const [leadership, setLeadership] = useState<any>(null);
   const [loading, setLoading] = useState(true);
 
   const fetchData = useCallback(async () => {
@@ -73,9 +74,17 @@ export default function DashboardPage() {
       .order("event_date", { ascending: true })
       .limit(3);
 
+    // 4. Check Leadership
+    const { data: leadershipData } = await supabase
+      .from("classes")
+      .select("*")
+      .or(`president_id.eq.${profile.id},vice_president_id.eq.${profile.id},secretary_1_id.eq.${profile.id},secretary_2_id.eq.${profile.id}`)
+      .single();
+
     if (courseData) setCourses(courseData.map((c: any) => ({ ...c, lessons_count: c.lessons[0]?.count || 0 })));
     if (progData) setProgressData(progData);
     if (eventData) setEvents(eventData as SchoolEvent[]);
+    if (leadershipData) setLeadership(leadershipData);
     
     setLoading(false);
   }, [profile, supabase]);
@@ -162,6 +171,34 @@ export default function DashboardPage() {
           </div>
         </Card>
       </div>
+
+      {leadership && (
+        <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }}>
+          <Card className="bg-emerald-50 border-emerald-200">
+            <div className="flex items-center justify-between mb-4">
+              <div>
+                <h2 className="text-lg font-bold text-emerald-900 flex items-center gap-2">
+                  <Star className="h-5 w-5" /> Class Leadership Portal
+                </h2>
+                <p className="text-sm text-emerald-700 mt-1">Class {leadership.name} Management Tools</p>
+              </div>
+              <Badge variant="success">Active Duty</Badge>
+            </div>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+               <Link href="/student/leadership/attendance">
+                  <Button variant="secondary" className="w-full h-12 bg-white text-emerald-900 border-emerald-200 hover:bg-emerald-100" icon={<CalendarCheck className="h-4 w-4" />}>
+                     Manage Class Attendance
+                  </Button>
+               </Link>
+               <Link href="/chat">
+                  <Button variant="secondary" className="w-full h-12 bg-white text-emerald-900 border-emerald-200 hover:bg-emerald-100" icon={<ChevronRight className="h-4 w-4" />}>
+                     Broadcast Announcement
+                  </Button>
+               </Link>
+            </div>
+          </Card>
+        </motion.div>
+      )}
 
       <div>
         <div className="flex items-center justify-between mb-4">

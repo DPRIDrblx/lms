@@ -82,7 +82,11 @@ export default function TUFinanceHub() {
   };
 
   const markAsPaid = async (id: string) => {
-    const { error } = await supabase.from("finance_bills").update({ status: "paid" }).eq("id", id);
+    const { error } = await supabase.from("finance_bills").update({ 
+      status: "paid", 
+      paid_at: new Date().toISOString(),
+      payment_method: "over_the_counter" 
+    }).eq("id", id);
     if (!error) fetchBills();
   };
 

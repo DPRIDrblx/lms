@@ -61,6 +61,7 @@ const tuNav = [
   { href: "/chat", label: "Communications", icon: MessageSquare },
   { href: "/tu/finance", label: "Financial Hub", icon: CreditCard },
   { href: "/tu/reports", label: "Report Cards", icon: FileText },
+  { href: "/tu/account-generator", label: "Account Generator", icon: Users },
   { href: "/tu/cards", label: "Card Inventory", icon: CreditCard },
   { href: "/settings", label: "Settings", icon: Settings },
 ];
@@ -85,7 +86,7 @@ export function Sidebar() {
     profile?.role === "tu" ? tuNav :
     studentNav;
 
-  const SidebarContent = () => (
+const SidebarContent = ({ navItems, pathname, profile, setMobileOpen }: any) => (
     <div className="flex flex-col h-full">
       {/* Logo */}
       <div className="p-5 border-b border-[var(--border)]">
@@ -105,7 +106,7 @@ export function Sidebar() {
         <p className="px-3 pt-3 pb-2 text-[10px] font-semibold text-[var(--text-tertiary)] uppercase tracking-wider">
           Menu
         </p>
-        {navItems.map((item) => {
+        {navItems.map((item: any) => {
           const isActive = pathname === item.href || (item.href !== "/dashboard" && pathname.startsWith(item.href));
           return (
             <Link
@@ -181,7 +182,7 @@ export function Sidebar() {
               >
                 <X className="h-4 w-4 text-[var(--text-secondary)]" />
               </button>
-              <SidebarContent />
+              <SidebarContent navItems={navItems} pathname={pathname} profile={profile} setMobileOpen={setMobileOpen} />
             </motion.aside>
           </>
         )}
@@ -189,7 +190,7 @@ export function Sidebar() {
 
       {/* Desktop sidebar */}
       <aside className="hidden lg:flex lg:flex-col w-[260px] min-h-screen bg-[var(--bg-primary)] border-r border-[var(--border)] fixed inset-y-0 left-0 z-30">
-        <SidebarContent />
+        <SidebarContent navItems={navItems} pathname={pathname} profile={profile} setMobileOpen={setMobileOpen} />
       </aside>
     </>
   );

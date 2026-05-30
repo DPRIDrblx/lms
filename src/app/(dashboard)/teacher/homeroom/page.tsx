@@ -30,8 +30,13 @@ export default function HomeroomTeacherDashboard() {
   const fetchClassData = useCallback(async () => {
     if (!profile) return;
     
-    // 1. Get class where teacher is homeroom
-    const { data: cls } = await supabase.from("classes").select("*").eq("homeroom_teacher_id", profile.id).single();
+    // 1. Get class where teacher is homeroom, co-homeroom, or supervisor
+    const { data: cls } = await supabase
+      .from("classes")
+      .select("*")
+      .or(`homeroom_teacher_id.eq.${profile.id},co_homeroom_id.eq.${profile.id},supervisor_id.eq.${profile.id}`)
+      .limit(1)
+      .single();
     
     if (cls) {
       setManagedClass(cls);
@@ -56,7 +61,7 @@ export default function HomeroomTeacherDashboard() {
          </div>
          <h2 className="text-xl font-black text-slate-900">No Homeroom Assigned</h2>
          <p className="text-sm text-slate-500 mt-2 max-w-sm">
-            You are currently not assigned as a Homeroom Teacher (Wali Kelas) for any class. Please contact the TU Administrator.
+            You are currently not assigned as a Homeroom Teacher, Co-Homeroom, or Supervisor for any class. Please contact the TU Administrator.
          </p>
       </div>
     );

@@ -13,6 +13,7 @@ export interface Profile {
   avatar_url: string | null;
   class_id: string | null;
   face_descriptor: number[] | null;
+  force_password_change?: boolean;
 }
 
 interface AuthContextType {

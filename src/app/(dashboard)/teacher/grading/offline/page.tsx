@@ -98,7 +98,7 @@ export default function ExcelGradebookPage() {
       }))
     );
 
-    const { error } = await supabase.from("student_scores").upsert(updates, { onConflict: 'student_id,category_id' });
+    const { error } = await supabase.from("student_scores").upsert(updates, { onConflict: 'student_id,category_id,target_id' });
 
     if (error) toast.error(error.message);
     else toast.success("All grades synchronized to cloud!");
@@ -113,7 +113,7 @@ export default function ExcelGradebookPage() {
     if (quizScores) {
       const { error } = await supabase.from("student_scores").upsert(
         quizScores.map((s: any) => ({ ...s, target_type: "offline" })), // Map to offline grid
-        { onConflict: 'student_id,category_id' }
+        { onConflict: 'student_id,category_id,target_id' }
       );
       if (!error) {
         toast.success(`Successfully synced ${quizScores.length} CBT grades into the gradebook!`);

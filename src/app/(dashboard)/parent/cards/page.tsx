@@ -32,8 +32,7 @@ export default function ParentCardsPage() {
       .from("card_inventory")
       .select(`
         *,
-        student:profiles!card_inventory_student_id_fkey(full_name, id),
-        wallet:wallets!card_inventory_student_id_fkey(balance)
+        student:profiles!card_inventory_student_id_fkey(full_name, id, wallets(balance))
       `)
       .eq("parent_id", profile.id);
     
@@ -92,7 +91,7 @@ export default function ParentCardsPage() {
                         <div>
                            <p className="text-[10px] font-black text-[var(--text-tertiary)] uppercase tracking-widest mb-1">Student Balance</p>
                            <h3 className="text-3xl font-black text-[var(--text-primary)]">
-                             Rp {card.wallet?.balance?.toLocaleString() || 0}
+                             Rp {card.student?.wallets?.[0]?.balance?.toLocaleString() || card.student?.wallets?.balance?.toLocaleString() || 0}
                            </h3>
                         </div>
                         <Link href="/parent/finance">
