@@ -3,6 +3,7 @@
 import { useAuth } from "@/lib/auth-context";
 import { createClient } from "@/lib/supabase";
 import { Card } from "@/components/ui/card";
+import { processPayment } from "@/app/actions/finance";
 import { Button } from "@/components/ui/button";
 import { formatCurrency } from "@/lib/utils";
 import { motion, AnimatePresence } from "framer-motion";
@@ -47,18 +48,10 @@ export default function CheckoutPage({ params }: { params: Promise<{ id: string 
     // Simulate high-fidelity payment gateway handshake
     await new Promise((r) => setTimeout(r, 2000));
 
-    const { error } = await supabase
-      .from("finance_bills")
-      .update({
-        status: "paid",
-        payment_method: selectedMethod,
-        transaction_id: `TRX-${Math.random().toString(36).substr(2, 9).toUpperCase()}`,
-        paid_at: new Date().toISOString(),
-      })
-      .eq("id", bill.id);
-
-    if (error) {
-      toast.error("Payment sync failed: " + error.message);
+    try {
+      await processPayment(bill.id, selectedMethod);
+    } catch (err: any) {
+      toast.error("Payment sync failed: " + err.message);
       setProcessing(false);
       return;
     }

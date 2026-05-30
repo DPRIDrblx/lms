@@ -42,6 +42,7 @@ export default function ParentFinancePage() {
   
   const [isTopUpOpen, setIsTopUpOpen] = useState(false);
   const [topUpAmount, setTopUpAmount] = useState(50000);
+  const [isPaymentModalOpen, setIsPaymentModalOpen] = useState(false);
 
   const fetchData = useCallback(async () => {
     if (!profile) return;
@@ -211,7 +212,10 @@ export default function ParentFinancePage() {
                 </div>
                 <div className="flex gap-3">
                    <Button variant="ghost" className="flex-1" onClick={() => setIsTopUpOpen(false)}>Cancel</Button>
-                   <Button className="flex-1 font-bold" onClick={() => {}}>Proceed</Button>
+                   <Button className="flex-1 font-bold" onClick={() => {
+                      setIsTopUpOpen(false);
+                      setIsPaymentModalOpen(true);
+                   }}>Proceed</Button>
                 </div>
              </motion.div>
           </div>
@@ -219,10 +223,22 @@ export default function ParentFinancePage() {
       </AnimatePresence>
 
       <MockPaymentModal 
-        isOpen={false} // Will manage this properly in next refactor if needed, but the button Proceed needs to open MockPaymentModal
-        onClose={() => {}}
+        isOpen={isPaymentModalOpen}
+        onClose={() => setIsPaymentModalOpen(false)}
         amount={topUpAmount}
-        onSuccess={() => {}}
+        onSuccess={async () => {
+          // Add to wallet
+          if (wallet && child) {
+             const { error } = await supabase.from("wallets").update({
+                balance: (wallet.balance || 0) + topUpAmount
+             }).eq("id", wallet.id);
+             
+             if (!error) {
+                setWallet({ ...wallet, balance: (wallet.balance || 0) + topUpAmount });
+             }
+          }
+          setIsPaymentModalOpen(false);
+        }}
       />
     </div>
   );
