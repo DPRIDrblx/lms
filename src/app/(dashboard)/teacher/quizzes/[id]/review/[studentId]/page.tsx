@@ -173,7 +173,7 @@ export default function TeacherQuizGradingPage({ params }: { params: Promise<{ i
             <Card key={q.id} className={`p-6 border-l-4 ${q.question_type === 'essay' ? 'border-l-[var(--warning)]' : showCorrectness ? (isCorrect ? 'border-l-[var(--success)]' : 'border-l-[var(--error)]') : 'border-l-[var(--accent)]'} relative overflow-hidden`}>
               <div className="flex justify-between items-start mb-6 gap-4">
                  <div>
-                    <Badge variant="outline" className="mb-3 text-[10px] uppercase font-bold tracking-wider text-[var(--text-tertiary)]">
+                    <Badge variant="info" className="mb-3 text-[10px] uppercase font-bold tracking-wider opacity-80">
                        Question {index + 1} &bull; {q.question_type.toUpperCase()}
                     </Badge>
                     <p className="font-bold text-[var(--text-primary)] text-lg leading-relaxed">{q.text}</p>
