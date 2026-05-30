@@ -90,7 +90,7 @@ export default function EditCoursePage() {
     if (lessonData) {
       const parsed = lessonData.map((l: any) => ({
         ...l,
-        content_type: (l.content_type === 'video' && l.video_url?.includes('canva.com')) ? 'canva' : l.content_type
+        content_type: (l.content_type === 'video' && l.video_url?.toLowerCase().includes('canva')) ? 'canva' : l.content_type
       }));
       setLessons(parsed as Lesson[]);
     }

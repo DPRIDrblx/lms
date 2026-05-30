@@ -42,8 +42,8 @@ export default function LessonViewerPage({ params }: { params: Promise<{ id: str
       ]);
 
       if (lessonRes.data) {
-        const l = lessonRes.data;
-        if (l.content_type === 'video' && l.video_url?.includes('canva.com')) {
+        const l = { ...lessonRes.data };
+        if (l.content_type === 'video' && l.video_url?.toLowerCase().includes('canva')) {
           l.content_type = 'canva';
         }
         setLesson(l);
@@ -146,7 +146,7 @@ export default function LessonViewerPage({ params }: { params: Promise<{ id: str
               {lesson.video_url ? (
                 <iframe 
                   className="w-full h-full"
-                  src={lesson.video_url} 
+                  src={lesson.video_url.includes('view?embed') ? lesson.video_url : (lesson.video_url.split('/edit')[0].split('/view')[0].replace(/\/$/, '') + '/view?embed')} 
                   title="Canva Embed" 
                   frameBorder="0" 
                   allowFullScreen
