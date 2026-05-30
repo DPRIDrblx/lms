@@ -83,6 +83,9 @@ export default function TeacherQuizzesPage() {
                     </div>
                   </div>
                   <div className="flex items-center gap-2">
+                    <Link href={`/teacher/quizzes/${quiz.id}/review`}>
+                      <Button variant="ghost" size="sm" icon={<FileText className="h-3.5 w-3.5" />}>Review</Button>
+                    </Link>
                     <Link href={`/teacher/quizzes/${quiz.id}/builder`}>
                       <Button variant="secondary" size="sm" icon={<Edit2 className="h-3.5 w-3.5" />}>Builder</Button>
                     </Link>
