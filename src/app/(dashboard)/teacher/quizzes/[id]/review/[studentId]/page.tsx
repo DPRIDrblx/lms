@@ -30,7 +30,7 @@ export default function TeacherQuizGradingPage({ params }: { params: Promise<{ i
       const [quizRes, qRes, scoreRes, respRes] = await Promise.all([
         supabase.from("quizzes").select("*").eq("id", id).single(),
         supabase.from("questions").select("*").eq("quiz_id", id).order("order_index"),
-        supabase.from("student_scores").select("*, profiles(full_name, avatar_url)").eq("target_id", id).eq("student_id", studentId).single(),
+        supabase.from("student_scores").select("*, profiles!student_scores_student_id_fkey(full_name, avatar_url)").eq("target_id", id).eq("student_id", studentId).single(),
         supabase.from("quiz_responses").select("*").eq("quiz_id", id).eq("student_id", studentId)
       ]);
       

@@ -25,7 +25,7 @@ export default function TeacherQuizReviewListPage({ params }: { params: Promise<
       const [quizRes, scoresRes] = await Promise.all([
         supabase.from("quizzes").select("*").eq("id", id).single(),
         supabase.from("student_scores")
-          .select("*, profiles(id, full_name, avatar_url)")
+          .select("*, profiles!student_scores_student_id_fkey(id, full_name, avatar_url)")
           .eq("target_id", id)
           .eq("target_type", "quiz")
       ]);
