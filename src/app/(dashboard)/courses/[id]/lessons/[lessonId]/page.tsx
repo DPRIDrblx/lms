@@ -89,6 +89,28 @@ export default function LessonViewerPage({ params }: { params: Promise<{ id: str
 
   const TypeIcon = lesson.content_type === "video" ? Play : lesson.content_type === "pdf" ? FileText : lesson.content_type === "canva" ? Presentation : BookOpen;
 
+  const getCanvaEmbedUrl = (url: string) => {
+    if (!url) return "";
+    
+    // 1. If it's a full HTML embed code from Canva, extract the src
+    const srcMatch = url.match(/src="([^"]+)"/);
+    if (srcMatch && srcMatch[1]) {
+      return srcMatch[1].replace(/&#x2F;/g, '/');
+    }
+    
+    // 2. If it's a canva.link short URL, don't append /view?embed
+    if (url.includes('canva.link')) return url;
+    
+    // 3. Auto-format standard canva.com URLs
+    if (url.includes('view?embed')) return url;
+    if (url.includes('/edit')) return url.split('/edit')[0] + '/view?embed';
+    if (url.includes('/view')) return url.split('/view')[0] + '/view?embed';
+    
+    // 4. Default fallback
+    const cleanUrl = url.endsWith('/') ? url.slice(0, -1) : url;
+    return cleanUrl + (cleanUrl.includes('canva.com/design') ? '/view?embed' : '');
+  };
+
   return (
     <div className="max-w-4xl mx-auto space-y-6 pb-32">
       <header className="flex items-center justify-between border-b border-[var(--border)] pb-4">
@@ -146,7 +168,7 @@ export default function LessonViewerPage({ params }: { params: Promise<{ id: str
               {lesson.video_url ? (
                 <iframe 
                   className="w-full h-full"
-                  src={lesson.video_url.includes('view?embed') ? lesson.video_url : (lesson.video_url.split('/edit')[0].split('/view')[0].replace(/\/$/, '') + '/view?embed')} 
+                  src={getCanvaEmbedUrl(lesson.video_url)} 
                   title="Canva Embed" 
                   frameBorder="0" 
                   allowFullScreen
