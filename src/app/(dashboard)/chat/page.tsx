@@ -47,7 +47,7 @@ export default function AdvancedChatPortal() {
     // If student/parent, get class groups
     let classId = profile?.class_id;
     if (profile?.role === 'parent') {
-       const { data: link } = await supabase.from("parent_student_links").select("student_id").eq("parent_id", profile.id).single();
+       const { data: link } = await supabase.from("family_members").select("student_id").eq("parent_id", profile.id).limit(1).maybeSingle();
        if (link) {
           const { data: std } = await supabase.from("profiles").select("class_id").eq("id", link.student_id).single();
           classId = std?.class_id;
@@ -63,7 +63,7 @@ export default function AdvancedChatPortal() {
     // Determine class context
     let classId = profile?.class_id;
     if (profile?.role === 'parent') {
-       const { data: link } = await supabase.from("parent_student_links").select("student_id").eq("parent_id", profile.id).single();
+       const { data: link } = await supabase.from("family_members").select("student_id").eq("parent_id", profile.id).limit(1).maybeSingle();
        if (link) {
           const { data: std } = await supabase.from("profiles").select("class_id").eq("id", link.student_id).single();
           classId = std?.class_id;
@@ -136,6 +136,30 @@ export default function AdvancedChatPortal() {
     setSending(false);
   };
 
+  const startDirectMessage = async (otherUser: any) => {
+    if (!profile) return;
+    const dmName = `DM-${[profile.id, otherUser.id].sort().join("-")}`;
+    
+    let { data: existing } = await supabase.from("chat_groups").select("*").eq("name", dmName).maybeSingle();
+    
+    if (!existing) {
+      const { data: newGroup, error } = await supabase.from("chat_groups").insert({
+        name: dmName,
+        type: 'dm'
+      }).select().single();
+      
+      if (newGroup) {
+         existing = newGroup;
+         setGroups(prev => [...prev, newGroup]);
+      }
+    }
+    
+    if (existing) {
+      setSelectedGroup(existing);
+      setTab("chats");
+    }
+  };
+
   return (
     <div className="h-[calc(100vh-140px)] flex gap-6 overflow-hidden">
       {/* Sidebar: Navigation & Directory */}
@@ -183,9 +207,9 @@ export default function AdvancedChatPortal() {
                </div>
             ) : (
                <div className="space-y-6 p-2">
-                  <DirectorySection title="Academic Faculty" items={directory.teachers} icon={Briefcase} color="text-indigo-500" />
-                  <DirectorySection title="Student Body" items={directory.students} icon={GraduationCap} color="text-emerald-500" />
-                  <DirectorySection title="Parent Association" items={directory.parents} icon={Users} color="text-amber-500" />
+                  <DirectorySection title="Academic Faculty" items={directory.teachers} icon={Briefcase} color="text-indigo-500" onSelect={startDirectMessage} />
+                  <DirectorySection title="Student Body" items={directory.students} icon={GraduationCap} color="text-emerald-500" onSelect={startDirectMessage} />
+                  <DirectorySection title="Parent Association" items={directory.parents} icon={Users} color="text-amber-500" onSelect={startDirectMessage} />
                </div>
             )}
          </div>
@@ -267,7 +291,7 @@ export default function AdvancedChatPortal() {
   );
 }
 
-function DirectorySection({ title, items, icon: Icon, color }: any) {
+function DirectorySection({ title, items, icon: Icon, color, onSelect }: any) {
    return (
       <div className="space-y-3">
          <div className="flex items-center justify-between px-2">
@@ -278,15 +302,15 @@ function DirectorySection({ title, items, icon: Icon, color }: any) {
          </div>
          <div className="space-y-1">
             {items.map((item: any) => (
-               <div key={item.id} className="flex items-center gap-3 p-2 rounded-xl hover:bg-[var(--bg-secondary)] transition-all group">
-                  <div className="w-8 h-8 rounded-lg bg-[var(--bg-tertiary)] flex items-center justify-center text-xs font-bold text-[var(--text-tertiary)]">
+               <button onClick={() => onSelect?.(item)} key={item.id} className="w-full flex items-center text-left gap-3 p-2 rounded-xl hover:bg-[var(--bg-secondary)] transition-all group">
+                  <div className="w-8 h-8 rounded-lg bg-[var(--bg-tertiary)] flex items-center justify-center text-xs font-bold text-[var(--text-tertiary)] shrink-0">
                      {item.full_name?.charAt(0)}
                   </div>
                   <div className="flex-1 min-w-0">
                      <p className="text-xs font-bold text-[var(--text-primary)] truncate">{item.full_name}</p>
                   </div>
-                  <ChevronRight className="h-3 w-3 text-[var(--text-tertiary)] opacity-0 group-hover:opacity-100 transition-all" />
-               </div>
+                  <ChevronRight className="h-3 w-3 text-[var(--text-tertiary)] opacity-0 group-hover:opacity-100 transition-all shrink-0" />
+               </button>
             ))}
          </div>
       </div>

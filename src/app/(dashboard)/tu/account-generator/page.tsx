@@ -24,15 +24,16 @@ export default function AccountGenerator() {
   const [generating, setGenerating] = useState(false);
 
   const generateEmail = (name: string, role: string) => {
-    const parts = name.trim().split(" ");
-    let initials = parts[0].substring(0, Math.min(3, parts[0].length)).toLowerCase();
+    // Menghilangkan spasi dan karakter non-alfabet
+    const cleanName = name.replace(/[^a-zA-Z]/g, "").toLowerCase();
     
     if (role === "teacher") {
-      initials = parts[0].substring(0, Math.min(4, parts[0].length)).toLowerCase();
+      const initials = cleanName.substring(0, Math.min(4, cleanName.length));
       return `${initials}-teacher@mmis.msi`;
     }
     
-    return `${initials}${Math.floor(Math.random() * 1000)}@mmis.msi`;
+    const initials = cleanName.substring(0, Math.min(3, cleanName.length));
+    return `${initials}@mmis.msi`;
   };
 
   const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {

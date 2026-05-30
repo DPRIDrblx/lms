@@ -16,7 +16,8 @@ import {
   Award,
   CheckCircle2,
   Clock,
-  PlayCircle
+  PlayCircle,
+  BookOpen
 } from "lucide-react";
 import { useEffect, useState, use } from "react";
 import Link from "next/link";
@@ -89,51 +90,75 @@ export default function LessonDetailPage({ params }: { params: Promise<{ id: str
       </header>
 
       <div className="grid grid-cols-1 lg:grid-cols-4 gap-8">
-        <div className="lg:col-span-3 space-y-8">
+         <div className="lg:col-span-3 space-y-8">
            {/* Primary Content Container */}
            <Card className="p-0 overflow-hidden border-none shadow-2xl bg-[var(--bg-secondary)]">
-              {/* Media Section */}
-              {lesson.video_url && (
+              {lesson.content_type === "video" && lesson.video_url && (
                  <div className="aspect-video bg-black relative">
                     <iframe 
-                      src={lesson.video_url.replace("watch?v=", "embed/")} 
+                      src={lesson.video_url.includes("watch?v=") ? lesson.video_url.replace("watch?v=", "embed/") : lesson.video_url} 
                       className="w-full h-full border-none"
                       allowFullScreen
                     />
                  </div>
               )}
-              {lesson.pdf_url && (
-                 <div className="p-4 bg-[var(--bg-tertiary)] flex items-center justify-between">
-                    <div className="flex items-center gap-3">
-                       <File className="h-6 w-6 text-[var(--accent)]" />
-                       <span className="text-sm font-bold text-[var(--text-primary)]">Course Material.pdf</span>
-                    </div>
-                    <a href={lesson.pdf_url} target="_blank" rel="noopener noreferrer">
-                       <Button size="sm" icon={<Download className="h-4 w-4" />}>Download PDF</Button>
+              
+              {lesson.content_type === "pdf" && lesson.pdf_url && (
+                 <div className="p-12 text-center bg-[var(--bg-tertiary)] flex flex-col items-center justify-center space-y-4">
+                    <File className="h-16 w-16 text-[var(--accent)]" />
+                    <h3 className="text-xl font-bold text-[var(--text-primary)]">Modul PDF Tersedia</h3>
+                    <p className="text-sm text-[var(--text-secondary)]">Silakan baca dokumen ini secara seksama.</p>
+                    <a href={lesson.pdf_url} target="_blank" rel="noopener noreferrer" onClick={handleMarkComplete}>
+                       <Button size="lg" icon={<Download className="h-5 w-5" />}>Baca PDF & Dapatkan XP</Button>
                     </a>
                  </div>
               )}
 
               {/* Textual Content */}
-              <div className="p-8 sm:p-12 prose prose-invert max-w-none">
-                 <div 
-                   className="text-[var(--text-primary)] leading-relaxed space-y-4"
-                   dangerouslySetInnerHTML={{ __html: lesson.body_rich_text || lesson.body_text }}
-                 />
-              </div>
+              {lesson.content_type === "text" && (
+                <div className="p-8 sm:p-12 prose prose-invert max-w-none">
+                  {!completed ? (
+                    <div className="text-center space-y-6">
+                      <div className="h-32 overflow-hidden relative">
+                         <div 
+                           className="text-[var(--text-primary)] leading-relaxed space-y-4 blur-[2px] opacity-50"
+                           dangerouslySetInnerHTML={{ __html: lesson.body_text?.substring(0, 500) + '...' }}
+                         />
+                         <div className="absolute inset-0 bg-gradient-to-b from-transparent to-[var(--bg-secondary)]" />
+                      </div>
+                      <Button onClick={handleMarkComplete} size="lg" icon={<BookOpen className="h-5 w-5" />}>
+                        Baca Selengkapnya
+                      </Button>
+                    </div>
+                  ) : (
+                    <motion.div 
+                      initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }}
+                      className="text-[var(--text-primary)] leading-relaxed space-y-4"
+                      dangerouslySetInnerHTML={{ __html: lesson.body_text }}
+                    />
+                  )}
+                </div>
+              )}
            </Card>
 
            {/* Feedback/Navigation Footer */}
            <div className="flex items-center justify-between pt-8">
               <Button variant="secondary" className="rounded-2xl h-12 px-6">Previous Lesson</Button>
-              <Button 
-                onClick={handleMarkComplete} 
-                disabled={completed}
-                className={`rounded-2xl h-12 px-8 font-black ${completed ? "bg-green-500 hover:bg-green-600 border-none" : ""}`}
-                icon={completed ? <CheckCircle2 className="h-5 w-5" /> : <Award className="h-5 w-5" />}
-              >
-                 {completed ? "Lesson Completed" : `Finish & Earn ${lesson.xp_reward} XP`}
-              </Button>
+              {lesson.content_type !== "pdf" && lesson.content_type !== "text" && (
+                <Button 
+                  onClick={handleMarkComplete} 
+                  disabled={completed}
+                  className={`rounded-2xl h-12 px-8 font-black ${completed ? "bg-green-500 hover:bg-green-600 border-none" : ""}`}
+                  icon={completed ? <CheckCircle2 className="h-5 w-5" /> : <Award className="h-5 w-5" />}
+                >
+                   {completed ? "Lesson Completed" : `Selesai Menonton & Dapatkan ${lesson.xp_reward || 10} XP`}
+                </Button>
+              )}
+              {lesson.content_type === "text" && completed && (
+                <div className="flex items-center gap-2 text-green-500 font-bold">
+                  <CheckCircle2 className="h-5 w-5" /> Materi Telah Dibaca
+                </div>
+              )}
            </div>
         </div>
 

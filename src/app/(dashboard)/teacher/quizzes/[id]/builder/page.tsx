@@ -11,12 +11,15 @@ import {
   Trash2, 
   CheckCircle2, 
   Circle, 
+  CheckSquare,
+  Square,
   GripVertical, 
   Save,
   HelpCircle,
   Type,
   Loader2,
-  X
+  X,
+  Link as LinkIcon
 } from "lucide-react";
 import Link from "next/link";
 import { useParams, useRouter } from "next/navigation";
@@ -26,8 +29,8 @@ import { motion, AnimatePresence } from "framer-motion";
 interface Question {
   id: string;
   question_text: string;
-  question_type: "mcq" | "essay";
-  options: { text: string; is_correct: boolean }[] | null;
+  question_type: "mcq" | "essay" | "complex_mcq" | "matching";
+  options: { text: string; is_correct?: boolean; match_pair?: string }[] | null;
   points: number;
   order_index: number;
 }
@@ -55,16 +58,19 @@ export default function CBTBuilderPage() {
     fetchData();
   }, [id, supabase]);
 
-  const addQuestion = (type: "mcq" | "essay") => {
+  const addQuestion = (type: "mcq" | "essay" | "complex_mcq" | "matching") => {
     const newQ: Question = {
       id: `temp-${Date.now()}`,
       question_text: "",
       question_type: type,
       points: 10,
       order_index: questions.length,
-      options: type === "mcq" ? [
-        { text: "Option 1", is_correct: true },
+      options: type === "mcq" || type === "complex_mcq" ? [
+        { text: "Option 1", is_correct: type === "mcq" ? true : false },
         { text: "Option 2", is_correct: false },
+      ] : type === "matching" ? [
+        { text: "Term 1", match_pair: "Definition 1" },
+        { text: "Term 2", match_pair: "Definition 2" }
       ] : null
     };
     setQuestions([...questions, newQ]);
@@ -80,7 +86,6 @@ export default function CBTBuilderPage() {
 
   const handleSave = async () => {
     setSaving(true);
-    // Delete existing questions and insert new ones (simple sync strategy)
     await supabase.from("questions").delete().eq("quiz_id", id);
     
     const questionsToSave = questions.map((q, idx) => ({
@@ -122,12 +127,12 @@ export default function CBTBuilderPage() {
         <AnimatePresence>
           {questions.map((q, idx) => (
             <motion.div key={q.id} initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, x: -20 }}>
-              <Card className="relative group">
+              <Card className="relative group p-6">
                 <div className="absolute left-3 top-7 text-[var(--text-tertiary)] cursor-grab">
                   <GripVertical className="h-4 w-4" />
                 </div>
                 
-                <div className="pl-8 space-y-4">
+                <div className="pl-6 space-y-4">
                   <div className="flex items-start justify-between">
                     <div className="flex-1 mr-4">
                       <input
@@ -139,8 +144,11 @@ export default function CBTBuilderPage() {
                     </div>
                     <div className="flex items-center gap-2">
                       <Badge variant="info" className="flex items-center gap-1">
-                        {q.question_type === "mcq" ? <HelpCircle className="h-3 w-3" /> : <Type className="h-3 w-3" />}
-                        {q.question_type.toUpperCase()}
+                        {q.question_type === "mcq" && <HelpCircle className="h-3 w-3" />}
+                        {q.question_type === "complex_mcq" && <CheckSquare className="h-3 w-3" />}
+                        {q.question_type === "matching" && <LinkIcon className="h-3 w-3" />}
+                        {q.question_type === "essay" && <Type className="h-3 w-3" />}
+                        {q.question_type.toUpperCase().replace("_", " ")}
                       </Badge>
                       <button onClick={() => removeQuestion(q.id)} className="p-2 text-[var(--error)] hover:bg-[var(--error-light)] rounded-lg transition-colors">
                         <Trash2 className="h-4 w-4" />
@@ -148,18 +156,30 @@ export default function CBTBuilderPage() {
                     </div>
                   </div>
 
-                  {q.question_type === "mcq" && q.options && (
+                  {/* Multiple Choice & Complex MCQ */}
+                  {(q.question_type === "mcq" || q.question_type === "complex_mcq") && q.options && (
                     <div className="space-y-2">
                       {q.options.map((opt, oIdx) => (
                         <div key={oIdx} className="flex items-center gap-3">
                           <button 
                             onClick={() => {
-                              const newOpts = q.options!.map((o, i) => ({ ...o, is_correct: i === oIdx }));
+                              const newOpts = q.options!.map((o, i) => {
+                                if (q.question_type === "mcq") {
+                                  return { ...o, is_correct: i === oIdx };
+                                } else {
+                                  if (i === oIdx) return { ...o, is_correct: !o.is_correct };
+                                  return o;
+                                }
+                              });
                               updateQuestion(q.id, { options: newOpts });
                             }}
                             className={opt.is_correct ? "text-[var(--success)]" : "text-[var(--text-tertiary)]"}
                           >
-                            {opt.is_correct ? <CheckCircle2 className="h-5 w-5" /> : <Circle className="h-5 w-5" />}
+                            {q.question_type === "mcq" ? (
+                              opt.is_correct ? <CheckCircle2 className="h-5 w-5" /> : <Circle className="h-5 w-5" />
+                            ) : (
+                              opt.is_correct ? <CheckSquare className="h-5 w-5" /> : <Square className="h-5 w-5" />
+                            )}
                           </button>
                           <input
                             className="flex-1 text-sm bg-[var(--bg-secondary)] border border-[var(--border)] rounded-lg px-3 py-2 focus:ring-1 focus:ring-[var(--accent)]"
@@ -196,14 +216,70 @@ export default function CBTBuilderPage() {
                     </div>
                   )}
 
-                  <div className="flex items-center gap-4 pt-2">
+                  {/* Matching Option */}
+                  {q.question_type === "matching" && q.options && (
+                    <div className="space-y-2">
+                      <div className="grid grid-cols-2 gap-4 mb-2">
+                        <span className="text-xs font-bold uppercase text-[var(--text-tertiary)]">Premise (Term)</span>
+                        <span className="text-xs font-bold uppercase text-[var(--text-tertiary)]">Response (Definition)</span>
+                      </div>
+                      {q.options.map((opt, oIdx) => (
+                        <div key={oIdx} className="flex items-center gap-3">
+                          <input
+                            className="flex-1 text-sm bg-[var(--bg-secondary)] border border-[var(--border)] rounded-lg px-3 py-2 focus:ring-1 focus:ring-[var(--accent)]"
+                            value={opt.text}
+                            onChange={(e) => {
+                              const newOpts = [...q.options!];
+                              newOpts[oIdx].text = e.target.value;
+                              updateQuestion(q.id, { options: newOpts });
+                            }}
+                            placeholder="e.g. Mitochondria"
+                          />
+                          <LinkIcon className="h-4 w-4 text-[var(--text-tertiary)] flex-shrink-0" />
+                          <input
+                            className="flex-1 text-sm bg-[var(--bg-secondary)] border border-[var(--border)] rounded-lg px-3 py-2 focus:ring-1 focus:ring-[var(--accent)]"
+                            value={opt.match_pair || ""}
+                            onChange={(e) => {
+                              const newOpts = [...q.options!];
+                              newOpts[oIdx].match_pair = e.target.value;
+                              updateQuestion(q.id, { options: newOpts });
+                            }}
+                            placeholder="e.g. Powerhouse of the cell"
+                          />
+                          {q.options!.length > 2 && (
+                            <button 
+                              onClick={() => {
+                                const newOpts = q.options!.filter((_, i) => i !== oIdx);
+                                updateQuestion(q.id, { options: newOpts });
+                              }}
+                              className="text-[var(--text-tertiary)] hover:text-[var(--error)]"
+                            >
+                              <X className="h-3.5 w-3.5" />
+                            </button>
+                          )}
+                        </div>
+                      ))}
+                      <Button 
+                        variant="ghost" 
+                        size="sm" 
+                        className="text-xs mt-2" 
+                        onClick={() => {
+                          updateQuestion(q.id, { options: [...q.options!, { text: `Term ${q.options!.length + 1}`, match_pair: `Definition ${q.options!.length + 1}` }] });
+                        }}
+                      >
+                        + Add Pair
+                      </Button>
+                    </div>
+                  )}
+
+                  <div className="flex items-center gap-4 pt-4 border-t border-[var(--border)]">
                     <div className="flex items-center gap-2">
-                      <span className="text-xs text-[var(--text-tertiary)]">Points:</span>
+                      <span className="text-xs font-bold text-[var(--text-tertiary)] uppercase">Points:</span>
                       <input
                         type="number"
-                        className="w-16 h-8 text-center text-sm bg-[var(--bg-secondary)] border border-[var(--border)] rounded-lg"
+                        className="w-20 p-2 text-center text-sm font-black bg-[var(--bg-secondary)] border border-[var(--border)] rounded-lg focus:outline-[var(--accent)]"
                         value={q.points}
-                        onChange={(e) => updateQuestion(q.id, { points: parseInt(e.target.value) })}
+                        onChange={(e) => updateQuestion(q.id, { points: parseInt(e.target.value) || 0 })}
                       />
                     </div>
                   </div>
@@ -213,12 +289,18 @@ export default function CBTBuilderPage() {
           ))}
         </AnimatePresence>
 
-        <div className="flex items-center justify-center gap-4 py-8">
+        <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 py-8">
           <Button variant="secondary" onClick={() => addQuestion("mcq")} icon={<Plus className="h-4 w-4" />}>
             Multiple Choice
           </Button>
+          <Button variant="secondary" onClick={() => addQuestion("complex_mcq")} icon={<Plus className="h-4 w-4" />}>
+            Complex PG
+          </Button>
+          <Button variant="secondary" onClick={() => addQuestion("matching")} icon={<Plus className="h-4 w-4" />}>
+            Matching
+          </Button>
           <Button variant="secondary" onClick={() => addQuestion("essay")} icon={<Plus className="h-4 w-4" />}>
-            Essay Question
+            Essay
           </Button>
         </div>
       </div>

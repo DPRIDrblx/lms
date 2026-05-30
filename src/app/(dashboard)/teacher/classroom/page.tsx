@@ -26,15 +26,20 @@ export default function TeacherClassroomPage() {
   
   const [students, setStudents] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
-  const [activeTab, setActiveTab] = useState<"students" | "chat">("students");
+  const [activeTab, setActiveTab] = useState<"students" | "chat" | "leadership">("students");
   const [chatMessage, setChatMessage] = useState("");
+  const [leadership, setLeadership] = useState<any[]>([]);
 
   useEffect(() => {
     fetchClassData();
-  }, []);
+  }, [profile]);
 
   const fetchClassData = async () => {
-    // 1. Get students in the teacher's class (simplified logic)
+    if (!profile?.class_id) {
+       setLoading(false);
+       return;
+    }
+    // 1. Get students in the teacher's class
     const { data: stds } = await supabase
       .from("profiles")
       .select(`
@@ -42,10 +47,17 @@ export default function TeacherClassroomPage() {
         wallets (balance, updated_at)
       `)
       .eq("role", "student")
-      .limit(20);
+      .eq("class_id", profile.class_id)
+      .limit(50);
     
-    // Simulate classroom grouping
+    // 2. Get leadership
+    const { data: lds } = await supabase
+      .from("class_leadership")
+      .select("*, profiles(full_name, avatar_url, role)")
+      .eq("class_id", profile.class_id);
+
     setStudents(stds || []);
+    setLeadership(lds || []);
     setLoading(false);
   };
 
@@ -54,18 +66,26 @@ export default function TeacherClassroomPage() {
       <header className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
           <h1 className="text-3xl font-bold text-[var(--text-primary)]">Classroom Management</h1>
-          <p className="text-[var(--text-secondary)] mt-1">Wali Kelas Dashboard for Class 10-A (Science)</p>
+          <p className="text-[var(--text-secondary)] mt-1">
+             {profile?.class_id ? "Wali Kelas Dashboard" : "Anda bukan wali kelas aktif."}
+          </p>
         </div>
-        <div className="flex bg-[var(--bg-secondary)] p-1 rounded-xl border border-[var(--border)]">
+        <div className="flex bg-[var(--bg-secondary)] p-1 rounded-xl border border-[var(--border)] overflow-x-auto">
           <button 
             onClick={() => setActiveTab("students")}
-            className={`px-6 py-2 rounded-lg text-sm font-bold transition-all ${activeTab === 'students' ? "bg-white shadow-sm text-[var(--accent)]" : "text-[var(--text-tertiary)]"}`}
+            className={`px-6 py-2 rounded-lg text-sm font-bold transition-all whitespace-nowrap ${activeTab === 'students' ? "bg-white shadow-sm text-[var(--accent)]" : "text-[var(--text-tertiary)]"}`}
           >
             Students
           </button>
           <button 
+            onClick={() => setActiveTab("leadership")}
+            className={`px-6 py-2 rounded-lg text-sm font-bold transition-all whitespace-nowrap ${activeTab === 'leadership' ? "bg-white shadow-sm text-[var(--accent)]" : "text-[var(--text-tertiary)]"}`}
+          >
+            Pengurus Kelas
+          </button>
+          <button 
             onClick={() => setActiveTab("chat")}
-            className={`px-6 py-2 rounded-lg text-sm font-bold transition-all ${activeTab === 'chat' ? "bg-white shadow-sm text-[var(--accent)]" : "text-[var(--text-tertiary)]"}`}
+            className={`px-6 py-2 rounded-lg text-sm font-bold transition-all whitespace-nowrap ${activeTab === 'chat' ? "bg-white shadow-sm text-[var(--accent)]" : "text-[var(--text-tertiary)]"}`}
           >
             Group Chat
           </button>
@@ -73,7 +93,7 @@ export default function TeacherClassroomPage() {
       </header>
 
       <AnimatePresence mode="wait">
-        {activeTab === "students" ? (
+        {activeTab === "students" && (
           <motion.div 
             key="students"
             initial={{ opacity: 0, y: 20 }}
@@ -154,7 +174,68 @@ export default function TeacherClassroomPage() {
               </div>
             </Card>
           </motion.div>
-        ) : (
+        )}
+        
+        {activeTab === "leadership" && (
+          <motion.div 
+            key="leadership"
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -20 }}
+            className="space-y-8"
+          >
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+               <Card className="p-6 col-span-1 md:col-span-2 bg-[var(--accent)] text-white relative overflow-hidden">
+                  <div className="absolute top-0 right-0 w-64 h-64 bg-white/10 rounded-full -mr-20 -mt-20 blur-3xl pointer-events-none" />
+                  <h3 className="text-xl font-bold mb-2">Struktur Kepengurusan Kelas</h3>
+                  <p className="text-white/80 text-sm max-w-2xl">
+                     Kelola ketua kelas, wakil, sekretaris, dan pendamping wali kelas di sini. 
+                     Posisi kepemimpinan ini akan memberi mereka badge khusus di profil masing-masing.
+                  </p>
+               </Card>
+               
+               {/* We map predefined roles to UI block */}
+               {["Ketua Kelas", "Wakil Ketua", "Sekretaris 1", "Sekretaris 2", "Pendamping Wali Kelas (Teacher)", "Pengawas Kelas (Teacher)"].map((roleTitle) => {
+                 const leader = leadership.find(l => l.role_title === roleTitle);
+                 return (
+                   <Card key={roleTitle} className="p-0 overflow-hidden flex flex-col">
+                     <div className="p-4 bg-[var(--bg-secondary)] border-b border-[var(--border)] flex items-center justify-between">
+                       <h4 className="font-bold text-[var(--text-primary)] text-sm">{roleTitle}</h4>
+                       <Badge variant="default" className="text-[10px] uppercase">
+                          {leader ? "Terisi" : "Kosong"}
+                       </Badge>
+                     </div>
+                     <div className="p-6 flex items-center gap-4">
+                        {leader ? (
+                           <>
+                             <div className="h-12 w-12 rounded-full bg-[var(--accent-light)] flex items-center justify-center font-bold text-[var(--accent)] text-lg border-2 border-[var(--accent)]">
+                               {leader.profiles?.full_name?.split(' ').map((n: string) => n[0]).join('').substring(0, 2)}
+                             </div>
+                             <div>
+                               <p className="font-bold text-[var(--text-primary)]">{leader.profiles?.full_name}</p>
+                               <p className="text-xs text-[var(--text-tertiary)] uppercase font-medium mt-1">{leader.profiles?.role}</p>
+                             </div>
+                             <Button variant="ghost" size="sm" className="ml-auto text-[var(--error)] hover:bg-red-50 hover:text-red-600">
+                                Copot
+                             </Button>
+                           </>
+                        ) : (
+                           <div className="flex flex-col w-full gap-3">
+                             <p className="text-sm text-[var(--text-secondary)] italic">Belum ada yang ditugaskan.</p>
+                             <Button variant="secondary" size="sm" className="w-fit text-xs h-8">
+                               + Tunjuk Seseorang
+                             </Button>
+                           </div>
+                        )}
+                     </div>
+                   </Card>
+                 );
+               })}
+            </div>
+          </motion.div>
+        )}
+
+        {activeTab === "chat" && (
           <motion.div 
             key="chat"
             initial={{ opacity: 0, scale: 0.98 }}
@@ -169,8 +250,8 @@ export default function TeacherClassroomPage() {
                     <MessageSquare className="h-5 w-5" />
                   </div>
                   <div>
-                    <h3 className="text-sm font-bold text-[var(--text-primary)]">Class 10-A Group Chat</h3>
-                    <p className="text-[10px] text-[var(--success)] font-medium">12 Participants Online</p>
+                    <h3 className="text-sm font-bold text-[var(--text-primary)]">Classroom Group Chat</h3>
+                    <p className="text-[10px] text-[var(--success)] font-medium">Live Server</p>
                   </div>
                 </div>
                 <Button variant="ghost" size="sm"><MoreVertical className="h-4 w-4" /></Button>

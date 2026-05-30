@@ -91,42 +91,36 @@ export default function QRTeacherPage() {
     fetchTeacherCourses();
   }, [fetchSessions, fetchTeacherCourses]);
 
-  // When active session changes, we need to find its class_id and fetch those students
+  // When active session changes, we need to find its class_id and fetch those students, and listen to changes
   useEffect(() => {
     if (!activeSession) return;
     
     // We need the class_id to filter students
     const fetchSessionClassStudents = async () => {
-       const { data: courseData } = await supabase.from("courses").select("class_id").eq("id", (activeSession as any).course_id).single();
-       if (courseData && courseData.class_id) {
-         await fetchStudents(courseData.class_id);
+       const { data: courseData } = await supabase.from("courses").select("class_id").eq("id", (activeSession as any).course_id).maybeSingle();
+       if (courseData?.class_id) {
+          fetchStudents(courseData.class_id);
        }
     };
     fetchSessionClassStudents();
-    
     fetchLogs(activeSession.id);
-
-    // Supabase Realtime subscription
-    const channel = supabase
-      .channel(`attendance-${activeSession.id}`)
-      .on(
-        "postgres_changes",
-        {
-          event: "INSERT",
-          schema: "public",
-          table: "attendance_logs",
-          filter: `session_id=eq.${activeSession.id}`,
-        },
-        async () => {
-          await fetchLogs(activeSession.id);
-        }
-      )
+    const channel = supabase.channel(`attendance-${activeSession.id}`)
+      .on('postgres_changes', { 
+        event: 'INSERT', 
+        schema: 'public', 
+        table: 'attendance_logs', 
+        filter: `session_id=eq.${activeSession.id}` 
+      }, (payload: any) => {
+        // Fetch profile detail for the new log
+        supabase.from("profiles").select("full_name, avatar_url").eq("id", payload.new.student_id).single()
+          .then(({ data }: any) => {
+            setLogs(prev => [...prev, { ...payload.new, profiles: data } as LogEntry]);
+          });
+      })
       .subscribe();
 
-    return () => {
-      supabase.removeChannel(channel);
-    };
-  }, [activeSession, supabase, fetchLogs]);
+    return () => { supabase.removeChannel(channel); };
+  }, [activeSession, fetchLogs, fetchStudents, supabase]);
 
   const createSession = async () => {
     if (!profile || !selectedCourse) return;

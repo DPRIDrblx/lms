@@ -2,33 +2,18 @@
 
 import { useAuth } from "@/lib/auth-context";
 import { createClient } from "@/lib/supabase";
-import { Card } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
-import { 
-  Clock, 
-  ChevronLeft, 
-  ChevronRight, 
-  Flag, 
-  CheckCircle2, 
-  Loader2,
-  LayoutGrid,
-  ShieldAlert,
-  Save,
-  Monitor
-} from "lucide-react";
-import { useEffect, useState, use, useCallback, useRef } from "react";
-import { motion, AnimatePresence } from "framer-motion";
-import { toast } from "react-hot-toast";
 import { useRouter } from "next/navigation";
+import { useEffect, useState, use, useCallback } from "react";
 
-export default function IndustrialCBTPage({ params }: { params: Promise<{ id: string }> }) {
+// Lucide icons removed to keep it "Old School/Classic" 
+// Using basic HTML symbols instead where needed.
+
+export default function ExamPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = use(params);
   const { profile } = useAuth();
   const supabase = createClient();
   const router = useRouter();
 
-  // State
   const [quiz, setQuiz] = useState<any>(null);
   const [questions, setQuestions] = useState<any[]>([]);
   const [currentIndex, setCurrentIndex] = useState(0);
@@ -39,7 +24,9 @@ export default function IndustrialCBTPage({ params }: { params: Promise<{ id: st
   const [isFinished, setIsFinished] = useState(false);
   const [session, setSession] = useState<any>(null);
 
-  // 1. Data Fetching
+  // Drag and drop state for matching
+  const [draggedItem, setDraggedItem] = useState<string | null>(null);
+
   const initExam = useCallback(async () => {
     if (!profile) return;
     
@@ -58,80 +45,157 @@ export default function IndustrialCBTPage({ params }: { params: Promise<{ id: st
       if (existing.status === 'submitted') { setIsFinished(true); setLoading(false); return; }
       setSession(existing);
       setTimeLeft(existing.time_left_seconds);
-      setFlags(existing.metadata?.flags || {});
       
       const { data: resp } = await supabase.from("quiz_responses").select("*").eq("student_id", profile.id).eq("quiz_id", id);
-      const rMap: Record<string, any> = {};
-      resp?.forEach((r: any) => { try { rMap[r.question_id] = JSON.parse(r.answer_text); } catch { rMap[r.question_id] = r.answer_text; } });
-      setResponses(rMap);
+      if (resp) {
+        const initialResp: Record<string, any> = {};
+        const initialFlags: Record<string, boolean> = {};
+        resp.forEach((r: any) => {
+          if (r.metadata?.answer) {
+             initialResp[r.question_id] = r.metadata.answer;
+          }
+          initialFlags[r.question_id] = r.is_flagged;
+        });
+        setResponses(initialResp);
+        setFlags(initialFlags);
+      }
     } else {
-      const initialTime = (qData.data?.time_limit_minutes || 60) * 60;
-      const { data: newS } = await supabase.from("exam_sessions").insert({
-        student_id: profile.id, quiz_id: id, time_left_seconds: initialTime, status: 'ongoing'
+      const { data: newSession } = await supabase.from("exam_sessions").insert({
+        student_id: profile.id,
+        quiz_id: id,
+        time_left_seconds: (qData.data?.time_limit_minutes || 60) * 60,
+        status: 'in_progress',
+        metadata: { started_at: new Date().toISOString() }
       }).select().single();
-      setSession(newS);
-      setTimeLeft(initialTime);
+      
+      if (newSession) {
+        setSession(newSession);
+        setTimeLeft(newSession.time_left_seconds);
+      }
     }
+    
     setLoading(false);
-  }, [id, profile, supabase]);
+  }, [profile, id, supabase]);
 
   useEffect(() => { initExam(); }, [initExam]);
 
-  // 2. Timer & Auto-Save
   useEffect(() => {
     if (timeLeft <= 0 || loading || isFinished) return;
-    const timer = setInterval(() => {
+    const t = setInterval(() => {
       setTimeLeft(prev => {
-        const next = prev - 1;
-        if (next % 10 === 0) supabase.from("exam_sessions").update({ time_left_seconds: next }).eq("id", session?.id);
-        return next;
+        if (prev <= 1) { clearInterval(t); submitExam(); return 0; }
+        return prev - 1;
       });
     }, 1000);
-    return () => clearInterval(timer);
-  }, [timeLeft, loading, isFinished, session, supabase]);
+    return () => clearInterval(t);
+  }, [timeLeft, loading, isFinished]);
 
-  // 3. Anti-Cheat
+  // Handle Tab blur for anti-cheat
   useEffect(() => {
-    const onBlur = () => { if (!isFinished && !loading) toast.error("PERINGATAN: Perpindahan jendela terdeteksi!", { duration: 5000, icon: <ShieldAlert className="text-red-600" /> }); };
-    window.addEventListener("blur", onBlur);
-    return () => window.removeEventListener("blur", onBlur);
+    const handleBlur = () => {
+      if (!isFinished && !loading) {
+        alert("PERINGATAN KECURANGAN: Anda telah meninggalkan halaman ujian! Aktivitas dicatat.");
+      }
+    };
+    window.addEventListener("blur", handleBlur);
+    return () => window.removeEventListener("blur", handleBlur);
   }, [isFinished, loading]);
 
-  // 4. Persistence
-  const saveAnswer = async (qId: string, val: any) => {
-    setResponses(prev => ({ ...prev, [qId]: val }));
+  const saveAnswer = async (qId: string, answer: any) => {
+    const newResponses = { ...responses, [qId]: answer };
+    setResponses(newResponses);
+    
     await supabase.from("quiz_responses").upsert({
-      student_id: profile?.id, quiz_id: id, question_id: qId, answer_text: JSON.stringify(val), is_flagged: flags[qId] || false
-    });
+      student_id: profile?.id,
+      quiz_id: id,
+      question_id: qId,
+      metadata: { answer },
+      is_flagged: flags[qId] || false
+    }, { onConflict: 'student_id,question_id' });
   };
 
   const setFlag = async (qId: string) => {
     const val = !flags[qId];
     const newFlags = { ...flags, [qId]: val };
     setFlags(newFlags);
-    await supabase.from("exam_sessions").update({ metadata: { ...session?.metadata, flags: newFlags } }).eq("id", session?.id);
+    
     await supabase.from("quiz_responses").update({ is_flagged: val }).eq("student_id", profile?.id).eq("question_id", qId);
   };
 
   const submitExam = async () => {
-    if (!confirm("Apakah Anda yakin ingin mengakhiri ujian ini?")) return;
+    if (timeLeft > 0 && !confirm("Apakah Anda yakin ingin mengakhiri ujian ini?")) return;
     await supabase.from("exam_sessions").update({ status: 'submitted', time_left_seconds: 0 }).eq("id", session?.id);
+    
+    // We also need to process grading!
+    let totalScore = 0;
+    let maxScore = 0;
+    let hasEssay = false;
+
+    questions.forEach(q => {
+      maxScore += q.points;
+      const ans = responses[q.id];
+      if (!ans) return;
+
+      if (q.question_type === "mcq") {
+        const correctOpt = q.options?.find((o: any) => o.is_correct);
+        if (ans === correctOpt?.text) totalScore += q.points;
+      } else if (q.question_type === "complex_mcq") {
+        const correctOpts = q.options?.filter((o: any) => o.is_correct).map((o: any) => o.text) || [];
+        const isCorrect = Array.isArray(ans) && ans.length === correctOpts.length && ans.every(a => correctOpts.includes(a));
+        if (isCorrect) totalScore += q.points;
+      } else if (q.question_type === "matching") {
+        let matches = 0;
+        let totalPairs = q.options?.length || 1;
+        q.options?.forEach((opt: any) => {
+          if (ans[opt.text] === opt.match_pair) matches++;
+        });
+        totalScore += (matches / totalPairs) * q.points;
+      } else if (q.question_type === "essay") {
+        hasEssay = true;
+      }
+    });
+
+    const finalPercentage = Math.round((totalScore / maxScore) * 100);
+
+    // Save final grade
+    await supabase.from("student_scores").insert({
+      student_id: profile?.id,
+      target_id: id,
+      target_type: "quiz",
+      score: finalPercentage,
+      is_graded: !hasEssay,
+      submission_url: JSON.stringify(responses), 
+      graded_at: hasEssay ? null : new Date().toISOString()
+    });
+
     setIsFinished(true);
   };
 
-  const formatTime = (s: number) => `${Math.floor(s/60)}:${(s%60).toString().padStart(2,'0')}`;
+  const formatTime = (s: number) => {
+    const h = Math.floor(s / 3600);
+    const m = Math.floor((s % 3600) / 60);
+    const sec = s % 60;
+    if (h > 0) return `${h.toString().padStart(2,'0')}:${m.toString().padStart(2,'0')}:${sec.toString().padStart(2,'0')}`;
+    return `${m.toString().padStart(2,'0')}:${sec.toString().padStart(2,'0')}`;
+  };
 
-  if (loading) return <div className="h-screen flex items-center justify-center bg-slate-900 text-white font-mono uppercase tracking-widest"><Loader2 className="animate-spin mr-3" /> Mempersiapkan Lingkungan Ujian...</div>;
+  if (loading) return <div style={{height: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', backgroundColor: '#e2e8f0', fontFamily: 'Arial, sans-serif'}}>Memuat Data Ujian...</div>;
 
   if (isFinished) {
     return (
-      <div className="h-screen flex flex-col items-center justify-center bg-slate-50 text-center p-8">
-         <div className="bg-white p-12 rounded-3xl shadow-2xl border border-slate-200 max-w-lg">
-            <CheckCircle2 className="h-20 w-20 text-emerald-500 mx-auto mb-6" />
-            <h1 className="text-3xl font-black text-slate-900 mb-2">Ujian Selesai</h1>
-            <p className="text-slate-500 font-bold uppercase text-xs tracking-widest mb-8">Data Telah Berhasil Disinkronisasi</p>
-            <p className="text-slate-600 mb-8 leading-relaxed">Terima kasih <strong>{profile?.full_name}</strong>. Jawaban Anda telah tersimpan secara permanen di cloud Nusantara Academy.</p>
-            <Button className="w-full h-14 rounded-xl bg-slate-900 font-bold" onClick={() => router.push('/dashboard')}>Kembali ke Dashboard</Button>
+      <div style={{height: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', backgroundColor: '#e2e8f0', fontFamily: 'Arial, sans-serif'}}>
+         <div style={{backgroundColor: '#fff', padding: '40px', border: '1px solid #ccc', maxWidth: '500px', textAlign: 'center'}}>
+            <h1 style={{fontSize: '24px', fontWeight: 'bold', color: '#1e3a8a', marginBottom: '10px'}}>UJIAN SELESAI</h1>
+            <p style={{fontSize: '14px', color: '#475569', marginBottom: '20px'}}>Jawaban Anda telah disinkronisasikan dengan server.</p>
+            <p style={{fontSize: '14px', color: '#475569', marginBottom: '30px'}}>
+              Silakan kembali ke Dashboard. Jika terdapat soal Essay, nilai Anda berstatus <strong>Menunggu Penilaian Guru</strong>.
+            </p>
+            <button 
+              onClick={() => router.push('/dashboard')}
+              style={{padding: '10px 20px', backgroundColor: '#1e3a8a', color: 'white', border: 'none', cursor: 'pointer', fontWeight: 'bold'}}
+            >
+              KEMBALI KE DASHBOARD
+            </button>
          </div>
       </div>
     );
@@ -140,164 +204,298 @@ export default function IndustrialCBTPage({ params }: { params: Promise<{ id: st
   const currentQ = questions[currentIndex];
 
   return (
-    <div className="min-h-screen bg-slate-200 flex flex-col font-sans select-none">
-      {/* INDUSTRIAL HEADER */}
-      <header className="bg-slate-800 text-white border-b-4 border-blue-600 sticky top-0 z-50 px-6 py-4">
-         <div className="max-w-[1400px] mx-auto flex items-center justify-between">
-            <div className="flex items-center gap-8">
-               <div className="flex flex-col border-r border-slate-600 pr-8">
-                  <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">Peserta</span>
-                  <span className="text-sm font-black uppercase text-blue-400">{profile?.full_name}</span>
-               </div>
-               <div className="flex flex-col">
-                  <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">Mata Pelajaran</span>
-                  <span className="text-sm font-black uppercase">{quiz?.title}</span>
-               </div>
-            </div>
-
-            <div className="flex items-center gap-6">
-               <div className={`px-10 py-3 rounded-lg border-2 flex flex-col items-center transition-all ${timeLeft < 300 ? "bg-red-600 border-red-400 animate-pulse" : "bg-slate-700 border-slate-600"}`}>
-                  <span className="text-[9px] font-black uppercase opacity-60">Sisa Waktu</span>
-                  <span className="text-3xl font-black font-mono leading-none mt-1 tracking-tighter">{formatTime(timeLeft)}</span>
-               </div>
-               <div className="hidden lg:flex items-center gap-2 px-4 py-2 bg-slate-900/50 rounded-lg border border-slate-600">
-                  <Monitor className="h-4 w-4 text-emerald-400" />
-                  <span className="text-[10px] font-bold text-slate-400 uppercase">Secure Client v2.0.4</span>
-               </div>
-            </div>
-         </div>
+    <div style={{minHeight: '100vh', backgroundColor: '#f1f5f9', fontFamily: 'Arial, Helvetica, sans-serif', color: '#1e293b'}}>
+      {/* HEADER CLASSIC */}
+      <header style={{backgroundColor: '#1e3a8a', color: 'white', borderBottom: '5px solid #ef4444', padding: '10px 20px', display: 'flex', justifyContent: 'space-between', alignItems: 'center'}}>
+        <div style={{display: 'flex', alignItems: 'center', gap: '30px'}}>
+          <div style={{borderRight: '1px solid #3b82f6', paddingRight: '30px'}}>
+            <div style={{fontSize: '10px', color: '#93c5fd', textTransform: 'uppercase', letterSpacing: '1px'}}>CBT Application System</div>
+            <div style={{fontSize: '18px', fontWeight: 'bold'}}>{quiz?.title}</div>
+          </div>
+          <div>
+            <div style={{fontSize: '10px', color: '#93c5fd', textTransform: 'uppercase'}}>Nama Peserta</div>
+            <div style={{fontSize: '14px', fontWeight: 'bold'}}>{profile?.full_name}</div>
+          </div>
+        </div>
+        
+        <div style={{display: 'flex', alignItems: 'center', gap: '15px'}}>
+          <div style={{backgroundColor: timeLeft < 300 ? '#ef4444' : '#334155', padding: '10px 20px', border: '2px solid #475569'}}>
+            <div style={{fontSize: '10px', color: '#cbd5e1', textTransform: 'uppercase', textAlign: 'center'}}>Sisa Waktu</div>
+            <div style={{fontSize: '28px', fontWeight: 'bold', fontFamily: 'monospace', letterSpacing: '2px'}}>{formatTime(timeLeft)}</div>
+          </div>
+        </div>
       </header>
 
-      <main className="flex-1 max-w-[1400px] mx-auto w-full p-6 flex flex-col lg:flex-row gap-6">
-         {/* QUESTION AREA */}
-         <div className="flex-1 flex flex-col gap-6">
-            <Card className="flex-1 p-10 bg-white rounded-xl border-none shadow-xl flex flex-col relative overflow-hidden">
-               {/* Watermark */}
-               <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 opacity-[0.03] rotate-[-30deg] text-9xl font-black pointer-events-none select-none uppercase">Confidential</div>
-               
-               <div className="flex justify-between items-center mb-8 border-b-2 border-slate-50 pb-6">
-                  <div className="flex items-center gap-4">
-                     <div className="w-12 h-12 rounded bg-slate-900 text-white flex items-center justify-center font-black text-xl shadow-lg">
-                        {currentIndex + 1}
-                     </div>
-                     <Badge className="bg-slate-100 text-slate-500 border-none uppercase text-[10px] font-black px-3 py-1">Tipe: {currentQ?.question_type}</Badge>
-                  </div>
-                  <button 
-                    onClick={() => setFlag(currentQ.id)}
-                    className={`flex items-center gap-2 px-6 py-3 rounded-lg font-black text-[10px] uppercase tracking-widest transition-all ${flags[currentQ.id] ? "bg-amber-400 text-slate-900 shadow-lg" : "bg-slate-100 text-slate-400 hover:bg-slate-200"}`}
-                  >
-                     <Flag className={`h-4 w-4 ${flags[currentQ.id] ? "fill-slate-900" : ""}`} /> Ragu-Ragu
-                  </button>
-               </div>
-
-               <div className="flex-1">
-                  <div className="text-xl font-bold text-slate-800 leading-relaxed mb-12 select-none" dangerouslySetInnerHTML={{ __html: currentQ?.question_text }} />
-
-                  <div className="grid grid-cols-1 gap-4">
-                     {currentQ?.question_type === 'mcq' && currentQ.options?.map((opt: any, i: number) => {
-                        const isSelected = responses[currentQ.id] === opt.text;
-                        return (
-                           <button
-                             key={i}
-                             onClick={() => saveAnswer(currentQ.id, opt.text)}
-                             className={`group w-full flex items-center gap-6 p-6 rounded-xl border-2 transition-all text-left ${isSelected ? "border-blue-600 bg-blue-50 text-blue-900" : "border-slate-100 hover:border-slate-200 bg-slate-50/50"}`}
-                           >
-                              <div className={`w-10 h-10 rounded flex items-center justify-center font-black text-lg transition-all ${isSelected ? "bg-blue-600 text-white" : "bg-white text-slate-400 border border-slate-200 group-hover:border-slate-400"}`}>
-                                 {String.fromCharCode(65 + i)}
-                              </div>
-                              <span className="text-base font-bold uppercase">{opt.text}</span>
-                           </button>
-                        );
-                     })}
-
-                     {currentQ?.question_type === 'essay' && (
-                        <textarea 
-                           value={responses[currentQ.id] || ""}
-                           onChange={(e) => saveAnswer(currentQ.id, e.target.value)}
-                           className="w-full min-h-[300px] p-8 rounded-xl bg-slate-50 border-2 border-slate-200 text-lg font-medium focus:border-blue-600 focus:bg-white outline-none transition-all resize-none"
-                           placeholder="Ketikkan jawaban essay Anda secara lengkap di sini..."
-                        />
-                     )}
-                  </div>
-               </div>
-
-               <div className="mt-12 pt-8 border-t-2 border-slate-50 flex items-center justify-between">
-                  <Button 
-                    variant="ghost" 
-                    disabled={currentIndex === 0} 
-                    onClick={() => setCurrentIndex(prev => prev - 1)}
-                    className="h-14 px-8 rounded-lg font-black text-slate-400 hover:text-slate-900"
-                    icon={<ChevronLeft className="h-5 w-5" />}
-                  >
-                     SOAL SEBELUMNYA
-                  </Button>
-
-                  {currentIndex === questions.length - 1 ? (
-                    <Button onClick={submitExam} className="h-14 px-12 rounded-lg font-black bg-emerald-600 text-white shadow-xl shadow-emerald-500/20 hover:bg-emerald-700">AKHIRI UJIAN</Button>
-                  ) : (
-                    <Button 
-                       onClick={() => setCurrentIndex(i => i + 1)}
-                       className="h-14 px-12 rounded-lg font-black bg-blue-600 text-white shadow-xl shadow-blue-500/20 hover:bg-blue-700"
-                    >
-                       SOAL BERIKUTNYA <ChevronRight className="ml-2 h-5 w-5" />
-                    </Button>
-                  )}
-               </div>
-            </Card>
-
-            <div className="p-4 bg-blue-50 border border-blue-100 rounded-lg flex items-center gap-4 text-blue-700">
-               <Save className="h-5 w-5" />
-               <p className="text-[10px] font-black uppercase tracking-widest">Sistem telah mensinkronisasi jawaban terakhir ke server secara otomatis.</p>
+      <main style={{display: 'flex', gap: '20px', padding: '20px', maxWidth: '1400px', margin: '0 auto', height: 'calc(100vh - 85px)'}}>
+        
+        {/* LEFT PANEL: QUESTION CONTENT */}
+        <div style={{flex: 1, display: 'flex', flexDirection: 'column', gap: '15px'}}>
+          <div style={{flex: 1, backgroundColor: 'white', border: '1px solid #cbd5e1', padding: '25px', display: 'flex', flexDirection: 'column'}}>
+            
+            <div style={{display: 'flex', justifyContent: 'space-between', borderBottom: '2px solid #e2e8f0', paddingBottom: '15px', marginBottom: '20px'}}>
+              <div style={{display: 'flex', alignItems: 'center', gap: '15px'}}>
+                <div style={{fontSize: '24px', fontWeight: 'bold', color: '#1e3a8a'}}>Soal No. {currentIndex + 1}</div>
+                <div style={{backgroundColor: '#e2e8f0', padding: '4px 10px', fontSize: '12px', fontWeight: 'bold', border: '1px solid #cbd5e1'}}>
+                  Tipe: {currentQ?.question_type?.toUpperCase().replace("_", " ")}
+                </div>
+              </div>
             </div>
-         </div>
 
-         {/* SIDEBAR NAVIGATION GRID */}
-         <aside className="w-full lg:w-96">
-            <Card className="p-8 bg-white rounded-xl border-none shadow-xl sticky top-[108px]">
-               <div className="flex items-center gap-3 mb-8">
-                  <LayoutGrid className="h-5 w-5 text-slate-400" />
-                  <h3 className="text-sm font-black uppercase tracking-widest text-slate-900">Navigasi Soal</h3>
-               </div>
+            <div style={{flex: 1, overflowY: 'auto', fontSize: '16px', lineHeight: '1.6'}}>
+              <div style={{marginBottom: '30px'}} dangerouslySetInnerHTML={{ __html: currentQ?.question_text }} />
 
-               <div className="grid grid-cols-5 gap-3">
-                  {questions.map((q, i) => {
-                     const isAnswered = responses[q.id] && responses[q.id].length > 0;
-                     const isFlagged = flags[q.id];
-                     return (
-                        <button
-                           key={q.id}
-                           onClick={() => setCurrentIndex(i)}
-                           className={`aspect-square rounded-lg flex items-center justify-center text-xs font-black transition-all border-2 ${
-                              currentIndex === i ? "ring-2 ring-blue-600 ring-offset-4" : ""
-                           } ${
-                              isFlagged ? "bg-amber-400 border-amber-500 text-slate-900" :
-                              isAnswered ? "bg-blue-600 border-blue-700 text-white" :
-                              "bg-slate-50 border-slate-100 text-slate-400 hover:border-slate-300"
-                           }`}
-                        >
-                           {i + 1}
-                        </button>
-                     );
-                  })}
-               </div>
+              {/* RENDER QUESTION BY TYPE */}
+              <div style={{marginTop: '20px'}}>
+                
+                {/* MCQ */}
+                {currentQ?.question_type === 'mcq' && currentQ.options?.map((opt: any, i: number) => {
+                  const isSelected = responses[currentQ.id] === opt.text;
+                  return (
+                    <div 
+                      key={i}
+                      onClick={() => saveAnswer(currentQ.id, opt.text)}
+                      style={{display: 'flex', alignItems: 'center', padding: '15px', border: '1px solid', borderColor: isSelected ? '#1e3a8a' : '#cbd5e1', backgroundColor: isSelected ? '#eff6ff' : 'white', marginBottom: '10px', cursor: 'pointer'}}
+                    >
+                      <div style={{width: '30px', height: '30px', backgroundColor: isSelected ? '#1e3a8a' : '#e2e8f0', color: isSelected ? 'white' : 'black', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 'bold', marginRight: '15px', border: '1px solid #94a3b8'}}>
+                        {String.fromCharCode(65 + i)}
+                      </div>
+                      <span>{opt.text}</span>
+                    </div>
+                  );
+                })}
 
-               <div className="mt-10 pt-8 border-t border-slate-50 space-y-4">
-                  <div className="flex justify-between text-[10px] font-black uppercase text-slate-400">
-                     <span>Terjawab</span>
-                     <span className="text-slate-900 font-black">{Object.keys(responses).length} / {questions.length}</span>
-                  </div>
-                  <div className="h-2 w-full bg-slate-100 rounded-full overflow-hidden">
-                     <div className="h-full bg-blue-600 transition-all duration-700" style={{ width: `${(Object.keys(responses).length / questions.length) * 100}%` }} />
-                  </div>
+                {/* COMPLEX MCQ */}
+                {currentQ?.question_type === 'complex_mcq' && currentQ.options?.map((opt: any, i: number) => {
+                  const selectedArr = responses[currentQ.id] || [];
+                  const isSelected = selectedArr.includes(opt.text);
                   
-                  <div className="flex flex-wrap gap-4 mt-4">
-                     <div className="flex items-center gap-2"><div className="w-3 h-3 rounded bg-blue-600" /><span className="text-[9px] font-bold text-slate-400 uppercase">Sudah Terisi</span></div>
-                     <div className="flex items-center gap-2"><div className="w-3 h-3 rounded bg-amber-400" /><span className="text-[9px] font-bold text-slate-400 uppercase">Ragu-Ragu</span></div>
-                     <div className="flex items-center gap-2"><div className="w-3 h-3 rounded bg-slate-100 border border-slate-200" /><span className="text-[9px] font-bold text-slate-400 uppercase">Kosong</span></div>
-                  </div>
-               </div>
-            </Card>
-         </aside>
+                  const toggleSelect = () => {
+                    let newArr = [...selectedArr];
+                    if (isSelected) newArr = newArr.filter(item => item !== opt.text);
+                    else newArr.push(opt.text);
+                    saveAnswer(currentQ.id, newArr);
+                  };
+
+                  return (
+                    <div 
+                      key={i}
+                      onClick={toggleSelect}
+                      style={{display: 'flex', alignItems: 'center', padding: '15px', border: '1px solid', borderColor: isSelected ? '#1e3a8a' : '#cbd5e1', backgroundColor: isSelected ? '#eff6ff' : 'white', marginBottom: '10px', cursor: 'pointer'}}
+                    >
+                      <input 
+                        type="checkbox" 
+                        checked={isSelected}
+                        readOnly
+                        style={{width: '20px', height: '20px', marginRight: '15px', cursor: 'pointer'}}
+                      />
+                      <span>{opt.text}</span>
+                    </div>
+                  );
+                })}
+
+                {/* MATCHING (Simple Drag and Drop) */}
+                {currentQ?.question_type === 'matching' && (() => {
+                  const answersMap = responses[currentQ.id] || {}; // { term: definition }
+                  const terms = currentQ.options?.map((o: any) => o.text) || [];
+                  
+                  // Shuffle definitions only once per question (deterministic based on length for simplicity)
+                  const defs = currentQ.options?.map((o: any) => o.match_pair) || [];
+                  const availableDefs = defs.filter((d: string) => !Object.values(answersMap).includes(d));
+
+                  return (
+                    <div>
+                      <p style={{fontSize: '12px', fontWeight: 'bold', color: '#64748b', marginBottom: '15px'}}>Tarik kotak definisi di sebelah kanan ke area kosong di sebelah kiri.</p>
+                      <div style={{display: 'flex', gap: '30px'}}>
+                        {/* Terms Column */}
+                        <div style={{flex: 1}}>
+                          {terms.map((term: string, i: number) => {
+                            const matchedDef = answersMap[term];
+                            return (
+                              <div key={i} style={{display: 'flex', alignItems: 'center', marginBottom: '15px'}}>
+                                <div style={{width: '40%', padding: '10px', backgroundColor: '#f8fafc', border: '1px solid #cbd5e1', fontWeight: 'bold'}}>
+                                  {term}
+                                </div>
+                                <div style={{padding: '10px', fontWeight: 'bold', color: '#94a3b8'}}>&#8594;</div>
+                                <div 
+                                  onDragOver={(e) => e.preventDefault()}
+                                  onDrop={(e) => {
+                                    if (draggedItem) {
+                                      const newAnswers = { ...answersMap, [term]: draggedItem };
+                                      saveAnswer(currentQ.id, newAnswers);
+                                      setDraggedItem(null);
+                                    }
+                                  }}
+                                  style={{
+                                    flex: 1, 
+                                    padding: '10px', 
+                                    border: '2px dashed #94a3b8', 
+                                    minHeight: '42px',
+                                    backgroundColor: matchedDef ? '#eff6ff' : 'transparent',
+                                    color: '#1e3a8a',
+                                    fontWeight: 'bold',
+                                    cursor: matchedDef ? 'pointer' : 'default'
+                                  }}
+                                  onClick={() => {
+                                    if (matchedDef) {
+                                      const newAnswers = { ...answersMap };
+                                      delete newAnswers[term];
+                                      saveAnswer(currentQ.id, newAnswers);
+                                    }
+                                  }}
+                                  title={matchedDef ? "Klik untuk membatalkan" : ""}
+                                >
+                                  {matchedDef || <span style={{opacity: 0.5}}>Area Jawaban</span>}
+                                </div>
+                              </div>
+                            );
+                          })}
+                        </div>
+                        {/* Definitions Column */}
+                        <div style={{width: '300px', backgroundColor: '#f1f5f9', padding: '15px', border: '1px solid #cbd5e1'}}>
+                          <div style={{fontSize: '12px', fontWeight: 'bold', marginBottom: '10px'}}>Pilihan Jawaban:</div>
+                          {availableDefs.map((def: string, i: number) => (
+                            <div 
+                              key={i}
+                              draggable
+                              onDragStart={() => setDraggedItem(def)}
+                              style={{padding: '10px', backgroundColor: '#fff', border: '1px solid #64748b', marginBottom: '10px', cursor: 'grab', fontSize: '14px', boxShadow: '2px 2px 0px #cbd5e1'}}
+                            >
+                              {def}
+                            </div>
+                          ))}
+                          {availableDefs.length === 0 && <div style={{fontSize: '12px', color: '#16a34a', fontWeight: 'bold', textAlign: 'center', marginTop: '20px'}}>Semua terpasang!</div>}
+                        </div>
+                      </div>
+                    </div>
+                  );
+                })()}
+
+                {/* ESSAY */}
+                {currentQ?.question_type === 'essay' && (
+                  <textarea 
+                    value={responses[currentQ.id] || ""}
+                    onChange={(e) => saveAnswer(currentQ.id, e.target.value)}
+                    style={{width: '100%', minHeight: '300px', padding: '15px', backgroundColor: '#fff', border: '1px solid #94a3b8', fontSize: '16px', outline: 'none', resize: 'vertical'}}
+                    placeholder="Ketikkan jawaban essay Anda di sini..."
+                  />
+                )}
+              </div>
+            </div>
+
+            {/* BUTTON CONTROLS */}
+            <div style={{display: 'flex', justifyContent: 'space-between', borderTop: '2px solid #e2e8f0', paddingTop: '15px', marginTop: '15px'}}>
+              <button 
+                disabled={currentIndex === 0} 
+                onClick={() => setCurrentIndex(prev => prev - 1)}
+                style={{padding: '12px 20px', backgroundColor: currentIndex === 0 ? '#f1f5f9' : '#fff', color: currentIndex === 0 ? '#cbd5e1' : '#1e293b', border: '1px solid #cbd5e1', fontWeight: 'bold', cursor: currentIndex === 0 ? 'not-allowed' : 'pointer'}}
+              >
+                &#9664; SOAL SEBELUMNYA
+              </button>
+
+              <button 
+                onClick={() => setFlag(currentQ.id)}
+                style={{padding: '12px 20px', backgroundColor: flags[currentQ.id] ? '#eab308' : '#fff', color: flags[currentQ.id] ? '#fff' : '#1e293b', border: '1px solid #cbd5e1', fontWeight: 'bold', cursor: 'pointer'}}
+              >
+                &#9873; RAGU-RAGU
+              </button>
+
+              {currentIndex === questions.length - 1 ? (
+                <button 
+                  onClick={submitExam} 
+                  style={{padding: '12px 20px', backgroundColor: '#16a34a', color: '#fff', border: '1px solid #15803d', fontWeight: 'bold', cursor: 'pointer'}}
+                >
+                  SELESAI &#9632;
+                </button>
+              ) : (
+                <button 
+                  onClick={() => setCurrentIndex(i => i + 1)}
+                  style={{padding: '12px 20px', backgroundColor: '#1e3a8a', color: '#fff', border: '1px solid #1e40af', fontWeight: 'bold', cursor: 'pointer'}}
+                >
+                  SOAL BERIKUTNYA &#9654;
+                </button>
+              )}
+            </div>
+          </div>
+        </div>
+
+        {/* RIGHT PANEL: NUMBER GRID */}
+        <div style={{width: '320px', backgroundColor: 'white', border: '1px solid #cbd5e1', display: 'flex', flexDirection: 'column'}}>
+          <div style={{backgroundColor: '#e2e8f0', padding: '15px', borderBottom: '1px solid #cbd5e1', fontWeight: 'bold', fontSize: '14px', textAlign: 'center'}}>
+            NAVIGASI SOAL
+          </div>
+          <div style={{padding: '15px', flex: 1, overflowY: 'auto'}}>
+            <div style={{display: 'grid', gridTemplateColumns: 'repeat(5, 1fr)', gap: '8px'}}>
+              {questions.map((q, i) => {
+                const ans = responses[q.id];
+                // Check if answered based on question type
+                let isAnswered = false;
+                if (q.question_type === 'mcq' || q.question_type === 'essay') {
+                  isAnswered = !!ans && ans.length > 0;
+                } else if (q.question_type === 'complex_mcq') {
+                  isAnswered = Array.isArray(ans) && ans.length > 0;
+                } else if (q.question_type === 'matching') {
+                  isAnswered = ans && Object.keys(ans).length > 0;
+                }
+
+                const isFlagged = flags[q.id];
+                
+                let bgColor = '#fff';
+                let color = '#334155';
+                let border = '1px solid #94a3b8';
+                
+                if (isFlagged) {
+                  bgColor = '#eab308';
+                  color = '#fff';
+                  border = '1px solid #ca8a04';
+                } else if (isAnswered) {
+                  bgColor = '#3b82f6';
+                  color = '#fff';
+                  border = '1px solid #2563eb';
+                }
+
+                if (currentIndex === i) {
+                  border = '3px solid #0f172a';
+                }
+
+                return (
+                  <button
+                    key={q.id}
+                    onClick={() => setCurrentIndex(i)}
+                    style={{
+                      aspectRatio: '1',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      fontSize: '12px',
+                      fontWeight: 'bold',
+                      backgroundColor: bgColor,
+                      color: color,
+                      border: border,
+                      cursor: 'pointer'
+                    }}
+                  >
+                    {i + 1}
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+          <div style={{padding: '15px', borderTop: '1px solid #cbd5e1', fontSize: '12px'}}>
+            <div style={{display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '8px'}}>
+              <div style={{width: '15px', height: '15px', backgroundColor: '#3b82f6', border: '1px solid #2563eb'}} />
+              <span>Sudah Dijawab</span>
+            </div>
+            <div style={{display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '8px'}}>
+              <div style={{width: '15px', height: '15px', backgroundColor: '#eab308', border: '1px solid #ca8a04'}} />
+              <span>Ragu-ragu</span>
+            </div>
+            <div style={{display: 'flex', alignItems: 'center', gap: '10px'}}>
+              <div style={{width: '15px', height: '15px', backgroundColor: '#fff', border: '1px solid #94a3b8'}} />
+              <span>Belum Dijawab</span>
+            </div>
+          </div>
+        </div>
+
       </main>
     </div>
   );

@@ -14,6 +14,10 @@ export default function LoginPage() {
   // Prevent immediate redirect loop, wait for session to stabilize
   useEffect(() => {
     if (user && profile) {
+      if (profile.force_password_change) {
+        router.push("/auth/change-password");
+        return;
+      }
       const timer = setTimeout(() => {
         router.push("/dashboard");
       }, 2000);
@@ -41,10 +45,7 @@ export default function LoginPage() {
         setError(err);
         setLoading(false);
       } else {
-        // Wait for session stabilization
-        setTimeout(() => {
-          router.push("/dashboard");
-        }, 1500);
+        // Redirection will be handled by the useEffect above once profile loads
       }
     } else {
       const { error: err } = await signUpWithEmail(email, password, fullName, role);

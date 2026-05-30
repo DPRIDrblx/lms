@@ -400,12 +400,61 @@ export default function EditCoursePage() {
                   onClick={() => setEditingLesson({ ...editingLesson, content_type: t })}
                   className={`p-3 rounded-xl border-2 transition-all flex flex-col items-center gap-1 ${editingLesson?.content_type === t ? "border-[var(--accent)] bg-[var(--accent-light)] text-[var(--accent)]" : "border-[var(--border)]"}`}
                 >
-                  {t === "video" ? <Video size={16} /> : <FileText size={16} />}
                   <span className="text-[10px] font-bold uppercase">{t}</span>
                 </button>
               ))}
             </div>
           </div>
+          
+          {editingLesson?.content_type === "text" && (
+            <div>
+              <label className="block text-sm font-medium mb-1.5">Content (Markdown)</label>
+              <textarea 
+                rows={4}
+                value={editingLesson?.body_text || ""} 
+                onChange={e => setEditingLesson({ ...editingLesson, body_text: e.target.value })}
+                className="w-full p-4 rounded-xl bg-[var(--bg-secondary)] border border-[var(--border)] outline-none resize-none"
+                placeholder="Write your lesson content here..."
+              />
+            </div>
+          )}
+
+          {editingLesson?.content_type === "video" && (
+            <div>
+              <label className="block text-sm font-medium mb-1.5">YouTube Video URL / Embed ID</label>
+              <input 
+                type="text" 
+                value={editingLesson?.video_url || ""} 
+                onChange={e => setEditingLesson({ ...editingLesson, video_url: e.target.value })}
+                className="w-full h-11 px-4 rounded-xl bg-[var(--bg-secondary)] border border-[var(--border)] outline-none"
+                placeholder="e.g. dQw4w9WgXcQ"
+              />
+            </div>
+          )}
+
+          {editingLesson?.content_type === "pdf" && (
+            <div>
+              <label className="block text-sm font-medium mb-1.5">PDF Link (G-Drive / Public URL)</label>
+              <input 
+                type="text" 
+                value={editingLesson?.pdf_url || ""} 
+                onChange={e => setEditingLesson({ ...editingLesson, pdf_url: e.target.value })}
+                className="w-full h-11 px-4 rounded-xl bg-[var(--bg-secondary)] border border-[var(--border)] outline-none"
+                placeholder="https://..."
+              />
+            </div>
+          )}
+
+          <div>
+            <label className="block text-sm font-medium mb-1.5">XP Reward</label>
+            <input 
+              type="number" 
+              value={editingLesson?.xp_reward || 10} 
+              onChange={e => setEditingLesson({ ...editingLesson, xp_reward: parseInt(e.target.value) || 10 })}
+              className="w-full h-11 px-4 rounded-xl bg-[var(--bg-secondary)] border border-[var(--border)] outline-none"
+            />
+          </div>
+
           <Button className="w-full" onClick={handleSaveLesson} loading={saving}>Save Material</Button>
         </div>
       </Modal>
