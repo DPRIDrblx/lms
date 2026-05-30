@@ -13,7 +13,21 @@ interface MockPaymentModalProps {
   title?: string;
 }
 
-const PAYMENT_METHODS = [
+interface PaymentMethodItem {
+  id: string;
+  name: string;
+  logo?: string;
+  icons?: string[];
+  icon?: React.ReactNode;
+}
+
+interface PaymentGroup {
+  group: string;
+  icon: React.ReactNode;
+  items: PaymentMethodItem[];
+}
+
+const PAYMENT_METHODS: PaymentGroup[] = [
   {
     group: "Virtual Account",
     icon: <Building2 className="h-5 w-5 text-blue-600" />,
