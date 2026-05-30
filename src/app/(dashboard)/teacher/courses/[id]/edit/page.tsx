@@ -87,7 +87,13 @@ export default function EditCoursePage() {
       setChapters(chapterData);
       setExpandedChapters(new Set(chapterData.map((c: any) => c.id)));
     }
-    if (lessonData) setLessons(lessonData as Lesson[]);
+    if (lessonData) {
+      const parsed = lessonData.map(l => ({
+        ...l,
+        content_type: (l.content_type === 'video' && l.video_url?.includes('canva.com')) ? 'canva' : l.content_type
+      }));
+      setLessons(parsed as Lesson[]);
+    }
     if (quizData) setQuizzes(quizData as Quiz[]);
     setLoading(false);
   }, [id, supabase]);
@@ -133,7 +139,7 @@ export default function EditCoursePage() {
       course_id: id,
       chapter_id: editingLesson.chapter_id,
       title: editingLesson.title,
-      content_type: editingLesson.content_type,
+      content_type: editingLesson.content_type === 'canva' ? 'video' : editingLesson.content_type,
       body_text: editingLesson.body_text,
       video_url: editingLesson.video_url,
       pdf_url: editingLesson.pdf_url,

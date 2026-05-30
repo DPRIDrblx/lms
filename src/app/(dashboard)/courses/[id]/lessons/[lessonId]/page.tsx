@@ -41,7 +41,13 @@ export default function LessonViewerPage({ params }: { params: Promise<{ id: str
         supabase.from("course_progress").select("completed").eq("lesson_id", lessonId).eq("student_id", profile.id).single()
       ]);
 
-      if (lessonRes.data) setLesson(lessonRes.data);
+      if (lessonRes.data) {
+        const l = lessonRes.data;
+        if (l.content_type === 'video' && l.video_url?.includes('canva.com')) {
+          l.content_type = 'canva';
+        }
+        setLesson(l);
+      }
       if (courseRes.data) setCourse(courseRes.data);
       if (progressRes.data?.completed) setIsCompleted(true);
       setLoading(false);
