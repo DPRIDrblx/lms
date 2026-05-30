@@ -82,13 +82,13 @@ export function Gradebook({ courseId, classId }: { courseId: string; classId: st
         let finalScores = scs ? [...scs] : [];
         
         // Auto-sync: Fetch student_scores for linked quizzes
-        const linkedCols = cols.filter(c => c.linked_quiz_id);
+        const linkedCols = cols.filter((c: any) => c.linked_quiz_id);
         if (linkedCols.length > 0) {
-          const quizIds = linkedCols.map(c => c.linked_quiz_id);
+          const quizIds = linkedCols.map((c: any) => c.linked_quiz_id);
           const { data: stdScs } = await supabase.from("student_scores").select("*").in("target_id", quizIds);
           if (stdScs) {
-            stdScs.forEach(ss => {
-               const col = linkedCols.find(c => c.linked_quiz_id === ss.target_id);
+            stdScs.forEach((ss: any) => {
+               const col = linkedCols.find((c: any) => c.linked_quiz_id === ss.target_id);
                if (col) {
                   finalScores.push({
                      id: `auto-${ss.id}`,

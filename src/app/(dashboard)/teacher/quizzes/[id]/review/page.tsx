@@ -106,7 +106,7 @@ export default function TeacherQuizReviewListPage({ params }: { params: Promise<
                   </td>
                   <td className="px-6 py-4 text-right">
                     <Link href={`/teacher/quizzes/${id}/review/${sub.profiles?.id}`}>
-                      <Button size="sm" variant={sub.is_graded ? "outline" : "default"} icon={<Eye className="h-4 w-4" />}>
+                      <Button size="sm" variant={sub.is_graded ? "secondary" : "primary"} icon={<Eye className="h-4 w-4" />}>
                          {sub.is_graded ? "View" : "Review"}
                       </Button>
                     </Link>
