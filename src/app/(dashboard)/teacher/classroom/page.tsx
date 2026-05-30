@@ -38,11 +38,10 @@ export default function TeacherClassroomPage() {
   const fetchClassData = async () => {
     if (!profile) return;
     
-    // 1. Get class where teacher is homeroom, co-homeroom, or supervisor
     const { data: cls } = await supabase
       .from("classes")
       .select("*")
-      .or(`homeroom_teacher_id.eq.${profile.id},co_homeroom_id.eq.${profile.id},supervisor_id.eq.${profile.id}`)
+      .or(`wali_kelas_id.eq.${profile.id},co_homeroom_id.eq.${profile.id},supervisor_id.eq.${profile.id}`)
       .limit(1)
       .single();
 
@@ -61,7 +60,7 @@ export default function TeacherClassroomPage() {
         
       setStudents(stds || []);
       
-      const staffIds = [cls.homeroom_teacher_id, cls.co_homeroom_id, cls.supervisor_id].filter(Boolean);
+      const staffIds = [cls.wali_kelas_id, cls.co_homeroom_id, cls.supervisor_id].filter(Boolean);
       if (staffIds.length > 0) {
          const { data: staffData } = await supabase.from("profiles").select("id, full_name, role").in("id", staffIds);
          if (staffData) setStaff(staffData);
@@ -72,10 +71,10 @@ export default function TeacherClassroomPage() {
   };
 
   const isReadOnly = managedClass?.supervisor_id === profile?.id;
-  const isHomeroom = managedClass?.homeroom_teacher_id === profile?.id;
+  const isHomeroom = managedClass?.wali_kelas_id === profile?.id;
 
   const ROLES = [
-    { title: "Wali Kelas", id: managedClass?.homeroom_teacher_id, isStaff: true },
+    { title: "Wali Kelas", id: managedClass?.wali_kelas_id, isStaff: true },
     { title: "Pendamping (Co-Homeroom)", id: managedClass?.co_homeroom_id, isStaff: true },
     { title: "Pengawas (Supervisor)", id: managedClass?.supervisor_id, isStaff: true },
     { title: "Ketua Kelas", id: managedClass?.president_id, isStaff: false },

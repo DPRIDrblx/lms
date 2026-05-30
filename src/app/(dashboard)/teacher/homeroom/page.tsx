@@ -35,7 +35,7 @@ export default function HomeroomTeacherDashboard() {
     const { data: cls } = await supabase
       .from("classes")
       .select("*")
-      .or(`homeroom_teacher_id.eq.${profile.id},co_homeroom_id.eq.${profile.id},supervisor_id.eq.${profile.id}`)
+      .or(`wali_kelas_id.eq.${profile.id},co_homeroom_id.eq.${profile.id},supervisor_id.eq.${profile.id}`)
       .limit(1)
       .single();
     
@@ -46,7 +46,7 @@ export default function HomeroomTeacherDashboard() {
       if (stds) setStudents(stds);
       
       // 3. Get staff
-      const staffIds = [cls.homeroom_teacher_id, cls.co_homeroom_id, cls.supervisor_id].filter(Boolean);
+      const staffIds = [cls.wali_kelas_id, cls.co_homeroom_id, cls.supervisor_id].filter(Boolean);
       if (staffIds.length > 0) {
          const { data: staffData } = await supabase.from("profiles").select("id, full_name").in("id", staffIds);
          if (staffData) setStaff(staffData);
@@ -76,7 +76,7 @@ export default function HomeroomTeacherDashboard() {
   }
 
   const isReadOnly = managedClass.supervisor_id === profile?.id;
-  const isHomeroom = managedClass.homeroom_teacher_id === profile?.id;
+  const isHomeroom = managedClass.wali_kelas_id === profile?.id;
 
   const getStudentName = (id: string) => students.find(s => s.id === id)?.full_name || "Belum Ditentukan";
   const getStaffName = (id: string) => staff.find(s => s.id === id)?.full_name || "Belum Ditentukan";
@@ -136,7 +136,7 @@ export default function HomeroomTeacherDashboard() {
                <div className="space-y-4">
                   <div className="p-4 bg-slate-50 rounded-xl border border-slate-100">
                      <p className="text-[10px] font-bold text-slate-500 uppercase mb-1">Wali Kelas</p>
-                     <p className="font-bold text-slate-800">{getStaffName(managedClass.homeroom_teacher_id)}</p>
+                     <p className="font-bold text-slate-800">{getStaffName(managedClass.wali_kelas_id)}</p>
                   </div>
                   <div className="p-4 bg-slate-50 rounded-xl border border-slate-100">
                      <p className="text-[10px] font-bold text-slate-500 uppercase mb-1">Ketua Kelas</p>
