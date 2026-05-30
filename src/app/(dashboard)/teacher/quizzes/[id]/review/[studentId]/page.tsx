@@ -83,6 +83,11 @@ export default function TeacherQuizGradingPage({ params }: { params: Promise<{ i
     setSaving(true);
     let totalScore = 0;
     let maxScore = quiz?.total_points || 0;
+    if (!maxScore && questions && questions.length > 0) {
+       maxScore = questions.reduce((acc, q) => acc + (q.points || 10), 0);
+    }
+    // Prevent division by zero
+    if (!maxScore) maxScore = 100;
 
     questions.forEach(q => {
       const ans = responses[q.id];

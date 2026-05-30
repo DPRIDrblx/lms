@@ -44,6 +44,7 @@ export default function TakeQuizPage({ params }: { params: Promise<{ id: string 
   const router = useRouter();
 
   const [quiz, setQuiz] = useState<Quiz | null>(null);
+  const [scoreRecord, setScoreRecord] = useState<any>(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -56,11 +57,25 @@ export default function TakeQuizPage({ params }: { params: Promise<{ id: string 
 
       if (quizData) {
         setQuiz(quizData as Quiz);
+        
+        if (profile) {
+           const { data: scoreData } = await supabase
+             .from("student_scores")
+             .select("score, is_graded")
+             .eq("student_id", profile.id)
+             .eq("target_id", quizId)
+             .eq("target_type", "quiz")
+             .single();
+             
+           if (scoreData) {
+             setScoreRecord(scoreData);
+           }
+        }
       }
       setLoading(false);
     };
-    fetchQuiz();
-  }, [quizId, supabase]);
+    if (profile) fetchQuiz();
+  }, [quizId, profile, supabase]);
 
   if (loading) return <div className="h-screen flex items-center justify-center"><Loader2 className="animate-spin text-[var(--accent)]" /></div>;
   if (!quiz) return <div className="py-20 text-center text-[var(--text-tertiary)]">Quiz not found.</div>;
@@ -99,9 +114,27 @@ export default function TakeQuizPage({ params }: { params: Promise<{ id: string 
             </ul>
           </div>
 
+          {scoreRecord ? (
+            <div className="mb-10 p-6 bg-slate-50 border border-slate-200 rounded-xl">
+               <p className="text-sm font-bold text-slate-500 uppercase tracking-wider mb-2">Nilai Ujian Anda</p>
+               {!scoreRecord.is_graded ? (
+                  <div>
+                    <div className="text-4xl font-black text-amber-500">{scoreRecord.score !== null ? scoreRecord.score : "?"} <span className="text-xl text-slate-400">/ 100</span></div>
+                    <p className="text-xs font-bold text-amber-700 mt-2">Menunggu Penilaian Guru (Ada Soal Essay)</p>
+                  </div>
+               ) : (
+                  <div>
+                    <div className={`text-5xl font-black ${scoreRecord.score !== null && scoreRecord.score >= (quiz.passing_score || 0) ? 'text-green-600' : 'text-red-500'}`}>
+                       {scoreRecord.score !== null ? scoreRecord.score : "?"} <span className="text-2xl text-slate-400">/ 100</span>
+                    </div>
+                  </div>
+               )}
+            </div>
+          ) : null}
+
           <Link href={`/quizzes/${quizId}/exam`}>
             <Button size="lg" className="w-full text-lg h-14 uppercase tracking-widest font-black" icon={<ArrowRight className="h-5 w-5" />}>
-              MASUK KE RUANG UJIAN (CBT)
+              {scoreRecord ? "LIHAT RUANG CBT" : "MASUK KE RUANG UJIAN (CBT)"}
             </Button>
           </Link>
         </Card>
