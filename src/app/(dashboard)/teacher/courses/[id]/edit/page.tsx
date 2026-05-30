@@ -22,7 +22,8 @@ import {
   HelpCircle,
   Award,
   ChevronDown,
-  ChevronUp
+  ChevronUp,
+  Presentation
 } from "lucide-react";
 import Link from "next/link";
 import { useParams, useRouter } from "next/navigation";
@@ -34,7 +35,7 @@ interface Lesson {
   id: string;
   chapter_id: string | null;
   title: string;
-  content_type: "text" | "video" | "pdf";
+  content_type: "text" | "video" | "pdf" | "canva";
   body_text?: string;
   video_url?: string;
   pdf_url?: string;
@@ -279,7 +280,7 @@ export default function EditCoursePage() {
                                 <Card key={lesson.id} className="p-3 hover:border-[var(--accent)]/30 transition-all flex items-center justify-between group">
                                   <div className="flex items-center gap-3">
                                     <GripVertical className="h-4 w-4 text-[var(--text-tertiary)] cursor-grab" />
-                                    {lesson.content_type === "video" ? <Video className="h-4 w-4 text-[var(--accent)]" /> : <FileText className="h-4 w-4 text-[var(--accent)]" />}
+                                    {lesson.content_type === "video" ? <Video className="h-4 w-4 text-[var(--accent)]" /> : lesson.content_type === "canva" ? <Presentation className="h-4 w-4 text-[var(--accent)]" /> : <FileText className="h-4 w-4 text-[var(--accent)]" />}
                                     <span className="text-sm font-medium text-[var(--text-primary)]">{lesson.title}</span>
                                   </div>
                                   <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-all">
@@ -393,8 +394,8 @@ export default function EditCoursePage() {
           </div>
           <div>
             <label className="block text-sm font-medium mb-1.5">Type</label>
-            <div className="grid grid-cols-3 gap-2">
-              {(["text", "video", "pdf"] as const).map(t => (
+            <div className="grid grid-cols-4 gap-2">
+              {(["text", "video", "pdf", "canva"] as const).map(t => (
                 <button 
                   key={t}
                   onClick={() => setEditingLesson({ ...editingLesson, content_type: t })}
@@ -428,6 +429,19 @@ export default function EditCoursePage() {
                 onChange={e => setEditingLesson({ ...editingLesson, video_url: e.target.value })}
                 className="w-full h-11 px-4 rounded-xl bg-[var(--bg-secondary)] border border-[var(--border)] outline-none"
                 placeholder="e.g. dQw4w9WgXcQ"
+              />
+            </div>
+          )}
+
+          {editingLesson?.content_type === "canva" && (
+            <div>
+              <label className="block text-sm font-medium mb-1.5">Canva Embed Link</label>
+              <input 
+                type="text" 
+                value={editingLesson?.video_url || ""} 
+                onChange={e => setEditingLesson({ ...editingLesson, video_url: e.target.value })}
+                className="w-full h-11 px-4 rounded-xl bg-[var(--bg-secondary)] border border-[var(--border)] outline-none"
+                placeholder="e.g. https://www.canva.com/design/DA.../view?embed"
               />
             </div>
           )}

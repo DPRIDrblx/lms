@@ -13,7 +13,8 @@ import {
   FileText, 
   Trophy, 
   Loader2,
-  ExternalLink
+  ExternalLink,
+  Presentation
 } from "lucide-react";
 import { useEffect, useState, use } from "react";
 import Link from "next/link";
@@ -80,7 +81,7 @@ export default function LessonViewerPage({ params }: { params: Promise<{ id: str
   if (loading) return <div className="h-[80vh] flex items-center justify-center"><Loader2 className="h-8 w-8 animate-spin text-[var(--accent)]" /></div>;
   if (!lesson) return <div className="py-20 text-center text-[var(--text-tertiary)] font-bold">Materi tidak ditemukan.</div>;
 
-  const TypeIcon = lesson.content_type === "video" ? Play : lesson.content_type === "pdf" ? FileText : BookOpen;
+  const TypeIcon = lesson.content_type === "video" ? Play : lesson.content_type === "pdf" ? FileText : lesson.content_type === "canva" ? Presentation : BookOpen;
 
   return (
     <div className="max-w-4xl mx-auto space-y-6 pb-32">
@@ -130,6 +131,25 @@ export default function LessonViewerPage({ params }: { params: Promise<{ id: str
                 <div dangerouslySetInnerHTML={{ __html: lesson.body_text.replace(/\n/g, '<br />') }} />
               ) : (
                 <p className="text-center text-[var(--text-tertiary)] italic">Isi materi kosong.</p>
+              )}
+            </div>
+          )}
+
+          {lesson.content_type === "canva" && (
+            <div className="aspect-video w-full bg-black/5">
+              {lesson.video_url ? (
+                <iframe 
+                  className="w-full h-full"
+                  src={lesson.video_url} 
+                  title="Canva Embed" 
+                  frameBorder="0" 
+                  allowFullScreen
+                ></iframe>
+              ) : (
+                <div className="w-full h-full flex flex-col items-center justify-center text-[var(--text-tertiary)]">
+                  <Presentation className="h-12 w-12 opacity-20 mb-2" />
+                  <p className="font-bold">Desain Canva tidak tersedia</p>
+                </div>
               )}
             </div>
           )}
