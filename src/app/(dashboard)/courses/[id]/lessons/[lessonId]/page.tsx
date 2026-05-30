@@ -164,15 +164,28 @@ export default function LessonViewerPage({ params }: { params: Promise<{ id: str
           )}
 
           {lesson.content_type === "canva" && (
-            <div className="aspect-video w-full bg-black/5">
+            <div className="aspect-video w-full bg-black/5 rounded-2xl overflow-hidden relative">
               {lesson.video_url ? (
-                <iframe 
-                  className="w-full h-full"
-                  src={getCanvaEmbedUrl(lesson.video_url)} 
-                  title="Canva Embed" 
-                  frameBorder="0" 
-                  allowFullScreen
-                ></iframe>
+                lesson.video_url.includes('canva.link') ? (
+                  <div className="absolute inset-0 flex flex-col items-center justify-center text-center p-8 bg-[var(--bg-secondary)]/50">
+                    <Presentation className="h-16 w-16 text-[var(--accent)] mb-4" />
+                    <h3 className="text-lg font-bold text-[var(--text-primary)] mb-2">Link Pendek Canva</h3>
+                    <p className="text-sm text-[var(--text-secondary)] mb-6 max-w-md">
+                      Link pendek (canva.link) tidak dapat di-embed langsung karena batasan keamanan dari Canva. Silakan buka di tab baru atau ubah materinya menggunakan Kode Embed asli.
+                    </p>
+                    <a href={lesson.video_url} target="_blank" rel="noopener noreferrer" className="px-6 py-2.5 bg-[var(--accent)] text-white text-sm font-bold rounded-xl hover:bg-[var(--accent-hover)] transition-all">
+                      Buka di Tab Baru
+                    </a>
+                  </div>
+                ) : (
+                  <iframe 
+                    className="w-full h-full"
+                    src={getCanvaEmbedUrl(lesson.video_url)} 
+                    title="Canva Embed" 
+                    frameBorder="0" 
+                    allowFullScreen
+                  ></iframe>
+                )
               ) : (
                 <div className="w-full h-full flex flex-col items-center justify-center text-[var(--text-tertiary)]">
                   <Presentation className="h-12 w-12 opacity-20 mb-2" />

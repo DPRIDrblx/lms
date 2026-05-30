@@ -441,14 +441,19 @@ export default function EditCoursePage() {
 
           {editingLesson?.content_type === "canva" && (
             <div>
-              <label className="block text-sm font-medium mb-1.5">Canva Embed Link</label>
+              <label className="block text-sm font-medium mb-1.5">Canva Embed Link / HTML Code</label>
               <input 
                 type="text" 
                 value={editingLesson?.video_url || ""} 
                 onChange={e => setEditingLesson({ ...editingLesson, video_url: e.target.value })}
                 className="w-full h-11 px-4 rounded-xl bg-[var(--bg-secondary)] border border-[var(--border)] outline-none"
-                placeholder="e.g. https://www.canva.com/design/DA.../view?embed"
+                placeholder="Paste link desain Canva atau seluruh Kode Embed HTML..."
               />
+              {editingLesson?.video_url?.includes('canva.link') && (
+                <p className="text-xs text-[var(--warning)] mt-1.5 font-medium">
+                  ⚠️ Link pendek (canva.link) tidak dapat di-embed langsung. Siswa akan diarahkan untuk membuka di tab baru. Gunakan URL panjang atau Kode Embed HTML jika ingin tampil langsung di halaman ini.
+                </p>
+              )}
             </div>
           )}
 
