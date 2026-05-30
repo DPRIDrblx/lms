@@ -42,7 +42,27 @@ export default function ExamPage({ params }: { params: Promise<{ id: string }> }
     const { data: existing } = await supabase.from("exam_sessions").select("*").eq("student_id", profile.id).eq("quiz_id", id).single();
     
     if (existing) {
-      if (existing.status === 'submitted') { setIsFinished(true); setLoading(false); return; }
+      if (existing.status === 'submitted') { 
+        // SAFETY CHECK: Did the score actually save? (due to previous RLS bugs it might have failed)
+        const { data: scoreCheck } = await supabase
+          .from("student_scores")
+          .select("id")
+          .eq("student_id", profile.id)
+          .eq("target_id", id)
+          .eq("target_type", "quiz")
+          .single();
+          
+        if (!scoreCheck) {
+          // If score is missing, reset session so student can re-submit
+          await supabase.from("exam_sessions").delete().eq("id", existing.id);
+          window.location.reload();
+          return;
+        }
+
+        setIsFinished(true); 
+        setLoading(false); 
+        return; 
+      }
       setSession(existing);
       setTimeLeft(existing.time_left_seconds);
       
