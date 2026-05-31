@@ -190,7 +190,7 @@ const SidebarContent = ({ navItems, pathname, profile, setMobileOpen }: any) => 
       </AnimatePresence>
 
       {/* Desktop sidebar */}
-      <aside className="hidden lg:flex lg:flex-col w-[260px] min-h-screen bg-[var(--bg-primary)] border-r border-[var(--border)] fixed inset-y-0 left-0 z-30 print:hidden">
+      <aside className="hidden lg:flex lg:flex-col w-[260px] min-h-screen bg-white border-r border-[var(--border)] fixed inset-y-0 left-0 z-30 print:hidden">
         <SidebarContent navItems={navItems} pathname={pathname} profile={profile} setMobileOpen={setMobileOpen} />
       </aside>
     </>

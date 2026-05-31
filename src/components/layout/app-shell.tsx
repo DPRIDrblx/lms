@@ -30,7 +30,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
   }
 
   return (
-    <div className="min-h-screen mesh-bg print:bg-white text-[var(--text-primary)]">
+    <div className="min-h-screen saas-bg print:bg-white text-[var(--text-primary)]">
       <div className="print:hidden">
         <Sidebar />
       </div>
