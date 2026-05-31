@@ -75,53 +75,8 @@ export default function EditCoursePage() {
   const [saving, setSaving] = useState(false);
   const [expandedChapters, setExpandedChapters] = useState<Set<string>>(new Set());
   const [activeTab, setActiveTab] = useState<"curriculum" | "gradebook">("curriculum");
-  const [isGeneratingGame, setIsGeneratingGame] = useState(false);
-
-  const handleGenerateAIGame = () => {
-    setIsGeneratingGame(true);
-    setTimeout(() => {
-      // Mock generated HTML game
-      const mockGameHTML = `<!DOCTYPE html>
-<html>
-<head>
-  <style>
-    body { font-family: system-ui; text-align: center; padding: 2rem; background: #f8fafc; }
-    h2 { color: #1e293b; }
-    .btn { padding: 10px 20px; background: #4f46e5; color: white; border: none; border-radius: 8px; cursor: pointer; font-weight: bold; margin-top: 20px;}
-    .btn:hover { background: #4338ca; }
-    .card { background: white; padding: 20px; border-radius: 12px; box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1); max-w: 400px; margin: 0 auto; }
-  </style>
-</head>
-<body>
-  <div class="card">
-    <h2>🎯 Mini Quiz Game</h2>
-    <p>Answer the question correctly to win XP!</p>
-    <p style="font-weight:bold; margin-top: 20px;">What is 5 + 7?</p>
-    <div style="display: flex; gap: 10px; justify-content: center; margin-top:20px;">
-      <button class="btn" onclick="wrong()">10</button>
-      <button class="btn" onclick="win()">12</button>
-      <button class="btn" onclick="wrong()">15</button>
-    </div>
-    <p id="msg" style="margin-top: 20px; font-weight: bold;"></p>
-  </div>
-  <script>
-    function wrong() {
-      document.getElementById('msg').innerText = "❌ Incorrect, try again!";
-      document.getElementById('msg').style.color = "red";
-    }
-    function win() {
-      document.getElementById('msg').innerText = "🎉 Correct! You won XP!";
-      document.getElementById('msg').style.color = "green";
-      // Tell LMS that game is completed
-      window.parent.postMessage({ type: 'GAME_COMPLETED' }, '*');
-    }
-  </script>
-</body>
-</html>`;
-      setEditingLesson((prev: any) => ({ ...prev, body_text: mockGameHTML }));
-      setIsGeneratingGame(false);
-    }, 3000);
-  };
+  const [gameTopic, setGameTopic] = useState("");
+  const [gameInstruction, setGameInstruction] = useState("");
 
   const fetchData = useCallback(async () => {
     const { data: courseData } = await supabase.from("courses").select("*").eq("id", id).single();
@@ -519,49 +474,71 @@ export default function EditCoursePage() {
 
           {editingLesson?.content_type === "game" && (
             <div className="space-y-4">
-              <div className="p-4 bg-purple-50 border border-purple-100 rounded-xl space-y-3">
+              <div className="p-4 bg-purple-50 border border-purple-100 rounded-xl space-y-4">
                  <div className="flex items-center gap-2 text-purple-700 font-bold">
                     <Presentation className="h-5 w-5" />
-                    <span>AI Game Generator</span>
+                    <span>AI Game Prompt Template</span>
                  </div>
-                 <p className="text-xs text-purple-600">Jelaskan game apa yang ingin Anda buat untuk materi ini. AI akan membuatkan kode HTML interaktif secara otomatis.</p>
+                 <p className="text-xs text-purple-600">Gunakan template prompt ini untuk meminta AI (seperti ChatGPT atau Claude) membuatkan game interaktif. Salin prompt di bawah, berikan ke AI, lalu tempel kode HTML hasilnya ke kotak di bawahnya.</p>
                  
-                 <div className="space-y-2">
-                    <label className="block text-xs font-semibold text-purple-800">Topik / Materi</label>
-                    <input 
-                      type="text" 
-                      placeholder="e.g. Anatomi Jantung Manusia" 
-                      className="w-full h-10 px-3 rounded-lg bg-white border border-purple-200 outline-none text-sm"
-                    />
-                 </div>
-                 
-                 <div className="space-y-2">
-                    <label className="block text-xs font-semibold text-purple-800">Prompt / Instruksi Game</label>
-                    <textarea 
-                      rows={3}
-                      placeholder="Buatkan game kuis mencocokkan kata (drag and drop) tentang anatomi jantung dengan 5 pertanyaan..."
-                      className="w-full p-3 rounded-lg bg-white border border-purple-200 outline-none resize-none text-sm"
-                    />
+                 <div className="grid grid-cols-2 gap-4">
+                   <div className="space-y-2">
+                      <label className="block text-xs font-semibold text-purple-800">Topik / Materi</label>
+                      <input 
+                        type="text" 
+                        value={gameTopic}
+                        onChange={(e) => setGameTopic(e.target.value)}
+                        placeholder="e.g. Anatomi Jantung Manusia" 
+                        className="w-full h-10 px-3 rounded-lg bg-white border border-purple-200 outline-none text-sm"
+                      />
+                   </div>
+                   
+                   <div className="space-y-2">
+                      <label className="block text-xs font-semibold text-purple-800">Instruksi Khusus (Opsional)</label>
+                      <input 
+                        type="text"
+                        value={gameInstruction}
+                        onChange={(e) => setGameInstruction(e.target.value)}
+                        placeholder="e.g. Buat soal pilihan ganda, target umur 10 tahun"
+                        className="w-full h-10 px-3 rounded-lg bg-white border border-purple-200 outline-none text-sm"
+                      />
+                   </div>
                  </div>
 
-                 <Button 
-                   onClick={() => handleGenerateAIGame()} 
-                   className="w-full bg-purple-600 hover:bg-purple-700 text-white"
-                   disabled={isGeneratingGame}
-                 >
-                   {isGeneratingGame ? (
-                     <><Loader2 className="h-4 w-4 mr-2 animate-spin" /> Generating Game...</>
-                   ) : "Generate AI Game"}
-                 </Button>
+                 <div className="space-y-2">
+                    <label className="block text-xs font-semibold text-purple-800 flex justify-between items-center">
+                      Prompt untuk AI
+                      <Button 
+                        size="sm" 
+                        variant="secondary" 
+                        className="h-7 text-[10px] bg-white"
+                        onClick={() => {
+                          navigator.clipboard.writeText(`Buatkan saya sebuah mini-game interaktif berbasis HTML tunggal (HTML, CSS, dan JS berada dalam satu file). \n\nTopik materi: ${gameTopic || "[Isi Topik]"}\nInstruksi khusus: ${gameInstruction || "[Isi Instruksi]"}\n\nGame harus menarik, menggunakan warna-warna cerah, dan memiliki umpan balik visual ketika pemain menjawab benar atau salah. \n\nPENTING: Ketika pemain berhasil menyelesaikan game atau menang, eksekusi kode javascript berikut ini untuk melapor ke sistem LMS:\nwindow.parent.postMessage({ type: 'GAME_COMPLETED' }, '*');\n\nBerikan hanya kode HTML-nya saja tanpa penjelasan tambahan.`);
+                          alert("Prompt tersalin!");
+                        }}
+                      >
+                        Copy Prompt
+                      </Button>
+                    </label>
+                    <textarea 
+                      readOnly
+                      rows={6}
+                      value={`Buatkan saya sebuah mini-game interaktif berbasis HTML tunggal (HTML, CSS, dan JS berada dalam satu file). \n\nTopik materi: ${gameTopic || "[Isi Topik]"}\nInstruksi khusus: ${gameInstruction || "[Isi Instruksi]"}\n\nGame harus menarik, menggunakan warna-warna cerah, dan memiliki umpan balik visual ketika pemain menjawab benar atau salah. \n\nPENTING: Ketika pemain berhasil menyelesaikan game atau menang, eksekusi kode javascript berikut ini untuk melapor ke sistem LMS:\nwindow.parent.postMessage({ type: 'GAME_COMPLETED' }, '*');\n\nBerikan hanya kode HTML-nya saja tanpa penjelasan tambahan.`}
+                      className="w-full p-3 rounded-lg bg-white/50 border border-purple-200 outline-none resize-none text-xs text-purple-900 font-mono"
+                    />
+                 </div>
               </div>
 
-              {editingLesson?.body_text && editingLesson.body_text.includes("<html") && (
-                <div className="p-3 bg-green-50 border border-green-200 rounded-xl">
-                   <p className="text-xs font-bold text-green-700 flex items-center gap-1">
-                      ✅ Game berhasil di-generate!
-                   </p>
-                </div>
-              )}
+              <div>
+                <label className="block text-sm font-medium mb-1.5">Paste Kode HTML Game dari AI</label>
+                <textarea 
+                  rows={8}
+                  value={editingLesson?.body_text || ""} 
+                  onChange={e => setEditingLesson({ ...editingLesson, body_text: e.target.value })}
+                  className="w-full p-4 rounded-xl bg-[var(--bg-secondary)] border border-[var(--border)] outline-none resize-none font-mono text-sm"
+                  placeholder="<!DOCTYPE html>&#10;<html>&#10;..."
+                />
+              </div>
             </div>
           )}
 
