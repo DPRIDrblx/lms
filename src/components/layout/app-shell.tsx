@@ -38,7 +38,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
         <div className="print:hidden">
           <TopBar />
         </div>
-        <main className="flex-1 p-4 sm:p-6 lg:p-8 print:p-0 print:m-0">
+        <main className="flex-1 p-4 sm:p-6 lg:p-10 print:p-0 print:m-0">
           <ClassGuard>
             {children}
           </ClassGuard>

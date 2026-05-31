@@ -115,10 +115,10 @@ const SidebarContent = ({ navItems, pathname, profile, setMobileOpen }: any) => 
               href={item.href}
               onClick={() => setMobileOpen(false)}
               className={cn(
-                "flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-all duration-200",
-                isActive
-                  ? "bg-[var(--accent-light)] text-[var(--accent)]"
-                  : "text-[var(--text-secondary)] hover:text-[var(--text-primary)] hover:bg-[var(--bg-tertiary)]"
+                "flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-all duration-300",
+                isActive 
+                  ? "bg-[var(--accent)] text-white font-bold shadow-lg shadow-[var(--accent)]/30" 
+                  : "text-[#a3aed1] hover:bg-white/10 hover:text-white"
               )}
             >
               <item.icon className="h-[18px] w-[18px]" />
@@ -175,7 +175,7 @@ const SidebarContent = ({ navItems, pathname, profile, setMobileOpen }: any) => 
               animate={{ x: 0 }}
               exit={{ x: -280 }}
               transition={{ type: "spring", damping: 25, stiffness: 300 }}
-              className="fixed inset-y-0 left-0 w-[260px] bg-[var(--bg-primary)] border-r border-[var(--border)] z-50 lg:hidden"
+              className="fixed inset-y-0 left-0 w-[260px] bg-[#0b1437] text-white z-50 lg:hidden"
             >
               <button
                 onClick={() => setMobileOpen(false)}
@@ -190,7 +190,7 @@ const SidebarContent = ({ navItems, pathname, profile, setMobileOpen }: any) => 
       </AnimatePresence>
 
       {/* Desktop sidebar */}
-      <aside className="hidden lg:flex lg:flex-col w-[260px] min-h-screen bg-white border-r border-[var(--border)] fixed inset-y-0 left-0 z-30 print:hidden">
+      <aside className="hidden lg:flex lg:flex-col w-[260px] min-h-screen bg-[#0b1437] text-white fixed inset-y-0 left-0 z-30 print:hidden">
         <SidebarContent navItems={navItems} pathname={pathname} profile={profile} setMobileOpen={setMobileOpen} />
       </aside>
     </>
