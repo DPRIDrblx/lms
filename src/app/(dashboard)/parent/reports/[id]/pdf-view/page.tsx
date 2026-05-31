@@ -54,32 +54,51 @@ export default function ReportPdfView({ params }: { params: Promise<{ id: string
   if (loading) return <div className="p-20 text-center flex flex-col justify-center items-center h-screen"><Loader2 className="h-10 w-10 animate-spin text-slate-400" /></div>;
   if (!data) return <div className="p-20 text-center font-bold text-red-500">Report not found.</div>;
 
-  const renderKopSurat = () => (
-    <div className="text-center border-b-[4px] border-double border-black pb-4 mb-6">
-       <h1 className="text-2xl font-black font-serif uppercase tracking-wider text-black">Nusantara International Academy</h1>
-       <p className="text-sm font-medium mt-1 text-black font-serif">"Empowering the Leaders of Tomorrow"</p>
-       <p className="text-xs text-black mt-1 font-serif">Jl. Pendidikan No. 123, Nusantara Raya 12345 | Telp: (021) 1234567</p>
+  const renderHeader = () => (
+    <div className="mb-6">
+      <table className="w-full text-[11pt] font-serif text-black border-none">
+        <tbody>
+           <tr>
+              <td className="w-40 py-1 font-bold align-top">Nama Sekolah</td>
+              <td className="w-4 py-1 align-top">:</td>
+              <td className="py-1 uppercase font-bold align-top">Mainan Middle International School</td>
+              
+              <td className="w-32 py-1 font-bold align-top">Kelas</td>
+              <td className="w-4 py-1 align-top">:</td>
+              <td className="py-1 uppercase font-bold align-top">{classData?.name}</td>
+           </tr>
+           <tr>
+              <td className="py-1 font-bold align-top">Alamat Sekolah</td>
+              <td className="py-1 align-top">:</td>
+              <td className="py-1 uppercase align-top pr-4">123 Education Boulevard, Mainan City</td>
+              
+              <td className="py-1 font-bold align-top">Semester</td>
+              <td className="py-1 align-top">:</td>
+              <td className="py-1 uppercase align-top">{reportType === 'monthly' ? data.month_year : data.semester}</td>
+           </tr>
+           <tr>
+              <td className="py-1 font-bold align-top">Nama Peserta Didik</td>
+              <td className="py-1 align-top">:</td>
+              <td className="py-1 uppercase font-bold align-top">{student?.full_name}</td>
+              
+              <td className="py-1 font-bold align-top">Tahun Pelajaran</td>
+              <td className="py-1 align-top">:</td>
+              <td className="py-1 uppercase align-top">{reportType === 'monthly' ? '2025/2026' : data.academic_year}</td>
+           </tr>
+           <tr>
+              <td className="py-1 font-bold align-top">Nomor Induk / NISN</td>
+              <td className="py-1 align-top">:</td>
+              <td className="py-1 uppercase align-top">{student?.id.substring(0,8).toUpperCase()}</td>
+              
+              <td colSpan={3}></td>
+           </tr>
+        </tbody>
+      </table>
+      <div className="border-b-[3px] border-black mt-4 w-full"></div>
     </div>
   );
 
-  const renderBiodata = () => (
-    <table className="w-full text-[11pt] font-serif mb-6 text-black">
-      <tbody>
-         <tr>
-            <td className="w-40 py-1 font-bold">Nama Peserta Didik</td><td className="w-4 py-1">:</td><td className="py-1 uppercase font-bold">{student?.full_name}</td>
-            <td className="w-32 py-1 font-bold">Kelas</td><td className="w-4 py-1">:</td><td className="py-1 uppercase font-bold">{classData?.name}</td>
-         </tr>
-         <tr>
-            <td className="py-1 font-bold">Nomor Induk / NISN</td><td className="py-1">:</td><td className="py-1 uppercase">{student?.id.substring(0,8).toUpperCase()}</td>
-            <td className="py-1 font-bold">Semester</td><td className="py-1">:</td><td className="py-1 uppercase">{reportType === 'monthly' ? data.month_year : data.semester}</td>
-         </tr>
-         <tr>
-            <td className="py-1 font-bold">Nama Sekolah</td><td className="py-1">:</td><td className="py-1 uppercase">Nusantara Int. Academy</td>
-            <td className="py-1 font-bold">Tahun Pelajaran</td><td className="py-1">:</td><td className="py-1 uppercase">{reportType === 'monthly' ? '2025/2026' : data.academic_year}</td>
-         </tr>
-      </tbody>
-    </table>
-  );
+
 
   const renderSignatures = () => (
     <div className="mt-12 flex justify-between px-8 text-center text-[11pt] font-serif text-black page-break-inside-avoid">
@@ -88,7 +107,7 @@ export default function ReportPdfView({ params }: { params: Promise<{ id: string
           <div className="border-b border-black w-48 mx-auto"></div>
        </div>
        <div className="space-y-20">
-          <p className="font-bold">Nusantara, {new Date().toLocaleDateString('id-ID', {day: 'numeric', month: 'long', year: 'numeric'})}<br/>Wali Kelas</p>
+          <p className="font-bold">Mainan City, {new Date().toLocaleDateString('id-ID', {day: 'numeric', month: 'long', year: 'numeric'})}<br/>Wali Kelas</p>
           <div className="border-b border-black w-48 mx-auto"></div>
        </div>
     </div>
@@ -117,11 +136,10 @@ export default function ReportPdfView({ params }: { params: Promise<{ id: string
          <>
             {/* MONTHLY PAGE 1 */}
             <div className="w-[210mm] min-h-[297mm] bg-white p-[20mm] relative shadow-xl mb-8 print:shadow-none print:mb-0 box-border break-after-page text-black">
-               {renderKopSurat()}
                <div className="text-center mb-6">
                   <h2 className="text-lg font-bold uppercase tracking-wider">Laporan Hasil Belajar Bulanan</h2>
                </div>
-               {renderBiodata()}
+               {renderHeader()}
                
                <div className="mb-6">
                   <h3 className="font-bold mb-2 uppercase border-b border-black pb-1">Sambutan Kepala Sekolah</h3>
@@ -133,11 +151,10 @@ export default function ReportPdfView({ params }: { params: Promise<{ id: string
 
             {/* MONTHLY PAGE 2 */}
             <div className="w-[210mm] min-h-[297mm] bg-white p-[20mm] relative shadow-xl mb-8 print:shadow-none print:mb-0 box-border break-after-page text-black">
-               {renderKopSurat()}
                <div className="text-center mb-6">
                   <h2 className="text-lg font-bold uppercase tracking-wider">Capaian Kompetensi dan Kehadiran</h2>
                </div>
-               {renderBiodata()}
+               {renderHeader()}
 
                <div className="mb-6">
                   <h3 className="font-bold mb-2 uppercase border-b border-black pb-1">Capaian Akademik</h3>
@@ -192,11 +209,10 @@ export default function ReportPdfView({ params }: { params: Promise<{ id: string
          <>
             {/* SEMESTER PAGE 1 */}
             <div className="w-[210mm] min-h-[297mm] bg-white p-[20mm] relative shadow-xl mb-8 print:shadow-none print:mb-0 box-border break-after-page text-black">
-               {renderKopSurat()}
                <div className="text-center mb-6">
                   <h2 className="text-lg font-bold uppercase tracking-wider">Rapor Peserta Didik</h2>
                </div>
-               {renderBiodata()}
+               {renderHeader()}
 
                <div className="mb-6">
                   <h3 className="font-bold mb-2 uppercase border-b border-black pb-1">A. Sikap</h3>
@@ -217,8 +233,7 @@ export default function ReportPdfView({ params }: { params: Promise<{ id: string
 
             {/* SEMESTER PAGE 2 */}
             <div className="w-[210mm] min-h-[297mm] bg-white p-[20mm] relative shadow-xl mb-8 print:shadow-none print:mb-0 box-border break-after-page text-black">
-               {renderKopSurat()}
-               {renderBiodata()}
+               {renderHeader()}
 
                <div className="mb-6">
                   <h3 className="font-bold mb-2 uppercase border-b border-black pb-1">B. Pengetahuan & Keterampilan</h3>
@@ -249,8 +264,7 @@ export default function ReportPdfView({ params }: { params: Promise<{ id: string
 
             {/* SEMESTER PAGE 3 */}
             <div className="w-[210mm] min-h-[297mm] bg-white p-[20mm] relative shadow-xl mb-8 print:shadow-none print:mb-0 box-border break-after-page text-black">
-               {renderKopSurat()}
-               {renderBiodata()}
+               {renderHeader()}
 
                <div className="mb-6">
                   <h3 className="font-bold mb-2 uppercase border-b border-black pb-1">C. Ekstrakurikuler</h3>
