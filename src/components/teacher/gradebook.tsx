@@ -247,11 +247,15 @@ export function Gradebook({ courseId, classId }: { courseId: string; classId: st
       });
 
       if (payloads.length > 0) {
-        await supabase.from("student_scores").upsert(payloads, { onConflict: 'student_id,target_id' });
-        toast.success("Final grades synced to database successfully!");
+        const { error } = await supabase.from("student_scores").upsert(payloads, { onConflict: 'student_id,target_id' });
+        if (error) {
+          toast.error("Sync failed: " + error.message);
+        } else {
+          toast.success("Final grades synced to database successfully!");
+        }
       }
-    } catch (err) {
-      toast.error("Failed to sync grades");
+    } catch (err: any) {
+      toast.error("Failed to sync grades: " + (err.message || err));
     }
     setLoading(false);
   };
