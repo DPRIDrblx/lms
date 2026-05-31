@@ -30,7 +30,7 @@ FOR ALL USING (
   EXISTS (
     SELECT 1 FROM public.classes 
     WHERE id = public.monthly_reports.class_id 
-    AND (homeroom_teacher_id = auth.uid() OR co_homeroom_id = auth.uid())
+    AND (wali_kelas_id = auth.uid() OR co_homeroom_id = auth.uid())
   )
 );
 

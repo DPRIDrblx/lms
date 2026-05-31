@@ -76,7 +76,7 @@ export function Sidebar() {
 
   useEffect(() => {
     if (profile?.role === 'teacher') {
-      supabase.from("classes").select("id").or(`homeroom_teacher_id.eq.${profile.id},co_homeroom_id.eq.${profile.id}`).limit(1)
+      supabase.from("classes").select("id").or(`wali_kelas_id.eq.${profile.id},co_homeroom_id.eq.${profile.id},supervisor_id.eq.${profile.id}`).limit(1)
         .then(({ data }: any) => { if (data && data.length > 0) setIsHomeroom(true); });
     }
   }, [profile, supabase]);
