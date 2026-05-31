@@ -13,14 +13,16 @@ export default function LoginPage() {
   
   // Prevent immediate redirect loop, wait for session to stabilize
   useEffect(() => {
-    if (user && profile) {
-      if (profile.force_password_change) {
+    if (user) {
+      if (profile?.force_password_change) {
         router.push("/auth/change-password");
         return;
       }
+      // If we have user, we should navigate. Wait a tiny bit for profile to load 
+      // so we can catch force_password_change, but don't wait forever.
       const timer = setTimeout(() => {
         router.push("/dashboard");
-      }, 2000);
+      }, profile ? 0 : 1500);
       return () => clearTimeout(timer);
     }
   }, [user, profile, router]);
