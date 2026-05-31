@@ -33,6 +33,7 @@ function RapotInputContent() {
   const supabase = createClient();
   
   const studentId = searchParams.get("student");
+  const isReadOnly = searchParams.get("readonly") === "true";
   const classId = params?.classId as string;
   
   const [student, setStudent] = useState<any>(null);
@@ -203,7 +204,7 @@ function RapotInputContent() {
             </div>
          </div>
          <div className="flex items-center gap-3">
-           {rapot.id && (
+           {!isReadOnly && rapot.id && (
              <Button 
                onClick={handleDelete} 
                disabled={saving} 
@@ -226,9 +227,11 @@ function RapotInputContent() {
                Download PDF
              </Button>
            )}
-           <Button onClick={handleSave} loading={saving} size="lg" className="h-14 px-8 rounded-2xl font-black shadow-xl shadow-[var(--accent)]/20" icon={<Save className="h-5 w-5" />}>
-              Finalize Data
-           </Button>
+           {!isReadOnly && (
+             <Button onClick={handleSave} loading={saving} size="lg" className="h-14 px-8 rounded-2xl font-black shadow-xl shadow-[var(--accent)]/20" icon={<Save className="h-5 w-5" />}>
+                Finalize Data
+             </Button>
+           )}
          </div>
       </header>
 
@@ -238,9 +241,11 @@ function RapotInputContent() {
             <Card className="p-8 border-none shadow-xl bg-white">
                <div className="flex items-center justify-between mb-8 border-b-2 border-slate-50 pb-4">
                   <h3 className="text-sm font-black uppercase tracking-widest text-slate-900">Academic Grades</h3>
-                  <Button onClick={handleSyncGrades} disabled={saving} variant="secondary" size="sm" icon={<RefreshCw className={`h-4 w-4 ${saving ? 'animate-spin' : ''}`} />}>
-                     Tarik Nilai
-                  </Button>
+                  {!isReadOnly && (
+                    <Button onClick={handleSyncGrades} disabled={saving} variant="secondary" size="sm" icon={<RefreshCw className={`h-4 w-4 ${saving ? 'animate-spin' : ''}`} />}>
+                       Tarik Nilai
+                    </Button>
+                  )}
                </div>
                <div className="space-y-4">
                   {Object.keys(rapot.grades_summary || {}).length > 0 ? (
@@ -277,27 +282,30 @@ function RapotInputContent() {
                      <label className="block text-[10px] font-black uppercase text-slate-400 mb-2">Sakit (Sick)</label>
                      <input 
                        type="number" 
+                       disabled={isReadOnly}
                        value={rapot.attendance_sick} 
                        onChange={e => setRapot({...rapot, attendance_sick: parseInt(e.target.value) || 0})}
-                       className="w-full h-14 px-6 rounded-2xl bg-slate-50 border-2 border-slate-100 font-black text-lg focus:border-[var(--accent)] outline-none transition-all"
+                       className="w-full h-14 px-6 rounded-2xl bg-slate-50 border-2 border-slate-100 font-black text-lg focus:border-[var(--accent)] outline-none transition-all disabled:opacity-50"
                      />
                   </div>
                   <div>
                      <label className="block text-[10px] font-black uppercase text-slate-400 mb-2">Izin (Excused)</label>
                      <input 
                        type="number" 
+                       disabled={isReadOnly}
                        value={rapot.attendance_excused} 
                        onChange={e => setRapot({...rapot, attendance_excused: parseInt(e.target.value) || 0})}
-                       className="w-full h-14 px-6 rounded-2xl bg-slate-50 border-2 border-slate-100 font-black text-lg focus:border-[var(--accent)] outline-none transition-all"
+                       className="w-full h-14 px-6 rounded-2xl bg-slate-50 border-2 border-slate-100 font-black text-lg focus:border-[var(--accent)] outline-none transition-all disabled:opacity-50"
                      />
                   </div>
                   <div>
                      <label className="block text-[10px] font-black uppercase text-slate-400 mb-2">Alfa (Unexcused)</label>
                      <input 
                        type="number" 
+                       disabled={isReadOnly}
                        value={rapot.attendance_unexcused} 
                        onChange={e => setRapot({...rapot, attendance_unexcused: parseInt(e.target.value) || 0})}
-                       className="w-full h-14 px-6 rounded-2xl bg-slate-50 border-2 border-slate-100 font-black text-lg focus:border-[var(--accent)] outline-none transition-all"
+                       className="w-full h-14 px-6 rounded-2xl bg-slate-50 border-2 border-slate-100 font-black text-lg focus:border-[var(--accent)] outline-none transition-all disabled:opacity-50"
                      />
                   </div>
                </div>
@@ -311,20 +319,22 @@ function RapotInputContent() {
                      <label className="block text-[10px] font-black uppercase text-slate-400 mb-2">Spiritual Attitude</label>
                      <textarea 
                        rows={4}
+                       disabled={isReadOnly}
                        value={rapot.attitude_spiritual} 
                        onChange={e => setRapot({...rapot, attitude_spiritual: e.target.value})}
                        placeholder="Describe the student's spiritual growth..."
-                       className="w-full p-6 rounded-2xl bg-slate-50 border-2 border-slate-100 font-medium text-sm focus:border-[var(--accent)] outline-none transition-all resize-none"
+                       className="w-full p-6 rounded-2xl bg-slate-50 border-2 border-slate-100 font-medium text-sm focus:border-[var(--accent)] outline-none transition-all resize-none disabled:opacity-50"
                      />
                   </div>
                   <div>
                      <label className="block text-[10px] font-black uppercase text-slate-400 mb-2">Social Attitude</label>
                      <textarea 
                        rows={4}
+                       disabled={isReadOnly}
                        value={rapot.attitude_social} 
                        onChange={e => setRapot({...rapot, attitude_social: e.target.value})}
                        placeholder="Describe the student's social interactions..."
-                       className="w-full p-6 rounded-2xl bg-slate-50 border-2 border-slate-100 font-medium text-sm focus:border-[var(--accent)] outline-none transition-all resize-none"
+                       className="w-full p-6 rounded-2xl bg-slate-50 border-2 border-slate-100 font-medium text-sm focus:border-[var(--accent)] outline-none transition-all resize-none disabled:opacity-50"
                      />
                   </div>
                </div>
@@ -334,19 +344,22 @@ function RapotInputContent() {
             <Card className="p-8 border-none shadow-xl bg-white">
                <div className="flex items-center justify-between mb-8 border-b-2 border-slate-50 pb-4">
                   <h3 className="text-sm font-black uppercase tracking-widest text-slate-900">Extracurricular Activities</h3>
-                  <Button variant="ghost" size="sm" onClick={addEkskul} icon={<Plus className="h-4 w-4" />}>Add Entry</Button>
+                  {!isReadOnly && <Button variant="ghost" size="sm" onClick={addEkskul} icon={<Plus className="h-4 w-4" />}>Add Entry</Button>}
                </div>
                <div className="space-y-4">
                   <AnimatePresence>
                      {extracurriculars.map((e, idx) => (
                         <motion.div key={idx} initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="p-6 rounded-3xl bg-slate-50 border border-slate-200 relative group">
-                           <button onClick={() => removeEkskul(idx)} className="absolute top-4 right-4 p-2 text-slate-300 hover:text-red-500 opacity-0 group-hover:opacity-100 transition-all">
+                           {!isReadOnly && (
+                            <button onClick={() => removeEkskul(idx)} className="absolute top-4 right-4 p-2 text-slate-300 hover:text-red-500 opacity-0 group-hover:opacity-100 transition-all">
                               <Trash2 className="h-4 w-4" />
                            </button>
+                           )}
                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
                               <div>
                                  <label className="block text-[10px] font-bold text-slate-400 uppercase mb-1.5">Activity Name</label>
                                  <input 
+                                   disabled={isReadOnly}
                                    value={e.activity_name} 
                                    onChange={(val: any) => {
                                       const next = [...extracurriculars];
@@ -354,19 +367,20 @@ function RapotInputContent() {
                                       setExtracurriculars(next);
                                    }}
                                    placeholder="e.g. Scouts, Basketball"
-                                   className="w-full h-11 px-4 rounded-xl bg-white border border-slate-200 font-bold text-sm outline-none"
+                                   className="w-full h-11 px-4 rounded-xl bg-white border border-slate-200 font-bold text-sm outline-none disabled:opacity-50"
                                  />
                               </div>
                               <div>
                                  <label className="block text-[10px] font-bold text-slate-400 uppercase mb-1.5">Predicate</label>
                                  <select 
+                                   disabled={isReadOnly}
                                    value={e.predicate}
                                    onChange={(val: any) => {
                                       const next = [...extracurriculars];
                                       next[idx].predicate = val.target.value;
                                       setExtracurriculars(next);
                                    }}
-                                   className="w-full h-11 px-4 rounded-xl bg-white border border-slate-200 font-bold text-sm outline-none"
+                                   className="w-full h-11 px-4 rounded-xl bg-white border border-slate-200 font-bold text-sm outline-none disabled:opacity-50"
                                  >
                                     <option value="A">A (Excellent)</option>
                                     <option value="B">B (Good)</option>
@@ -376,6 +390,7 @@ function RapotInputContent() {
                               </div>
                            </div>
                            <textarea 
+                             disabled={isReadOnly}
                              value={e.description}
                              onChange={(val: any) => {
                                 const next = [...extracurriculars];
@@ -383,7 +398,7 @@ function RapotInputContent() {
                                 setExtracurriculars(next);
                              }}
                              placeholder="Briefly describe achievement..."
-                             className="w-full p-4 rounded-xl bg-white border border-slate-200 font-medium text-xs outline-none resize-none"
+                             className="w-full p-4 rounded-xl bg-white border border-slate-200 font-medium text-xs outline-none resize-none disabled:opacity-50"
                            />
                         </motion.div>
                      ))}

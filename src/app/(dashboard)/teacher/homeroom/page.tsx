@@ -220,10 +220,10 @@ export default function HomeroomTeacherDashboard() {
                               </td>
                               <td className="px-6 py-4 text-right">
                                  <div className="flex justify-end gap-2">
-                                    <Link href={`/teacher/homeroom/${managedClass.id}/reports/monthly?student=${student.id}`}>
+                                    <Link href={`/teacher/homeroom/${managedClass.id}/reports/monthly?student=${student.id}&readonly=${isReadOnly}`}>
                                        <Button variant="ghost" size="sm" className="text-[var(--accent)] font-bold">Monthly</Button>
                                     </Link>
-                                    <Link href={`/teacher/homeroom/${managedClass.id}/reports/semester?student=${student.id}`}>
+                                    <Link href={`/teacher/homeroom/${managedClass.id}/reports/semester?student=${student.id}&readonly=${isReadOnly}`}>
                                        <Button variant="ghost" size="sm" icon={<ArrowRight className="h-4 w-4" />}>Semester</Button>
                                     </Link>
                                  </div>

@@ -8,7 +8,7 @@ import { Badge } from "@/components/ui/badge";
 import { ChevronLeft, FileText, Download, Users, RefreshCw, Save, Loader2 } from "lucide-react";
 import { useEffect, useState, use } from "react";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { toast } from "react-hot-toast";
 
 export default function MonthlyReportPage({ params }: { params: Promise<{ classId: string }> }) {
@@ -16,6 +16,8 @@ export default function MonthlyReportPage({ params }: { params: Promise<{ classI
   const { profile } = useAuth();
   const supabase = createClient();
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const isReadOnly = searchParams.get("readonly") === "true";
 
   const [managedClass, setManagedClass] = useState<any>(null);
   const [students, setStudents] = useState<any[]>([]);
@@ -162,6 +164,16 @@ export default function MonthlyReportPage({ params }: { params: Promise<{ classI
     toast.success("Data Presensi berhasil ditarik!");
   };
 
+  const handleDataChange = (studentId: string, field: string, value: any) => {
+    setReportsData(prev => ({
+      ...prev,
+      [studentId]: {
+        ...prev[studentId],
+        [field]: value
+      }
+    }));
+  };
+
   const saveReport = async (studentId: string, isPublish: boolean) => {
     setSaving(true);
     const data = reportsData[studentId];
@@ -245,12 +257,16 @@ export default function MonthlyReportPage({ params }: { params: Promise<{ classI
               <option key={m} value={m} />
             ))}
           </datalist>
-          <Button onClick={handleSyncGrades} disabled={syncing} variant="secondary" icon={<RefreshCw className={`h-4 w-4 ${syncing ? 'animate-spin' : ''}`} />}>
-            Tarik Nilai
-          </Button>
-          <Button onClick={handleSyncAttendance} disabled={syncing} variant="secondary" className="border border-[var(--accent)] text-[var(--accent)] bg-transparent hover:bg-slate-50" icon={<RefreshCw className={`h-4 w-4 ${syncing ? 'animate-spin' : ''}`} />}>
-            Tarik Presensi
-          </Button>
+          {!isReadOnly && (
+            <>
+              <Button onClick={handleSyncGrades} disabled={syncing} variant="secondary" icon={<RefreshCw className={`h-4 w-4 ${syncing ? 'animate-spin' : ''}`} />}>
+                Tarik Nilai
+              </Button>
+              <Button onClick={handleSyncAttendance} disabled={syncing} variant="secondary" className="border border-[var(--accent)] text-[var(--accent)] bg-transparent hover:bg-slate-50" icon={<RefreshCw className={`h-4 w-4 ${syncing ? 'animate-spin' : ''}`} />}>
+                Tarik Presensi
+              </Button>
+            </>
+          )}
         </div>
       </header>
 
@@ -258,9 +274,10 @@ export default function MonthlyReportPage({ params }: { params: Promise<{ classI
         <h3 className="text-sm font-black uppercase text-indigo-900 mb-2">Sambutan Kepala Sekolah (Global)</h3>
         <p className="text-xs text-indigo-700 mb-4">Teks ini akan dicetak di semua Laporan Hasil Belajar Bulanan siswa di kelas ini.</p>
         <textarea 
-          className="w-full min-h-[60px] p-3 text-sm border border-indigo-200 rounded focus:ring-1 focus:ring-indigo-500 focus:outline-none"
+          className="w-full min-h-[60px] p-3 text-sm border border-indigo-200 rounded focus:ring-1 focus:ring-indigo-500 focus:outline-none disabled:opacity-50"
           value={globalPrincipalRemarks}
           onChange={(e) => setGlobalPrincipalRemarks(e.target.value)}
+          disabled={isReadOnly}
         />
       </Card>
 
@@ -284,36 +301,38 @@ export default function MonthlyReportPage({ params }: { params: Promise<{ classI
                     </Badge>
                   </div>
                 </div>
-                <div className="flex gap-2">
-                  {sData.id && (
+                {!isReadOnly && (
+                  <div className="flex gap-2">
+                    {sData.id && (
+                      <Button 
+                        onClick={() => deleteReport(student.id)} 
+                        disabled={saving} 
+                        variant="danger"
+                        size="sm"
+                        className="text-white border-red-200"
+                      >
+                        Hapus
+                      </Button>
+                    )}
                     <Button 
-                      onClick={() => deleteReport(student.id)} 
+                      onClick={() => saveReport(student.id, false)} 
                       disabled={saving} 
-                      variant="danger"
-                      size="sm"
-                      className="text-white border-red-200"
+                      variant="ghost" 
+                      size="sm" 
+                      icon={<Save className="h-4 w-4" />}
                     >
-                      Hapus
+                      Save Draft
                     </Button>
-                  )}
-                  <Button 
-                    onClick={() => saveReport(student.id, false)} 
-                    disabled={saving} 
-                    variant="ghost" 
-                    size="sm" 
-                    icon={<Save className="h-4 w-4" />}
-                  >
-                    Save Draft
-                  </Button>
-                  <Button 
-                    onClick={() => saveReport(student.id, true)} 
-                    disabled={saving || sData.is_published} 
-                    size="sm" 
-                    className="bg-[var(--accent)] hover:bg-[var(--accent-hover)] text-white"
-                  >
-                    {sData.is_published ? "Already Published" : "Publish Report"}
-                  </Button>
-                </div>
+                    <Button 
+                      onClick={() => saveReport(student.id, true)} 
+                      disabled={saving || sData.is_published} 
+                      size="sm" 
+                      className="bg-[var(--accent)] hover:bg-[var(--accent-hover)] text-white"
+                    >
+                      {sData.is_published ? "Already Published" : "Publish Report"}
+                    </Button>
+                  </div>
+                )}
               </div>
               
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -324,7 +343,13 @@ export default function MonthlyReportPage({ params }: { params: Promise<{ classI
                       {Object.entries(grades).map(([course, score]: any) => (
                         <div key={course} className="flex justify-between items-center text-sm p-2 bg-slate-50 border border-slate-100 rounded">
                           <span className="font-medium text-slate-700">{course}</span>
-                          <span className="font-black text-slate-900">{score}</span>
+                          <input 
+                            type="number"
+                            disabled={isReadOnly}
+                            value={score}
+                            onChange={(e) => handleDataChange(student.id, 'grades_summary', { ...grades, [course]: parseFloat(e.target.value) || 0 })}
+                            className="w-16 bg-transparent text-right font-black text-slate-900 focus:outline-none"
+                          />
                         </div>
                       ))}
                     </div>
@@ -338,20 +363,20 @@ export default function MonthlyReportPage({ params }: { params: Promise<{ classI
                     <h4 className="text-xs font-black uppercase text-[var(--text-tertiary)] tracking-widest mb-3">Rekap Kehadiran</h4>
                     <div className="grid grid-cols-4 gap-2">
                       <div className="p-2 bg-emerald-50 rounded text-center border border-emerald-100">
-                        <span className="block text-[10px] text-emerald-600 font-bold uppercase">Hadir (QR)</span>
+                        <span className="block text-[10px] text-emerald-600 font-bold uppercase">Hadir</span>
                         <span className="block font-black text-emerald-900 mt-1">{att.present || 0}</span>
                       </div>
                       <div className="p-2 bg-amber-50 rounded text-center border border-amber-100">
                         <span className="block text-[10px] text-amber-600 font-bold uppercase">Sakit</span>
-                        <input type="number" value={att.sick || 0} onChange={e => setReportsData({...reportsData, [student.id]: {...sData, attendance_summary: {...att, sick: parseInt(e.target.value)||0}}})} className="w-full text-center bg-transparent mt-1 font-black focus:outline-none" />
+                        <input type="number" disabled={isReadOnly} value={att.sick || 0} onChange={e => setReportsData({...reportsData, [student.id]: {...sData, attendance_summary: {...att, sick: parseInt(e.target.value)||0}}})} className="w-full text-center bg-transparent mt-1 font-black focus:outline-none disabled:opacity-50" />
                       </div>
                       <div className="p-2 bg-blue-50 rounded text-center border border-blue-100">
                         <span className="block text-[10px] text-blue-600 font-bold uppercase">Izin</span>
-                        <input type="number" value={att.excused || 0} onChange={e => setReportsData({...reportsData, [student.id]: {...sData, attendance_summary: {...att, excused: parseInt(e.target.value)||0}}})} className="w-full text-center bg-transparent mt-1 font-black focus:outline-none" />
+                        <input type="number" disabled={isReadOnly} value={att.excused || 0} onChange={e => setReportsData({...reportsData, [student.id]: {...sData, attendance_summary: {...att, excused: parseInt(e.target.value)||0}}})} className="w-full text-center bg-transparent mt-1 font-black focus:outline-none disabled:opacity-50" />
                       </div>
                       <div className="p-2 bg-red-50 rounded text-center border border-red-100">
                         <span className="block text-[10px] text-red-600 font-bold uppercase">Alpa</span>
-                        <input type="number" value={att.unexcused || 0} onChange={e => setReportsData({...reportsData, [student.id]: {...sData, attendance_summary: {...att, unexcused: parseInt(e.target.value)||0}}})} className="w-full text-center bg-transparent mt-1 font-black focus:outline-none" />
+                        <input type="number" disabled={isReadOnly} value={att.unexcused || 0} onChange={e => setReportsData({...reportsData, [student.id]: {...sData, attendance_summary: {...att, unexcused: parseInt(e.target.value)||0}}})} className="w-full text-center bg-transparent mt-1 font-black focus:outline-none disabled:opacity-50" />
                       </div>
                     </div>
                   </div>
