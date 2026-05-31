@@ -14,7 +14,8 @@ import {
   Trophy, 
   Loader2,
   ExternalLink,
-  Presentation
+  Presentation,
+  Gamepad2
 } from "lucide-react";
 import { useEffect, useState, use } from "react";
 import Link from "next/link";
@@ -56,6 +57,19 @@ export default function LessonViewerPage({ params }: { params: Promise<{ id: str
     fetchData();
   }, [id, lessonId, profile, supabase]);
 
+  // Listener for AI Game completion
+  useEffect(() => {
+    const handleMessage = (event: MessageEvent) => {
+      if (event.data?.type === 'GAME_COMPLETED') {
+        if (!isCompleted && !completing) {
+           handleComplete();
+        }
+      }
+    };
+    window.addEventListener('message', handleMessage);
+    return () => window.removeEventListener('message', handleMessage);
+  }, [isCompleted, completing, lesson, course, profile]);
+
   const handleComplete = async () => {
     if (!profile || isCompleted || !lesson || !course) return;
     setCompleting(true);
@@ -87,7 +101,7 @@ export default function LessonViewerPage({ params }: { params: Promise<{ id: str
   if (loading) return <div className="h-[80vh] flex items-center justify-center"><Loader2 className="h-8 w-8 animate-spin text-[var(--accent)]" /></div>;
   if (!lesson) return <div className="py-20 text-center text-[var(--text-tertiary)] font-bold">Materi tidak ditemukan.</div>;
 
-  const TypeIcon = lesson.content_type === "video" ? Play : lesson.content_type === "pdf" ? FileText : lesson.content_type === "canva" ? Presentation : BookOpen;
+  const TypeIcon = lesson.content_type === "video" ? Play : lesson.content_type === "pdf" ? FileText : lesson.content_type === "canva" ? Presentation : lesson.content_type === "game" ? Gamepad2 : BookOpen;
 
   const getCanvaEmbedUrl = (url: string) => {
     if (!url) return "";
@@ -118,7 +132,7 @@ export default function LessonViewerPage({ params }: { params: Promise<{ id: str
           <ArrowLeft className="h-4 w-4" /> Kembali ke Daftar Bab
         </Link>
         <div className="flex items-center gap-2 text-[var(--text-tertiary)] bg-[var(--bg-secondary)] px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider">
-          <TypeIcon className="h-3.5 w-3.5" /> {lesson.content_type === 'canva' ? 'presentasi' : lesson.content_type}
+          <TypeIcon className="h-3.5 w-3.5" /> {lesson.content_type === 'canva' ? 'presentasi' : lesson.content_type === 'game' ? 'AI Game' : lesson.content_type}
         </div>
       </header>
 
@@ -205,6 +219,24 @@ export default function LessonViewerPage({ params }: { params: Promise<{ id: str
                <a href={lesson.pdf_url} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-2 px-6 py-3 bg-[var(--accent)] text-white font-bold rounded-xl hover:bg-[var(--accent-hover)] transition-all shadow-lg shadow-[var(--accent)]/30">
                  Buka Dokumen PDF <ExternalLink className="h-5 w-5" />
                </a>
+            </div>
+          )}
+
+          {lesson.content_type === "game" && (
+            <div className="w-full h-[600px] bg-slate-50 border-t border-[var(--border)] overflow-hidden">
+               {lesson.body_text ? (
+                 <iframe 
+                   className="w-full h-full border-0"
+                   srcDoc={lesson.body_text}
+                   sandbox="allow-scripts allow-same-origin"
+                   title="Interactive AI Game"
+                 />
+               ) : (
+                 <div className="w-full h-full flex flex-col items-center justify-center text-[var(--text-tertiary)]">
+                   <Gamepad2 className="h-12 w-12 opacity-20 mb-2" />
+                   <p className="font-bold">Game belum dibuat.</p>
+                 </div>
+               )}
             </div>
           )}
 

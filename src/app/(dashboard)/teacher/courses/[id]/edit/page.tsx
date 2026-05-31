@@ -35,7 +35,7 @@ interface Lesson {
   id: string;
   chapter_id: string | null;
   title: string;
-  content_type: "text" | "video" | "pdf" | "canva";
+  content_type: "text" | "video" | "pdf" | "canva" | "game";
   body_text?: string;
   video_url?: string;
   pdf_url?: string;
@@ -75,6 +75,53 @@ export default function EditCoursePage() {
   const [saving, setSaving] = useState(false);
   const [expandedChapters, setExpandedChapters] = useState<Set<string>>(new Set());
   const [activeTab, setActiveTab] = useState<"curriculum" | "gradebook">("curriculum");
+  const [isGeneratingGame, setIsGeneratingGame] = useState(false);
+
+  const handleGenerateAIGame = () => {
+    setIsGeneratingGame(true);
+    setTimeout(() => {
+      // Mock generated HTML game
+      const mockGameHTML = `<!DOCTYPE html>
+<html>
+<head>
+  <style>
+    body { font-family: system-ui; text-align: center; padding: 2rem; background: #f8fafc; }
+    h2 { color: #1e293b; }
+    .btn { padding: 10px 20px; background: #4f46e5; color: white; border: none; border-radius: 8px; cursor: pointer; font-weight: bold; margin-top: 20px;}
+    .btn:hover { background: #4338ca; }
+    .card { background: white; padding: 20px; border-radius: 12px; box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1); max-w: 400px; margin: 0 auto; }
+  </style>
+</head>
+<body>
+  <div class="card">
+    <h2>🎯 Mini Quiz Game</h2>
+    <p>Answer the question correctly to win XP!</p>
+    <p style="font-weight:bold; margin-top: 20px;">What is 5 + 7?</p>
+    <div style="display: flex; gap: 10px; justify-content: center; margin-top:20px;">
+      <button class="btn" onclick="wrong()">10</button>
+      <button class="btn" onclick="win()">12</button>
+      <button class="btn" onclick="wrong()">15</button>
+    </div>
+    <p id="msg" style="margin-top: 20px; font-weight: bold;"></p>
+  </div>
+  <script>
+    function wrong() {
+      document.getElementById('msg').innerText = "❌ Incorrect, try again!";
+      document.getElementById('msg').style.color = "red";
+    }
+    function win() {
+      document.getElementById('msg').innerText = "🎉 Correct! You won XP!";
+      document.getElementById('msg').style.color = "green";
+      // Tell LMS that game is completed
+      window.parent.postMessage({ type: 'GAME_COMPLETED' }, '*');
+    }
+  </script>
+</body>
+</html>`;
+      setEditingLesson((prev: any) => ({ ...prev, body_text: mockGameHTML }));
+      setIsGeneratingGame(false);
+    }, 3000);
+  };
 
   const fetchData = useCallback(async () => {
     const { data: courseData } = await supabase.from("courses").select("*").eq("id", id).single();
@@ -286,7 +333,7 @@ export default function EditCoursePage() {
                                 <Card key={lesson.id} className="p-3 hover:border-[var(--accent)]/30 transition-all flex items-center justify-between group">
                                   <div className="flex items-center gap-3">
                                     <GripVertical className="h-4 w-4 text-[var(--text-tertiary)] cursor-grab" />
-                                    {lesson.content_type === "video" ? <Video className="h-4 w-4 text-[var(--accent)]" /> : lesson.content_type === "canva" ? <Presentation className="h-4 w-4 text-[var(--accent)]" /> : <FileText className="h-4 w-4 text-[var(--accent)]" />}
+                                    {lesson.content_type === "video" ? <Video className="h-4 w-4 text-[var(--accent)]" /> : lesson.content_type === "canva" ? <Presentation className="h-4 w-4 text-[var(--accent)]" /> : lesson.content_type === "game" ? <Presentation className="h-4 w-4 text-purple-500" /> : <FileText className="h-4 w-4 text-[var(--accent)]" />}
                                     <span className="text-sm font-medium text-[var(--text-primary)]">{lesson.title}</span>
                                   </div>
                                   <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-all">
@@ -400,14 +447,14 @@ export default function EditCoursePage() {
           </div>
           <div>
             <label className="block text-sm font-medium mb-1.5">Type</label>
-            <div className="grid grid-cols-4 gap-2">
-              {(["text", "video", "pdf", "canva"] as const).map(t => (
+            <div className="grid grid-cols-5 gap-2">
+              {(["text", "video", "pdf", "canva", "game"] as const).map(t => (
                 <button 
                   key={t}
                   onClick={() => setEditingLesson({ ...editingLesson, content_type: t })}
                   className={`p-3 rounded-xl border-2 transition-all flex flex-col items-center gap-1 ${editingLesson?.content_type === t ? "border-[var(--accent)] bg-[var(--accent-light)] text-[var(--accent)]" : "border-[var(--border)]"}`}
                 >
-                  <span className="text-[10px] font-bold uppercase">{t === "canva" ? "presentasi" : t}</span>
+                  <span className="text-[10px] font-bold uppercase">{t === "canva" ? "presentasi" : t === "game" ? "AI Game" : t}</span>
                 </button>
               ))}
             </div>
@@ -467,6 +514,54 @@ export default function EditCoursePage() {
                 className="w-full h-11 px-4 rounded-xl bg-[var(--bg-secondary)] border border-[var(--border)] outline-none"
                 placeholder="https://..."
               />
+            </div>
+          )}
+
+          {editingLesson?.content_type === "game" && (
+            <div className="space-y-4">
+              <div className="p-4 bg-purple-50 border border-purple-100 rounded-xl space-y-3">
+                 <div className="flex items-center gap-2 text-purple-700 font-bold">
+                    <Presentation className="h-5 w-5" />
+                    <span>AI Game Generator</span>
+                 </div>
+                 <p className="text-xs text-purple-600">Jelaskan game apa yang ingin Anda buat untuk materi ini. AI akan membuatkan kode HTML interaktif secara otomatis.</p>
+                 
+                 <div className="space-y-2">
+                    <label className="block text-xs font-semibold text-purple-800">Topik / Materi</label>
+                    <input 
+                      type="text" 
+                      placeholder="e.g. Anatomi Jantung Manusia" 
+                      className="w-full h-10 px-3 rounded-lg bg-white border border-purple-200 outline-none text-sm"
+                    />
+                 </div>
+                 
+                 <div className="space-y-2">
+                    <label className="block text-xs font-semibold text-purple-800">Prompt / Instruksi Game</label>
+                    <textarea 
+                      rows={3}
+                      placeholder="Buatkan game kuis mencocokkan kata (drag and drop) tentang anatomi jantung dengan 5 pertanyaan..."
+                      className="w-full p-3 rounded-lg bg-white border border-purple-200 outline-none resize-none text-sm"
+                    />
+                 </div>
+
+                 <Button 
+                   onClick={() => handleGenerateAIGame()} 
+                   className="w-full bg-purple-600 hover:bg-purple-700 text-white"
+                   disabled={isGeneratingGame}
+                 >
+                   {isGeneratingGame ? (
+                     <><Loader2 className="h-4 w-4 mr-2 animate-spin" /> Generating Game...</>
+                   ) : "Generate AI Game"}
+                 </Button>
+              </div>
+
+              {editingLesson?.body_text && editingLesson.body_text.includes("<html") && (
+                <div className="p-3 bg-green-50 border border-green-200 rounded-xl">
+                   <p className="text-xs font-bold text-green-700 flex items-center gap-1">
+                      ✅ Game berhasil di-generate!
+                   </p>
+                </div>
+              )}
             </div>
           )}
 
