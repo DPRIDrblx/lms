@@ -3,7 +3,8 @@
 import { useState, useEffect, useCallback } from "react";
 import { createClient } from "@/lib/supabase";
 import { Card } from "@/components/ui/card";
-import { Loader2, Search, TrendingUp, AlertCircle, Edit3, Check, X, Plus, Trash2 } from "lucide-react";
+import { Loader2, Search, TrendingUp, AlertCircle, Edit3, Check, X, Plus, Trash2, RefreshCw } from "lucide-react";
+import { toast } from "react-hot-toast";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 
@@ -221,6 +222,40 @@ export function Gradebook({ courseId, classId }: { courseId: string; classId: st
     fetchData();
   };
 
+  const handleForceSync = async () => {
+    setLoading(true);
+    try {
+      const payloads: any[] = [];
+      let totalWeight = 0;
+      columns.forEach(col => totalWeight += col.weight);
+
+      students.forEach(student => {
+        let weightedSum = 0;
+        columns.forEach(col => {
+          const s = scores.find(x => x.student_id === student.id && x.column_id === col.id);
+          weightedSum += (s?.score || 0) * col.weight;
+        });
+        const finalScore = Math.round(weightedSum / (totalWeight || 1));
+        
+        payloads.push({
+          student_id: student.id,
+          target_id: courseId,
+          score: finalScore,
+          target_type: "course",
+          updated_at: new Date().toISOString()
+        });
+      });
+
+      if (payloads.length > 0) {
+        await supabase.from("student_scores").upsert(payloads, { onConflict: 'student_id,target_id' });
+        toast.success("Final grades synced to database successfully!");
+      }
+    } catch (err) {
+      toast.error("Failed to sync grades");
+    }
+    setLoading(false);
+  };
+
   const filteredStudents = students.filter(s => s.full_name?.toLowerCase().includes(search.toLowerCase()));
 
   if (loading) return <div className="py-20 text-center"><Loader2 className="animate-spin mx-auto text-[var(--accent)]" /></div>;
@@ -243,6 +278,9 @@ export function Gradebook({ courseId, classId }: { courseId: string; classId: st
               className="w-full pl-10 pr-4 py-2 rounded-xl bg-[var(--bg-secondary)] border border-[var(--border)] text-sm focus:ring-2 focus:ring-[var(--accent)] transition-all"
             />
           </div>
+          <Button onClick={handleForceSync} variant="secondary" size="sm" icon={<RefreshCw className="h-4 w-4" />}>
+            Save & Sync
+          </Button>
           <Button onClick={() => setShowAddColumn(true)} size="sm" icon={<Plus className="h-4 w-4" />}>
             Add Column
           </Button>

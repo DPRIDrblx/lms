@@ -16,7 +16,8 @@ import {
   MessageSquare,
   Clock,
   Plus,
-  Trash2
+  Trash2,
+  RefreshCw
 } from "lucide-react";
 import { useEffect, useState, useCallback, Suspense } from "react";
 import { useSearchParams, useRouter, useParams } from "next/navigation";
@@ -43,7 +44,8 @@ function RapotInputContent() {
     attendance_unexcused: 0,
     homeroom_notes: "",
     attitude_spiritual: "",
-    attitude_social: ""
+    attitude_social: "",
+    grades_summary: {}
   });
   const [extracurriculars, setExtracurriculars] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
@@ -73,6 +75,36 @@ function RapotInputContent() {
   useEffect(() => {
     fetchData();
   }, [fetchData]);
+
+  const handleSyncGrades = async () => {
+    if (!studentId || !classId) return;
+    setSaving(true);
+    
+    // Fetch all courses for this class
+    const { data: courses } = await supabase.from("courses").select("id, title").eq("class_id", classId);
+    
+    // Fetch scores for the student
+    const { data: scores } = await supabase
+      .from("student_scores")
+      .select("score, target_id")
+      .eq("target_type", "course")
+      .eq("student_id", studentId);
+      
+    const grades: any = {};
+    
+    courses?.forEach((course: any) => {
+      const courseScore = scores?.find((s: any) => s.target_id === course.id);
+      if (courseScore) {
+        grades[course.title] = courseScore.score;
+      } else {
+        grades[course.title] = 0;
+      }
+    });
+    
+    setRapot((prev: any) => ({ ...prev, grades_summary: grades }));
+    setSaving(false);
+    toast.success("Data Akademik berhasil ditarik!");
+  };
 
   const handleSave = async () => {
     if (!studentId || !profile) return;
@@ -162,6 +194,40 @@ function RapotInputContent() {
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
          <div className="lg:col-span-2 space-y-8">
+            {/* 0. Academic Grades */}
+            <Card className="p-8 border-none shadow-xl bg-white">
+               <div className="flex items-center justify-between mb-8 border-b-2 border-slate-50 pb-4">
+                  <h3 className="text-sm font-black uppercase tracking-widest text-slate-900">Academic Grades</h3>
+                  <Button onClick={handleSyncGrades} disabled={saving} variant="secondary" size="sm" icon={<RefreshCw className={`h-4 w-4 ${saving ? 'animate-spin' : ''}`} />}>
+                     Tarik Nilai
+                  </Button>
+               </div>
+               <div className="space-y-4">
+                  {Object.keys(rapot.grades_summary || {}).length > 0 ? (
+                     <table className="w-full text-sm">
+                        <thead className="bg-slate-50 text-slate-500 uppercase text-[10px] font-black">
+                           <tr>
+                              <th className="p-3 text-left rounded-l-xl">Mata Pelajaran</th>
+                              <th className="p-3 text-center rounded-r-xl w-32">Nilai Akhir</th>
+                           </tr>
+                        </thead>
+                        <tbody className="divide-y divide-slate-50">
+                           {Object.entries(rapot.grades_summary).map(([course, score]: any) => (
+                              <tr key={course}>
+                                 <td className="p-3 font-bold text-slate-700">{course}</td>
+                                 <td className="p-3 text-center font-black text-slate-900 text-lg">{score}</td>
+                              </tr>
+                           ))}
+                        </tbody>
+                     </table>
+                  ) : (
+                     <div className="text-center py-12 border-2 border-dashed border-slate-100 rounded-3xl">
+                        <p className="text-xs text-slate-400 font-bold uppercase tracking-widest">Belum ada data akademik yang ditarik.</p>
+                     </div>
+                  )}
+               </div>
+            </Card>
+
             {/* 1. Attendance Section */}
             <Card className="p-8 border-none shadow-xl bg-white relative overflow-hidden">
                <div className="absolute top-0 right-0 p-8 opacity-5"><Activity className="h-24 w-24" /></div>
