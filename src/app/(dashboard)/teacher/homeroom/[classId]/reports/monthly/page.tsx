@@ -21,6 +21,7 @@ export default function MonthlyReportPage({ params }: { params: Promise<{ classI
   const [students, setStudents] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [selectedMonth, setSelectedMonth] = useState("");
+  const [historyMonths, setHistoryMonths] = useState<string[]>([]);
   const [globalPrincipalRemarks, setGlobalPrincipalRemarks] = useState("Terus tingkatkan prestasi belajar Anda di Mainan Middle International School.");
   
   // Data State
@@ -40,6 +41,16 @@ export default function MonthlyReportPage({ params }: { params: Promise<{ classI
       
       const { data: stds } = await supabase.from("profiles").select("*").eq("class_id", classId).order("full_name");
       if (stds) setStudents(stds);
+      
+      const { data: monthHistory } = await supabase
+        .from("monthly_reports")
+        .select("month_year")
+        .eq("class_id", classId);
+        
+      if (monthHistory) {
+        const uniqueMonths = Array.from(new Set(monthHistory.map((m: any) => m.month_year)));
+        setHistoryMonths(uniqueMonths as string[]);
+      }
       
       setLoading(false);
     };
@@ -70,7 +81,9 @@ export default function MonthlyReportPage({ params }: { params: Promise<{ classI
           is_published: r.is_published
         };
       });
-      setReportsData(prev => ({ ...prev, ...map }));
+      setReportsData(map); // Reset to only data from this month
+    } else {
+      setReportsData({});
     }
   };
 
@@ -182,6 +195,27 @@ export default function MonthlyReportPage({ params }: { params: Promise<{ classI
     setSaving(false);
   };
 
+  const deleteReport = async (studentId: string) => {
+    const data = reportsData[studentId];
+    if (!data?.id) return;
+    
+    if (!confirm("Yakin ingin menghapus laporan bulan ini? Laporan yang dihapus tidak bisa dikembalikan.")) return;
+    
+    const { error } = await supabase.from("monthly_reports").delete().eq("id", data.id);
+    
+    if (error) {
+      toast.error("Gagal menghapus laporan: " + error.message);
+    } else {
+      toast.success("Laporan berhasil dihapus");
+      setReportsData(prev => {
+        const newData = { ...prev };
+        delete newData[studentId];
+        return newData;
+      });
+      // Update history months if needed by refetching data, but for now we just delete from UI
+    }
+  };
+
   if (loading) return <div className="p-20 text-center animate-pulse">Memuat Data Kelas...</div>;
 
   return (
@@ -204,7 +238,13 @@ export default function MonthlyReportPage({ params }: { params: Promise<{ classI
             onChange={(e) => setSelectedMonth(e.target.value)}
             className="border border-[var(--border)] rounded-md px-3 py-2 text-sm bg-white font-bold text-center w-40"
             placeholder="e.g. Agustus 2026"
+            list="history-months"
           />
+          <datalist id="history-months">
+            {historyMonths.map(m => (
+              <option key={m} value={m} />
+            ))}
+          </datalist>
           <Button onClick={handleSyncGrades} disabled={syncing} variant="secondary" icon={<RefreshCw className={`h-4 w-4 ${syncing ? 'animate-spin' : ''}`} />}>
             Tarik Nilai
           </Button>
@@ -245,6 +285,17 @@ export default function MonthlyReportPage({ params }: { params: Promise<{ classI
                   </div>
                 </div>
                 <div className="flex gap-2">
+                  {sData.id && (
+                    <Button 
+                      onClick={() => deleteReport(student.id)} 
+                      disabled={saving} 
+                      variant="danger"
+                      size="sm"
+                      className="text-white border-red-200"
+                    >
+                      Hapus
+                    </Button>
+                  )}
                   <Button 
                     onClick={() => saveReport(student.id, false)} 
                     disabled={saving} 

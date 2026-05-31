@@ -146,6 +146,34 @@ function RapotInputContent() {
     setExtracurriculars(extracurriculars.filter((_, i) => i !== index));
   };
 
+  const handleDelete = async () => {
+    if (!rapot.id) return;
+    if (!confirm("Yakin ingin menghapus Rapor Semester ini? Data rapor dan ekstrakurikuler yang terkait akan hilang permanen.")) return;
+    
+    setSaving(true);
+    const { error } = await supabase.from("report_cards").delete().eq("id", rapot.id);
+    
+    if (error) {
+      toast.error("Gagal menghapus rapor: " + error.message);
+      setSaving(false);
+    } else {
+      toast.success("Rapor berhasil dihapus.");
+      setRapot({
+        semester: "Semester 2",
+        academic_year: "2025/2026",
+        attendance_sick: 0,
+        attendance_excused: 0,
+        attendance_unexcused: 0,
+        homeroom_notes: "",
+        attitude_spiritual: "",
+        attitude_social: "",
+        grades_summary: {}
+      });
+      setExtracurriculars([]);
+      setSaving(false);
+    }
+  };
+
   if (loading) return <div className="p-20 text-center animate-pulse">Retrieving Student Academic History...</div>;
 
   if (!studentId) {
@@ -175,6 +203,18 @@ function RapotInputContent() {
             </div>
          </div>
          <div className="flex items-center gap-3">
+           {rapot.id && (
+             <Button 
+               onClick={handleDelete} 
+               disabled={saving} 
+               variant="danger" 
+               size="lg" 
+               className="h-14 px-6 rounded-2xl font-black text-white border border-red-200" 
+               icon={<Trash2 className="h-5 w-5" />}
+             >
+               Hapus
+             </Button>
+           )}
            {rapot.id ? (
              <Link href={`/teacher/homeroom/${classId || '1'}/reports/${rapot.id}/pdf-view?type=semester`}>
                <Button variant="secondary" size="lg" className="h-14 px-6 rounded-2xl font-black text-[var(--accent)] border border-[var(--accent)]" icon={<FileText className="h-5 w-5" />}>

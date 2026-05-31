@@ -127,9 +127,9 @@ export default function ReportPdfView({ params }: { params: Promise<{ id: string
            <>
               <div className="mb-8">
                  <h3 className="font-black text-slate-800 mb-2 uppercase border-b border-slate-300 pb-1">Sambutan Kepala Sekolah</h3>
-                 <p className="text-sm text-slate-700 italic leading-relaxed text-justify bg-slate-50 p-4 rounded border border-slate-200">
-                    "{data.principal_remarks || "Terus tingkatkan prestasi belajar Anda di Mainan Middle International School."}"
-                 </p>
+                 <div className="text-sm text-slate-800 leading-relaxed text-justify bg-white p-4 rounded-md border border-slate-300 font-serif whitespace-pre-wrap">
+                    {data.principal_remarks || "Terus tingkatkan prestasi belajar Anda di Mainan Middle International School."}
+                 </div>
               </div>
 
               <div className="mb-8">
@@ -192,71 +192,104 @@ export default function ReportPdfView({ params }: { params: Promise<{ id: string
 
         {reportType === "semester" && (
            <>
-              <div className="mb-8 flex gap-8">
-                 <div className="w-1/2">
-                    <h3 className="font-black text-slate-800 mb-3 uppercase border-b border-slate-300 pb-1">Sikap Spiritual</h3>
-                    <div className="border border-slate-300 rounded p-3 text-sm text-slate-700 bg-slate-50 min-h-[100px]">
-                       {data.attitude_spiritual || "Baik."}
-                    </div>
-                 </div>
-                 <div className="w-1/2">
-                    <h3 className="font-black text-slate-800 mb-3 uppercase border-b border-slate-300 pb-1">Sikap Sosial</h3>
-                    <div className="border border-slate-300 rounded p-3 text-sm text-slate-700 bg-slate-50 min-h-[100px]">
-                       {data.attitude_social || "Baik."}
-                    </div>
-                 </div>
+              <div className="mb-6">
+                 <h3 className="font-bold text-slate-800 mb-2 uppercase border-b-2 border-slate-800 pb-1 text-sm tracking-widest">A. Sikap</h3>
+                 <table className="w-full text-sm border-collapse border border-slate-800 mb-4">
+                    <tbody>
+                       <tr>
+                          <td className="border border-slate-800 p-2 font-bold w-48 bg-slate-100">Sikap Spiritual</td>
+                          <td className="border border-slate-800 p-2">{data.attitude_spiritual || "Baik."}</td>
+                       </tr>
+                       <tr>
+                          <td className="border border-slate-800 p-2 font-bold w-48 bg-slate-100">Sikap Sosial</td>
+                          <td className="border border-slate-800 p-2">{data.attitude_social || "Baik."}</td>
+                       </tr>
+                    </tbody>
+                 </table>
               </div>
 
-              <div className="mb-8">
-                 <h3 className="font-black text-slate-800 mb-3 uppercase border-b border-slate-300 pb-1">Ekstrakurikuler</h3>
-                 <table className="w-full text-sm border-collapse border border-slate-300">
+              <div className="mb-6">
+                 <h3 className="font-bold text-slate-800 mb-2 uppercase border-b-2 border-slate-800 pb-1 text-sm tracking-widest">B. Pengetahuan & Keterampilan</h3>
+                 <table className="w-full text-sm border-collapse border border-slate-800">
                     <thead>
                        <tr className="bg-slate-100">
-                          <th className="border border-slate-300 p-2 text-left font-bold text-slate-700">Kegiatan</th>
-                          <th className="border border-slate-300 p-2 text-center font-bold text-slate-700 w-24">Predikat</th>
-                          <th className="border border-slate-300 p-2 text-left font-bold text-slate-700">Keterangan</th>
+                          <th className="border border-slate-800 p-2 text-center font-bold text-slate-800 w-12">No</th>
+                          <th className="border border-slate-800 p-2 text-left font-bold text-slate-800">Mata Pelajaran</th>
+                          <th className="border border-slate-800 p-2 text-center font-bold text-slate-800 w-24">Nilai Akhir</th>
                        </tr>
                     </thead>
                     <tbody>
-                       {data.extracurriculars && data.extracurriculars.length > 0 ? (
-                          data.extracurriculars.map((e: any, idx: number) => (
-                             <tr key={idx}>
-                                <td className="border border-slate-300 p-2 font-medium">{e.activity_name}</td>
-                                <td className="border border-slate-300 p-2 text-center font-black text-slate-900">{e.predicate}</td>
-                                <td className="border border-slate-300 p-2">{e.description}</td>
+                       {data.grades_summary && Object.entries(data.grades_summary).length > 0 ? (
+                          Object.entries(data.grades_summary).map(([course, score]: any, idx: number) => (
+                             <tr key={course}>
+                                <td className="border border-slate-800 p-2 text-center">{idx + 1}</td>
+                                <td className="border border-slate-800 p-2 font-medium">{course}</td>
+                                <td className="border border-slate-800 p-2 text-center font-bold">{score}</td>
                              </tr>
                           ))
                        ) : (
-                          <tr><td colSpan={3} className="border border-slate-300 p-4 text-center text-slate-500 italic">Tidak mengikuti kegiatan ekstrakurikuler</td></tr>
+                          <tr><td colSpan={3} className="border border-slate-800 p-4 text-center text-slate-500 italic">Belum ada data nilai</td></tr>
                        )}
                     </tbody>
                  </table>
               </div>
 
-              <div className="mb-8 flex gap-8">
+              <div className="mb-6 flex gap-6">
                  <div className="w-1/2">
-                    <h3 className="font-black text-slate-800 mb-3 uppercase border-b border-slate-300 pb-1">Ketidakhadiran</h3>
-                    <table className="w-full text-sm border-collapse border border-slate-300">
+                    <h3 className="font-bold text-slate-800 mb-2 uppercase border-b-2 border-slate-800 pb-1 text-sm tracking-widest">C. Ekstrakurikuler</h3>
+                    <table className="w-full text-sm border-collapse border border-slate-800">
+                       <thead>
+                          <tr className="bg-slate-100">
+                             <th className="border border-slate-800 p-2 text-center font-bold text-slate-800 w-8">No</th>
+                             <th className="border border-slate-800 p-2 text-left font-bold text-slate-800">Kegiatan</th>
+                             <th className="border border-slate-800 p-2 text-center font-bold text-slate-800 w-20">Predikat</th>
+                          </tr>
+                       </thead>
                        <tbody>
-                          <tr>
-                             <td className="border border-slate-300 p-2 font-medium">Sakit</td>
-                             <td className="border border-slate-300 p-2 text-center font-bold">{data.attendance_sick || 0} hari</td>
-                          </tr>
-                          <tr>
-                             <td className="border border-slate-300 p-2 font-medium">Izin</td>
-                             <td className="border border-slate-300 p-2 text-center font-bold">{data.attendance_excused || 0} hari</td>
-                          </tr>
-                          <tr>
-                             <td className="border border-slate-300 p-2 font-medium">Tanpa Keterangan</td>
-                             <td className="border border-slate-300 p-2 text-center font-bold text-red-600">{data.attendance_unexcused || 0} hari</td>
-                          </tr>
+                          {data.extracurriculars && data.extracurriculars.length > 0 ? (
+                             data.extracurriculars.map((e: any, idx: number) => (
+                                <tr key={idx}>
+                                   <td className="border border-slate-800 p-2 text-center">{idx + 1}</td>
+                                   <td className="border border-slate-800 p-2">
+                                      <div className="font-bold">{e.activity_name}</div>
+                                      <div className="text-[11px] text-slate-600 mt-0.5">{e.description}</div>
+                                   </td>
+                                   <td className="border border-slate-800 p-2 text-center font-bold">{e.predicate}</td>
+                                </tr>
+                             ))
+                          ) : (
+                             <tr><td colSpan={3} className="border border-slate-800 p-4 text-center text-slate-500 italic">-</td></tr>
+                          )}
                        </tbody>
                     </table>
                  </div>
-                 <div className="w-1/2">
-                    <h3 className="font-black text-slate-800 mb-3 uppercase border-b border-slate-300 pb-1">Catatan Wali Kelas</h3>
-                    <div className="h-[100px] border border-slate-300 rounded p-3 text-sm text-slate-700 italic bg-yellow-50/50">
-                       {data.homeroom_notes || "Tidak ada catatan."}
+                 
+                 <div className="w-1/2 space-y-6">
+                    <div>
+                       <h3 className="font-bold text-slate-800 mb-2 uppercase border-b-2 border-slate-800 pb-1 text-sm tracking-widest">D. Ketidakhadiran</h3>
+                       <table className="w-full text-sm border-collapse border border-slate-800">
+                          <tbody>
+                             <tr>
+                                <td className="border border-slate-800 p-2 w-48 font-medium">Sakit</td>
+                                <td className="border border-slate-800 p-2 text-center">{data.attendance_sick || 0} hari</td>
+                             </tr>
+                             <tr>
+                                <td className="border border-slate-800 p-2 font-medium">Izin</td>
+                                <td className="border border-slate-800 p-2 text-center">{data.attendance_excused || 0} hari</td>
+                             </tr>
+                             <tr>
+                                <td className="border border-slate-800 p-2 font-medium">Tanpa Keterangan</td>
+                                <td className="border border-slate-800 p-2 text-center">{data.attendance_unexcused || 0} hari</td>
+                             </tr>
+                          </tbody>
+                       </table>
+                    </div>
+                    
+                    <div>
+                       <h3 className="font-bold text-slate-800 mb-2 uppercase border-b-2 border-slate-800 pb-1 text-sm tracking-widest">E. Catatan Wali Kelas</h3>
+                       <div className="border border-slate-800 p-3 text-sm min-h-[80px] bg-white text-justify">
+                          {data.homeroom_notes || "-"}
+                       </div>
                     </div>
                  </div>
               </div>
