@@ -95,9 +95,14 @@ export default function HomeroomTeacherDashboard() {
          </div>
          {!isReadOnly && (
             <div className="flex gap-2">
-               <Link href="/teacher/homeroom/rapot">
+               <Link href={`/teacher/homeroom/${managedClass.id}/reports/monthly`}>
+                  <Button variant="secondary" className="h-12 px-6 rounded-xl font-bold border-[var(--border)]" icon={<FileText className="h-4 w-4" />}>
+                     Monthly Reports
+                  </Button>
+               </Link>
+               <Link href={`/teacher/homeroom/${managedClass.id}/reports/semester`}>
                   <Button className="h-12 px-6 rounded-xl font-bold shadow-lg shadow-[var(--accent)]/20" icon={<FileText className="h-4 w-4" />}>
-                     Manage Report Cards
+                     Semester Rapot
                   </Button>
                </Link>
             </div>
@@ -216,11 +221,16 @@ export default function HomeroomTeacherDashboard() {
                                  <Badge variant="success" className="font-bold">Active</Badge>
                               </td>
                               {!isReadOnly && (
-                                 <td className="px-6 py-4 text-right">
-                                    <Link href={`/teacher/homeroom/rapot?student=${student.id}`}>
-                                       <Button variant="ghost" size="sm" icon={<ArrowRight className="h-4 w-4" />}>Input Data</Button>
-                                    </Link>
-                                 </td>
+                                  <td className="px-6 py-4 text-right">
+                                     <div className="flex justify-end gap-2">
+                                        <Link href={`/teacher/homeroom/${managedClass.id}/reports/monthly?student=${student.id}`}>
+                                           <Button variant="ghost" size="sm" className="text-[var(--accent)] font-bold">Monthly</Button>
+                                        </Link>
+                                        <Link href={`/teacher/homeroom/${managedClass.id}/reports/semester?student=${student.id}`}>
+                                           <Button variant="ghost" size="sm" icon={<ArrowRight className="h-4 w-4" />}>Semester</Button>
+                                        </Link>
+                                     </div>
+                                  </td>
                               )}
                            </tr>
                         ))}

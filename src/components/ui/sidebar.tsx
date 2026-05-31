@@ -51,6 +51,7 @@ const parentNav = [
   { href: "/parent/dashboard", label: "My Children", icon: Users },
   { href: "/parent/finance", label: "School Fees", icon: Wallet },
   { href: "/chat", label: "Communications", icon: MessageSquare },
+  { href: "/parent/reports", label: "Academic Reports", icon: FileText },
   { href: "/parent/cards", label: "Child Wallet", icon: CreditCard },
   { href: "/settings", label: "Settings", icon: Settings },
 ];
@@ -75,8 +76,8 @@ export function Sidebar() {
 
   useEffect(() => {
     if (profile?.role === 'teacher') {
-      supabase.from("classes").select("id").eq("homeroom_teacher_id", profile.id).single()
-        .then(({ data }: any) => { if (data) setIsHomeroom(true); });
+      supabase.from("classes").select("id").or(`homeroom_teacher_id.eq.${profile.id},co_homeroom_id.eq.${profile.id}`).limit(1)
+        .then(({ data }: any) => { if (data && data.length > 0) setIsHomeroom(true); });
     }
   }, [profile, supabase]);
 
