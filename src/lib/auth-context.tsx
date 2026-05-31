@@ -60,7 +60,17 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     
     if (error || !data) {
       console.warn("Profile hydration delayed or missing profile record.");
-      // We don't force logout anymore, let the user stay with partial data
+      // Create a fallback profile so the app doesn't freeze on the dashboard
+      setProfile({
+        id: userId,
+        full_name: "Student Profile (Offline/Syncing)",
+        role: "student",
+        xp: 0,
+        rank: "Novice",
+        avatar_url: null,
+        class_id: null,
+        face_descriptor: null
+      });
       console.timeEnd('profile-hydration');
       return;
     }

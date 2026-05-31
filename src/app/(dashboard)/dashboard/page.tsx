@@ -50,6 +50,14 @@ export default function DashboardPage() {
   const [events, setEvents] = useState<SchoolEvent[]>([]);
   const [leadership, setLeadership] = useState<any>(null);
   const [loading, setLoading] = useState(true);
+  const [profileTimeout, setProfileTimeout] = useState(false);
+
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setProfileTimeout(true);
+    }, 5000);
+    return () => clearTimeout(timer);
+  }, []);
 
   const fetchData = useCallback(async () => {
     if (!profile) return;
@@ -106,8 +114,24 @@ export default function DashboardPage() {
   if (!profile) {
     return (
       <div className="h-[60vh] flex flex-col items-center justify-center space-y-4">
-        <Loader2 className="h-10 w-10 animate-spin text-[var(--accent)]" />
-        <p className="text-sm text-[var(--text-secondary)] animate-pulse">Hydrating your Academy Profile...</p>
+        {profileTimeout ? (
+          <>
+            <div className="p-4 bg-red-50 border border-red-200 rounded-xl max-w-sm text-center">
+              <p className="text-red-700 font-bold mb-2">Gagal Memuat Profil</p>
+              <p className="text-sm text-red-600 mb-4">
+                Koneksi ke database lambat atau terputus. Silakan periksa jaringan internet Anda atau coba lagi nanti.
+              </p>
+              <Button onClick={() => window.location.reload()} variant="danger" className="w-full">
+                Refresh Halaman
+              </Button>
+            </div>
+          </>
+        ) : (
+          <>
+            <Loader2 className="h-10 w-10 animate-spin text-[var(--accent)]" />
+            <p className="text-sm text-[var(--text-secondary)] animate-pulse">Hydrating your Academy Profile...</p>
+          </>
+        )}
       </div>
     );
   }
