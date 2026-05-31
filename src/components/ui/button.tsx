@@ -18,9 +18,9 @@ const Button = forwardRef<HTMLButtonElement, ButtonProps>(
 
     const variants: Record<string, string> = {
       primary:
-        "bg-[var(--accent)] text-white hover:bg-[var(--accent-hover)] focus-visible:ring-[var(--accent)] shadow-sm hover:shadow-md active:scale-[0.98]",
+        "bg-gradient-to-b from-[var(--accent)] to-[var(--accent-hover)] text-white hover:brightness-110 focus-visible:ring-[var(--accent)] shadow-[0_4px_12px_rgba(79,70,229,0.3)] shadow-[inset_0_1px_1px_rgba(255,255,255,0.2)] hover:shadow-[0_6px_16px_rgba(79,70,229,0.4)] active:scale-[0.97]",
       secondary:
-        "bg-[var(--bg-secondary)] text-[var(--text-primary)] border border-[var(--border)] hover:bg-[var(--bg-tertiary)] hover:border-[var(--border-hover)] active:scale-[0.98]",
+        "bg-white/80 backdrop-blur-sm text-[var(--text-primary)] border border-[var(--border)] hover:bg-white hover:border-[var(--border-hover)] hover:shadow-sm active:scale-[0.97]",
       ghost:
         "text-[var(--text-secondary)] hover:text-[var(--text-primary)] hover:bg-[var(--bg-tertiary)]",
       danger:

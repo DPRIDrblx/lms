@@ -24,8 +24,9 @@ export function TopBar() {
   }, []);
 
   return (
-    <header className="sticky top-0 z-20 bg-[var(--bg-primary)]/80 backdrop-blur-xl border-b border-[var(--border)] print:hidden">
-      <div className="flex items-center justify-between h-16 px-6">
+    <div className="sticky top-0 z-20 pt-4 px-4 lg:px-8 print:hidden">
+      <header className="glass-panel rounded-2xl transition-all duration-300">
+        <div className="flex items-center justify-between h-16 px-6">
         <div className="lg:hidden w-10" />
 
         <div className="flex-1" />
@@ -71,7 +72,7 @@ export function TopBar() {
                   animate={{ opacity: 1, y: 0, scale: 1 }}
                   exit={{ opacity: 0, y: 4, scale: 0.95 }}
                   transition={{ duration: 0.15 }}
-                  className="absolute right-0 mt-2 w-48 bg-[var(--bg-primary)] border border-[var(--border)] rounded-xl shadow-[var(--shadow-lg)] py-1.5 overflow-hidden"
+                  className="absolute right-0 mt-2 w-48 glass-panel border border-[var(--border)]/50 rounded-xl py-1.5 overflow-hidden"
                 >
                   <div className="px-3 py-2 border-b border-[var(--border)]">
                     <p className="text-sm font-medium text-[var(--text-primary)]">{profile?.full_name}</p>
@@ -90,6 +91,7 @@ export function TopBar() {
           </div>
         </div>
       </div>
-    </header>
+      </header>
+    </div>
   );
 }

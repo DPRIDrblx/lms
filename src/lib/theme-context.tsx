@@ -18,8 +18,8 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
     const stored = localStorage.getItem("nia-theme") as Theme | null;
     if (stored) {
       setTheme(stored);
-    } else if (window.matchMedia("(prefers-color-scheme: dark)").matches) {
-      setTheme("dark");
+    } else {
+      setTheme("light");
     }
   }, []);
 
