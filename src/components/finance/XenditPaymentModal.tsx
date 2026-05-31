@@ -118,13 +118,14 @@ const PAYMENT_METHODS: PaymentGroup[] = [
 ];
 
 export function XenditPaymentModal({ isOpen, onClose, amount, onSuccess, title = "Nusantara International Academy" }: XenditPaymentModalProps) {
-  const [step, setStep] = useState<"select" | "detail" | "processing" | "success">("select");
+  const [step, setStep] = useState<"select" | "detail" | "otp" | "processing" | "success">("select");
   const [selectedMethod, setSelectedMethod] = useState<PaymentMethodItem | null>(null);
   const [expandedGroup, setExpandedGroup] = useState<string | null>("va"); // Virtual Account default
   const [timeLeft, setTimeLeft] = useState(24 * 60 * 60); // 24 hours
   
   const [activeInstructionTab, setActiveInstructionTab] = useState<string>("atm");
   const [isProcessing, setIsProcessing] = useState(false);
+  const [otpValue, setOtpValue] = useState("");
 
   const [orderId, setOrderId] = useState("");
   const [vaNumber, setVaNumber] = useState("");
@@ -135,6 +136,7 @@ export function XenditPaymentModal({ isOpen, onClose, amount, onSuccess, title =
       setSelectedMethod(null);
       setTimeLeft(24 * 60 * 60);
       setIsProcessing(false);
+      setOtpValue("");
       setOrderId(`INV-${Math.random().toString(36).substring(2, 9).toUpperCase()}`);
       setVaNumber("8890" + Math.random().toString().substring(2, 10));
     }
@@ -161,6 +163,19 @@ export function XenditPaymentModal({ isOpen, onClose, amount, onSuccess, title =
   };
 
   const handleSimulatePaymentAction = () => {
+    if (selectedMethod?.id.startsWith("cc") || selectedMethod?.id.startsWith("dd_")) {
+       setStep("otp");
+       return;
+    }
+    setIsProcessing(true);
+    setStep("processing");
+    setTimeout(() => {
+      setStep("success");
+      setIsProcessing(false);
+    }, 3000);
+  };
+
+  const handleOtpSubmit = () => {
     setIsProcessing(true);
     setStep("processing");
     setTimeout(() => {
@@ -192,12 +207,12 @@ export function XenditPaymentModal({ isOpen, onClose, amount, onSuccess, title =
         <div className="flex-none bg-[#041444] text-white z-10 relative">
            {/* Top nav area */}
            <div className="px-4 py-3 flex items-center justify-between">
-              {step === "detail" && (
-                <button onClick={() => setStep("select")} className="p-1 -ml-1 rounded-full hover:bg-white/10 transition-colors">
+              {(step === "detail" || step === "otp") && (
+                <button onClick={() => setStep(step === "otp" ? "detail" : "select")} className="p-1 -ml-1 rounded-full hover:bg-white/10 transition-colors">
                   <ChevronLeft className="h-6 w-6 text-white" />
                 </button>
               )}
-              {step !== "detail" && <div />} {/* Spacer for alignment */}
+              {step !== "detail" && step !== "otp" && <div />} {/* Spacer for alignment */}
               
               {step !== "success" && step !== "processing" && (
                 <button onClick={onClose} className="p-1 -mr-1 rounded-full hover:bg-white/10 transition-colors">
@@ -340,10 +355,30 @@ export function XenditPaymentModal({ isOpen, onClose, amount, onSuccess, title =
                            ))}
                         </div>
                         <div className="p-4 text-sm text-gray-600 space-y-4 bg-white">
-                           <div className="flex gap-3"><div className="w-5 h-5 rounded-full bg-blue-50 text-blue-700 flex items-center justify-center flex-none font-bold text-xs mt-0.5">1</div><p>Select <span className="font-semibold">Transfer</span> \u003e <span className="font-semibold">Virtual Account</span></p></div>
-                           <div className="flex gap-3"><div className="w-5 h-5 rounded-full bg-blue-50 text-blue-700 flex items-center justify-center flex-none font-bold text-xs mt-0.5">2</div><p>Enter the VA number <span className="font-mono font-semibold">{vaNumber}</span></p></div>
-                           <div className="flex gap-3"><div className="w-5 h-5 rounded-full bg-blue-50 text-blue-700 flex items-center justify-center flex-none font-bold text-xs mt-0.5">3</div><p>Verify the total amount <span className="font-semibold">Rp {amount.toLocaleString('id-ID')}</span></p></div>
-                           <div className="flex gap-3"><div className="w-5 h-5 rounded-full bg-blue-50 text-blue-700 flex items-center justify-center flex-none font-bold text-xs mt-0.5">4</div><p>Complete the transaction</p></div>
+                           {activeInstructionTab === "atm" && (
+                              <>
+                                 <div className="flex gap-3"><div className="w-5 h-5 rounded-full bg-blue-50 text-blue-700 flex items-center justify-center flex-none font-bold text-xs mt-0.5">1</div><p>Insert your ATM Card and enter PIN</p></div>
+                                 <div className="flex gap-3"><div className="w-5 h-5 rounded-full bg-blue-50 text-blue-700 flex items-center justify-center flex-none font-bold text-xs mt-0.5">2</div><p>Select <span className="font-semibold">Other Transactions</span> \u003e <span className="font-semibold">Transfer</span> \u003e <span className="font-semibold">Virtual Account</span></p></div>
+                                 <div className="flex gap-3"><div className="w-5 h-5 rounded-full bg-blue-50 text-blue-700 flex items-center justify-center flex-none font-bold text-xs mt-0.5">3</div><p>Enter the VA number <span className="font-mono font-semibold">{vaNumber}</span></p></div>
+                                 <div className="flex gap-3"><div className="w-5 h-5 rounded-full bg-blue-50 text-blue-700 flex items-center justify-center flex-none font-bold text-xs mt-0.5">4</div><p>Verify the total amount <span className="font-semibold">Rp {amount.toLocaleString('id-ID')}</span> and confirm</p></div>
+                              </>
+                           )}
+                           {activeInstructionTab === "m-banking" && (
+                              <>
+                                 <div className="flex gap-3"><div className="w-5 h-5 rounded-full bg-blue-50 text-blue-700 flex items-center justify-center flex-none font-bold text-xs mt-0.5">1</div><p>Log in to your Mobile Banking app</p></div>
+                                 <div className="flex gap-3"><div className="w-5 h-5 rounded-full bg-blue-50 text-blue-700 flex items-center justify-center flex-none font-bold text-xs mt-0.5">2</div><p>Select <span className="font-semibold">Transfer</span> \u003e <span className="font-semibold">Virtual Account</span></p></div>
+                                 <div className="flex gap-3"><div className="w-5 h-5 rounded-full bg-blue-50 text-blue-700 flex items-center justify-center flex-none font-bold text-xs mt-0.5">3</div><p>Enter the VA number <span className="font-mono font-semibold">{vaNumber}</span></p></div>
+                                 <div className="flex gap-3"><div className="w-5 h-5 rounded-full bg-blue-50 text-blue-700 flex items-center justify-center flex-none font-bold text-xs mt-0.5">4</div><p>Input your PIN to confirm the payment of <span className="font-semibold">Rp {amount.toLocaleString('id-ID')}</span></p></div>
+                              </>
+                           )}
+                           {activeInstructionTab === "i-banking" && (
+                              <>
+                                 <div className="flex gap-3"><div className="w-5 h-5 rounded-full bg-blue-50 text-blue-700 flex items-center justify-center flex-none font-bold text-xs mt-0.5">1</div><p>Log in to your Internet Banking portal</p></div>
+                                 <div className="flex gap-3"><div className="w-5 h-5 rounded-full bg-blue-50 text-blue-700 flex items-center justify-center flex-none font-bold text-xs mt-0.5">2</div><p>Navigate to <span className="font-semibold">Fund Transfer</span> \u003e <span className="font-semibold">Virtual Account</span></p></div>
+                                 <div className="flex gap-3"><div className="w-5 h-5 rounded-full bg-blue-50 text-blue-700 flex items-center justify-center flex-none font-bold text-xs mt-0.5">3</div><p>Input the VA number <span className="font-mono font-semibold">{vaNumber}</span></p></div>
+                                 <div className="flex gap-3"><div className="w-5 h-5 rounded-full bg-blue-50 text-blue-700 flex items-center justify-center flex-none font-bold text-xs mt-0.5">4</div><p>Authorize the transaction of <span className="font-semibold">Rp {amount.toLocaleString('id-ID')}</span> using your token</p></div>
+                              </>
+                           )}
                         </div>
                      </div>
                    </div>
@@ -388,6 +423,29 @@ export function XenditPaymentModal({ isOpen, onClose, amount, onSuccess, title =
                          </div>
                       </div>
                    </div>
+                 ) : selectedMethod?.id.startsWith("rt_") ? (
+                   <div className="space-y-6 pt-4">
+                      <div className="text-center mb-6">
+                         <div className="mx-auto w-16 h-16 bg-gray-50 rounded-full flex items-center justify-center mb-4">
+                            <Store className="h-8 w-8 text-blue-600" />
+                         </div>
+                         <h3 className="text-lg font-bold text-gray-900">Pay at {selectedMethod.name}</h3>
+                         <p className="text-sm text-gray-600">Show this payment code to the cashier at any {selectedMethod.name} store.</p>
+                      </div>
+                      
+                      <div className="bg-gray-50 border border-gray-200 rounded-xl p-4 text-center">
+                         <p className="text-xs text-gray-500 font-semibold uppercase tracking-wider mb-2">Payment Code</p>
+                         <p className="text-3xl font-bold font-mono tracking-widest text-gray-900 mb-4">{vaNumber}</p>
+                         <div className="w-full flex justify-center">
+                            <div className="w-48 h-12 bg-black flex items-center justify-center opacity-80" style={{ backgroundImage: "repeating-linear-gradient(90deg, transparent, transparent 2px, white 2px, white 4px)" }}></div>
+                         </div>
+                      </div>
+                      <div className="p-4 text-sm text-gray-600 space-y-3">
+                         <div className="flex gap-3"><div className="w-5 h-5 rounded-full bg-blue-50 text-blue-700 flex items-center justify-center flex-none font-bold text-xs mt-0.5">1</div><p>Go to the nearest {selectedMethod.name} store.</p></div>
+                         <div className="flex gap-3"><div className="w-5 h-5 rounded-full bg-blue-50 text-blue-700 flex items-center justify-center flex-none font-bold text-xs mt-0.5">2</div><p>Tell the cashier you want to make a <span className="font-semibold">Xendit Payment</span>.</p></div>
+                         <div className="flex gap-3"><div className="w-5 h-5 rounded-full bg-blue-50 text-blue-700 flex items-center justify-center flex-none font-bold text-xs mt-0.5">3</div><p>Provide the payment code and pay <span className="font-semibold">Rp {amount.toLocaleString('id-ID')}</span>.</p></div>
+                      </div>
+                   </div>
                  ) : (
                    <div className="space-y-6 pt-4 text-center">
                       <p className="text-sm text-gray-600">Please follow the instructions from <span className="font-bold">{selectedMethod?.name}</span> to complete your payment.</p>
@@ -403,6 +461,48 @@ export function XenditPaymentModal({ isOpen, onClose, amount, onSuccess, title =
                 >
                   I have completed the payment
                 </button>
+              </div>
+            </div>
+          )}
+
+          {step === "otp" && (
+            <div className="flex flex-col h-full bg-white relative">
+              <div className="p-6 flex-1 flex flex-col justify-center items-center pb-24">
+                 <div className="w-full max-w-sm border border-gray-200 rounded-xl overflow-hidden shadow-xl">
+                    <div className="bg-blue-600 p-4 text-white text-center">
+                       <ShieldCheck className="h-8 w-8 mx-auto mb-2 opacity-80" />
+                       <h3 className="font-bold text-lg">3D Secure Verification</h3>
+                       <p className="text-xs text-blue-100 opacity-90">Your bank requires additional authentication.</p>
+                    </div>
+                    <div className="p-6 bg-white space-y-4">
+                       <p className="text-sm text-gray-600 text-center mb-6">
+                         A 6-digit OTP has been sent to your registered mobile number ending in <span className="font-bold text-gray-900">***992</span>.
+                       </p>
+                       <div className="space-y-1.5">
+                          <label className="text-xs font-semibold text-gray-700">Enter OTP (Any 6 digits)</label>
+                          <input 
+                             type="text" 
+                             maxLength={6}
+                             placeholder="123456" 
+                             value={otpValue}
+                             onChange={(e) => setOtpValue(e.target.value.replace(/\D/g, ''))}
+                             className="w-full text-center tracking-[0.5em] font-mono text-xl border border-gray-300 rounded-lg p-3 focus:ring-2 focus:ring-blue-600 focus:border-blue-600 outline-none" 
+                          />
+                       </div>
+                       <button 
+                          onClick={handleOtpSubmit}
+                          disabled={otpValue.length !== 6}
+                          className="w-full h-12 mt-4 rounded-lg bg-blue-600 hover:bg-blue-700 disabled:bg-gray-300 disabled:text-gray-500 text-white font-bold text-sm transition-colors"
+                       >
+                         Authenticate
+                       </button>
+                    </div>
+                 </div>
+                 <div className="mt-8 text-center">
+                    <button onClick={() => setStep("detail")} className="text-sm font-medium text-gray-500 hover:text-gray-800">
+                       Cancel and try another method
+                    </button>
+                 </div>
               </div>
             </div>
           )}
