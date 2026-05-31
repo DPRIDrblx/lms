@@ -184,11 +184,11 @@ export function Gradebook({ courseId, classId }: { courseId: string; classId: st
         
         supabase.from("student_scores").upsert({
           student_id: studentId,
-          course_id: courseId,
+          target_id: courseId,
           score: newFinal,
           target_type: "course",
           updated_at: new Date().toISOString()
-        }, { onConflict: 'student_id,course_id' }).then();
+        }, { onConflict: 'student_id,target_id' }).then();
 
         return next;
       });

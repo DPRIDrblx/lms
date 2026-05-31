@@ -140,12 +140,16 @@ function RapotInputContent() {
             </div>
          </div>
          <div className="flex items-center gap-3">
-           {rapot.id && (
+           {rapot.id ? (
              <Link href={`/teacher/homeroom/${classId || '1'}/reports/${rapot.id}/pdf-view?type=semester`}>
                <Button variant="secondary" size="lg" className="h-14 px-6 rounded-2xl font-black text-[var(--accent)] border border-[var(--accent)]" icon={<FileText className="h-5 w-5" />}>
                  Download PDF
                </Button>
              </Link>
+           ) : (
+             <Button disabled variant="secondary" size="lg" className="h-14 px-6 rounded-2xl font-black text-slate-400 border border-slate-300" icon={<FileText className="h-5 w-5" />}>
+               Download PDF
+             </Button>
            )}
            <Button onClick={handleSave} loading={saving} size="lg" className="h-14 px-8 rounded-2xl font-black shadow-xl shadow-[var(--accent)]/20" icon={<Save className="h-5 w-5" />}>
               Finalize Data

@@ -9,6 +9,7 @@ import { ChevronLeft, FileText, Download, Users, RefreshCw, Save, Loader2 } from
 import { useEffect, useState, use } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
+import { toast } from "react-hot-toast";
 
 export default function MonthlyReportPage({ params }: { params: Promise<{ classId: string }> }) {
   const { classId } = use(params);
@@ -73,7 +74,7 @@ export default function MonthlyReportPage({ params }: { params: Promise<{ classI
     }
   };
 
-  const handleSyncData = async () => {
+  const handleSyncGrades = async () => {
     setSyncing(true);
     // Fetch all courses for this class
     const { data: courses } = await supabase.from("courses").select("id, title").eq("class_id", classId);
@@ -81,16 +82,10 @@ export default function MonthlyReportPage({ params }: { params: Promise<{ classI
     // Fetch scores for all students in this class (final course scores from advanced gradebook)
     const { data: scores } = await supabase
       .from("student_scores")
-      .select("student_id, score, course_id")
+      .select("student_id, score, target_id")
       .eq("target_type", "course")
       .in("student_id", students.map((s: any) => s.id));
       
-    // Fetch attendance from sessions
-    const { data: attendance } = await supabase
-      .from("attendance_logs")
-      .select("student_id, session_id");
-      
-    // Aggregate data
     const newData = { ...reportsData };
     
     students.forEach((student: any) => {
@@ -98,7 +93,7 @@ export default function MonthlyReportPage({ params }: { params: Promise<{ classI
       const grades: any = {};
       
       courses?.forEach((course: any) => {
-        const courseScore = stdScores.find((s: any) => s.course_id === course.id);
+        const courseScore = stdScores.find((s: any) => s.target_id === course.id);
         if (courseScore) {
           grades[course.title] = courseScore.score;
         } else {
@@ -106,23 +101,52 @@ export default function MonthlyReportPage({ params }: { params: Promise<{ classI
         }
       });
       
-      const stdAtt = attendance?.filter((a: any) => a.student_id === student.id) || [];
-      
       if (!newData[student.id]) {
         newData[student.id] = {
           grades_summary: grades,
-          attendance_summary: { present: stdAtt.length, sick: 0, excused: 0, unexcused: 0 },
+          attendance_summary: { present: 0, sick: 0, excused: 0, unexcused: 0 },
           homeroom_notes: "",
           is_published: false
         };
       } else {
         newData[student.id].grades_summary = grades;
-        newData[student.id].attendance_summary.present = stdAtt.length;
       }
     });
     
     setReportsData(newData);
     setSyncing(false);
+    toast.success("Data Nilai berhasil ditarik!");
+  };
+
+  const handleSyncAttendance = async () => {
+    setSyncing(true);
+    const { data: attendance } = await supabase
+      .from("attendance_logs")
+      .select("student_id, session_id");
+      
+    const newData = { ...reportsData };
+    
+    students.forEach((student: any) => {
+      const stdAtt = attendance?.filter((a: any) => a.student_id === student.id) || [];
+      
+      if (!newData[student.id]) {
+        newData[student.id] = {
+          grades_summary: {},
+          attendance_summary: { present: stdAtt.length, sick: 0, excused: 0, unexcused: 0 },
+          homeroom_notes: "",
+          is_published: false
+        };
+      } else {
+        newData[student.id].attendance_summary = {
+          ...newData[student.id].attendance_summary,
+          present: stdAtt.length
+        };
+      }
+    });
+    
+    setReportsData(newData);
+    setSyncing(false);
+    toast.success("Data Presensi berhasil ditarik!");
   };
 
   const saveReport = async (studentId: string, isPublish: boolean) => {
@@ -178,8 +202,11 @@ export default function MonthlyReportPage({ params }: { params: Promise<{ classI
             className="border border-[var(--border)] rounded-md px-3 py-2 text-sm bg-white font-bold text-center w-40"
             placeholder="e.g. Agustus 2026"
           />
-          <Button onClick={handleSyncData} disabled={syncing} variant="secondary" icon={<RefreshCw className={`h-4 w-4 ${syncing ? 'animate-spin' : ''}`} />}>
-            Tarik Data Nilai & Presensi
+          <Button onClick={handleSyncGrades} disabled={syncing} variant="secondary" icon={<RefreshCw className={`h-4 w-4 ${syncing ? 'animate-spin' : ''}`} />}>
+            Tarik Nilai
+          </Button>
+          <Button onClick={handleSyncAttendance} disabled={syncing} variant="secondary" className="border border-[var(--accent)] text-[var(--accent)] bg-transparent hover:bg-slate-50" icon={<RefreshCw className={`h-4 w-4 ${syncing ? 'animate-spin' : ''}`} />}>
+            Tarik Presensi
           </Button>
         </div>
       </header>
