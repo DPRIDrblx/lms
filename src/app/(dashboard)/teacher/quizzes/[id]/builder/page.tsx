@@ -37,7 +37,7 @@ interface Question {
   options: { text: string; is_correct?: boolean; match_pair?: string }[] | null;
   points: number;
   order_index: number;
-  criteria?: { minLength?: number } | null;
+  criteria?: { minLength?: number; maxLength?: number } | null;
 }
 
 export default function CBTBuilderPage() {
@@ -61,7 +61,10 @@ export default function CBTBuilderPage() {
         setQuiz({
           ...quizData,
           time_limit: quizData.time_limit || 0,
-          max_score: quizData.max_score || 100
+          max_score: quizData.max_score || 100,
+          allow_leave_exam: quizData.allow_leave_exam ?? true,
+          min_time_to_submit: quizData.min_time_to_submit || 0,
+          shuffle_questions: quizData.shuffle_questions ?? false
         });
       }
       if (qData) setQuestions(qData as Question[]);
@@ -103,7 +106,13 @@ export default function CBTBuilderPage() {
     // Save quiz settings
     const { error: quizError } = await supabase
       .from("quizzes")
-      .update({ time_limit: quiz.time_limit || null, max_score: quiz.max_score || 100 })
+      .update({ 
+        time_limit: quiz.time_limit || null, 
+        max_score: quiz.max_score || 100,
+        allow_leave_exam: quiz.allow_leave_exam,
+        min_time_to_submit: quiz.min_time_to_submit,
+        shuffle_questions: quiz.shuffle_questions
+      })
       .eq("id", id);
 
     if (quizError) {
@@ -157,7 +166,7 @@ export default function CBTBuilderPage() {
 
       <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
         {/* Sidebar: Settings & Controls */}
-        <div className="lg:col-span-1 space-y-6">
+        <div className="lg:col-span-1 space-y-6 sticky top-6 self-start">
           <Card className="p-5 border-[var(--border)] shadow-sm bg-[var(--bg-primary)] rounded-md">
             <div className="flex items-center gap-2 mb-4 text-[var(--text-primary)] font-semibold border-b border-[var(--border)] pb-2">
               <Settings className="h-4 w-4" />
@@ -192,6 +201,38 @@ export default function CBTBuilderPage() {
                   onChange={(e) => setQuiz({ ...quiz, max_score: parseInt(e.target.value) || 0 })}
                 />
                 <p className="text-xs text-[var(--text-tertiary)]">Grades will be scaled to this max score.</p>
+              </div>
+
+              <div className="space-y-2 border-t border-[var(--border)] pt-4 mt-2">
+                <label className="flex items-center gap-2 text-sm font-medium text-[var(--text-secondary)]">
+                  Minimum Time to Submit (minutes)
+                </label>
+                <input
+                  type="number"
+                  className="w-full text-sm bg-white dark:bg-[var(--bg-secondary)] border border-[var(--border)] rounded px-3 py-2 focus:ring-1 focus:ring-[var(--accent)] focus:outline-none"
+                  value={quiz.min_time_to_submit}
+                  onChange={(e) => setQuiz({ ...quiz, min_time_to_submit: parseInt(e.target.value) || 0 })}
+                />
+              </div>
+
+              <div className="flex items-center justify-between">
+                <label className="text-sm font-medium text-[var(--text-secondary)]">Allow Leaving Exam Page</label>
+                <input 
+                  type="checkbox" 
+                  checked={quiz.allow_leave_exam} 
+                  onChange={(e) => setQuiz({ ...quiz, allow_leave_exam: e.target.checked })}
+                  className="h-4 w-4 text-[var(--accent)]"
+                />
+              </div>
+
+              <div className="flex items-center justify-between">
+                <label className="text-sm font-medium text-[var(--text-secondary)]">Shuffle Questions</label>
+                <input 
+                  type="checkbox" 
+                  checked={quiz.shuffle_questions} 
+                  onChange={(e) => setQuiz({ ...quiz, shuffle_questions: e.target.checked })}
+                  className="h-4 w-4 text-[var(--accent)]"
+                />
               </div>
             </div>
           </Card>
@@ -391,14 +432,25 @@ export default function CBTBuilderPage() {
                       <div className="space-y-3 bg-[var(--bg-tertiary)] p-4 rounded border border-[var(--border)]">
                         <label className="text-sm font-semibold text-[var(--text-primary)] block mb-2">Essay Criteria</label>
                         <div className="flex items-center gap-3 bg-white dark:bg-[var(--bg-secondary)] p-3 rounded border border-[var(--border)] shadow-sm">
-                          <label className="text-sm text-[var(--text-secondary)]">Minimum Characters required:</label>
+                          <label className="text-sm text-[var(--text-secondary)]">Min Characters:</label>
                           <input
                             type="number"
-                            className="w-24 px-2 py-1 text-sm border border-[var(--border)] rounded focus:ring-1 focus:ring-[var(--accent)] focus:outline-none"
+                            className="w-20 px-2 py-1 text-sm border border-[var(--border)] rounded focus:ring-1 focus:ring-[var(--accent)] focus:outline-none"
                             value={q.criteria?.minLength || 0}
                             onChange={(e) => {
                               updateQuestion(q.id, { 
                                 criteria: { ...q.criteria, minLength: parseInt(e.target.value) || 0 } 
+                              });
+                            }}
+                          />
+                          <label className="text-sm text-[var(--text-secondary)] ml-4">Max Characters:</label>
+                          <input
+                            type="number"
+                            className="w-20 px-2 py-1 text-sm border border-[var(--border)] rounded focus:ring-1 focus:ring-[var(--accent)] focus:outline-none"
+                            value={q.criteria?.maxLength || 0}
+                            onChange={(e) => {
+                              updateQuestion(q.id, { 
+                                criteria: { ...q.criteria, maxLength: parseInt(e.target.value) || 0 } 
                               });
                             }}
                           />
@@ -419,6 +471,10 @@ export default function CBTBuilderPage() {
             )}
           </AnimatePresence>
         </div>
+      </div>
+      
+      <div className="mt-12 text-center text-sm text-[var(--text-tertiary)] opacity-60 pointer-events-none select-none">
+        Provided by Ruang CBT
       </div>
     </div>
   );

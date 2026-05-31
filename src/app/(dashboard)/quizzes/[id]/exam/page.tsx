@@ -38,7 +38,14 @@ export default function ExamPage({ params }: { params: Promise<{ id: string }> }
     ]);
 
     if (qData.data) setQuiz(qData.data);
-    if (qsData.data) setQuestions(qsData.data);
+    if (qsData.data) {
+      let qList = qsData.data as any[];
+      if (qData.data?.shuffle_questions) {
+        // Simple random shuffle for questions
+        qList = [...qList].sort(() => Math.random() - 0.5);
+      }
+      setQuestions(qList);
+    }
 
     // Session Persistence
     const { data: existing } = await supabase.from("exam_sessions").select("*").eq("student_id", profile.id).eq("quiz_id", id).single();
@@ -87,7 +94,7 @@ export default function ExamPage({ params }: { params: Promise<{ id: string }> }
       const { data: newSession } = await supabase.from("exam_sessions").insert({
         student_id: profile.id,
         quiz_id: id,
-        time_left_seconds: (qData.data?.time_limit_minutes || 60) * 60,
+        time_left_seconds: (qData.data?.time_limit || qData.data?.time_limit_minutes || 60) * 60,
         status: 'in_progress',
         metadata: { started_at: new Date().toISOString() }
       }).select().single();
@@ -118,12 +125,17 @@ export default function ExamPage({ params }: { params: Promise<{ id: string }> }
   useEffect(() => {
     const handleBlur = () => {
       if (!isFinished && !loading) {
-        alert("PERINGATAN KECURANGAN: Anda telah meninggalkan halaman ujian! Aktivitas dicatat.");
+        if (quiz?.allow_leave_exam === false) {
+           alert("PELANGGARAN KECURANGAN: Ujian ini tidak mengizinkan Anda meninggalkan halaman! Ujian Anda disubmit otomatis.");
+           submitExam();
+        } else {
+           alert("PERINGATAN KECURANGAN: Anda telah meninggalkan halaman ujian! Aktivitas dicatat.");
+        }
       }
     };
     window.addEventListener("blur", handleBlur);
     return () => window.removeEventListener("blur", handleBlur);
-  }, [isFinished, loading]);
+  }, [isFinished, loading, quiz]);
 
   const saveAnswer = async (qId: string, answer: any) => {
     const newResponses = { ...responses, [qId]: answer };
@@ -148,6 +160,18 @@ export default function ExamPage({ params }: { params: Promise<{ id: string }> }
 
   const submitExam = async () => {
     if (timeLeft > 0 && !confirm("Apakah Anda yakin ingin mengakhiri ujian ini?")) return;
+    
+    // Calculate if they met minimum time (unless time ran out)
+    if (timeLeft > 0 && quiz?.min_time_to_submit > 0) {
+      const totalTimeSeconds = (quiz?.time_limit || quiz?.time_limit_minutes || 60) * 60;
+      const elapsedSeconds = totalTimeSeconds - timeLeft;
+      const minTimeSeconds = quiz.min_time_to_submit * 60;
+      if (elapsedSeconds < minTimeSeconds) {
+        alert(`Anda belum dapat mengumpulkan ujian. Waktu pengerjaan minimal adalah ${quiz.min_time_to_submit} menit.`);
+        return;
+      }
+    }
+    
     await supabase.from("exam_sessions").update({ status: 'submitted', time_left_seconds: 0 }).eq("id", session?.id);
     
     // We also need to process grading!
@@ -347,9 +371,9 @@ export default function ExamPage({ params }: { params: Promise<{ id: string }> }
                   const answersMap = responses[currentQ.id] || {}; // { term: definition }
                   const terms = currentQ.options?.map((o: any) => o.text) || [];
                   
-                  // Shuffle definitions only once per question (deterministic based on length for simplicity)
+                  // Sort definitions alphabetically to mix them up instead of keeping original order
                   const defs = currentQ.options?.map((o: any) => o.match_pair) || [];
-                  const availableDefs = defs.filter((d: string) => !Object.values(answersMap).includes(d));
+                  const availableDefs = defs.filter((d: string) => !Object.values(answersMap).includes(d)).sort();
 
                   return (
                     <div>
@@ -421,12 +445,22 @@ export default function ExamPage({ params }: { params: Promise<{ id: string }> }
 
                 {/* ESSAY */}
                 {currentQ?.question_type === 'essay' && (
-                  <textarea 
-                    value={responses[currentQ.id] || ""}
-                    onChange={(e) => saveAnswer(currentQ.id, e.target.value)}
-                    style={{width: '100%', minHeight: '300px', padding: '15px', backgroundColor: '#fff', border: '1px solid #94a3b8', fontSize: '16px', outline: 'none', resize: 'vertical'}}
-                    placeholder="Ketikkan jawaban essay Anda di sini..."
-                  />
+                  <div>
+                    <textarea 
+                      value={responses[currentQ.id] || ""}
+                      onChange={(e) => saveAnswer(currentQ.id, e.target.value)}
+                      style={{width: '100%', minHeight: '300px', padding: '15px', backgroundColor: '#fff', border: '1px solid #94a3b8', fontSize: '16px', outline: 'none', resize: 'vertical'}}
+                      placeholder="Ketikkan jawaban essay Anda di sini..."
+                      maxLength={currentQ.criteria?.maxLength > 0 ? currentQ.criteria.maxLength : undefined}
+                    />
+                    <div style={{display: 'flex', justifyContent: 'space-between', fontSize: '12px', color: '#64748b', marginTop: '5px'}}>
+                      <span>
+                        Minimal: {currentQ.criteria?.minLength || 0} karakter
+                        {currentQ.criteria?.maxLength > 0 ? ` | Maksimal: ${currentQ.criteria.maxLength} karakter` : ''}
+                      </span>
+                      <span>Saat ini: {(responses[currentQ.id] || "").length} karakter</span>
+                    </div>
+                  </div>
                 )}
               </div>
             </div>
@@ -546,6 +580,9 @@ export default function ExamPage({ params }: { params: Promise<{ id: string }> }
         </div>
 
       </main>
+      <div style={{textAlign: 'center', fontSize: '12px', color: '#94a3b8', padding: '15px', opacity: 0.6}}>
+        Provided by Ruang CBT
+      </div>
     </div>
   );
 }
