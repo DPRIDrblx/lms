@@ -78,10 +78,11 @@ export default function MonthlyReportPage({ params }: { params: Promise<{ classI
     // Fetch all courses for this class
     const { data: courses } = await supabase.from("courses").select("id, title").eq("class_id", classId);
     
-    // Fetch scores for all students in this class
+    // Fetch scores for all students in this class (final course scores from advanced gradebook)
     const { data: scores } = await supabase
       .from("student_scores")
-      .select("student_id, score, assessment_categories(course_id, name)")
+      .select("student_id, score, course_id")
+      .eq("target_type", "course")
       .in("student_id", students.map((s: any) => s.id));
       
     // Fetch attendance from sessions
@@ -97,10 +98,9 @@ export default function MonthlyReportPage({ params }: { params: Promise<{ classI
       const grades: any = {};
       
       courses?.forEach((course: any) => {
-        const courseScores = stdScores.filter((s: any) => s.assessment_categories?.course_id === course.id);
-        if (courseScores.length > 0) {
-          const avg = courseScores.reduce((acc: number, curr: any) => acc + curr.score, 0) / courseScores.length;
-          grades[course.title] = Math.round(avg);
+        const courseScore = stdScores.find((s: any) => s.course_id === course.id);
+        if (courseScore) {
+          grades[course.title] = courseScore.score;
         } else {
           grades[course.title] = 0;
         }

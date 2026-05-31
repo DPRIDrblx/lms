@@ -19,17 +19,20 @@ import {
   Trash2
 } from "lucide-react";
 import { useEffect, useState, useCallback, Suspense } from "react";
-import { useSearchParams, useRouter } from "next/navigation";
+import { useSearchParams, useRouter, useParams } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
 import { toast } from "react-hot-toast";
+import Link from "next/link";
 
 function RapotInputContent() {
   const searchParams = useSearchParams();
   const router = useRouter();
+  const params = useParams();
   const { profile } = useAuth();
   const supabase = createClient();
   
   const studentId = searchParams.get("student");
+  const classId = params?.classId as string;
   
   const [student, setStudent] = useState<any>(null);
   const [rapot, setRapot] = useState<any>({
@@ -136,9 +139,18 @@ function RapotInputContent() {
                </div>
             </div>
          </div>
-         <Button onClick={handleSave} loading={saving} size="lg" className="h-14 px-8 rounded-2xl font-black shadow-xl shadow-[var(--accent)]/20" icon={<Save className="h-5 w-5" />}>
-            Finalize Data
-         </Button>
+         <div className="flex items-center gap-3">
+           {rapot.id && (
+             <Link href={`/teacher/homeroom/${classId || '1'}/reports/${rapot.id}/pdf-view?type=semester`}>
+               <Button variant="secondary" size="lg" className="h-14 px-6 rounded-2xl font-black text-[var(--accent)] border border-[var(--accent)]" icon={<FileText className="h-5 w-5" />}>
+                 Download PDF
+               </Button>
+             </Link>
+           )}
+           <Button onClick={handleSave} loading={saving} size="lg" className="h-14 px-8 rounded-2xl font-black shadow-xl shadow-[var(--accent)]/20" icon={<Save className="h-5 w-5" />}>
+              Finalize Data
+           </Button>
+         </div>
       </header>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
