@@ -5,7 +5,7 @@ import { createClient } from "@/lib/supabase";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Award, Plus, Edit2, FileText, Clock, HelpCircle, BookOpen } from "lucide-react";
+import { Award, Plus, Edit2, FileText, Clock, HelpCircle, BookOpen, Eye } from "lucide-react";
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { motion } from "framer-motion";
@@ -83,6 +83,9 @@ export default function TeacherQuizzesPage() {
                     </div>
                   </div>
                   <div className="flex items-center gap-2">
+                    <Link href={`/teacher/quizzes/${quiz.id}/proctor`}>
+                      <Button variant="ghost" size="sm" icon={<Eye className="h-3.5 w-3.5" />}>Live Monitor</Button>
+                    </Link>
                     <Link href={`/teacher/quizzes/${quiz.id}/review`}>
                       <Button variant="ghost" size="sm" icon={<FileText className="h-3.5 w-3.5" />}>Review</Button>
                     </Link>

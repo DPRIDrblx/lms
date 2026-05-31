@@ -25,6 +25,8 @@ export default function ExamPage({ params }: { params: Promise<{ id: string }> }
   const [session, setSession] = useState<any>(null);
   const [finalScore, setFinalScore] = useState<number | null>(null);
   const [needsManualGrading, setNeedsManualGrading] = useState(false);
+  const [cheatWarnings, setCheatWarnings] = useState(0);
+  const [presenceChannel, setPresenceChannel] = useState<any>(null);
 
   // Drag and drop state for matching
   const [draggedItem, setDraggedItem] = useState<string | null>(null);
@@ -110,6 +112,39 @@ export default function ExamPage({ params }: { params: Promise<{ id: string }> }
 
   useEffect(() => { initExam(); }, [initExam]);
 
+  // Setup Realtime Presence
+  useEffect(() => {
+    if (!profile || !id) return;
+    
+    const channel = supabase.channel(`room:exam_${id}`, {
+      config: {
+        presence: {
+          key: profile.id,
+        },
+      },
+    });
+
+    channel.on('presence', { event: 'sync' }, () => {});
+
+    channel.subscribe(async (status: string) => {
+      if (status === 'SUBSCRIBED') {
+        await channel.track({
+          student_id: profile.id,
+          student_name: profile.full_name,
+          status: 'Active',
+          warnings: cheatWarnings,
+          last_ping: new Date().toISOString()
+        });
+      }
+    });
+
+    setPresenceChannel(channel);
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [profile, id, supabase]);
+
   useEffect(() => {
     if (timeLeft <= 0 || loading || isFinished) return;
     const t = setInterval(() => {
@@ -125,17 +160,50 @@ export default function ExamPage({ params }: { params: Promise<{ id: string }> }
   useEffect(() => {
     const handleBlur = () => {
       if (!isFinished && !loading) {
-        if (quiz?.allow_leave_exam === false) {
-           alert("PELANGGARAN KECURANGAN: Ujian ini tidak mengizinkan Anda meninggalkan halaman! Ujian Anda disubmit otomatis.");
-           submitExam();
-        } else {
-           alert("PERINGATAN KECURANGAN: Anda telah meninggalkan halaman ujian! Aktivitas dicatat.");
-        }
+        setCheatWarnings(prev => {
+          const newWarnings = prev + 1;
+          
+          if (presenceChannel) {
+             presenceChannel.track({
+               student_id: profile?.id,
+               student_name: profile?.full_name,
+               status: 'Warning: Tab Switched',
+               warnings: newWarnings,
+               last_ping: new Date().toISOString()
+             });
+          }
+
+          if (quiz?.allow_leave_exam === false) {
+             alert("PELANGGARAN KECURANGAN: Ujian ini tidak mengizinkan Anda meninggalkan halaman! Ujian Anda disubmit otomatis.");
+             submitExam();
+          } else {
+             alert("PERINGATAN KECURANGAN: Anda telah meninggalkan halaman ujian! Aktivitas dicatat.");
+          }
+          
+          return newWarnings;
+        });
       }
     };
+    
+    const handleFocus = () => {
+       if (!isFinished && !loading && presenceChannel && profile) {
+           presenceChannel.track({
+             student_id: profile.id,
+             student_name: profile.full_name,
+             status: 'Active',
+             warnings: cheatWarnings, // using state directly here might be slightly stale but acceptable for focus
+             last_ping: new Date().toISOString()
+           });
+       }
+    };
+
     window.addEventListener("blur", handleBlur);
-    return () => window.removeEventListener("blur", handleBlur);
-  }, [isFinished, loading, quiz]);
+    window.addEventListener("focus", handleFocus);
+    return () => {
+       window.removeEventListener("blur", handleBlur);
+       window.removeEventListener("focus", handleFocus);
+    }
+  }, [isFinished, loading, quiz, presenceChannel, profile, cheatWarnings]);
 
   const saveAnswer = async (qId: string, answer: any) => {
     const newResponses = { ...responses, [qId]: answer };
@@ -172,8 +240,19 @@ export default function ExamPage({ params }: { params: Promise<{ id: string }> }
       }
     }
     
+    
     await supabase.from("exam_sessions").update({ status: 'submitted', time_left_seconds: 0 }).eq("id", session?.id);
     
+    if (presenceChannel) {
+      presenceChannel.track({
+        student_id: profile?.id,
+        student_name: profile?.full_name,
+        status: 'Submitted',
+        warnings: cheatWarnings,
+        last_ping: new Date().toISOString()
+      });
+    }
+
     // We also need to process grading!
     let totalScore = 0;
     let maxScore = 0;
