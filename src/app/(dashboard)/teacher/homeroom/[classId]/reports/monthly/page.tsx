@@ -165,13 +165,16 @@ export default function MonthlyReportPage({ params }: { params: Promise<{ classI
       is_published: isPublish
     };
     
-    if (data.id) {
-      await supabase.from("monthly_reports").update(payload).eq("id", data.id);
-    } else {
-      const { data: inserted } = await supabase.from("monthly_reports").insert(payload).select().single();
-      if (inserted) {
-        setReportsData(prev => ({ ...prev, [studentId]: { ...prev[studentId], id: inserted.id } }));
-      }
+    const { data: savedReport, error } = await supabase.from("monthly_reports").upsert(payload, { onConflict: 'student_id,month_year' }).select().single();
+    
+    if (error) {
+      toast.error("Gagal menyimpan laporan: " + error.message);
+      setSaving(false);
+      return;
+    }
+    
+    if (savedReport) {
+      setReportsData(prev => ({ ...prev, [studentId]: { ...prev[studentId], id: savedReport.id } }));
     }
     
     // update local state
