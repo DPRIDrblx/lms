@@ -78,14 +78,16 @@ export function MockPaymentModal({ isOpen, onClose, amount, onSuccess, title = "
   
   const [activeInstructionTab, setActiveInstructionTab] = useState<string>("atm");
 
-  const orderId = `INV-${Math.random().toString(36).substring(2, 9).toUpperCase()}`;
-  const vaNumber = "8890" + Math.random().toString().substring(2, 10);
+  const [orderId, setOrderId] = useState("");
+  const [vaNumber, setVaNumber] = useState("");
 
   useEffect(() => {
     if (isOpen) {
       setStep("select");
       setSelectedMethod(null);
       setTimeLeft(24 * 60 * 60);
+      setOrderId(`INV-${Math.random().toString(36).substring(2, 9).toUpperCase()}`);
+      setVaNumber("8890" + Math.random().toString().substring(2, 10));
     }
   }, [isOpen]);
 
