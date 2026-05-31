@@ -30,11 +30,15 @@ export function AppShell({ children }: { children: React.ReactNode }) {
   }
 
   return (
-    <div className="min-h-screen bg-[var(--bg-secondary)]">
-      <Sidebar />
-      <div className="lg:pl-[260px] flex flex-col min-h-screen">
-        <TopBar />
-        <main className="flex-1 p-4 sm:p-6 lg:p-8">
+    <div className="min-h-screen bg-[var(--bg-secondary)] print:bg-white">
+      <div className="print:hidden">
+        <Sidebar />
+      </div>
+      <div className="lg:pl-[260px] flex flex-col min-h-screen print:pl-0 print:block">
+        <div className="print:hidden">
+          <TopBar />
+        </div>
+        <main className="flex-1 p-4 sm:p-6 lg:p-8 print:p-0 print:m-0">
           <ClassGuard>
             {children}
           </ClassGuard>
