@@ -113,7 +113,7 @@ export default function ReportPdfView({ params }: { params: Promise<{ id: string
   );
 
   return (
-    <div className="min-h-screen bg-slate-200 pb-20 pt-8 flex flex-col items-center font-serif text-black print:bg-white print:p-0 print:m-0">
+    <div className="min-h-screen bg-slate-200 pb-20 pt-8 flex flex-col items-center font-serif text-black print:bg-white print:p-0 print:m-0 print:block print:!h-auto print:!min-h-0">
       
       {/* Floating Actions */}
       <div className="fixed top-6 right-6 flex flex-col gap-3 z-50 print:hidden">

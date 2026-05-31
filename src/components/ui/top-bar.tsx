@@ -24,7 +24,7 @@ export function TopBar() {
   }, []);
 
   return (
-    <header className="sticky top-0 z-20 bg-[var(--bg-primary)]/80 backdrop-blur-xl border-b border-[var(--border)]">
+    <header className="sticky top-0 z-20 bg-[var(--bg-primary)]/80 backdrop-blur-xl border-b border-[var(--border)] print:hidden">
       <div className="flex items-center justify-between h-16 px-6">
         <div className="lg:hidden w-10" />
 
