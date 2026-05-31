@@ -26,9 +26,9 @@ export function Card({ children, hover = false, padding = "md", className, onCli
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.3, ease: "easeOut" }}
       className={cn(
-        "bg-white border-0 rounded-[var(--radius)] transition-all duration-200 shadow-[var(--shadow-md)]",
-        hover && "hover-lift cursor-pointer",
-        !hover && "",
+        "bg-white border border-[var(--border)] rounded-2xl transition-all duration-200",
+        hover && "hover-lift cursor-pointer hover:border-[var(--border-hover)]",
+        !hover && "shadow-[var(--shadow-sm)]",
         paddings[padding],
         className
       )}
