@@ -19,12 +19,16 @@ import {
   Type,
   Loader2,
   X,
-  Link as LinkIcon
+  Link as LinkIcon,
+  Settings,
+  Clock,
+  Award
 } from "lucide-react";
 import Link from "next/link";
 import { useParams, useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
+import { RichTextEditor } from "@/components/ui/rich-text-editor";
 
 interface Question {
   id: string;
@@ -33,6 +37,7 @@ interface Question {
   options: { text: string; is_correct?: boolean; match_pair?: string }[] | null;
   points: number;
   order_index: number;
+  criteria?: { minLength?: number } | null;
 }
 
 export default function CBTBuilderPage() {
@@ -51,7 +56,14 @@ export default function CBTBuilderPage() {
       const { data: quizData } = await supabase.from("quizzes").select("*, courses(title)").eq("id", id).single();
       const { data: qData } = await supabase.from("questions").select("*").eq("quiz_id", id).order("order_index", { ascending: true });
       
-      if (quizData) setQuiz(quizData);
+      if (quizData) {
+        // Initialize new fields if they don't exist
+        setQuiz({
+          ...quizData,
+          time_limit: quizData.time_limit || 0,
+          max_score: quizData.max_score || 100
+        });
+      }
       if (qData) setQuestions(qData as Question[]);
       setLoading(false);
     };
@@ -71,7 +83,8 @@ export default function CBTBuilderPage() {
       ] : type === "matching" ? [
         { text: "Term 1", match_pair: "Definition 1" },
         { text: "Term 2", match_pair: "Definition 2" }
-      ] : null
+      ] : null,
+      criteria: type === "essay" ? { minLength: 250 } : null
     };
     setQuestions([...questions, newQ]);
   };
@@ -86,6 +99,19 @@ export default function CBTBuilderPage() {
 
   const handleSave = async () => {
     setSaving(true);
+    
+    // Save quiz settings
+    const { error: quizError } = await supabase
+      .from("quizzes")
+      .update({ time_limit: quiz.time_limit || null, max_score: quiz.max_score || 100 })
+      .eq("id", id);
+
+    if (quizError) {
+      alert(quizError.message);
+      setSaving(false);
+      return;
+    }
+
     await supabase.from("questions").delete().eq("quiz_id", id);
     
     const questionsToSave = questions.map((q, idx) => ({
@@ -94,214 +120,304 @@ export default function CBTBuilderPage() {
       question_type: q.question_type,
       options: q.options,
       points: q.points,
-      order_index: idx
+      order_index: idx,
+      criteria: q.criteria || {}
     }));
 
-    const { error } = await supabase.from("questions").insert(questionsToSave);
+    if (questionsToSave.length > 0) {
+      const { error } = await supabase.from("questions").insert(questionsToSave);
+      if (error) alert(error.message);
+      else router.push("/teacher/quizzes");
+    } else {
+      router.push("/teacher/quizzes");
+    }
     
-    if (error) alert(error.message);
-    else router.push("/teacher/quizzes");
     setSaving(false);
   };
 
   if (loading) return <div className="h-64 flex items-center justify-center"><Loader2 className="animate-spin" /></div>;
 
   return (
-    <div className="max-w-4xl mx-auto space-y-6 pb-20">
-      <div className="flex items-center justify-between">
-        <div className="flex items-center gap-3">
-          <Link href="/teacher/quizzes" className="p-2 rounded-xl hover:bg-[var(--bg-tertiary)] transition-colors">
-            <ChevronLeft className="h-5 w-5" />
+    <div className="max-w-5xl mx-auto space-y-6 pb-20 p-6">
+      <div className="flex items-center justify-between border-b border-[var(--border)] pb-6">
+        <div className="flex items-center gap-4">
+          <Link href="/teacher/quizzes" className="p-2 border border-[var(--border)] rounded-md hover:bg-[var(--bg-secondary)] transition-colors">
+            <ChevronLeft className="h-5 w-5 text-[var(--text-secondary)]" />
           </Link>
           <div>
-            <h1 className="text-xl font-bold text-[var(--text-primary)]">{quiz?.title}</h1>
-            <p className="text-xs text-[var(--text-secondary)]">Course: {quiz?.courses?.title}</p>
+            <h1 className="text-2xl font-serif text-[var(--text-primary)]">Edit Assessment: {quiz?.title}</h1>
+            <p className="text-sm text-[var(--text-secondary)] mt-1">{quiz?.courses?.title}</p>
           </div>
         </div>
-        <Button onClick={handleSave} loading={saving} icon={<Save className="h-4 w-4" />}>
+        <Button onClick={handleSave} disabled={saving} className="bg-[var(--accent)] hover:bg-[var(--accent-hover)] text-white shadow-sm">
+          {saving ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : <Save className="h-4 w-4 mr-2" />}
           Save Assessment
         </Button>
       </div>
 
-      <div className="space-y-4">
-        <AnimatePresence>
-          {questions.map((q, idx) => (
-            <motion.div key={q.id} initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, x: -20 }}>
-              <Card className="relative group p-6">
-                <div className="absolute left-3 top-7 text-[var(--text-tertiary)] cursor-grab">
-                  <GripVertical className="h-4 w-4" />
-                </div>
-                
-                <div className="pl-6 space-y-4">
-                  <div className="flex items-start justify-between">
-                    <div className="flex-1 mr-4">
-                      <input
-                        className="w-full text-lg font-bold bg-transparent border-none focus:outline-none placeholder:text-[var(--text-tertiary)]"
-                        placeholder="Enter your question here..."
-                        value={q.question_text}
-                        onChange={(e) => updateQuestion(q.id, { question_text: e.target.value })}
-                      />
-                    </div>
-                    <div className="flex items-center gap-2">
-                      <Badge variant="info" className="flex items-center gap-1">
+      <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
+        {/* Sidebar: Settings & Controls */}
+        <div className="lg:col-span-1 space-y-6">
+          <Card className="p-5 border-[var(--border)] shadow-sm bg-[var(--bg-primary)] rounded-md">
+            <div className="flex items-center gap-2 mb-4 text-[var(--text-primary)] font-semibold border-b border-[var(--border)] pb-2">
+              <Settings className="h-4 w-4" />
+              <h2>Assessment Settings</h2>
+            </div>
+            
+            <div className="space-y-4">
+              <div className="space-y-2">
+                <label className="flex items-center gap-2 text-sm font-medium text-[var(--text-secondary)]">
+                  <Clock className="h-4 w-4 text-[var(--text-tertiary)]" />
+                  Time Limit (minutes)
+                </label>
+                <input
+                  type="number"
+                  placeholder="0 for unlimited"
+                  className="w-full text-sm bg-white dark:bg-[var(--bg-secondary)] border border-[var(--border)] rounded px-3 py-2 focus:ring-1 focus:ring-[var(--accent)] focus:outline-none"
+                  value={quiz.time_limit || ""}
+                  onChange={(e) => setQuiz({ ...quiz, time_limit: parseInt(e.target.value) || 0 })}
+                />
+                <p className="text-xs text-[var(--text-tertiary)]">Leave 0 for no time limit.</p>
+              </div>
+
+              <div className="space-y-2">
+                <label className="flex items-center gap-2 text-sm font-medium text-[var(--text-secondary)]">
+                  <Award className="h-4 w-4 text-[var(--text-tertiary)]" />
+                  Maximum Score
+                </label>
+                <input
+                  type="number"
+                  className="w-full text-sm bg-white dark:bg-[var(--bg-secondary)] border border-[var(--border)] rounded px-3 py-2 focus:ring-1 focus:ring-[var(--accent)] focus:outline-none"
+                  value={quiz.max_score}
+                  onChange={(e) => setQuiz({ ...quiz, max_score: parseInt(e.target.value) || 0 })}
+                />
+                <p className="text-xs text-[var(--text-tertiary)]">Grades will be scaled to this max score.</p>
+              </div>
+            </div>
+          </Card>
+
+          <Card className="p-5 border-[var(--border)] shadow-sm bg-[var(--bg-primary)] rounded-md">
+            <h2 className="text-sm font-semibold text-[var(--text-primary)] border-b border-[var(--border)] pb-2 mb-4">Add Question</h2>
+            <div className="flex flex-col gap-2">
+              <Button variant="secondary" className="justify-start border-[var(--border)] bg-white dark:bg-[var(--bg-secondary)] shadow-sm" onClick={() => addQuestion("mcq")}>
+                <Plus className="h-4 w-4 mr-2 text-[var(--accent)]" />
+                Multiple Choice
+              </Button>
+              <Button variant="secondary" className="justify-start border-[var(--border)] bg-white dark:bg-[var(--bg-secondary)] shadow-sm" onClick={() => addQuestion("complex_mcq")}>
+                <Plus className="h-4 w-4 mr-2 text-[var(--accent)]" />
+                Complex PG
+              </Button>
+              <Button variant="secondary" className="justify-start border-[var(--border)] bg-white dark:bg-[var(--bg-secondary)] shadow-sm" onClick={() => addQuestion("matching")}>
+                <Plus className="h-4 w-4 mr-2 text-[var(--accent)]" />
+                Matching
+              </Button>
+              <Button variant="secondary" className="justify-start border-[var(--border)] bg-white dark:bg-[var(--bg-secondary)] shadow-sm" onClick={() => addQuestion("essay")}>
+                <Plus className="h-4 w-4 mr-2 text-[var(--accent)]" />
+                Essay
+              </Button>
+            </div>
+          </Card>
+        </div>
+
+        {/* Main Content: Questions List */}
+        <div className="lg:col-span-3 space-y-6">
+          <AnimatePresence>
+            {questions.map((q, idx) => (
+              <motion.div key={q.id} initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, x: -20 }}>
+                <Card className="relative group border border-[var(--border)] shadow-sm bg-white dark:bg-[var(--bg-primary)] rounded-md overflow-hidden">
+                  <div className="bg-[var(--bg-secondary)] px-4 py-3 border-b border-[var(--border)] flex items-center justify-between">
+                    <div className="flex items-center gap-3">
+                      <div className="cursor-grab text-[var(--text-tertiary)] hover:text-[var(--text-secondary)]">
+                        <GripVertical className="h-4 w-4" />
+                      </div>
+                      <span className="font-semibold text-sm text-[var(--text-primary)]">Question {idx + 1}</span>
+                      <Badge variant="info" className="bg-white dark:bg-[var(--bg-tertiary)] text-[var(--text-secondary)] border-[var(--border)] flex items-center gap-1 font-normal">
                         {q.question_type === "mcq" && <HelpCircle className="h-3 w-3" />}
                         {q.question_type === "complex_mcq" && <CheckSquare className="h-3 w-3" />}
                         {q.question_type === "matching" && <LinkIcon className="h-3 w-3" />}
                         {q.question_type === "essay" && <Type className="h-3 w-3" />}
                         {q.question_type.toUpperCase().replace("_", " ")}
                       </Badge>
-                      <button onClick={() => removeQuestion(q.id)} className="p-2 text-[var(--error)] hover:bg-[var(--error-light)] rounded-lg transition-colors">
+                    </div>
+                    <div className="flex items-center gap-4">
+                      <div className="flex items-center gap-2">
+                        <span className="text-xs font-medium text-[var(--text-secondary)]">Points:</span>
+                        <input
+                          type="number"
+                          className="w-16 px-2 py-1 text-center text-sm border border-[var(--border)] rounded focus:ring-1 focus:ring-[var(--accent)] focus:outline-none"
+                          value={q.points}
+                          onChange={(e) => updateQuestion(q.id, { points: parseInt(e.target.value) || 0 })}
+                        />
+                      </div>
+                      <button onClick={() => removeQuestion(q.id)} className="text-[var(--error)] hover:bg-[var(--error-light)] p-1.5 rounded transition-colors" title="Remove question">
                         <Trash2 className="h-4 w-4" />
                       </button>
                     </div>
                   </div>
-
-                  {/* Multiple Choice & Complex MCQ */}
-                  {(q.question_type === "mcq" || q.question_type === "complex_mcq") && q.options && (
+                  
+                  <div className="p-6 space-y-6">
                     <div className="space-y-2">
-                      {q.options.map((opt, oIdx) => (
-                        <div key={oIdx} className="flex items-center gap-3">
-                          <button 
-                            onClick={() => {
-                              const newOpts = q.options!.map((o, i) => {
-                                if (q.question_type === "mcq") {
-                                  return { ...o, is_correct: i === oIdx };
-                                } else {
-                                  if (i === oIdx) return { ...o, is_correct: !o.is_correct };
-                                  return o;
-                                }
-                              });
-                              updateQuestion(q.id, { options: newOpts });
-                            }}
-                            className={opt.is_correct ? "text-[var(--success)]" : "text-[var(--text-tertiary)]"}
-                          >
-                            {q.question_type === "mcq" ? (
-                              opt.is_correct ? <CheckCircle2 className="h-5 w-5" /> : <Circle className="h-5 w-5" />
-                            ) : (
-                              opt.is_correct ? <CheckSquare className="h-5 w-5" /> : <Square className="h-5 w-5" />
-                            )}
-                          </button>
-                          <input
-                            className="flex-1 text-sm bg-[var(--bg-secondary)] border border-[var(--border)] rounded-lg px-3 py-2 focus:ring-1 focus:ring-[var(--accent)]"
-                            value={opt.text}
-                            onChange={(e) => {
-                              const newOpts = [...q.options!];
-                              newOpts[oIdx].text = e.target.value;
-                              updateQuestion(q.id, { options: newOpts });
-                            }}
-                          />
-                          {q.options!.length > 2 && (
-                            <button 
-                              onClick={() => {
-                                const newOpts = q.options!.filter((_, i) => i !== oIdx);
-                                updateQuestion(q.id, { options: newOpts });
-                              }}
-                              className="text-[var(--text-tertiary)] hover:text-[var(--error)]"
-                            >
-                              <X className="h-3.5 w-3.5" />
-                            </button>
-                          )}
-                        </div>
-                      ))}
-                      <Button 
-                        variant="ghost" 
-                        size="sm" 
-                        className="text-xs" 
-                        onClick={() => {
-                          updateQuestion(q.id, { options: [...q.options!, { text: `Option ${q.options!.length + 1}`, is_correct: false }] });
-                        }}
-                      >
-                        + Add Option
-                      </Button>
-                    </div>
-                  )}
-
-                  {/* Matching Option */}
-                  {q.question_type === "matching" && q.options && (
-                    <div className="space-y-2">
-                      <div className="grid grid-cols-2 gap-4 mb-2">
-                        <span className="text-xs font-bold uppercase text-[var(--text-tertiary)]">Premise (Term)</span>
-                        <span className="text-xs font-bold uppercase text-[var(--text-tertiary)]">Response (Definition)</span>
-                      </div>
-                      {q.options.map((opt, oIdx) => (
-                        <div key={oIdx} className="flex items-center gap-3">
-                          <input
-                            className="flex-1 text-sm bg-[var(--bg-secondary)] border border-[var(--border)] rounded-lg px-3 py-2 focus:ring-1 focus:ring-[var(--accent)]"
-                            value={opt.text}
-                            onChange={(e) => {
-                              const newOpts = [...q.options!];
-                              newOpts[oIdx].text = e.target.value;
-                              updateQuestion(q.id, { options: newOpts });
-                            }}
-                            placeholder="e.g. Mitochondria"
-                          />
-                          <LinkIcon className="h-4 w-4 text-[var(--text-tertiary)] flex-shrink-0" />
-                          <input
-                            className="flex-1 text-sm bg-[var(--bg-secondary)] border border-[var(--border)] rounded-lg px-3 py-2 focus:ring-1 focus:ring-[var(--accent)]"
-                            value={opt.match_pair || ""}
-                            onChange={(e) => {
-                              const newOpts = [...q.options!];
-                              newOpts[oIdx].match_pair = e.target.value;
-                              updateQuestion(q.id, { options: newOpts });
-                            }}
-                            placeholder="e.g. Powerhouse of the cell"
-                          />
-                          {q.options!.length > 2 && (
-                            <button 
-                              onClick={() => {
-                                const newOpts = q.options!.filter((_, i) => i !== oIdx);
-                                updateQuestion(q.id, { options: newOpts });
-                              }}
-                              className="text-[var(--text-tertiary)] hover:text-[var(--error)]"
-                            >
-                              <X className="h-3.5 w-3.5" />
-                            </button>
-                          )}
-                        </div>
-                      ))}
-                      <Button 
-                        variant="ghost" 
-                        size="sm" 
-                        className="text-xs mt-2" 
-                        onClick={() => {
-                          updateQuestion(q.id, { options: [...q.options!, { text: `Term ${q.options!.length + 1}`, match_pair: `Definition ${q.options!.length + 1}` }] });
-                        }}
-                      >
-                        + Add Pair
-                      </Button>
-                    </div>
-                  )}
-
-                  <div className="flex items-center gap-4 pt-4 border-t border-[var(--border)]">
-                    <div className="flex items-center gap-2">
-                      <span className="text-xs font-bold text-[var(--text-tertiary)] uppercase">Points:</span>
-                      <input
-                        type="number"
-                        className="w-20 p-2 text-center text-sm font-black bg-[var(--bg-secondary)] border border-[var(--border)] rounded-lg focus:outline-[var(--accent)]"
-                        value={q.points}
-                        onChange={(e) => updateQuestion(q.id, { points: parseInt(e.target.value) || 0 })}
+                      <label className="text-sm font-semibold text-[var(--text-primary)]">Question Text</label>
+                      <RichTextEditor 
+                        value={q.question_text} 
+                        onChange={(val) => updateQuestion(q.id, { question_text: val })} 
                       />
                     </div>
-                  </div>
-                </div>
-              </Card>
-            </motion.div>
-          ))}
-        </AnimatePresence>
 
-        <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 py-8">
-          <Button variant="secondary" onClick={() => addQuestion("mcq")} icon={<Plus className="h-4 w-4" />}>
-            Multiple Choice
-          </Button>
-          <Button variant="secondary" onClick={() => addQuestion("complex_mcq")} icon={<Plus className="h-4 w-4" />}>
-            Complex PG
-          </Button>
-          <Button variant="secondary" onClick={() => addQuestion("matching")} icon={<Plus className="h-4 w-4" />}>
-            Matching
-          </Button>
-          <Button variant="secondary" onClick={() => addQuestion("essay")} icon={<Plus className="h-4 w-4" />}>
-            Essay
-          </Button>
+                    {/* Multiple Choice & Complex MCQ */}
+                    {(q.question_type === "mcq" || q.question_type === "complex_mcq") && q.options && (
+                      <div className="space-y-3 bg-[var(--bg-tertiary)] p-4 rounded border border-[var(--border)]">
+                        <label className="text-sm font-semibold text-[var(--text-primary)] block mb-2">Answers</label>
+                        {q.options.map((opt, oIdx) => (
+                          <div key={oIdx} className="flex items-start gap-3 bg-white dark:bg-[var(--bg-secondary)] p-3 rounded border border-[var(--border)] shadow-sm">
+                            <button 
+                              onClick={() => {
+                                const newOpts = q.options!.map((o, i) => {
+                                  if (q.question_type === "mcq") {
+                                    return { ...o, is_correct: i === oIdx };
+                                  } else {
+                                    if (i === oIdx) return { ...o, is_correct: !o.is_correct };
+                                    return o;
+                                  }
+                                });
+                                updateQuestion(q.id, { options: newOpts });
+                              }}
+                              className={`mt-1 ${opt.is_correct ? "text-[var(--success)]" : "text-[var(--text-tertiary)] hover:text-[var(--text-secondary)]"}`}
+                              title={opt.is_correct ? "Correct answer" : "Mark as correct"}
+                            >
+                              {q.question_type === "mcq" ? (
+                                opt.is_correct ? <CheckCircle2 className="h-5 w-5" /> : <Circle className="h-5 w-5" />
+                              ) : (
+                                opt.is_correct ? <CheckSquare className="h-5 w-5" /> : <Square className="h-5 w-5" />
+                              )}
+                            </button>
+                            <input
+                              className="flex-1 text-sm bg-transparent border-none p-1 focus:ring-0 focus:outline-none text-[var(--text-primary)]"
+                              value={opt.text}
+                              placeholder="Enter option text"
+                              onChange={(e) => {
+                                const newOpts = [...q.options!];
+                                newOpts[oIdx].text = e.target.value;
+                                updateQuestion(q.id, { options: newOpts });
+                              }}
+                            />
+                            {q.options!.length > 2 && (
+                              <button 
+                                onClick={() => {
+                                  const newOpts = q.options!.filter((_, i) => i !== oIdx);
+                                  updateQuestion(q.id, { options: newOpts });
+                                }}
+                                className="text-[var(--text-tertiary)] hover:text-[var(--error)] p-1"
+                              >
+                                <X className="h-4 w-4" />
+                              </button>
+                            )}
+                          </div>
+                        ))}
+                        <Button 
+                          variant="secondary" 
+                          size="sm" 
+                          className="mt-2 bg-white dark:bg-[var(--bg-secondary)] border-[var(--border)]"
+                          onClick={() => {
+                            updateQuestion(q.id, { options: [...q.options!, { text: `Option ${q.options!.length + 1}`, is_correct: false }] });
+                          }}
+                        >
+                          <Plus className="h-3 w-3 mr-1" /> Add Option
+                        </Button>
+                      </div>
+                    )}
+
+                    {/* Matching Option */}
+                    {q.question_type === "matching" && q.options && (
+                      <div className="space-y-3 bg-[var(--bg-tertiary)] p-4 rounded border border-[var(--border)]">
+                        <label className="text-sm font-semibold text-[var(--text-primary)] block mb-2">Matching Pairs</label>
+                        <div className="grid grid-cols-[1fr_auto_1fr_auto] gap-3 items-center mb-1 px-1">
+                          <span className="text-xs font-semibold uppercase text-[var(--text-secondary)]">Premise (Term)</span>
+                          <span className="w-4"></span>
+                          <span className="text-xs font-semibold uppercase text-[var(--text-secondary)]">Response (Definition)</span>
+                          <span className="w-6"></span>
+                        </div>
+                        {q.options.map((opt, oIdx) => (
+                          <div key={oIdx} className="grid grid-cols-[1fr_auto_1fr_auto] gap-3 items-center bg-white dark:bg-[var(--bg-secondary)] p-2 rounded border border-[var(--border)] shadow-sm">
+                            <input
+                              className="w-full text-sm bg-transparent border-none p-2 focus:ring-0 focus:outline-none text-[var(--text-primary)]"
+                              value={opt.text}
+                              onChange={(e) => {
+                                const newOpts = [...q.options!];
+                                newOpts[oIdx].text = e.target.value;
+                                updateQuestion(q.id, { options: newOpts });
+                              }}
+                              placeholder="e.g. Mitochondria"
+                            />
+                            <LinkIcon className="h-4 w-4 text-[var(--text-tertiary)]" />
+                            <input
+                              className="w-full text-sm bg-transparent border-none p-2 focus:ring-0 focus:outline-none text-[var(--text-primary)]"
+                              value={opt.match_pair || ""}
+                              onChange={(e) => {
+                                const newOpts = [...q.options!];
+                                newOpts[oIdx].match_pair = e.target.value;
+                                updateQuestion(q.id, { options: newOpts });
+                              }}
+                              placeholder="e.g. Powerhouse of the cell"
+                            />
+                            {q.options!.length > 2 ? (
+                              <button 
+                                onClick={() => {
+                                  const newOpts = q.options!.filter((_, i) => i !== oIdx);
+                                  updateQuestion(q.id, { options: newOpts });
+                                }}
+                                className="text-[var(--text-tertiary)] hover:text-[var(--error)] p-1 justify-self-end"
+                              >
+                                <X className="h-4 w-4" />
+                              </button>
+                            ) : <span className="w-6"></span>}
+                          </div>
+                        ))}
+                        <Button 
+                          variant="secondary" 
+                          size="sm" 
+                          className="mt-2 bg-white dark:bg-[var(--bg-secondary)] border-[var(--border)]"
+                          onClick={() => {
+                            updateQuestion(q.id, { options: [...q.options!, { text: `Term ${q.options!.length + 1}`, match_pair: `Definition ${q.options!.length + 1}` }] });
+                          }}
+                        >
+                          <Plus className="h-3 w-3 mr-1" /> Add Pair
+                        </Button>
+                      </div>
+                    )}
+
+                    {/* Essay Options */}
+                    {q.question_type === "essay" && (
+                      <div className="space-y-3 bg-[var(--bg-tertiary)] p-4 rounded border border-[var(--border)]">
+                        <label className="text-sm font-semibold text-[var(--text-primary)] block mb-2">Essay Criteria</label>
+                        <div className="flex items-center gap-3 bg-white dark:bg-[var(--bg-secondary)] p-3 rounded border border-[var(--border)] shadow-sm">
+                          <label className="text-sm text-[var(--text-secondary)]">Minimum Characters required:</label>
+                          <input
+                            type="number"
+                            className="w-24 px-2 py-1 text-sm border border-[var(--border)] rounded focus:ring-1 focus:ring-[var(--accent)] focus:outline-none"
+                            value={q.criteria?.minLength || 0}
+                            onChange={(e) => {
+                              updateQuestion(q.id, { 
+                                criteria: { ...q.criteria, minLength: parseInt(e.target.value) || 0 } 
+                              });
+                            }}
+                          />
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                </Card>
+              </motion.div>
+            ))}
+            
+            {questions.length === 0 && (
+              <div className="text-center py-16 border-2 border-dashed border-[var(--border)] rounded-lg text-[var(--text-tertiary)] bg-[var(--bg-tertiary)]">
+                <HelpCircle className="h-12 w-12 mx-auto mb-3 opacity-20" />
+                <p className="text-lg font-medium">No questions added yet.</p>
+                <p className="text-sm mt-1">Use the panel on the left to add questions to your assessment.</p>
+              </div>
+            )}
+          </AnimatePresence>
         </div>
       </div>
     </div>
