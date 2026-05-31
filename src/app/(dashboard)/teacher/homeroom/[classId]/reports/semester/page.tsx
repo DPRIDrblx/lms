@@ -50,7 +50,10 @@ function RapotInputContent() {
   const [saving, setSaving] = useState(false);
 
   const fetchData = useCallback(async () => {
-    if (!studentId) return;
+    if (!studentId) {
+      setLoading(false);
+      return;
+    }
     
     setLoading(true);
     const [stdRes, rapotRes] = await Promise.all([
