@@ -187,8 +187,7 @@ export function Gradebook({ courseId, classId }: { courseId: string; classId: st
           student_id: studentId,
           target_id: courseId,
           score: newFinal,
-          target_type: "course",
-          updated_at: new Date().toISOString()
+          target_type: "course"
         }, { onConflict: 'student_id,target_id' }).then();
 
         return next;
@@ -241,8 +240,7 @@ export function Gradebook({ courseId, classId }: { courseId: string; classId: st
           student_id: student.id,
           target_id: courseId,
           score: finalScore,
-          target_type: "course",
-          updated_at: new Date().toISOString()
+          target_type: "course"
         });
       });
 
