@@ -21,7 +21,8 @@ import {
   Calendar,
   FileText,
   Settings,
-  MessageSquare
+  MessageSquare,
+  LogOut
 } from "lucide-react";
 import { useState, useEffect } from "react";
 
@@ -97,28 +98,34 @@ export function Sidebar() {
     profile?.role === "principal" ? principalNav :
     studentNav;
 
-const SidebarContent = ({ navItems, pathname, profile, setMobileOpen }: any) => (
-    <div className="flex flex-col h-full">
+const SidebarContent = ({ navItems, pathname, profile, setMobileOpen }: any) => {
+  const isExecutive = profile?.role === "principal";
+
+  return (
+    <div className={cn("flex flex-col h-full", isExecutive ? "bg-slate-900 text-slate-300" : "bg-white")}>
       {/* Logo */}
-      <div className="p-5 border-b border-[var(--border)]">
-        <Link href="/dashboard" className="flex items-center gap-3">
-          <div className="w-9 h-9 rounded-xl bg-[var(--accent)] flex items-center justify-center">
+      <div className={cn("p-5 border-b", isExecutive ? "border-slate-800" : "border-[var(--border)]")}>
+        <Link href={isExecutive ? "/principal" : "/dashboard"} className="flex items-center gap-3">
+          <div className={cn("w-9 h-9 rounded-xl flex items-center justify-center", isExecutive ? "bg-amber-500" : "bg-[var(--accent)]")}>
             <GraduationCap className="h-5 w-5 text-white" />
           </div>
           <div>
-            <h1 className="text-sm font-bold text-[var(--text-primary)] leading-tight">Nusantara</h1>
-            <p className="text-[10px] font-medium text-[var(--text-tertiary)] uppercase tracking-wider">International Academy</p>
+            <h1 className={cn("text-sm font-bold leading-tight", isExecutive ? "text-white" : "text-[var(--text-primary)]")}>Nusantara</h1>
+            <p className={cn("text-[10px] font-medium uppercase tracking-wider", isExecutive ? "text-amber-500" : "text-[var(--text-tertiary)]")}>
+              {isExecutive ? "Executive Board" : "International Academy"}
+            </p>
           </div>
         </Link>
       </div>
 
       {/* Navigation */}
       <nav className="flex-1 p-3 space-y-0.5 overflow-y-auto">
-        <p className="px-3 pt-3 pb-2 text-[10px] font-semibold text-[var(--text-tertiary)] uppercase tracking-wider">
+        <p className={cn("px-3 pt-3 pb-2 text-[10px] font-semibold uppercase tracking-wider", isExecutive ? "text-slate-500" : "text-[var(--text-tertiary)]")}>
           Menu
         </p>
         {navItems.map((item: any) => {
-          const isActive = pathname === item.href || (item.href !== "/dashboard" && pathname.startsWith(item.href));
+          const isActive = pathname === item.href || (item.href !== "/dashboard" && item.href !== "/principal" && pathname.startsWith(item.href));
+          
           return (
             <Link
               key={item.href}
@@ -127,8 +134,8 @@ const SidebarContent = ({ navItems, pathname, profile, setMobileOpen }: any) => 
               className={cn(
                 "flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-all duration-200",
                 isActive
-                  ? "bg-[var(--accent-light)] text-[var(--accent)]"
-                  : "text-[var(--text-secondary)] hover:text-[var(--text-primary)] hover:bg-[var(--bg-tertiary)]"
+                  ? (isExecutive ? "bg-amber-500/10 text-amber-500" : "bg-[var(--accent-light)] text-[var(--accent)]")
+                  : (isExecutive ? "text-slate-400 hover:text-white hover:bg-slate-800" : "text-[var(--text-secondary)] hover:text-[var(--text-primary)] hover:bg-[var(--bg-tertiary)]")
               )}
             >
               <item.icon className="h-[18px] w-[18px]" />
@@ -139,25 +146,30 @@ const SidebarContent = ({ navItems, pathname, profile, setMobileOpen }: any) => 
       </nav>
 
       {/* User Footer */}
-      {profile && (
-        <div className="p-4 border-t border-[var(--border)]">
-          <div className="flex items-center gap-3">
-            {profile.avatar_url ? (
-              <img src={profile.avatar_url} alt="" className="w-8 h-8 rounded-full object-cover" />
-            ) : (
-              <div className="w-8 h-8 rounded-full bg-[var(--accent-light)] flex items-center justify-center text-xs font-semibold text-[var(--accent)]">
-                {getInitials(profile.full_name || "U")}
-              </div>
-            )}
-            <div className="min-w-0 flex-1">
-              <p className="text-sm font-medium text-[var(--text-primary)] truncate">{profile.full_name}</p>
-              <p className="text-xs text-[var(--text-tertiary)] capitalize">{profile.role}</p>
+      {/* User Profile */}
+      <div className={cn("p-4 border-t", isExecutive ? "border-slate-800" : "border-[var(--border)]")}>
+        <div className="flex items-center gap-3 px-2">
+          {profile?.avatar_url ? (
+            <img src={profile.avatar_url} alt="Profile" className={cn("w-10 h-10 rounded-full object-cover border-2", isExecutive ? "border-amber-500" : "border-[var(--accent)]")} />
+          ) : (
+            <div className={cn("w-10 h-10 rounded-full flex items-center justify-center font-bold text-sm", isExecutive ? "bg-amber-500 text-white" : "bg-[var(--accent-light)] text-[var(--accent)]")}>
+              {profile?.full_name?.charAt(0).toUpperCase()}
             </div>
+          )}
+          <div className="flex-1 min-w-0">
+            <h3 className={cn("text-sm font-bold truncate", isExecutive ? "text-white" : "text-[var(--text-primary)]")}>{profile?.full_name}</h3>
+            <p className={cn("text-[10px] font-medium uppercase tracking-wider truncate", isExecutive ? "text-amber-500" : "text-[var(--text-tertiary)]")}>
+              {profile?.role}
+            </p>
           </div>
+          <button onClick={() => supabase.auth.signOut()} className={cn("p-2 rounded-lg transition-colors", isExecutive ? "text-slate-500 hover:text-red-400 hover:bg-slate-800" : "text-[var(--text-tertiary)] hover:text-red-500 hover:bg-red-50")}>
+            <LogOut className="h-4 w-4" />
+          </button>
         </div>
-      )}
+      </div>
     </div>
   );
+};
 
   return (
     <>

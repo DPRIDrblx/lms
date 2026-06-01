@@ -58,51 +58,59 @@ export default function PrincipalDashboardPage() {
 
   return (
     <div className="max-w-6xl mx-auto space-y-8 pb-12">
-      <div>
-        <h1 className="text-3xl font-black text-[var(--text-primary)]">Sistem Informasi Manajemen Sekolah</h1>
-        <p className="text-[var(--text-secondary)] mt-2 text-lg">Selamat datang kembali, Kepala Sekolah.</p>
+      <div className="bg-slate-900 rounded-3xl p-8 md:p-12 shadow-2xl relative overflow-hidden border border-slate-800">
+        <div className="absolute top-0 right-0 p-8 opacity-10">
+          <Building2 className="h-48 w-48 text-white" />
+        </div>
+        <div className="relative z-10">
+          <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-amber-500/20 border border-amber-500/30 text-amber-500 text-xs font-bold uppercase tracking-widest mb-4">
+            <GraduationCap className="h-4 w-4" /> Executive Board
+          </div>
+          <h1 className="text-3xl md:text-5xl font-black text-white tracking-tight leading-tight">Sistem Informasi<br />Manajemen Sekolah</h1>
+          <p className="text-slate-400 mt-4 text-lg max-w-xl">Selamat datang kembali, Kepala Sekolah. Berikut adalah ringkasan operasional Nusantara International Academy hari ini.</p>
+        </div>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-        <Card className="p-6 flex items-center gap-4 bg-gradient-to-br from-blue-50 to-blue-100/50 border-blue-200">
-          <div className="h-12 w-12 rounded-xl bg-blue-500 text-white flex items-center justify-center shadow-lg shadow-blue-500/30">
-            <GraduationCap className="h-6 w-6" />
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+        <div className="p-6 rounded-2xl bg-slate-900 border border-slate-800 shadow-xl flex items-center gap-5 group hover:-translate-y-1 transition-all">
+          <div className="h-14 w-14 rounded-xl bg-blue-500/10 text-blue-400 flex items-center justify-center border border-blue-500/20 group-hover:scale-110 transition-transform">
+            <GraduationCap className="h-7 w-7" />
           </div>
           <div>
-            <p className="text-sm font-bold text-blue-900/60 uppercase tracking-wider">Total Siswa</p>
-            <p className="text-3xl font-black text-blue-900">{stats.totalStudents}</p>
+            <p className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-1">Total Siswa</p>
+            <p className="text-3xl font-black text-white">{stats.totalStudents}</p>
           </div>
-        </Card>
+        </div>
 
-        <Card className="p-6 flex items-center gap-4 bg-gradient-to-br from-emerald-50 to-emerald-100/50 border-emerald-200">
-          <div className="h-12 w-12 rounded-xl bg-emerald-500 text-white flex items-center justify-center shadow-lg shadow-emerald-500/30">
-            <Users className="h-6 w-6" />
+        <div className="p-6 rounded-2xl bg-slate-900 border border-slate-800 shadow-xl flex items-center gap-5 group hover:-translate-y-1 transition-all">
+          <div className="h-14 w-14 rounded-xl bg-emerald-500/10 text-emerald-400 flex items-center justify-center border border-emerald-500/20 group-hover:scale-110 transition-transform">
+            <Users className="h-7 w-7" />
           </div>
           <div>
-            <p className="text-sm font-bold text-emerald-900/60 uppercase tracking-wider">Total Guru</p>
-            <p className="text-3xl font-black text-emerald-900">{stats.totalTeachers}</p>
+            <p className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-1">Total Guru</p>
+            <p className="text-3xl font-black text-white">{stats.totalTeachers}</p>
           </div>
-        </Card>
+        </div>
 
-        <Card className="p-6 flex items-center gap-4 bg-gradient-to-br from-purple-50 to-purple-100/50 border-purple-200">
-          <div className="h-12 w-12 rounded-xl bg-purple-500 text-white flex items-center justify-center shadow-lg shadow-purple-500/30">
-            <Building2 className="h-6 w-6" />
+        <div className="p-6 rounded-2xl bg-slate-900 border border-slate-800 shadow-xl flex items-center gap-5 group hover:-translate-y-1 transition-all">
+          <div className="h-14 w-14 rounded-xl bg-purple-500/10 text-purple-400 flex items-center justify-center border border-purple-500/20 group-hover:scale-110 transition-transform">
+            <Building2 className="h-7 w-7" />
           </div>
           <div>
-            <p className="text-sm font-bold text-purple-900/60 uppercase tracking-wider">Total Kelas</p>
-            <p className="text-3xl font-black text-purple-900">{stats.totalClasses}</p>
+            <p className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-1">Total Kelas</p>
+            <p className="text-3xl font-black text-white">{stats.totalClasses}</p>
           </div>
-        </Card>
+        </div>
 
-        <Card className="p-6 flex items-center gap-4 bg-gradient-to-br from-amber-50 to-amber-100/50 border-amber-200">
-          <div className="h-12 w-12 rounded-xl bg-amber-500 text-white flex items-center justify-center shadow-lg shadow-amber-500/30">
-            <BookOpen className="h-6 w-6" />
+        <div className="p-6 rounded-2xl bg-gradient-to-br from-amber-500 to-orange-600 shadow-xl shadow-amber-500/20 flex items-center gap-5 group hover:-translate-y-1 transition-all">
+          <div className="h-14 w-14 rounded-xl bg-white/20 text-white flex items-center justify-center backdrop-blur-md group-hover:scale-110 transition-transform">
+            <BookOpen className="h-7 w-7" />
           </div>
           <div>
-            <p className="text-sm font-bold text-amber-900/60 uppercase tracking-wider">Jurnal Hari Ini</p>
-            <p className="text-3xl font-black text-amber-900">{stats.journalsToday}</p>
+            <p className="text-xs font-bold text-amber-100 uppercase tracking-wider mb-1">Jurnal Hari Ini</p>
+            <p className="text-3xl font-black text-white">{stats.journalsToday}</p>
           </div>
-        </Card>
+        </div>
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
@@ -111,20 +119,22 @@ export default function PrincipalDashboardPage() {
         </div>
         
         <div className="space-y-6">
-          <Card className="p-6">
-            <h3 className="text-lg font-bold text-[var(--text-primary)] mb-4 flex items-center gap-2">
-              <AlertCircle className="h-5 w-5 text-[var(--accent)]" />
+          <div className="bg-slate-900 rounded-3xl p-6 md:p-8 shadow-xl border border-slate-800">
+            <h3 className="text-lg font-bold text-white mb-6 flex items-center gap-3">
+              <div className="p-2 rounded-lg bg-slate-800 text-amber-500">
+                <AlertCircle className="h-5 w-5" />
+              </div>
               Tindakan Cepat
             </h3>
             <div className="space-y-3">
-              <Link href="/principal/journals" className="flex items-center justify-between p-3 rounded-xl border border-[var(--border)] hover:border-[var(--accent)] hover:bg-[var(--accent-light)] transition-all group">
-                <span className="font-bold text-[var(--text-secondary)] group-hover:text-[var(--accent)]">Pantau Jurnal Mengajar</span>
+              <Link href="/principal/journals" className="flex items-center justify-between p-4 rounded-xl border border-slate-800 bg-slate-800/50 hover:bg-slate-800 hover:border-amber-500/50 transition-all group">
+                <span className="font-bold text-slate-300 group-hover:text-amber-500 transition-colors">Pantau Jurnal Mengajar</span>
               </Link>
-              <Link href="/principal/attendances" className="flex items-center justify-between p-3 rounded-xl border border-[var(--border)] hover:border-[var(--accent)] hover:bg-[var(--accent-light)] transition-all group">
-                <span className="font-bold text-[var(--text-secondary)] group-hover:text-[var(--accent)]">Rekapitulasi Absensi</span>
+              <Link href="/principal/attendances" className="flex items-center justify-between p-4 rounded-xl border border-slate-800 bg-slate-800/50 hover:bg-slate-800 hover:border-amber-500/50 transition-all group">
+                <span className="font-bold text-slate-300 group-hover:text-amber-500 transition-colors">Rekapitulasi Absensi</span>
               </Link>
             </div>
-          </Card>
+          </div>
         </div>
       </div>
 
