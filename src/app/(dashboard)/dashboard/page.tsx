@@ -162,6 +162,7 @@ export default function DashboardPage() {
   const nextRank = getNextRank(xp);
   const completedCount = progressData.filter(p => p.completed).length;
 
+  return (
     <div className="space-y-8 max-w-6xl font-sans">
       {/* Student Welcome Banner (Glassmorphism) */}
       <motion.div 
