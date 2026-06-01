@@ -67,6 +67,14 @@ const tuNav = [
   { href: "/settings", label: "Settings", icon: Settings },
 ];
 
+const principalNav = [
+  { href: "/principal", label: "SIMS Dashboard", icon: LayoutDashboard },
+  { href: "/principal/journals", label: "Jurnal Mengajar", icon: BookOpen },
+  { href: "/principal/attendances", label: "Rekap Absensi", icon: Users },
+  { href: "/chat", label: "Communications", icon: MessageSquare },
+  { href: "/settings", label: "Settings", icon: Settings },
+];
+
 export function Sidebar() {
   const { profile } = useAuth();
   const pathname = usePathname();
@@ -85,6 +93,7 @@ export function Sidebar() {
     profile?.role === "teacher" ? teacherNav.filter(item => item.href !== "/teacher/homeroom" || isHomeroom) : 
     profile?.role === "parent" ? parentNav : 
     profile?.role === "tu" ? tuNav :
+    profile?.role === "principal" ? principalNav :
     studentNav;
 
 const SidebarContent = ({ navItems, pathname, profile, setMobileOpen }: any) => (

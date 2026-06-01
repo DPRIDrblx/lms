@@ -6,6 +6,7 @@ import { StatCard } from "@/components/ui/stat-card";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { AnnouncementBoard } from "@/components/dashboard/announcement-board";
 import { ProgressBar } from "@/components/ui/progress-bar";
 import { getRank, getNextRank } from "@/lib/utils";
 import { motion, AnimatePresence } from "framer-motion";
@@ -196,6 +197,10 @@ export default function DashboardPage() {
         </Card>
       </div>
 
+      <div className="w-full">
+        <AnnouncementBoard />
+      </div>
+
       {leadership && (
         <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }}>
           <Card className="bg-emerald-50 border-emerald-200">
@@ -295,6 +300,10 @@ function TeacherDashboard() {
         <StatCard label="My Courses" value={stats.courses} icon={BookOpen} color="#10B981" />
         <StatCard label="Avg. Student XP" value={stats.avgXp} icon={Trophy} color="#F59E0B" />
         <StatCard label="Active Sessions" value="—" icon={CalendarCheck} color="#8B5CF6" trend={{ value: "Live", positive: true }} />
+      </div>
+
+      <div className="w-full">
+        <AnnouncementBoard />
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
