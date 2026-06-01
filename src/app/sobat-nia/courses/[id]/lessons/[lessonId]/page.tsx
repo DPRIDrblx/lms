@@ -31,6 +31,7 @@ export default function SobatNiaLessonViewerPage({ params }: { params: Promise<{
   const [answeredQuestions, setAnsweredQuestions] = useState<Set<number>>(new Set());
   const [selectedAnswer, setSelectedAnswer] = useState<number | null>(null);
   const [feedback, setFeedback] = useState<"correct" | "wrong" | null>(null);
+  const playerRef = useRef<any>(null);
   
   useEffect(() => {
     if (!profile) return;

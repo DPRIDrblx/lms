@@ -34,7 +34,7 @@ export default function PackageCoursesPage() {
       .select("course_id, courses(*)")
       .eq("package_id", id);
     
-    if (linkedData) setPackageCourses(linkedData.map(d => d.courses).filter(c => c !== null));
+    if (linkedData) setPackageCourses(linkedData.map((d: any) => d.courses).filter((c: any) => c !== null));
 
     // Fetch all courses to add
     const { data: coursesData } = await supabase.from("courses").select("*").order("created_at", { ascending: false });

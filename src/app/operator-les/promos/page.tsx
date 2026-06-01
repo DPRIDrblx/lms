@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect } from "react";
 import { createClient } from "@/lib/supabase";
-import { Plus, Trash2, Tag, Percent, DollarSign } from "lucide-react";
+import { Plus, Trash2, Tag, Percent, DollarSign, Receipt } from "lucide-react";
 import { motion } from "framer-motion";
 
 export default function PromosPage() {

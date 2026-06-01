@@ -29,7 +29,7 @@ export default function SobatNiaCoursesPage() {
         return;
       }
 
-      const packageIds = subs.map(s => s.package_id);
+      const packageIds = subs.map((s: any) => s.package_id);
 
       // 2. Get courses linked to those packages
       const { data: mappings } = await supabase
@@ -40,7 +40,7 @@ export default function SobatNiaCoursesPage() {
       if (mappings) {
         // Filter out duplicates if a course is in multiple packages, and ensure it is published
         const uniqueCourses = new Map();
-        mappings.forEach(m => {
+        mappings.forEach((m: any) => {
           if (m.courses && m.courses.is_published) {
             uniqueCourses.set(m.course_id, m.courses);
           }

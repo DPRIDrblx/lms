@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect } from "react";
 import { createClient } from "@/lib/supabase";
-import { Plus, Edit, Settings2, Trash2, Package } from "lucide-react";
+import { Plus, Edit, Settings2, Trash2, Package, Tag, BookOpen } from "lucide-react";
 import { motion } from "framer-motion";
 
 export default function PackagesPage() {
