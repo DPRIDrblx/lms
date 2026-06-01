@@ -6,6 +6,7 @@ import { Search, BookOpen, Target, Sparkles, CheckCircle2, ChevronRight, Graduat
 import { XenditPaymentModal } from "@/components/finance/XenditPaymentModal";
 import { createClient } from "@/lib/supabase";
 import toast from "react-hot-toast";
+import { registerSobatNiaAction } from "./actions";
 
 export default function BayarNiaPage() {
   const [packages, setPackages] = useState<any[]>([]);
@@ -92,35 +93,28 @@ export default function BayarNiaPage() {
     setIsProcessingSignup(true);
     
     try {
-      // 1. Sign Up User
-      const { data: authData, error: authError } = await supabase.auth.signUp({
+      // 1. Sign Up & Assign Subscription via Server Action (bypasses Supabase 3/hour rate limit)
+      const result = await registerSobatNiaAction({
+        name: form.name,
         email: form.email,
         password: form.password,
-        options: {
-          data: {
-            full_name: form.name,
-            role: "sobat_nia"
-          }
-        }
+        packageId: selectedPackage.id
       });
 
-      if (authError) throw authError;
+      if (!result.success) {
+        throw new Error(result.error);
+      }
 
-      if (authData.user) {
-        // Ensure role is set in profiles table (trigger might only do basics)
-        await supabase.from("profiles").update({
-          full_name: form.name,
-          role: "sobat_nia"
-        }).eq("id", authData.user.id);
+      // 2. Log the user in to establish the session in the browser
+      const { error: signInError } = await supabase.auth.signInWithPassword({
+        email: form.email,
+        password: form.password
+      });
 
-        // 2. Add Subscription
-        const { error: subError } = await supabase.from("nia_subscriptions").insert({
-          user_id: authData.user.id,
-          package_id: selectedPackage.id,
-          status: "active"
-        });
-
-        if (subError) throw subError;
+      if (signInError) {
+        console.error("Login after signup error:", signInError);
+        // We don't throw here because the account was successfully created and paid for
+        toast.error("Akun berhasil dibuat, namun gagal login otomatis. Silakan login manual.");
       }
       
       setCheckoutStep(3);
