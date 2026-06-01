@@ -189,8 +189,8 @@ export default function QRStudentPage() {
   return (
     <div className="max-w-lg mx-auto space-y-6 font-sans">
       <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} className="text-center">
-        <h1 className="text-3xl font-bold text-slate-800 dark:text-white tracking-tight">QR Check-in</h1>
-        <p className="text-sm font-medium text-slate-500 dark:text-slate-400 mt-2">
+        <h1 className="text-3xl font-bold text-[var(--text-primary)] tracking-tight">QR Check-in</h1>
+        <p className="text-sm font-medium text-[var(--text-secondary)] mt-2">
           {phase === "form" && formType === "feedback" 
             ? "Great job today! Please leave some feedback." 
             : "Scan your teacher's QR code to mark attendance."}
@@ -200,12 +200,12 @@ export default function QRStudentPage() {
       <AnimatePresence mode="wait">
         {phase === "idle" && (
           <motion.div key="idle" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}>
-            <div className="bg-white/60 dark:bg-slate-900/60 backdrop-blur-lg rounded-3xl border-2 border-dashed border-slate-300 dark:border-slate-700 text-center py-16 px-6 shadow-sm">
+            <div className="bg-[var(--bg-secondary)] backdrop-blur-lg rounded-3xl border-2 border-dashed border-slate-300 dark:border-slate-700 text-center py-16 px-6 shadow-sm">
               <div className="h-24 w-24 rounded-full bg-indigo-50 dark:bg-indigo-500/10 flex items-center justify-center mx-auto mb-8 shadow-inner">
                 <QrCode className="h-12 w-12 text-indigo-500 dark:text-indigo-400" />
               </div>
-              <h2 className="text-xl font-bold text-slate-800 dark:text-white mb-3 tracking-tight">Presence & Feedback</h2>
-              <p className="text-sm font-medium text-slate-500 dark:text-slate-400 max-w-xs mx-auto mb-10 leading-relaxed">
+              <h2 className="text-xl font-bold text-[var(--text-primary)] mb-3 tracking-tight">Presence & Feedback</h2>
+              <p className="text-sm font-medium text-[var(--text-secondary)] max-w-xs mx-auto mb-10 leading-relaxed">
                 Scan once at the start of the lesson for attendance, and once at the end for feedback.
               </p>
               <Button size="lg" onClick={startScanning} icon={<Camera className="h-5 w-5" />} className="px-10 h-14 rounded-2xl bg-indigo-600 hover:bg-indigo-700 text-white font-bold text-lg shadow-lg shadow-indigo-500/30">
@@ -217,12 +217,12 @@ export default function QRStudentPage() {
 
         {phase === "scanning" && (
           <motion.div key="scanning" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}>
-            <div className="bg-white/60 dark:bg-slate-900/60 backdrop-blur-lg rounded-3xl overflow-hidden border-2 border-indigo-500 shadow-2xl shadow-indigo-500/20">
+            <div className="bg-[var(--bg-secondary)] backdrop-blur-lg rounded-3xl overflow-hidden border-2 border-indigo-500 shadow-2xl shadow-indigo-500/20">
               <div id="qr-reader" className="w-full bg-black/90 aspect-square" />
-              <div className="p-6 text-center border-t border-indigo-500/30 bg-white/50 dark:bg-slate-800/50 backdrop-blur-md">
+              <div className="p-6 text-center border-t border-indigo-500/30 bg-[var(--bg-primary)] backdrop-blur-md">
                 <div className="flex items-center justify-center gap-3 mb-6">
                   <div className="h-2.5 w-2.5 rounded-full bg-indigo-500 animate-pulse shadow-[0_0_10px_rgba(99,102,241,0.8)]" />
-                  <p className="text-sm font-bold text-slate-700 dark:text-slate-200 tracking-wide">Searching for QR code...</p>
+                  <p className="text-sm font-bold text-[var(--text-primary)] tracking-wide">Searching for QR code...</p>
                 </div>
                 <Button variant="ghost" onClick={() => { stopScanner(); setPhase("idle"); }} className="text-rose-500 hover:bg-rose-50 dark:hover:bg-rose-500/10 font-bold rounded-xl px-8">
                   Cancel Scan
@@ -240,8 +240,8 @@ export default function QRStudentPage() {
                   <p className="text-xs font-black text-indigo-500 dark:text-indigo-400 uppercase tracking-widest mb-1.5">
                     {formType === "checkin" ? "Pre-Lesson Check-in" : "Post-Lesson Feedback"}
                   </p>
-                  <h3 className="text-xl font-bold text-slate-800 dark:text-white tracking-tight">{sessionInfo.subject}</h3>
-                  <p className="text-sm font-medium text-slate-500 dark:text-slate-400 mt-1">Class: <span className="font-semibold text-slate-700 dark:text-slate-300">{sessionInfo.class_name}</span></p>
+                  <h3 className="text-xl font-bold text-[var(--text-primary)] tracking-tight">{sessionInfo.subject}</h3>
+                  <p className="text-sm font-medium text-[var(--text-secondary)] mt-1">Class: <span className="font-semibold text-[var(--text-secondary)]">{sessionInfo.class_name}</span></p>
                 </div>
                 <div className="h-12 w-12 rounded-full bg-indigo-100 dark:bg-indigo-800/50 flex items-center justify-center">
                   <CheckCircle2 className="h-6 w-6 text-indigo-500 dark:text-indigo-300" />
@@ -249,11 +249,11 @@ export default function QRStudentPage() {
               </div>
             </div>
 
-            <div className="bg-white/60 dark:bg-slate-900/60 backdrop-blur-lg border border-white/40 dark:border-slate-700/50 rounded-3xl p-8 shadow-sm space-y-8">
+            <div className="bg-[var(--bg-secondary)] backdrop-blur-lg border border-[var(--border)] rounded-3xl p-8 shadow-sm space-y-8">
               {formType === "checkin" ? (
                 <>
                   <div>
-                    <p className="text-sm font-bold text-slate-800 dark:text-white mb-4 text-center uppercase tracking-wide">Ready to learn today?</p>
+                    <p className="text-sm font-bold text-[var(--text-primary)] mb-4 text-center uppercase tracking-wide">Ready to learn today?</p>
                     <div className="flex justify-between gap-2">
                       {EMOJIS.map((emoji, i) => (
                         <button
@@ -262,7 +262,7 @@ export default function QRStudentPage() {
                           className={`flex-1 py-4 rounded-2xl text-2xl transition-all duration-300 ${
                             readiness === i + 1
                               ? "bg-indigo-500 text-white scale-110 shadow-lg shadow-indigo-500/30"
-                              : "bg-slate-50 dark:bg-slate-800/50 hover:bg-slate-100 dark:hover:bg-slate-700 border border-slate-200 dark:border-slate-700"
+                              : "bg-[var(--bg-tertiary)] hover:bg-slate-100 dark:hover:bg-slate-700 border border-[var(--border)]"
                           }`}
                         >
                           {emoji}
@@ -272,7 +272,7 @@ export default function QRStudentPage() {
                   </div>
 
                   <div className="pt-2 border-t border-slate-100 dark:border-slate-800">
-                    <p className="text-sm font-bold text-slate-800 dark:text-white mb-4 text-center uppercase tracking-wide mt-4">How are you feeling?</p>
+                    <p className="text-sm font-bold text-[var(--text-primary)] mb-4 text-center uppercase tracking-wide mt-4">How are you feeling?</p>
                     <div className="flex justify-between gap-2">
                       {EMOJIS.map((emoji, i) => (
                         <button
@@ -281,7 +281,7 @@ export default function QRStudentPage() {
                           className={`flex-1 py-4 rounded-2xl text-2xl transition-all duration-300 ${
                             mood === i + 1
                               ? "bg-indigo-500 text-white scale-110 shadow-lg shadow-indigo-500/30"
-                              : "bg-slate-50 dark:bg-slate-800/50 hover:bg-slate-100 dark:hover:bg-slate-700 border border-slate-200 dark:border-slate-700"
+                              : "bg-[var(--bg-tertiary)] hover:bg-slate-100 dark:hover:bg-slate-700 border border-[var(--border)]"
                           }`}
                         >
                           {emoji}
@@ -291,12 +291,12 @@ export default function QRStudentPage() {
                   </div>
 
                   <div className="pt-4">
-                    <p className="text-sm font-bold text-slate-800 dark:text-white mb-2">Notes for teacher</p>
+                    <p className="text-sm font-bold text-[var(--text-primary)] mb-2">Notes for teacher</p>
                     <textarea
                       value={notes}
                       onChange={(e) => setNotes(e.target.value)}
                       placeholder="Optional: Forgot my book, feeling tired, etc."
-                      className="w-full p-4 rounded-2xl bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700 focus:outline-none focus:ring-2 focus:ring-indigo-500/50 text-sm transition-all text-slate-800 dark:text-white placeholder:text-slate-400"
+                      className="w-full p-4 rounded-2xl bg-[var(--bg-tertiary)] border border-[var(--border)] focus:outline-none focus:ring-2 focus:ring-indigo-500/50 text-sm transition-all text-[var(--text-primary)] placeholder:text-slate-400"
                       rows={3}
                     />
                   </div>
@@ -304,14 +304,14 @@ export default function QRStudentPage() {
               ) : (
                 <>
                   <div>
-                    <p className="text-sm font-bold text-slate-800 dark:text-white mb-4 text-center uppercase tracking-wide">Rate this lesson</p>
+                    <p className="text-sm font-bold text-[var(--text-primary)] mb-4 text-center uppercase tracking-wide">Rate this lesson</p>
                     <div className="flex justify-center gap-3">
                       {[1, 2, 3, 4, 5].map((star) => (
                         <button
                           key={star}
                           onClick={() => setRating(star)}
                           className={`h-14 w-14 rounded-2xl flex items-center justify-center text-2xl transition-all ${
-                            rating >= star ? "bg-amber-400 text-white shadow-lg shadow-amber-400/30 scale-110" : "bg-slate-50 dark:bg-slate-800/50 text-slate-300 dark:text-slate-600 border border-slate-200 dark:border-slate-700"
+                            rating >= star ? "bg-amber-400 text-white shadow-lg shadow-amber-400/30 scale-110" : "bg-[var(--bg-tertiary)] text-slate-300 dark:text-slate-600 border border-[var(--border)]"
                           }`}
                         >
                           ★
@@ -321,12 +321,12 @@ export default function QRStudentPage() {
                   </div>
 
                   <div className="pt-6 border-t border-slate-100 dark:border-slate-800">
-                    <p className="text-sm font-bold text-slate-800 dark:text-white mb-2">Lesson Reflection</p>
+                    <p className="text-sm font-bold text-[var(--text-primary)] mb-2">Lesson Reflection</p>
                     <textarea
                       value={reflection}
                       onChange={(e) => setReflection(e.target.value)}
                       placeholder="What did you learn today? What was difficult?"
-                      className="w-full p-4 rounded-2xl bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700 focus:outline-none focus:ring-2 focus:ring-indigo-500/50 text-sm transition-all text-slate-800 dark:text-white placeholder:text-slate-400"
+                      className="w-full p-4 rounded-2xl bg-[var(--bg-tertiary)] border border-[var(--border)] focus:outline-none focus:ring-2 focus:ring-indigo-500/50 text-sm transition-all text-[var(--text-primary)] placeholder:text-slate-400"
                       rows={4}
                     />
                   </div>
@@ -346,20 +346,20 @@ export default function QRStudentPage() {
                <div className="absolute inset-0 border-4 border-indigo-200 dark:border-indigo-900 rounded-full"></div>
                <div className="absolute inset-0 border-4 border-indigo-600 rounded-full border-t-transparent animate-spin"></div>
             </div>
-            <p className="text-lg font-bold text-slate-800 dark:text-white tracking-tight mb-2">Syncing with Academy Servers...</p>
-            <p className="text-sm font-medium text-slate-500 dark:text-slate-400">Please wait a moment</p>
+            <p className="text-lg font-bold text-[var(--text-primary)] tracking-tight mb-2">Syncing with Academy Servers...</p>
+            <p className="text-sm font-medium text-[var(--text-secondary)]">Please wait a moment</p>
           </motion.div>
         )}
 
         {phase === "success" && (
-          <motion.div key="success" initial={{ opacity: 0, scale: 0.9 }} animate={{ opacity: 1, scale: 1 }} className="text-center py-16 bg-white/60 dark:bg-slate-900/60 backdrop-blur-lg rounded-3xl border border-white/40 dark:border-slate-700/50 shadow-sm">
+          <motion.div key="success" initial={{ opacity: 0, scale: 0.9 }} animate={{ opacity: 1, scale: 1 }} className="text-center py-16 bg-[var(--bg-secondary)] backdrop-blur-lg rounded-3xl border border-[var(--border)] shadow-sm">
             <div className="h-24 w-24 bg-emerald-100 dark:bg-emerald-500/20 rounded-full flex items-center justify-center mx-auto mb-8 shadow-inner">
               <CheckCircle2 className="h-12 w-12 text-emerald-500 dark:text-emerald-400" />
             </div>
-            <h2 className="text-2xl font-black text-slate-800 dark:text-white mb-3 tracking-tight">
+            <h2 className="text-2xl font-black text-[var(--text-primary)] mb-3 tracking-tight">
               {formType === "checkin" ? "Presence Recorded! ✅" : "Feedback Received! 🌟"}
             </h2>
-            <p className="text-slate-500 dark:text-slate-400 font-medium mb-12 px-6">
+            <p className="text-[var(--text-secondary)] font-medium mb-12 px-6">
               {formType === "checkin" 
                 ? "Your attendance is secured. Ready to start learning?" 
                 : "Thank you for helping us improve our lessons."}
@@ -371,12 +371,12 @@ export default function QRStudentPage() {
         )}
 
         {phase === "error" && (
-          <motion.div key="error" initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="text-center py-16 bg-white/60 dark:bg-slate-900/60 backdrop-blur-lg rounded-3xl border border-white/40 dark:border-slate-700/50 shadow-sm">
+          <motion.div key="error" initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="text-center py-16 bg-[var(--bg-secondary)] backdrop-blur-lg rounded-3xl border border-[var(--border)] shadow-sm">
             <div className="h-24 w-24 bg-rose-100 dark:bg-rose-500/20 rounded-full flex items-center justify-center mx-auto mb-8 shadow-inner">
               <AlertTriangle className="h-12 w-12 text-rose-500 dark:text-rose-400" />
             </div>
-            <h2 className="text-2xl font-black text-slate-800 dark:text-white mb-3 tracking-tight">Scan Failed</h2>
-            <p className="text-slate-500 dark:text-slate-400 font-medium mb-12 px-8">{errorMsg}</p>
+            <h2 className="text-2xl font-black text-[var(--text-primary)] mb-3 tracking-tight">Scan Failed</h2>
+            <p className="text-[var(--text-secondary)] font-medium mb-12 px-8">{errorMsg}</p>
             <Button onClick={() => setPhase("idle")} className="px-12 h-14 rounded-2xl font-bold bg-slate-800 dark:bg-slate-700 text-white hover:bg-slate-900 dark:hover:bg-slate-600 shadow-md">
                Try Again
             </Button>

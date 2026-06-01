@@ -168,21 +168,21 @@ export default function DashboardPage() {
       <motion.div 
         initial={{ opacity: 0, y: 12 }} 
         animate={{ opacity: 1, y: 0 }}
-        className="relative overflow-hidden rounded-3xl bg-gradient-to-br from-indigo-50/80 via-white/60 to-purple-50/80 dark:from-slate-900/80 dark:via-slate-800/60 dark:to-indigo-950/80 border border-white/40 dark:border-slate-700/50 p-8 md:p-10 backdrop-blur-xl shadow-[0_8px_30px_rgb(0,0,0,0.04)] dark:shadow-[0_8px_30px_rgb(0,0,0,0.2)]"
+        className="relative overflow-hidden rounded-3xl bg-gradient-to-br from-indigo-50/80 via-white/60 to-purple-50/80 dark:from-slate-900/80 dark:via-slate-800/60 dark:to-indigo-950/80 border border-[var(--border)] p-8 md:p-10 backdrop-blur-xl shadow-[0_8px_30px_rgb(0,0,0,0.04)] dark:shadow-[0_8px_30px_rgb(0,0,0,0.2)]"
       >
         <div className="absolute top-0 right-0 w-96 h-96 bg-indigo-400/10 dark:bg-indigo-500/10 rounded-full blur-3xl -mr-20 -mt-20 pointer-events-none"></div>
         <div className="absolute bottom-0 left-0 w-64 h-64 bg-purple-400/10 dark:bg-purple-500/10 rounded-full blur-3xl -ml-20 -mb-20 pointer-events-none"></div>
         
         <div className="relative z-10 flex flex-col md:flex-row items-start md:items-center justify-between gap-6">
           <div className="flex items-center gap-6">
-            <div className="w-16 h-16 rounded-2xl bg-white/50 dark:bg-slate-800/50 backdrop-blur-md border border-white/60 dark:border-slate-700/50 flex items-center justify-center shrink-0 shadow-sm">
+            <div className="w-16 h-16 rounded-2xl bg-[var(--bg-primary)] backdrop-blur-md border border-white/60 dark:border-slate-700/50 flex items-center justify-center shrink-0 shadow-sm">
               <Trophy className="h-8 w-8 text-indigo-500 dark:text-indigo-400" />
             </div>
             <div>
-              <h1 className="text-3xl font-bold text-slate-800 dark:text-white mb-2 tracking-tight">
+              <h1 className="text-3xl font-bold text-[var(--text-primary)] mb-2 tracking-tight">
                 Welcome back, {profile.full_name?.split(" ")[0]}
               </h1>
-              <p className="text-slate-500 dark:text-slate-400 font-medium text-sm md:text-base">
+              <p className="text-[var(--text-secondary)] font-medium text-sm md:text-base">
                 Your learning progress overview for today.
               </p>
             </div>
@@ -193,7 +193,7 @@ export default function DashboardPage() {
       {/* Gamified Stats (Glass & Flow) */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
         {/* Total XP */}
-        <div className="bg-white/60 dark:bg-slate-900/60 backdrop-blur-lg p-6 rounded-3xl border border-white/40 dark:border-slate-700/50 shadow-sm hover:shadow-md transition-all group">
+        <div className="bg-[var(--bg-secondary)] backdrop-blur-lg p-6 rounded-3xl border border-[var(--border)] shadow-sm hover:shadow-md transition-all group">
           <div className="flex items-start justify-between mb-4">
             <div className="p-3 rounded-2xl bg-indigo-100/50 dark:bg-indigo-500/20 text-indigo-600 dark:text-indigo-400">
               <Star className="h-5 w-5" />
@@ -203,39 +203,39 @@ export default function DashboardPage() {
             </span>
           </div>
           <div>
-            <h3 className="text-3xl font-black text-slate-800 dark:text-white tracking-tight mb-1">{xp.toLocaleString()}</h3>
-            <p className="text-sm font-medium text-slate-500 dark:text-slate-400">Total XP</p>
+            <h3 className="text-3xl font-black text-[var(--text-primary)] tracking-tight mb-1">{xp.toLocaleString()}</h3>
+            <p className="text-sm font-medium text-[var(--text-secondary)]">Total XP</p>
           </div>
         </div>
 
         {/* Current Rank */}
-        <div className="bg-white/60 dark:bg-slate-900/60 backdrop-blur-lg p-6 rounded-3xl border border-white/40 dark:border-slate-700/50 shadow-sm hover:shadow-md transition-all group">
+        <div className="bg-[var(--bg-secondary)] backdrop-blur-lg p-6 rounded-3xl border border-[var(--border)] shadow-sm hover:shadow-md transition-all group">
           <div className="flex items-start justify-between mb-4">
             <div className="p-3 rounded-2xl bg-amber-100/50 dark:bg-amber-500/20 text-amber-600 dark:text-amber-400">
               <Trophy className="h-5 w-5" />
             </div>
           </div>
           <div>
-            <h3 className="text-2xl font-black text-slate-800 dark:text-white tracking-tight mb-1">{rank}</h3>
-            <p className="text-sm font-medium text-slate-500 dark:text-slate-400">Current Rank</p>
+            <h3 className="text-2xl font-black text-[var(--text-primary)] tracking-tight mb-1">{rank}</h3>
+            <p className="text-sm font-medium text-[var(--text-secondary)]">Current Rank</p>
           </div>
         </div>
 
         {/* Lessons Done */}
-        <div className="bg-white/60 dark:bg-slate-900/60 backdrop-blur-lg p-6 rounded-3xl border border-white/40 dark:border-slate-700/50 shadow-sm hover:shadow-md transition-all group">
+        <div className="bg-[var(--bg-secondary)] backdrop-blur-lg p-6 rounded-3xl border border-[var(--border)] shadow-sm hover:shadow-md transition-all group">
           <div className="flex items-start justify-between mb-4">
             <div className="p-3 rounded-2xl bg-emerald-100/50 dark:bg-emerald-500/20 text-emerald-600 dark:text-emerald-400">
               <BookOpen className="h-5 w-5" />
             </div>
           </div>
           <div>
-            <h3 className="text-3xl font-black text-slate-800 dark:text-white tracking-tight mb-1">{completedCount}</h3>
-            <p className="text-sm font-medium text-slate-500 dark:text-slate-400">Missions Cleared</p>
+            <h3 className="text-3xl font-black text-[var(--text-primary)] tracking-tight mb-1">{completedCount}</h3>
+            <p className="text-sm font-medium text-[var(--text-secondary)]">Missions Cleared</p>
           </div>
         </div>
 
         {/* Day Streak */}
-        <div className="bg-white/60 dark:bg-slate-900/60 backdrop-blur-lg p-6 rounded-3xl border border-white/40 dark:border-slate-700/50 shadow-sm hover:shadow-md transition-all group">
+        <div className="bg-[var(--bg-secondary)] backdrop-blur-lg p-6 rounded-3xl border border-[var(--border)] shadow-sm hover:shadow-md transition-all group">
           <div className="flex items-start justify-between mb-4">
             <div className="p-3 rounded-2xl bg-rose-100/50 dark:bg-rose-500/20 text-rose-600 dark:text-rose-400">
               <Flame className="h-5 w-5" />
@@ -245,20 +245,20 @@ export default function DashboardPage() {
             </span>
           </div>
           <div>
-            <h3 className="text-3xl font-black text-slate-800 dark:text-white tracking-tight mb-1">7</h3>
-            <p className="text-sm font-medium text-slate-500 dark:text-slate-400">Day Streak</p>
+            <h3 className="text-3xl font-black text-[var(--text-primary)] tracking-tight mb-1">7</h3>
+            <p className="text-sm font-medium text-[var(--text-secondary)]">Day Streak</p>
           </div>
         </div>
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        <div className="lg:col-span-2 bg-white/60 dark:bg-slate-900/60 backdrop-blur-lg rounded-3xl p-6 md:p-8 border border-white/40 dark:border-slate-700/50 shadow-sm relative">
+        <div className="lg:col-span-2 bg-[var(--bg-secondary)] backdrop-blur-lg rounded-3xl p-6 md:p-8 border border-[var(--border)] shadow-sm relative">
           <div className="flex items-center justify-between mb-8">
             <div>
-              <h2 className="text-xl font-bold text-slate-800 dark:text-white flex items-center gap-2 mb-1">
+              <h2 className="text-xl font-bold text-[var(--text-primary)] flex items-center gap-2 mb-1">
                 Rank Progress
               </h2>
-              <p className="text-sm font-medium text-slate-500 dark:text-slate-400">Earn XP to reach the next tier</p>
+              <p className="text-sm font-medium text-[var(--text-secondary)]">Earn XP to reach the next tier</p>
             </div>
             <div className="px-4 py-2 bg-indigo-100/50 dark:bg-indigo-500/20 text-indigo-700 dark:text-indigo-300 rounded-2xl text-sm font-bold tracking-wide border border-indigo-200/50 dark:border-indigo-500/30">
               {rank}
@@ -266,10 +266,10 @@ export default function DashboardPage() {
           </div>
           <div className="relative">
              <ProgressBar value={nextRank.progress} showLabel size="lg" color="#6366f1" />
-             <p className="text-sm font-medium text-slate-500 dark:text-slate-400 mt-6 flex justify-between items-center">
+             <p className="text-sm font-medium text-[var(--text-secondary)] mt-6 flex justify-between items-center">
                <span>Next milestone: <strong className="text-slate-800 dark:text-slate-200">{nextRank.name}</strong></span>
                {nextRank.xpNeeded > 0 ? (
-                 <span className="bg-slate-100 dark:bg-slate-800 px-3 py-1 rounded-full text-xs font-bold">{nextRank.xpNeeded} XP left</span>
+                 <span className="bg-[var(--bg-tertiary)] px-3 py-1 rounded-full text-xs font-bold">{nextRank.xpNeeded} XP left</span>
                ) : (
                  <span className="bg-indigo-100 dark:bg-indigo-900/50 text-indigo-600 dark:text-indigo-400 px-3 py-1 rounded-full text-xs font-bold">Max Rank</span>
                )}
@@ -277,9 +277,9 @@ export default function DashboardPage() {
           </div>
         </div>
 
-        <div className="bg-white/60 dark:bg-slate-900/60 backdrop-blur-lg rounded-3xl p-6 md:p-8 border border-white/40 dark:border-slate-700/50 shadow-sm">
+        <div className="bg-[var(--bg-secondary)] backdrop-blur-lg rounded-3xl p-6 md:p-8 border border-[var(--border)] shadow-sm">
           <div className="flex items-center justify-between mb-6">
-            <h2 className="text-lg font-bold text-slate-800 dark:text-white">Upcoming Events</h2>
+            <h2 className="text-lg font-bold text-[var(--text-primary)]">Upcoming Events</h2>
             <Link href="/events" className="text-xs text-indigo-600 dark:text-indigo-400 font-bold hover:underline">View All</Link>
           </div>
           <div className="space-y-4">
@@ -289,15 +289,15 @@ export default function DashboardPage() {
                   <Calendar className="h-5 w-5 text-indigo-500 dark:text-indigo-400" />
                 </div>
                 <div className="pt-1">
-                  <p className="text-sm font-semibold text-slate-800 dark:text-white mb-1 group-hover:text-indigo-600 dark:group-hover:text-indigo-400 transition-colors line-clamp-1">{event.title}</p>
-                  <p className="text-xs text-slate-500 dark:text-slate-400 font-medium">
+                  <p className="text-sm font-semibold text-[var(--text-primary)] mb-1 group-hover:text-indigo-600 dark:group-hover:text-indigo-400 transition-colors line-clamp-1">{event.title}</p>
+                  <p className="text-xs text-[var(--text-secondary)] font-medium">
                     {new Date(event.event_date).toLocaleDateString(undefined, { weekday: 'short', day: 'numeric', month: 'short' })}
                   </p>
                 </div>
               </div>
             )) : (
               <div className="text-center py-8">
-                 <p className="text-sm text-slate-400 dark:text-slate-500">No upcoming events.</p>
+                 <p className="text-sm text-[var(--text-tertiary)]">No upcoming events.</p>
               </div>
             )}
           </div>
@@ -325,12 +325,12 @@ export default function DashboardPage() {
             </div>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                <Link href="/student/leadership/attendance">
-                  <Button variant="secondary" className="w-full h-14 bg-white/80 dark:bg-slate-900/80 backdrop-blur-sm text-emerald-900 dark:text-emerald-100 border border-emerald-200/50 dark:border-emerald-800/50 hover:bg-white dark:hover:bg-slate-800 shadow-sm" icon={<CalendarCheck className="h-4 w-4" />}>
+                  <Button variant="secondary" className="w-full h-14 bg-[var(--bg-primary)] backdrop-blur-sm text-emerald-900 dark:text-emerald-100 border border-emerald-200/50 dark:border-emerald-800/50 hover:bg-white dark:hover:bg-slate-800 shadow-sm" icon={<CalendarCheck className="h-4 w-4" />}>
                      Manage Class Attendance
                   </Button>
                </Link>
                <Link href="/chat">
-                  <Button variant="secondary" className="w-full h-14 bg-white/80 dark:bg-slate-900/80 backdrop-blur-sm text-emerald-900 dark:text-emerald-100 border border-emerald-200/50 dark:border-emerald-800/50 hover:bg-white dark:hover:bg-slate-800 shadow-sm" icon={<ChevronRight className="h-4 w-4" />}>
+                  <Button variant="secondary" className="w-full h-14 bg-[var(--bg-primary)] backdrop-blur-sm text-emerald-900 dark:text-emerald-100 border border-emerald-200/50 dark:border-emerald-800/50 hover:bg-white dark:hover:bg-slate-800 shadow-sm" icon={<ChevronRight className="h-4 w-4" />}>
                      Broadcast Announcement
                   </Button>
                </Link>
@@ -342,10 +342,10 @@ export default function DashboardPage() {
       <div>
         <div className="flex items-end justify-between mb-6">
           <div>
-            <h2 className="text-xl font-bold text-slate-800 dark:text-white mb-1">
+            <h2 className="text-xl font-bold text-[var(--text-primary)] mb-1">
                Continue Learning
             </h2>
-            <p className="text-sm font-medium text-slate-500 dark:text-slate-400">Pick up where you left off</p>
+            <p className="text-sm font-medium text-[var(--text-secondary)]">Pick up where you left off</p>
           </div>
           <Link href="/courses" className="text-sm font-bold text-indigo-600 dark:text-indigo-400 hover:text-indigo-700 dark:hover:text-indigo-300 transition-colors">
             View All Courses
@@ -357,8 +357,8 @@ export default function DashboardPage() {
             const progressPercent = Math.round((done / (course.lessons_count || 1)) * 100);
             return (
               <Link key={course.id} href={`/courses/${course.id}`} className="group block h-full">
-                <div className="bg-white/60 dark:bg-slate-900/60 backdrop-blur-lg rounded-3xl border border-white/40 dark:border-slate-700/50 overflow-hidden shadow-sm hover:shadow-lg hover:-translate-y-1 transition-all duration-300 h-full flex flex-col">
-                  <div className="aspect-[16/9] bg-slate-100 dark:bg-slate-800 relative overflow-hidden">
+                <div className="bg-[var(--bg-secondary)] backdrop-blur-lg rounded-3xl border border-[var(--border)] overflow-hidden shadow-sm hover:shadow-lg hover:-translate-y-1 transition-all duration-300 h-full flex flex-col">
+                  <div className="aspect-[16/9] bg-[var(--bg-tertiary)] relative overflow-hidden">
                      {course.cover_image ? (
                        <img src={course.cover_image} alt="" className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700" />
                      ) : (
@@ -374,13 +374,13 @@ export default function DashboardPage() {
                      </div>
                   </div>
                   <div className="p-6 flex-1 flex flex-col">
-                    <h3 className="text-lg font-bold text-slate-800 dark:text-white mb-4 line-clamp-2 leading-snug group-hover:text-indigo-600 dark:group-hover:text-indigo-400 transition-colors">{course.title}</h3>
-                    <div className="mt-auto pt-4 border-t border-slate-100 dark:border-slate-800/50">
+                    <h3 className="text-lg font-bold text-[var(--text-primary)] mb-4 line-clamp-2 leading-snug group-hover:text-indigo-600 dark:group-hover:text-indigo-400 transition-colors">{course.title}</h3>
+                    <div className="mt-auto pt-4 border-t border-[var(--border)]">
                        <div className="flex justify-between items-center mb-2">
-                          <p className="text-xs font-semibold text-slate-500 dark:text-slate-400">{done}/{course.lessons_count} missions</p>
+                          <p className="text-xs font-semibold text-[var(--text-secondary)]">{done}/{course.lessons_count} missions</p>
                           <p className="text-xs font-black text-indigo-600 dark:text-indigo-400">{progressPercent}%</p>
                        </div>
-                       <div className="h-2 w-full bg-slate-100 dark:bg-slate-800 rounded-full overflow-hidden">
+                       <div className="h-2 w-full bg-[var(--bg-tertiary)] rounded-full overflow-hidden">
                          <div className="h-full bg-indigo-500 rounded-full transition-all duration-1000 ease-out" style={{ width: `${progressPercent}%` }}></div>
                        </div>
                     </div>

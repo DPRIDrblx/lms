@@ -92,8 +92,8 @@ export default function CoursesPage() {
     <div className="space-y-6 max-w-6xl font-sans">
       <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} className="flex flex-col md:flex-row md:items-end justify-between gap-4">
         <div>
-          <h1 className="text-3xl font-bold text-slate-800 dark:text-white tracking-tight">Course Portal</h1>
-          <p className="text-sm font-medium text-slate-500 dark:text-slate-400 mt-1">Explore your learning missions and track progress.</p>
+          <h1 className="text-3xl font-bold text-[var(--text-primary)] tracking-tight">Course Portal</h1>
+          <p className="text-sm font-medium text-[var(--text-secondary)] mt-1">Explore your learning missions and track progress.</p>
         </div>
       </motion.div>
 
@@ -106,10 +106,10 @@ export default function CoursesPage() {
             placeholder="Search courses..."
             value={search}
             onChange={(e) => setSearch(e.target.value)}
-            className="w-full h-12 pl-11 pr-4 rounded-2xl bg-white/60 dark:bg-slate-900/60 backdrop-blur-md border border-slate-200 dark:border-slate-800 text-sm text-slate-800 dark:text-white placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-indigo-500/50 focus:border-indigo-500/50 transition-all shadow-sm"
+            className="w-full h-12 pl-11 pr-4 rounded-2xl bg-[var(--bg-secondary)] backdrop-blur-md border border-[var(--border)] text-sm text-[var(--text-primary)] placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-indigo-500/50 focus:border-indigo-500/50 transition-all shadow-sm"
           />
         </div>
-        <div className="flex gap-1.5 bg-white/60 dark:bg-slate-900/60 backdrop-blur-md border border-slate-200 dark:border-slate-800 rounded-2xl p-1.5 shadow-sm overflow-x-auto shrink-0">
+        <div className="flex gap-1.5 bg-[var(--bg-secondary)] backdrop-blur-md border border-[var(--border)] rounded-2xl p-1.5 shadow-sm overflow-x-auto shrink-0">
           {(["all", "in-progress", "completed"] as const).map((f) => (
             <button
               key={f}
@@ -117,7 +117,7 @@ export default function CoursesPage() {
               className={`px-4 py-2 rounded-xl text-xs font-bold transition-all capitalize whitespace-nowrap ${
                 filter === f
                   ? "bg-indigo-500 text-white shadow-md shadow-indigo-500/20"
-                  : "text-slate-500 dark:text-slate-400 hover:text-slate-800 dark:hover:text-white hover:bg-slate-100/50 dark:hover:bg-slate-800/50"
+                  : "text-[var(--text-secondary)] hover:text-[var(--text-primary)] hover:bg-[var(--bg-tertiary)]"
               }`}
             >
               {f.replace("-", " ")}
@@ -130,7 +130,7 @@ export default function CoursesPage() {
       {loading ? (
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
           {[1, 2, 3, 4, 5, 6].map((i) => (
-            <div key={i} className="h-80 rounded-3xl bg-slate-100 dark:bg-slate-800/50 animate-pulse" />
+            <div key={i} className="h-80 rounded-3xl bg-[var(--bg-tertiary)]/50 animate-pulse" />
           ))}
         </div>
       ) : filtered.length > 0 ? (
@@ -147,8 +147,8 @@ export default function CoursesPage() {
                 transition={{ delay: i * 0.05 }}
               >
                 <Link href={`/courses/${course.id}`} className="block h-full group">
-                  <div className="bg-white/60 dark:bg-slate-900/60 backdrop-blur-lg rounded-3xl border border-white/40 dark:border-slate-700/50 overflow-hidden shadow-sm hover:shadow-xl hover:-translate-y-1 transition-all duration-300 h-full flex flex-col">
-                    <div className="aspect-[16/9] flex items-center justify-center relative bg-slate-100 dark:bg-slate-800 overflow-hidden">
+                  <div className="bg-[var(--bg-secondary)] backdrop-blur-lg rounded-3xl border border-[var(--border)] overflow-hidden shadow-sm hover:shadow-xl hover:-translate-y-1 transition-all duration-300 h-full flex flex-col">
+                    <div className="aspect-[16/9] flex items-center justify-center relative bg-[var(--bg-tertiary)] overflow-hidden">
                       {course.cover_image ? (
                         <img src={course.cover_image} alt="" className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700" />
                       ) : (
@@ -167,14 +167,14 @@ export default function CoursesPage() {
                       </div>
                     </div>
                     <div className="p-6 flex-1 flex flex-col">
-                      <h3 className="text-lg font-bold text-slate-800 dark:text-white mb-2 line-clamp-2 leading-snug group-hover:text-indigo-600 dark:group-hover:text-indigo-400 transition-colors">{course.title}</h3>
-                      <p className="text-sm text-slate-500 dark:text-slate-400 line-clamp-2 mb-6 flex-1 leading-relaxed">{course.description}</p>
-                      <div className="pt-4 border-t border-slate-100 dark:border-slate-800/50">
+                      <h3 className="text-lg font-bold text-[var(--text-primary)] mb-2 line-clamp-2 leading-snug group-hover:text-indigo-600 dark:group-hover:text-indigo-400 transition-colors">{course.title}</h3>
+                      <p className="text-sm text-[var(--text-secondary)] line-clamp-2 mb-6 flex-1 leading-relaxed">{course.description}</p>
+                      <div className="pt-4 border-t border-[var(--border)]">
                         <div className="flex items-center justify-between mb-2">
-                          <p className="text-xs font-medium text-slate-400 dark:text-slate-500 truncate mr-2">By <span className="font-semibold text-slate-600 dark:text-slate-300">{course.profiles?.full_name}</span></p>
+                          <p className="text-xs font-medium text-[var(--text-tertiary)] truncate mr-2">By <span className="font-semibold text-[var(--text-secondary)]">{course.profiles?.full_name}</span></p>
                           <p className="text-xs font-black text-indigo-600 dark:text-indigo-400">{progressPercent}%</p>
                         </div>
-                        <div className="h-2 w-full bg-slate-100 dark:bg-slate-800 rounded-full overflow-hidden">
+                        <div className="h-2 w-full bg-[var(--bg-tertiary)] rounded-full overflow-hidden">
                            <div className="h-full bg-indigo-500 rounded-full transition-all duration-1000 ease-out" style={{ width: `${progressPercent}%` }}></div>
                         </div>
                       </div>
@@ -186,10 +186,10 @@ export default function CoursesPage() {
           })}
         </div>
       ) : (
-        <div className="bg-white/60 dark:bg-slate-900/60 backdrop-blur-lg border border-slate-200 dark:border-slate-800 rounded-3xl text-center py-20 shadow-sm">
+        <div className="bg-[var(--bg-secondary)] backdrop-blur-lg border border-[var(--border)] rounded-3xl text-center py-20 shadow-sm">
           <BookOpen className="h-16 w-16 text-slate-300 dark:text-slate-600 mx-auto mb-4" />
-          <h2 className="text-xl font-bold text-slate-800 dark:text-white mb-2">No courses found</h2>
-          <p className="text-sm font-medium text-slate-500 dark:text-slate-400">Try adjusting your search or filters.</p>
+          <h2 className="text-xl font-bold text-[var(--text-primary)] mb-2">No courses found</h2>
+          <p className="text-sm font-medium text-[var(--text-secondary)]">Try adjusting your search or filters.</p>
         </div>
       )}
     </div>
