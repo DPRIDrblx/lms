@@ -14,7 +14,10 @@ import {
   Bell,
   ArrowRight,
   Plus,
-  Loader2
+  Loader2,
+  ShieldCheck,
+  Building2,
+  Activity
 } from "lucide-react";
 import { useEffect, useState } from "react";
 import Link from "next/link";
@@ -73,69 +76,131 @@ export default function TUDashboard() {
   }, [supabase]);
 
   return (
-    <div className="space-y-8 max-w-6xl">
-      <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }}>
-        <h1 className="text-2xl font-bold text-[var(--text-primary)]">
-          Welcome, Staff Administrator 👋
-        </h1>
-        <p className="text-sm text-[var(--text-secondary)] mt-1">Nusantara School Operational Overview</p>
-      </motion.div>
-
-      {user && !profile && (
-        <div className="flex items-center gap-2 p-2 rounded-lg bg-[var(--accent-light)] text-[var(--accent)] w-fit">
-          <Loader2 className="h-3 w-3 animate-spin" />
-          <span className="text-[10px] font-bold uppercase tracking-widest">Hydrating Profile...</span>
+    <div className="space-y-8 max-w-6xl font-sans">
+      {/* Operation Center Header */}
+      <div className="relative overflow-hidden rounded-[2rem] bg-gradient-to-br from-blue-900 via-blue-800 to-cyan-900 p-8 md:p-10 text-white shadow-xl shadow-blue-900/20">
+        <div className="absolute inset-0 bg-white/5 pattern-dots pointer-events-none"></div>
+        <div className="relative z-10 flex flex-col md:flex-row items-start md:items-center justify-between gap-6">
+          <div className="flex items-center gap-5">
+            <div className="w-16 h-16 rounded-2xl bg-white/10 backdrop-blur-md border border-white/20 flex items-center justify-center shrink-0">
+              <ShieldCheck className="h-8 w-8 text-cyan-300" />
+            </div>
+            <div>
+              <h1 className="text-3xl font-black mb-1 text-transparent bg-clip-text bg-gradient-to-r from-white to-cyan-100">
+                Pusat Kendali Operasional
+              </h1>
+              <p className="text-blue-200 text-sm md:text-base font-medium flex items-center gap-2">
+                <Building2 className="h-4 w-4" /> Tata Usaha & Administrasi
+              </p>
+            </div>
+          </div>
+          {user && !profile && (
+            <div className="flex items-center gap-2 px-4 py-2 rounded-xl bg-cyan-500/20 border border-cyan-500/30 text-cyan-100 backdrop-blur-sm">
+              <Loader2 className="h-4 w-4 animate-spin" />
+              <span className="text-xs font-bold uppercase tracking-widest">Sinkronisasi Data...</span>
+            </div>
+          )}
         </div>
-      )}
-
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-        <StatCard label="Total Students" value={stats.totalStudents} icon={Users} color="#4F46E5" />
-        <StatCard label="Pending SPP" value={stats.pendingBills} icon={CreditCard} color="#F59E0B" />
-        <StatCard label="School Events" value={stats.upcomingEvents} icon={Calendar} color="#10B981" />
-        <StatCard label="Collection Rate" value={stats.collectionRate} icon={TrendingUp} color="#8B5CF6" />
+        
+        {/* Decorative elements */}
+        <div className="absolute -top-24 -right-24 w-64 h-64 bg-cyan-400/10 rounded-full blur-3xl pointer-events-none"></div>
+        <div className="absolute -bottom-24 right-1/4 w-48 h-48 bg-blue-500/20 rounded-full blur-3xl pointer-events-none"></div>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+      <div className="flex items-center gap-3">
+        <div className="p-2.5 bg-blue-50 text-blue-600 rounded-lg">
+          <Activity className="h-5 w-5" />
+        </div>
+        <h2 className="text-xl font-bold text-slate-800">Ringkasan Metrik</h2>
+      </div>
+
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+        <div className="bg-white p-6 rounded-2xl border border-slate-100 shadow-[0_2px_10px_rgb(0,0,0,0.02)] flex flex-col relative overflow-hidden group">
+          <div className="absolute top-0 right-0 w-24 h-24 bg-blue-50 rounded-bl-full -mr-4 -mt-4 transition-transform group-hover:scale-110"></div>
+          <div className="w-12 h-12 rounded-xl bg-blue-100 text-blue-600 flex items-center justify-center mb-4 relative z-10">
+            <Users className="h-6 w-6" />
+          </div>
+          <p className="text-xs font-bold uppercase tracking-wider text-slate-400 mb-1 relative z-10">Total Siswa Aktif</p>
+          <h3 className="text-3xl font-black text-slate-800 relative z-10">{stats.totalStudents}</h3>
+        </div>
+
+        <div className="bg-white p-6 rounded-2xl border border-slate-100 shadow-[0_2px_10px_rgb(0,0,0,0.02)] flex flex-col relative overflow-hidden group">
+          <div className="absolute top-0 right-0 w-24 h-24 bg-amber-50 rounded-bl-full -mr-4 -mt-4 transition-transform group-hover:scale-110"></div>
+          <div className="w-12 h-12 rounded-xl bg-amber-100 text-amber-600 flex items-center justify-center mb-4 relative z-10">
+            <CreditCard className="h-6 w-6" />
+          </div>
+          <p className="text-xs font-bold uppercase tracking-wider text-slate-400 mb-1 relative z-10">Tagihan SPP Pending</p>
+          <h3 className="text-3xl font-black text-slate-800 relative z-10">{stats.pendingBills}</h3>
+        </div>
+
+        <div className="bg-white p-6 rounded-2xl border border-slate-100 shadow-[0_2px_10px_rgb(0,0,0,0.02)] flex flex-col relative overflow-hidden group">
+          <div className="absolute top-0 right-0 w-24 h-24 bg-emerald-50 rounded-bl-full -mr-4 -mt-4 transition-transform group-hover:scale-110"></div>
+          <div className="w-12 h-12 rounded-xl bg-emerald-100 text-emerald-600 flex items-center justify-center mb-4 relative z-10">
+            <Calendar className="h-6 w-6" />
+          </div>
+          <p className="text-xs font-bold uppercase tracking-wider text-slate-400 mb-1 relative z-10">Acara & Libur (Bulan Ini)</p>
+          <h3 className="text-3xl font-black text-slate-800 relative z-10">{stats.upcomingEvents}</h3>
+        </div>
+
+        <div className="bg-white p-6 rounded-2xl border border-slate-100 shadow-[0_2px_10px_rgb(0,0,0,0.02)] flex flex-col relative overflow-hidden group">
+          <div className="absolute top-0 right-0 w-24 h-24 bg-cyan-50 rounded-bl-full -mr-4 -mt-4 transition-transform group-hover:scale-110"></div>
+          <div className="w-12 h-12 rounded-xl bg-cyan-100 text-cyan-600 flex items-center justify-center mb-4 relative z-10">
+            <TrendingUp className="h-6 w-6" />
+          </div>
+          <p className="text-xs font-bold uppercase tracking-wider text-slate-400 mb-1 relative z-10">Collection Rate SPP</p>
+          <h3 className="text-3xl font-black text-slate-800 relative z-10">{stats.collectionRate}</h3>
+        </div>
+      </div>
+
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
         {/* Quick Links */}
-        <Card>
-          <h2 className="text-lg font-semibold text-[var(--text-primary)] mb-4">Operational Links</h2>
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-            <Link href="/tu/finance">
-              <div className="p-4 rounded-2xl bg-[var(--bg-secondary)] border border-[var(--border)] hover:border-[var(--accent)] transition-all group">
-                <CreditCard className="h-5 w-5 text-[var(--accent)] mb-2" />
-                <p className="text-sm font-bold text-[var(--text-primary)]">Generate SPP Bills</p>
-                <p className="text-[10px] text-[var(--text-tertiary)] mt-1">Batch create monthly invoices</p>
+        <div className="space-y-4">
+          <h2 className="text-lg font-bold text-slate-800 border-b border-slate-100 pb-2">Pintasan Operasional</h2>
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <Link href="/tu/finance" className="block">
+              <div className="p-5 rounded-2xl bg-white border border-slate-200 hover:border-blue-500 hover:shadow-lg hover:shadow-blue-500/10 transition-all group h-full">
+                <div className="w-10 h-10 rounded-full bg-blue-50 flex items-center justify-center mb-4 group-hover:bg-blue-500 group-hover:text-white transition-colors text-blue-600">
+                   <CreditCard className="h-5 w-5" />
+                </div>
+                <p className="text-sm font-bold text-slate-800">Tagihan SPP Massal</p>
+                <p className="text-[11px] text-slate-500 mt-1 leading-relaxed">Buat dan kelola tagihan SPP bulanan untuk seluruh siswa</p>
               </div>
             </Link>
-            <Link href="/tu/events">
-              <div className="p-4 rounded-2xl bg-[var(--bg-secondary)] border border-[var(--border)] hover:border-[var(--accent)] transition-all group">
-                <Calendar className="h-5 w-5 text-[var(--success)] mb-2" />
-                <p className="text-sm font-bold text-[var(--text-primary)]">Manage Calendar</p>
-                <p className="text-[10px] text-[var(--text-tertiary)] mt-1">Add holidays & activities</p>
+            <Link href="/tu/events" className="block">
+              <div className="p-5 rounded-2xl bg-white border border-slate-200 hover:border-cyan-500 hover:shadow-lg hover:shadow-cyan-500/10 transition-all group h-full">
+                <div className="w-10 h-10 rounded-full bg-cyan-50 flex items-center justify-center mb-4 group-hover:bg-cyan-500 group-hover:text-white transition-colors text-cyan-600">
+                   <Calendar className="h-5 w-5" />
+                </div>
+                <p className="text-sm font-bold text-slate-800">Kelola Kalender</p>
+                <p className="text-[11px] text-slate-500 mt-1 leading-relaxed">Atur hari libur, jadwal ujian, dan acara sekolah tahunan</p>
               </div>
             </Link>
           </div>
-        </Card>
+        </div>
 
         {/* Recent Activity */}
-        <Card>
-          <div className="flex items-center justify-between mb-4">
-            <h2 className="text-lg font-semibold text-[var(--text-primary)]">Recent Alerts</h2>
-            <Badge variant="info">Live Updates</Badge>
+        <div className="space-y-4">
+          <div className="flex items-center justify-between border-b border-slate-100 pb-2">
+            <h2 className="text-lg font-bold text-slate-800">Pemberitahuan Sistem</h2>
+            <Badge className="bg-emerald-100 text-emerald-700 border-none px-2 py-0.5 text-[10px]">Live</Badge>
           </div>
-          <div className="space-y-3">
-            {alerts.map((alert: any) => (
-              <div key={alert.id} className={`flex items-center gap-3 p-3 rounded-xl border ${
+          <div className="space-y-3 bg-slate-50 p-4 rounded-2xl border border-slate-100">
+            {alerts.length > 0 ? alerts.map((alert: any) => (
+              <div key={alert.id} className={`flex items-start gap-3 p-3.5 rounded-xl border bg-white ${
                 alert.type === "warning" 
-                  ? "bg-orange-50 dark:bg-orange-950/20 border-orange-200 dark:border-orange-900/30 text-orange-800 dark:text-orange-200"
-                  : "bg-indigo-50 dark:bg-indigo-950/20 border-indigo-200 dark:border-indigo-900/30 text-indigo-800 dark:text-indigo-200"
+                  ? "border-l-4 border-l-amber-500 border-y-slate-100 border-r-slate-100 shadow-sm"
+                  : "border-l-4 border-l-blue-500 border-y-slate-100 border-r-slate-100 shadow-sm"
               }`}>
-                <Bell className={`h-4 w-4 ${alert.type === "warning" ? "text-orange-500" : "text-indigo-500"}`} />
-                <p className="text-xs">{alert.message}</p>
+                <Bell className={`h-4 w-4 shrink-0 mt-0.5 ${alert.type === "warning" ? "text-amber-500" : "text-blue-500"}`} />
+                <p className="text-sm text-slate-600 leading-snug">{alert.message}</p>
               </div>
-            ))}
+            )) : (
+               <div className="text-center py-6 text-slate-400">
+                  <p className="text-sm">Tidak ada pemberitahuan baru.</p>
+               </div>
+            )}
           </div>
-        </Card>
+        </div>
       </div>
     </div>
   );
