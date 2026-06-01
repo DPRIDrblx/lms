@@ -41,6 +41,7 @@ const teacherNav = [
   { href: "/teacher/homeroom", label: "Homeroom Authority", icon: Award },
   { href: "/chat", label: "Communications", icon: MessageSquare },
   { href: "/teacher/courses", label: "Content Suite", icon: BookOpen },
+  { href: "/teacher/journal", label: "Jurnal Mengajar", icon: FileText },
   { href: "/teacher/quizzes", label: "CBT Builder", icon: Award },
   { href: "/teacher/grading/offline", label: "Excel Gradebook", icon: FileText },
   { href: "/attendance/qr/teacher", label: "QR Sessions", icon: QrCode },
