@@ -1,3 +1,6 @@
+-- Drop the role check constraint to allow new roles (tu, principal, parent)
+ALTER TABLE public.profiles DROP CONSTRAINT IF EXISTS profiles_role_check;
+
 -- Add status column to profiles
 ALTER TABLE public.profiles ADD COLUMN IF NOT EXISTS status TEXT DEFAULT 'approved';
 
