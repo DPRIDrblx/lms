@@ -23,9 +23,9 @@ import { useEffect, useState, use, useRef } from "react";
 import Link from "next/link";
 import toast from "react-hot-toast";
 import { useRouter } from "next/navigation";
-import ReactPlayer from 'react-player';
+import dynamic from "next/dynamic";
 
-const Player: any = ReactPlayer;
+const Player = dynamic(() => import("react-player"), { ssr: false }) as any;
 
 export default function LessonViewerPage({ params }: { params: Promise<{ id: string; lessonId: string }> }) {
   const { id, lessonId } = use(params);
@@ -215,6 +215,19 @@ export default function LessonViewerPage({ params }: { params: Promise<{ id: str
 
   const formatVideoUrl = (url: string) => {
     if (!url) return "";
+    
+    // Normalize youtu.be to youtube.com/watch?v=
+    if (url.includes("youtu.be/")) {
+      const id = url.split("youtu.be/")[1]?.split("?")[0];
+      if (id) return `https://www.youtube.com/watch?v=${id}`;
+    }
+    
+    // Normalize youtube.com/shorts/ to youtube.com/watch?v=
+    if (url.includes("youtube.com/shorts/")) {
+      const id = url.split("youtube.com/shorts/")[1]?.split("?")[0];
+      if (id) return `https://www.youtube.com/watch?v=${id}`;
+    }
+
     if (url.includes("http://") || url.includes("https://")) return url;
     return `https://www.youtube.com/watch?v=${url}`;
   };
