@@ -231,7 +231,7 @@ export default function AdvancedChatPortal() {
                         </div>
                      </div>
                   </div>
-                  <Button variant="outline" size="sm" className="bg-white/50 dark:bg-slate-800/50 border-slate-200 dark:border-slate-700 shadow-sm rounded-xl">
+                  <Button variant="secondary" size="sm" className="bg-white/50 dark:bg-slate-800/50 border-slate-200 dark:border-slate-700 shadow-sm rounded-xl">
                      <UserPlus className="h-4 w-4 mr-2" /> Add Member
                   </Button>
                </div>
