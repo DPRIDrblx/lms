@@ -114,16 +114,10 @@ export default function BayarNiaPage() {
         }).eq("id", authData.user.id);
 
         // 2. Add Subscription
-        const startDate = new Date();
-        const endDate = new Date();
-        endDate.setFullYear(startDate.getFullYear() + 1); // 1 year duration
-
         const { error: subError } = await supabase.from("nia_subscriptions").insert({
           user_id: authData.user.id,
           package_id: selectedPackage.id,
-          status: "active",
-          start_date: startDate.toISOString(),
-          end_date: endDate.toISOString()
+          status: "active"
         });
 
         if (subError) throw subError;
