@@ -3,7 +3,7 @@
 import React, { useEffect, useState } from "react";
 import { useAuth } from "@/lib/auth-context";
 import { motion } from "framer-motion";
-import { Sparkles, PlayCircle, Trophy, Flame } from "lucide-react";
+import { Sparkles, PlayCircle, Trophy, Flame, BookOpen } from "lucide-react";
 
 export default function SobatNiaDashboard() {
   const { profile } = useAuth();
