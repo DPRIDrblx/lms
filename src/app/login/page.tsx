@@ -165,8 +165,8 @@ export default function LoginPage() {
                 </div>
                 <div>
                   <label className="block text-sm font-medium text-[var(--text-primary)] mb-1.5">Role</label>
-                  <div className="grid grid-cols-3 md:grid-cols-5 gap-2">
-                    {(["student", "teacher", "parent", "tu", "principal"] as const).map((r) => (
+                  <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
+                    {(["student", "teacher", "parent", "tu", "principal", "sobat_nia", "pengurus_nia", "operator_les"] as const).map((r) => (
                       <button
                         key={r}
                         type="button"
