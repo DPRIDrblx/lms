@@ -4,7 +4,6 @@ import React, { useEffect, useState } from "react";
 import { useAuth } from "@/lib/auth-context";
 import { motion } from "framer-motion";
 import { Sparkles, PlayCircle, Trophy, Flame } from "lucide-react";
-import { supabase } from "@/lib/supabase";
 
 export default function SobatNiaDashboard() {
   const { profile } = useAuth();
