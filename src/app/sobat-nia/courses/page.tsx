@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
-import { supabase } from "@/lib/supabase";
+import { createClient } from "@/lib/supabase";
 import { useAuth } from "@/lib/auth-context";
 import { BookOpen, Search, PlayCircle } from "lucide-react";
 import { motion } from "framer-motion";
@@ -9,6 +9,7 @@ import Link from "next/link";
 
 export default function SobatNiaCoursesPage() {
   const { profile } = useAuth();
+  const supabase = createClient();
   const [courses, setCourses] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");

@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState, useEffect, useRef, use } from "react";
-import { supabase } from "@/lib/supabase";
+import { createClient } from "@/lib/supabase";
 import { useAuth } from "@/lib/auth-context";
 import { useParams, useRouter } from "next/navigation";
 import { ArrowLeft, CheckCircle2, Play, FileText, Trophy, Loader2, Gamepad2, Presentation, ExternalLink, HelpCircle } from "lucide-react";
@@ -16,6 +16,7 @@ export default function SobatNiaLessonViewerPage({ params }: { params: Promise<{
   const { id, lessonId } = use(params);
   const { profile, refreshProfile } = useAuth();
   const router = useRouter();
+  const supabase = createClient();
 
   const [lesson, setLesson] = useState<any>(null);
   const [course, setCourse] = useState<any>(null);

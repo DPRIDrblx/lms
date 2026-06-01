@@ -1,11 +1,12 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
-import { supabase } from "@/lib/supabase";
-import { Plus, Edit, Trash2, Tag, BookOpen } from "lucide-react";
+import { createClient } from "@/lib/supabase";
+import { Plus, Edit, Settings2, Trash2, Package } from "lucide-react";
 import { motion } from "framer-motion";
 
 export default function PackagesPage() {
+  const supabase = createClient();
   const [packages, setPackages] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [showModal, setShowModal] = useState(false);

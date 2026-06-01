@@ -1,11 +1,12 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
-import { supabase } from "@/lib/supabase";
-import { Plus, Trash2, Tag, Percent, Receipt } from "lucide-react";
+import { createClient } from "@/lib/supabase";
+import { Plus, Trash2, Tag, Percent, DollarSign } from "lucide-react";
 import { motion } from "framer-motion";
 
 export default function PromosPage() {
+  const supabase = createClient();
   const [promos, setPromos] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [showModal, setShowModal] = useState(false);

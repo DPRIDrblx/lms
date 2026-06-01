@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState } from "react";
-import { supabase } from "@/lib/supabase";
+import { createClient } from "@/lib/supabase";
 import { useAuth } from "@/lib/auth-context";
 import { ArrowLeft, Save, Image as ImageIcon, BookOpen } from "lucide-react";
 import { motion } from "framer-motion";
@@ -11,6 +11,7 @@ import { useRouter } from "next/navigation";
 export default function CreatePengurusCoursePage() {
   const { profile } = useAuth();
   const router = useRouter();
+  const supabase = createClient();
   const [loading, setLoading] = useState(false);
   const [formData, setFormData] = useState({
     title: "",

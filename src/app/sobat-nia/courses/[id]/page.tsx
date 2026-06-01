@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
-import { supabase } from "@/lib/supabase";
+import { createClient } from "@/lib/supabase";
 import { useAuth } from "@/lib/auth-context";
 import { useParams } from "next/navigation";
 import { ArrowLeft, CheckCircle2, Circle, BookOpen, Play, FileText, HelpCircle, Trophy, ChevronDown, ChevronUp, Presentation, Layout } from "lucide-react";
@@ -31,6 +31,7 @@ const BUTTON_LABELS: Record<string, string> = {
 export default function SobatNiaCourseDetailPage() {
   const { id } = useParams();
   const { profile } = useAuth();
+  const supabase = createClient();
   
   const [course, setCourse] = useState<any>(null);
   const [completedIds, setCompletedIds] = useState<Set<string>>(new Set());

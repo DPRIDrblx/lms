@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState, useEffect, useCallback } from "react";
-import { supabase } from "@/lib/supabase";
+import { createClient } from "@/lib/supabase";
 import { useParams, useRouter } from "next/navigation";
 import { ArrowLeft, Plus, Edit2, Trash2, Video, FileText, Layout, Presentation, GripVertical, Settings } from "lucide-react";
 import { motion } from "framer-motion";
@@ -10,6 +10,7 @@ import Link from "next/link";
 export default function PengurusCourseBuilderPage() {
   const { id } = useParams();
   const router = useRouter();
+  const supabase = createClient();
 
   const [course, setCourse] = useState<any>(null);
   const [chapters, setChapters] = useState<any[]>([]);

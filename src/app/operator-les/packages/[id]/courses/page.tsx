@@ -1,7 +1,7 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
-import { supabase } from "@/lib/supabase";
+import React, { useState, useEffect, useCallback } from "react";
+import { createClient } from "@/lib/supabase";
 import { Plus, Trash2, ArrowLeft, Search, BookOpen } from "lucide-react";
 import { useParams, useRouter } from "next/navigation";
 import { motion } from "framer-motion";
@@ -9,6 +9,7 @@ import { motion } from "framer-motion";
 export default function PackageCoursesPage() {
   const { id } = useParams();
   const router = useRouter();
+  const supabase = createClient();
   
   const [pkg, setPkg] = useState<any>(null);
   const [packageCourses, setPackageCourses] = useState<any[]>([]);

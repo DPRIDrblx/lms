@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
-import { supabase } from "@/lib/supabase";
+import { createClient } from "@/lib/supabase";
 import { useAuth } from "@/lib/auth-context";
 import { Plus, Edit, BookOpen, Trash2, Eye, EyeOff } from "lucide-react";
 import { motion } from "framer-motion";
@@ -19,6 +19,7 @@ interface Course {
 
 export default function PengurusCoursesPage() {
   const { profile } = useAuth();
+  const supabase = createClient();
   const [courses, setCourses] = useState<Course[]>([]);
   const [loading, setLoading] = useState(true);
 
