@@ -7,7 +7,7 @@ import type { User, Session } from "@supabase/supabase-js";
 export interface Profile {
   id: string;
   full_name: string | null;
-  role: "student" | "teacher" | "parent" | "tu" | "principal";
+  role: "student" | "teacher" | "parent" | "tu" | "principal" | "sobat_nia" | "pengurus_nia" | "operator_les";
   xp: number;
   rank: string;
   avatar_url: string | null;
