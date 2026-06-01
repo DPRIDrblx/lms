@@ -35,10 +35,11 @@ interface Lesson {
   id: string;
   chapter_id: string | null;
   title: string;
-  content_type: "text" | "video" | "pdf" | "canva" | "game";
+  content_type: "text" | "video" | "pdf" | "canva" | "game" | "interactive_video";
   body_text?: string;
   video_url?: string;
   pdf_url?: string;
+  interactive_quiz_data?: any[];
   order_index: number;
   xp_reward: number;
 }
@@ -145,6 +146,7 @@ export default function EditCoursePage() {
       body_text: editingLesson.body_text,
       video_url: editingLesson.video_url,
       pdf_url: editingLesson.pdf_url,
+      interactive_quiz_data: editingLesson.interactive_quiz_data || [],
       xp_reward: editingLesson.xp_reward || 10,
       order_index: editingLesson.id ? editingLesson.order_index : lessons.length,
     };
@@ -402,14 +404,14 @@ export default function EditCoursePage() {
           </div>
           <div>
             <label className="block text-sm font-medium mb-1.5">Type</label>
-            <div className="grid grid-cols-5 gap-2">
-              {(["text", "video", "pdf", "canva", "game"] as const).map(t => (
+            <div className="grid grid-cols-6 gap-2">
+              {(["text", "video", "pdf", "canva", "game", "interactive_video"] as const).map(t => (
                 <button 
                   key={t}
                   onClick={() => setEditingLesson({ ...editingLesson, content_type: t })}
                   className={`p-3 rounded-xl border-2 transition-all flex flex-col items-center gap-1 ${editingLesson?.content_type === t ? "border-[var(--accent)] bg-[var(--accent-light)] text-[var(--accent)]" : "border-[var(--border)]"}`}
                 >
-                  <span className="text-[10px] font-bold uppercase">{t === "canva" ? "presentasi" : t === "game" ? "AI Game" : t}</span>
+                  <span className="text-[10px] font-bold uppercase text-center">{t === "canva" ? "presentasi" : t === "game" ? "AI Game" : t === "interactive_video" ? "Int. Video" : t}</span>
                 </button>
               ))}
             </div>
@@ -438,6 +440,41 @@ export default function EditCoursePage() {
                 className="w-full h-11 px-4 rounded-xl bg-[var(--bg-secondary)] border border-[var(--border)] outline-none"
                 placeholder="e.g. dQw4w9WgXcQ"
               />
+            </div>
+          )}
+
+          {editingLesson?.content_type === "interactive_video" && (
+            <div className="space-y-4">
+              <div>
+                <label className="block text-sm font-medium mb-1.5">YouTube URL / MP4 URL</label>
+                <input 
+                  type="text" 
+                  value={editingLesson?.video_url || ""} 
+                  onChange={e => setEditingLesson({ ...editingLesson, video_url: e.target.value })}
+                  className="w-full h-11 px-4 rounded-xl bg-[var(--bg-secondary)] border border-[var(--border)] outline-none"
+                  placeholder="https://youtube.com/..."
+                />
+              </div>
+              <div className="p-4 bg-[var(--bg-secondary)] rounded-xl border border-[var(--border)] space-y-3">
+                <div className="flex items-center justify-between">
+                  <h4 className="text-sm font-bold text-[var(--text-primary)]">Daftar Pertanyaan (Format JSON)</h4>
+                </div>
+                <p className="text-xs text-[var(--text-secondary)]">Untuk prototipe awal, silakan gunakan JSON murni. Contoh: <br/><code className="text-[10px] bg-white p-1 rounded">[{'{"timestamp":10, "question":"Apa?", "options":["A","B"], "correct_index":0}'}]</code></p>
+                <textarea 
+                  rows={4}
+                  value={editingLesson?.interactive_quiz_data ? JSON.stringify(editingLesson.interactive_quiz_data) : "[]"} 
+                  onChange={e => {
+                    try {
+                      const parsed = JSON.parse(e.target.value);
+                      setEditingLesson({ ...editingLesson, interactive_quiz_data: parsed });
+                    } catch(err) {
+                      // ignore parse errors while typing
+                    }
+                  }}
+                  className="w-full p-4 rounded-xl bg-white border border-[var(--border)] outline-none resize-y font-mono text-xs"
+                  placeholder="[]"
+                />
+              </div>
             </div>
           )}
 

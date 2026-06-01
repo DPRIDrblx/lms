@@ -4,7 +4,7 @@ import { useAuth } from "@/lib/auth-context";
 import { createClient } from "@/lib/supabase";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { motion } from "framer-motion";
+import { motion, AnimatePresence } from "framer-motion";
 import { 
   ArrowLeft, 
   CheckCircle2, 
@@ -15,11 +15,15 @@ import {
   Loader2,
   ExternalLink,
   Presentation,
-  Gamepad2
+  Gamepad2,
+  Film
 } from "lucide-react";
-import { useEffect, useState, use } from "react";
+import { useEffect, useState, use, useRef } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
+import ReactPlayer from 'react-player';
+
+const Player: any = ReactPlayer;
 
 export default function LessonViewerPage({ params }: { params: Promise<{ id: string; lessonId: string }> }) {
   const { id, lessonId } = use(params);
@@ -32,6 +36,15 @@ export default function LessonViewerPage({ params }: { params: Promise<{ id: str
   const [isCompleted, setIsCompleted] = useState(false);
   const [completing, setCompleting] = useState(false);
   const [loading, setLoading] = useState(true);
+
+  // Interactive Video States
+  const [playing, setPlaying] = useState(false);
+  const [playedSeconds, setPlayedSeconds] = useState(0);
+  const [activeQuestion, setActiveQuestion] = useState<any>(null);
+  const [answeredQuestions, setAnsweredQuestions] = useState<Set<number>>(new Set());
+  const [selectedAnswer, setSelectedAnswer] = useState<number | null>(null);
+  const [feedback, setFeedback] = useState<"correct" | "wrong" | null>(null);
+  const playerRef = useRef<any>(null);
 
   useEffect(() => {
     const fetchData = async () => {
@@ -98,29 +111,54 @@ export default function LessonViewerPage({ params }: { params: Promise<{ id: str
     }, 1000);
   };
 
+  const handleVideoProgress = (state: any) => {
+    setPlayedSeconds(state.playedSeconds);
+    if (!lesson?.interactive_quiz_data) return;
+
+    // Check if there is a question at the current timestamp
+    for (let i = 0; i < lesson.interactive_quiz_data.length; i++) {
+      const q = lesson.interactive_quiz_data[i];
+      // Trigger if within 1 second window
+      if (!answeredQuestions.has(i) && Math.abs(state.playedSeconds - q.timestamp) < 1.0) {
+        setPlaying(false);
+        setActiveQuestion({ ...q, index: i });
+        break;
+      }
+    }
+  };
+
+  const handleAnswerSubmit = () => {
+    if (!activeQuestion || selectedAnswer === null) return;
+    if (selectedAnswer === activeQuestion.correct_index) {
+      setFeedback("correct");
+      setTimeout(() => {
+        setAnsweredQuestions(prev => new Set(prev).add(activeQuestion.index));
+        setActiveQuestion(null);
+        setSelectedAnswer(null);
+        setFeedback(null);
+        setPlaying(true);
+      }, 1500);
+    } else {
+      setFeedback("wrong");
+      setTimeout(() => setFeedback(null), 1500);
+    }
+  };
+
   if (loading) return <div className="h-[80vh] flex items-center justify-center"><Loader2 className="h-8 w-8 animate-spin text-[var(--accent)]" /></div>;
   if (!lesson) return <div className="py-20 text-center text-[var(--text-tertiary)] font-bold">Materi tidak ditemukan.</div>;
 
-  const TypeIcon = lesson.content_type === "video" ? Play : lesson.content_type === "pdf" ? FileText : lesson.content_type === "canva" ? Presentation : lesson.content_type === "game" ? Gamepad2 : BookOpen;
+  const TypeIcon = lesson.content_type === "video" ? Play : lesson.content_type === "pdf" ? FileText : lesson.content_type === "canva" ? Presentation : lesson.content_type === "game" ? Gamepad2 : lesson.content_type === "interactive_video" ? Film : BookOpen;
 
   const getCanvaEmbedUrl = (url: string) => {
     if (!url) return "";
-    
-    // 1. If it's a full HTML embed code from Canva, extract the src
     const srcMatch = url.match(/src="([^"]+)"/);
     if (srcMatch && srcMatch[1]) {
       return srcMatch[1].replace(/&#x2F;/g, '/');
     }
-    
-    // 2. If it's a canva.link short URL, don't append /view?embed
     if (url.includes('canva.link')) return url;
-    
-    // 3. Auto-format standard canva.com URLs
     if (url.includes('view?embed')) return url;
     if (url.includes('/edit')) return url.split('/edit')[0] + '/view?embed';
     if (url.includes('/view')) return url.split('/view')[0] + '/view?embed';
-    
-    // 4. Default fallback
     const cleanUrl = url.endsWith('/') ? url.slice(0, -1) : url;
     return cleanUrl + (cleanUrl.includes('canva.com/design') ? '/view?embed' : '');
   };
@@ -132,7 +170,7 @@ export default function LessonViewerPage({ params }: { params: Promise<{ id: str
           <ArrowLeft className="h-4 w-4" /> Kembali ke Daftar Bab
         </Link>
         <div className="flex items-center gap-2 text-[var(--text-tertiary)] bg-[var(--bg-secondary)] px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider">
-          <TypeIcon className="h-3.5 w-3.5" /> {lesson.content_type === 'canva' ? 'presentasi' : lesson.content_type === 'game' ? 'AI Game' : lesson.content_type}
+          <TypeIcon className="h-3.5 w-3.5" /> {lesson.content_type === 'canva' ? 'presentasi' : lesson.content_type === 'game' ? 'AI Game' : lesson.content_type === "interactive_video" ? 'Int. Video' : lesson.content_type}
         </div>
       </header>
 
@@ -147,6 +185,92 @@ export default function LessonViewerPage({ params }: { params: Promise<{ id: str
         {/* CONTENT RENDERER */}
         <div className="bg-white border border-[var(--border)] rounded-2xl overflow-hidden shadow-sm">
           
+          {lesson.content_type === "interactive_video" && (
+            <div className="aspect-video w-full bg-black relative">
+              {lesson.video_url ? (
+                <>
+                  <Player 
+                    ref={playerRef}
+                    url={lesson.video_url}
+                    playing={playing}
+                    onPlay={() => setPlaying(true)}
+                    onPause={() => setPlaying(false)}
+                    onProgress={handleVideoProgress}
+                    controls={!activeQuestion}
+                    width="100%"
+                    height="100%"
+                    progressInterval={500}
+                  />
+
+                  <AnimatePresence>
+                    {activeQuestion && (
+                      <motion.div 
+                        initial={{ opacity: 0 }}
+                        animate={{ opacity: 1 }}
+                        exit={{ opacity: 0 }}
+                        className="absolute inset-0 bg-black/80 backdrop-blur-sm flex items-center justify-center p-6 z-10"
+                      >
+                        <motion.div 
+                          initial={{ scale: 0.9, y: 20 }}
+                          animate={{ scale: 1, y: 0 }}
+                          className="bg-white rounded-2xl p-6 md:p-8 max-w-lg w-full text-center"
+                        >
+                          <div className="mb-6">
+                            <h3 className="text-xl font-bold text-[var(--text-primary)]">{activeQuestion.question}</h3>
+                          </div>
+                          
+                          <div className="space-y-3">
+                            {activeQuestion.options.map((opt: string, idx: number) => (
+                              <button
+                                key={idx}
+                                onClick={() => setSelectedAnswer(idx)}
+                                className={`w-full p-4 rounded-xl border-2 text-left transition-all ${
+                                  selectedAnswer === idx 
+                                    ? "border-[var(--accent)] bg-[var(--accent-light)] text-[var(--accent)]" 
+                                    : "border-[var(--border)] hover:border-[var(--border-hover)] text-[var(--text-primary)]"
+                                }`}
+                              >
+                                {opt}
+                              </button>
+                            ))}
+                          </div>
+
+                          <div className="mt-6 flex flex-col items-center gap-3">
+                            <Button 
+                              onClick={handleAnswerSubmit} 
+                              disabled={selectedAnswer === null}
+                              className="w-full h-12"
+                            >
+                              Jawab
+                            </Button>
+
+                            <AnimatePresence>
+                              {feedback === "correct" && (
+                                <motion.p initial={{ opacity: 0, y: 5 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }} className="text-[var(--success)] font-bold flex items-center gap-2">
+                                  <CheckCircle2 className="h-5 w-5" /> Jawaban Benar! Melanjutkan video...
+                                </motion.p>
+                              )}
+                              {feedback === "wrong" && (
+                                <motion.p initial={{ opacity: 0, y: 5 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }} className="text-[var(--error)] font-bold">
+                                  Jawaban Salah. Coba lagi!
+                                </motion.p>
+                              )}
+                            </AnimatePresence>
+                          </div>
+                        </motion.div>
+                      </motion.div>
+                    )}
+                  </AnimatePresence>
+                </>
+              ) : (
+                <div className="w-full h-full flex flex-col items-center justify-center text-[var(--text-tertiary)]">
+                  <Film className="h-12 w-12 opacity-20 mb-2" />
+                  <p className="font-bold">Video URL tidak tersedia</p>
+                </div>
+              )}
+            </div>
+          )}
+
           {lesson.content_type === "video" && (
             <div className="aspect-video w-full bg-black">
               {lesson.video_url ? (
@@ -201,7 +325,7 @@ export default function LessonViewerPage({ params }: { params: Promise<{ id: str
                   ></iframe>
                 )
               ) : (
-                <div className="w-full h-full flex flex-col items-center justify-center text-[var(--text-tertiary)]">
+                <div className="absolute inset-0 flex flex-col items-center justify-center text-[var(--text-tertiary)]">
                   <Presentation className="h-12 w-12 opacity-20 mb-2" />
                   <p className="font-bold">Presentasi tidak tersedia</p>
                 </div>
@@ -209,71 +333,55 @@ export default function LessonViewerPage({ params }: { params: Promise<{ id: str
             </div>
           )}
 
-          {lesson.content_type === "pdf" && (
-            <div className="p-12 flex flex-col items-center justify-center text-center bg-[var(--bg-secondary)]/50">
-               <FileText className="h-20 w-20 text-[var(--text-tertiary)] opacity-30 mb-6" />
-               <h3 className="text-xl font-bold text-[var(--text-primary)] mb-2">Dokumen PDF Tersedia</h3>
-               <p className="text-[var(--text-secondary)] mb-8 max-w-md">
-                 Dokumen ini perlu dibuka di tab baru. Silakan klik tombol di bawah untuk membaca materinya.
-               </p>
-               <a href={lesson.pdf_url} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-2 px-6 py-3 bg-[var(--accent)] text-white font-bold rounded-xl hover:bg-[var(--accent-hover)] transition-all shadow-lg shadow-[var(--accent)]/30">
-                 Buka Dokumen PDF <ExternalLink className="h-5 w-5" />
-               </a>
-            </div>
-          )}
-
           {lesson.content_type === "game" && (
-            <div className="w-full h-[600px] bg-slate-50 border-t border-[var(--border)] overflow-hidden">
-               {lesson.body_text ? (
-                 <iframe 
-                   className="w-full h-full border-0"
-                   srcDoc={lesson.body_text}
-                   sandbox="allow-scripts allow-same-origin"
-                   title="Interactive AI Game"
-                 />
-               ) : (
-                 <div className="w-full h-full flex flex-col items-center justify-center text-[var(--text-tertiary)]">
-                   <Gamepad2 className="h-12 w-12 opacity-20 mb-2" />
-                   <p className="font-bold">Game belum dibuat.</p>
-                 </div>
-               )}
+            <div className="p-8">
+              <div className="bg-[var(--bg-secondary)] rounded-2xl p-8 text-center border border-[var(--border)] max-w-2xl mx-auto">
+                <Gamepad2 className="h-16 w-16 text-[var(--accent)] mx-auto mb-4" />
+                <h3 className="text-2xl font-bold text-[var(--text-primary)] mb-2">AI Gamification Quest</h3>
+                <p className="text-[var(--text-secondary)] mb-8 max-w-md mx-auto">
+                  Selesaikan misi interaktif ini menggunakan AI untuk mendapatkan <span className="font-bold text-[var(--warning)]">{lesson.xp_reward} XP</span>.
+                </p>
+                
+                {isCompleted ? (
+                  <div className="bg-[var(--success-light)] text-[var(--success)] p-4 rounded-xl border border-[var(--success)]/20 font-bold flex flex-col items-center gap-2">
+                    <CheckCircle2 className="h-8 w-8" />
+                    Misi Selesai! Kamu hebat!
+                  </div>
+                ) : (
+                  <a href={`/courses/${id}/lessons/${lesson.id}/game`} className="inline-flex items-center justify-center gap-2 px-8 py-4 bg-[var(--accent)] text-white font-bold rounded-xl hover:bg-[var(--accent-hover)] transition-all shadow-lg hover:shadow-xl hover:-translate-y-1 group">
+                    <Play className="h-5 w-5 fill-white group-hover:scale-110 transition-transform" />
+                    Mulai Misi Sekarang
+                  </a>
+                )}
+              </div>
             </div>
           )}
+        </div>
 
+        {/* ACTIONS */}
+        <div className="flex items-center justify-between pt-8 border-t border-[var(--border)]">
+          <Link href={`/courses/${id}`}>
+            <Button variant="secondary" className="h-12 px-6">
+              Kembali ke Daftar
+            </Button>
+          </Link>
+
+          {!isCompleted && lesson.content_type !== 'game' ? (
+            <Button 
+              className="h-12 px-8 font-bold shadow-lg" 
+              onClick={handleComplete}
+              loading={completing}
+            >
+              <CheckCircle2 className="h-5 w-5 mr-2" />
+              Tandai Selesai (+{lesson.xp_reward} XP)
+            </Button>
+          ) : (
+            <div className="flex items-center gap-2 px-6 py-3 bg-[var(--success-light)] text-[var(--success)] rounded-xl font-bold border border-[var(--success)]/20">
+              <CheckCircle2 className="h-5 w-5" /> Selesai
+            </div>
+          )}
         </div>
       </div>
-
-      {/* FLOATING ACTION BAR */}
-      <motion.div 
-        initial={{ y: 100 }} 
-        animate={{ y: 0 }} 
-        className="fixed bottom-0 left-0 right-0 p-4 bg-white/80 backdrop-blur-xl border-t border-[var(--border)] shadow-[0_-10px_40px_rgba(0,0,0,0.05)] z-50 flex justify-center"
-      >
-        <div className="max-w-4xl w-full flex items-center justify-between gap-4">
-           <div>
-             {isCompleted ? (
-               <div className="flex items-center gap-2 text-[var(--success)] font-black">
-                 <CheckCircle2 className="h-6 w-6" /> Selesai Dipelajari!
-               </div>
-             ) : (
-               <div className="text-sm font-bold text-[var(--text-secondary)]">
-                 Pelajari materi di atas sampai habis, lalu tandai selesai.
-               </div>
-             )}
-           </div>
-           
-           <Button 
-             size="lg" 
-             className={`px-8 font-black ${isCompleted ? 'bg-[var(--success)] hover:bg-[var(--success)] text-white' : ''}`}
-             disabled={isCompleted || completing}
-             loading={completing}
-             onClick={handleComplete}
-             icon={isCompleted ? <CheckCircle2 className="h-5 w-5" /> : <Trophy className="h-5 w-5" />}
-           >
-             {isCompleted ? "Sudah Selesai" : `Tandai Selesai & Dapatkan ${lesson.xp_reward} XP`}
-           </Button>
-        </div>
-      </motion.div>
     </div>
   );
 }
