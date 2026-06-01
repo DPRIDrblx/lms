@@ -1,67 +1,79 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Search, BookOpen, Target, Sparkles, CheckCircle2, ChevronRight, GraduationCap, Calculator, Globe, X, Loader2 } from "lucide-react";
 import { XenditPaymentModal } from "@/components/finance/XenditPaymentModal";
 import { createClient } from "@/lib/supabase";
 import toast from "react-hot-toast";
 
-// Mock Data for Packages
-const PACKAGES = [
-  {
-    id: "pkg-1",
-    name: "Paket Intensif UTBK",
-    level: "SMA",
-    grade: "12",
-    major: "Sains",
-    price: 450000,
-    original_price: 900000,
-    features: ["Akses 100+ Video Interaktif", "Tryout UTBK Mingguan", "Tanya Tutor 24/7", "Rangkuman PDF Lengkap"],
-    popular: true,
-  },
-  {
-    id: "pkg-2",
-    name: "Paket Juara Kelas",
-    level: "SMP",
-    grade: "9",
-    major: "Umum",
-    price: 250000,
-    original_price: 500000,
-    features: ["Akses Semua Materi SMP", "Latihan Soal Harian", "Grup Belajar Eksklusif"],
-    popular: false,
-  },
-  {
-    id: "pkg-3",
-    name: "Master Bahasa Inggris",
-    level: "SMA",
-    grade: "Semua",
-    major: "Bahasa",
-    price: 300000,
-    original_price: 600000,
-    features: ["Materi TOEFL/IELTS Prep", "Native Speaker Session", "Sertifikat Penyelesaian"],
-    popular: false,
-  }
-];
-
 export default function BayarNiaPage() {
+  const [packages, setPackages] = useState<any[]>([]);
+  const [loadingPackages, setLoadingPackages] = useState(true);
   const [selectedLevel, setSelectedLevel] = useState("Semua");
   const [selectedPackage, setSelectedPackage] = useState<any>(null);
   const [showCheckout, setShowCheckout] = useState(false);
   const supabase = createClient();
   const [isProcessingSignup, setIsProcessingSignup] = useState(false);
 
-  // Mock Checkout State
+  // Form State
   const [form, setForm] = useState({ name: "", email: "", password: "", voucher: "" });
   const [checkoutStep, setCheckoutStep] = useState(1); // 1: Form, 2: Xendit Mock, 3: Success
+  const [appliedPromo, setAppliedPromo] = useState<any>(null);
 
-  const filteredPackages = PACKAGES.filter(p => selectedLevel === "Semua" || p.level === selectedLevel);
+  useEffect(() => {
+    const fetchPackages = async () => {
+      const { data } = await supabase.from("nia_packages").select("*").eq("is_active", true).order("created_at", { ascending: false });
+      if (data) {
+        // Find most expensive to mark as popular
+        if (data.length > 0) {
+          const maxPrice = Math.max(...data.map((d: any) => d.price));
+          data.forEach((d: any) => {
+            if (d.price === maxPrice) d.popular = true;
+          });
+        }
+        setPackages(data);
+      }
+      setLoadingPackages(false);
+    };
+    fetchPackages();
+  }, []);
+
+  const filteredPackages = packages.filter(p => selectedLevel === "Semua" || p.level === selectedLevel);
+
+  // Compute Final Price
+  const getFinalPrice = () => {
+    if (!selectedPackage) return 0;
+    let price = selectedPackage.price;
+    if (appliedPromo) {
+      if (appliedPromo.discount_type === 'percent') {
+        price = price - (price * (appliedPromo.discount_value / 100));
+      } else {
+        price = price - appliedPromo.discount_value;
+      }
+    }
+    return Math.max(0, price);
+  };
+  const finalPrice = getFinalPrice();
+
+  const handleApplyVoucher = async () => {
+    if (!form.voucher) return;
+    const { data } = await supabase.from("nia_promo_codes").select("*").eq("code", form.voucher.toUpperCase()).single();
+    if (data) {
+      setAppliedPromo(data);
+      toast.success("Voucher berhasil digunakan!");
+    } else {
+      setAppliedPromo(null);
+      toast.error("Kode voucher tidak valid!");
+    }
+  };
 
   const handleCheckout = (pkg: any) => {
     setSelectedPackage(pkg);
     setShowCheckout(true);
     setCheckoutStep(1);
     setForm({ name: "", email: "", password: "", voucher: "" });
+    setAppliedPromo(null);
   };
 
   const processPayment = () => {
@@ -214,59 +226,64 @@ export default function BayarNiaPage() {
             ))}
           </div>
 
-          {/* Grid Packages */}
-          <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
-            {filteredPackages.map((pkg, i) => (
-              <motion.div 
-                initial={{ opacity: 0, y: 20 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                viewport={{ once: true }}
-                transition={{ delay: i * 0.1 }}
-                key={pkg.id} 
-                className={`relative bg-white rounded-3xl p-8 border-2 transition-all hover:shadow-2xl hover:-translate-y-2 ${
-                  pkg.popular ? "border-orange-500 shadow-xl shadow-orange-500/10" : "border-slate-100 shadow-lg"
-                }`}
-              >
-                {pkg.popular && (
-                  <div className="absolute -top-4 left-1/2 -translate-x-1/2 px-4 py-1 bg-gradient-to-r from-amber-500 to-orange-600 text-white text-xs font-black rounded-full uppercase tracking-wider">
-                    Paling Laris
-                  </div>
-                )}
-                <div className="mb-8">
-                  <div className="flex items-center gap-2 mb-4">
-                    <span className="px-3 py-1 bg-slate-100 text-slate-700 text-xs font-bold rounded-lg">{pkg.level}</span>
-                    <span className="px-3 py-1 bg-slate-100 text-slate-700 text-xs font-bold rounded-lg">Kelas {pkg.grade}</span>
-                    <span className="px-3 py-1 bg-blue-100 text-blue-700 text-xs font-bold rounded-lg">{pkg.major}</span>
-                  </div>
-                  <h3 className="text-2xl font-black text-slate-900 mb-2">{pkg.name}</h3>
-                  <div className="flex items-baseline gap-2">
-                    <span className="text-4xl font-black text-slate-900">Rp{(pkg.price / 1000).toLocaleString()}k</span>
-                    <span className="text-lg text-slate-400 line-through">Rp{(pkg.original_price / 1000).toLocaleString()}k</span>
-                  </div>
-                </div>
-
-                <div className="space-y-4 mb-8">
-                  {pkg.features.map((feat, idx) => (
-                    <div key={idx} className="flex items-start gap-3">
-                      <CheckCircle2 className="w-5 h-5 text-orange-500 shrink-0" />
-                      <span className="text-slate-700 font-medium">{feat}</span>
-                    </div>
-                  ))}
-                </div>
-
-                <button 
-                  onClick={() => handleCheckout(pkg)}
-                  className={`w-full py-4 rounded-xl font-bold text-lg transition-all ${
-                    pkg.popular 
-                      ? "bg-gradient-to-r from-amber-500 to-orange-600 text-white shadow-lg shadow-orange-500/30 hover:shadow-xl hover:shadow-orange-500/40" 
-                      : "bg-slate-100 text-slate-900 hover:bg-slate-200"
+          {loadingPackages ? (
+            <div className="flex justify-center my-20">
+              <Loader2 className="w-12 h-12 text-orange-500 animate-spin" />
+            </div>
+          ) : (
+            <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
+              {filteredPackages.map((pkg, i) => (
+                <motion.div 
+                  initial={{ opacity: 0, y: 20 }}
+                  whileInView={{ opacity: 1, y: 0 }}
+                  viewport={{ once: true }}
+                  transition={{ delay: i * 0.1 }}
+                  key={pkg.id} 
+                  className={`relative bg-white rounded-3xl p-8 border-2 transition-all hover:shadow-2xl hover:-translate-y-2 flex flex-col ${
+                    pkg.popular ? "border-orange-500 shadow-xl shadow-orange-500/10" : "border-slate-100 shadow-lg"
                   }`}
                 >
-                  Beli Paket Ini
-                </button>
-              </motion.div>
-            ))}
-          </div>
+                  {pkg.popular && (
+                    <div className="absolute -top-4 left-1/2 -translate-x-1/2 px-4 py-1 bg-gradient-to-r from-amber-500 to-orange-600 text-white text-xs font-black rounded-full uppercase tracking-wider">
+                      Paling Laris
+                    </div>
+                  )}
+                  <div className="mb-8">
+                    <div className="flex items-center gap-2 mb-4">
+                      <span className="px-3 py-1 bg-slate-100 text-slate-700 text-xs font-bold rounded-lg">{pkg.level}</span>
+                      {pkg.grade && <span className="px-3 py-1 bg-slate-100 text-slate-700 text-xs font-bold rounded-lg">{pkg.grade}</span>}
+                      {pkg.major && <span className="px-3 py-1 bg-blue-100 text-blue-700 text-xs font-bold rounded-lg">{pkg.major}</span>}
+                    </div>
+                    <h3 className="text-2xl font-black text-slate-900 mb-2">{pkg.name}</h3>
+                    <div className="flex items-baseline gap-2">
+                      <span className="text-4xl font-black text-slate-900">Rp{(pkg.price / 1000).toLocaleString()}k</span>
+                      {pkg.original_price && <span className="text-lg text-slate-400 line-through">Rp{(pkg.original_price / 1000).toLocaleString()}k</span>}
+                    </div>
+                  </div>
+
+                  <div className="space-y-4 mb-8 flex-1">
+                    {pkg.features && pkg.features.map((feat: string, idx: number) => (
+                      <div key={idx} className="flex items-start gap-3">
+                        <CheckCircle2 className="w-5 h-5 text-orange-500 shrink-0" />
+                        <span className="text-slate-700 font-medium">{feat}</span>
+                      </div>
+                    ))}
+                  </div>
+
+                  <button 
+                    onClick={() => handleCheckout(pkg)}
+                    className={`w-full py-4 rounded-xl font-bold text-lg transition-all ${
+                      pkg.popular 
+                        ? "bg-gradient-to-r from-amber-500 to-orange-600 text-white shadow-lg shadow-orange-500/30 hover:shadow-xl hover:shadow-orange-500/40" 
+                        : "bg-slate-100 text-slate-900 hover:bg-slate-200"
+                    }`}
+                  >
+                    Beli Paket Ini
+                  </button>
+                </motion.div>
+              ))}
+            </div>
+          )}
         </div>
       </section>
 
@@ -294,15 +311,19 @@ export default function BayarNiaPage() {
                   <div className="text-lg font-bold text-slate-900 mb-4">{selectedPackage?.name}</div>
                   <div className="flex justify-between items-center pb-4 border-b border-slate-100 mb-4">
                     <span className="text-slate-500">Harga Normal</span>
-                    <span className="text-slate-400 line-through">Rp {selectedPackage?.original_price.toLocaleString()}</span>
+                    <span className={appliedPromo ? "text-slate-400 line-through" : "text-slate-900 font-bold"}>Rp {selectedPackage?.price.toLocaleString()}</span>
                   </div>
-                  <div className="flex justify-between items-center pb-4 border-b border-slate-100 mb-4">
-                    <span className="text-slate-500">Diskon Spesial</span>
-                    <span className="text-green-600 font-bold">- Rp {(selectedPackage?.original_price - selectedPackage?.price).toLocaleString()}</span>
-                  </div>
+                  {appliedPromo && (
+                    <div className="flex justify-between items-center pb-4 border-b border-slate-100 mb-4">
+                      <span className="text-slate-500">Voucher {appliedPromo.code}</span>
+                      <span className="text-green-600 font-bold">
+                        - {appliedPromo.discount_type === 'percent' ? `${appliedPromo.discount_value}%` : `Rp ${appliedPromo.discount_value.toLocaleString()}`}
+                      </span>
+                    </div>
+                  )}
                   <div className="flex justify-between items-center">
                     <span className="text-slate-800 font-bold">Total Bayar</span>
-                    <span className="text-2xl font-black text-slate-900">Rp {selectedPackage?.price.toLocaleString()}</span>
+                    <span className="text-2xl font-black text-slate-900">Rp {finalPrice.toLocaleString()}</span>
                   </div>
                 </div>
                 
@@ -340,8 +361,8 @@ export default function BayarNiaPage() {
                       <div>
                         <label className="block text-sm font-bold text-slate-700 mb-1.5">Kode Voucher (Opsional)</label>
                         <div className="flex gap-2">
-                          <input type="text" className="flex-1 px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-orange-500 focus:border-orange-500 outline-none transition-all uppercase" placeholder="KODEPROMO" />
-                          <button className="px-6 font-bold bg-slate-900 text-white rounded-xl hover:bg-slate-800 transition-colors">Gunakan</button>
+                          <input type="text" value={form.voucher} onChange={e => setForm({...form, voucher: e.target.value.toUpperCase()})} className="flex-1 px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-orange-500 focus:border-orange-500 outline-none transition-all uppercase" placeholder="KODEPROMO" />
+                          <button onClick={handleApplyVoucher} className="px-6 font-bold bg-slate-900 text-white rounded-xl hover:bg-slate-800 transition-colors">Gunakan</button>
                         </div>
                       </div>
                     </div>
@@ -370,7 +391,7 @@ export default function BayarNiaPage() {
                         <XenditPaymentModal
                           isOpen={true}
                           onClose={() => setCheckoutStep(1)}
-                          amount={selectedPackage?.price || 0}
+                          amount={finalPrice}
                           onSuccess={handlePaymentSuccess}
                           title="NIA Tutoring"
                         />
