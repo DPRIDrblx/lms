@@ -21,6 +21,7 @@ import {
 } from "lucide-react";
 import { useEffect, useState, use, useRef } from "react";
 import Link from "next/link";
+import toast from "react-hot-toast";
 import { useRouter } from "next/navigation";
 import ReactPlayer from 'react-player';
 
@@ -34,6 +35,9 @@ export default function LessonViewerPage({ params }: { params: Promise<{ id: str
 
   const [lesson, setLesson] = useState<any>(null);
   const [course, setCourse] = useState<any>(null);
+  const [answerText, setAnswerText] = useState("");
+  const [submission, setSubmission] = useState<any>(null);
+  const [submitting, setSubmitting] = useState(false);
   const [isCompleted, setIsCompleted] = useState(false);
   const [completing, setCompleting] = useState(false);
   const [loading, setLoading] = useState(true);
@@ -70,6 +74,51 @@ export default function LessonViewerPage({ params }: { params: Promise<{ id: str
 
     fetchData();
   }, [id, lessonId, profile, supabase]);
+
+  useEffect(() => {
+    const fetchSubmission = async () => {
+      if (!profile || !lesson) return;
+      const { data } = await supabase
+        .from("assignment_submissions")
+        .select("*")
+        .eq("lesson_id", lessonId)
+        .eq("student_id", profile.id)
+        .maybeSingle();
+      if (data) {
+        setSubmission(data);
+        setAnswerText(data.text_content || "");
+      }
+    };
+
+    if (lesson?.content_type === "assignment") {
+      fetchSubmission();
+    }
+  }, [lessonId, supabase, profile, lesson]);
+
+  const handleSubmitAssignment = async () => {
+    if (!answerText.trim()) return toast.error("Jawaban tidak boleh kosong");
+    setSubmitting(true);
+    const toastId = toast.loading("Mengumpulkan tugas...");
+
+    const { data, error } = await supabase
+      .from("assignment_submissions")
+      .upsert({
+        lesson_id: lessonId,
+        student_id: profile?.id,
+        text_content: answerText,
+        submitted_at: new Date().toISOString()
+      }, { onConflict: "lesson_id,student_id" })
+      .select()
+      .single();
+
+    if (error) {
+      toast.error(`Gagal: ${error.message}`, { id: toastId });
+    } else {
+      toast.success("Tugas berhasil dikumpulkan!", { id: toastId });
+      setSubmission(data);
+    }
+    setSubmitting(false);
+  };
 
   // Listener for AI Game completion
   useEffect(() => {
@@ -148,7 +197,7 @@ export default function LessonViewerPage({ params }: { params: Promise<{ id: str
   if (loading) return <div className="h-[80vh] flex items-center justify-center"><Loader2 className="h-8 w-8 animate-spin text-[var(--accent)]" /></div>;
   if (!lesson) return <div className="py-20 text-center text-[var(--text-tertiary)] font-bold">Materi tidak ditemukan.</div>;
 
-  const TypeIcon = lesson.content_type === "video" ? Play : lesson.content_type === "pdf" ? FileText : lesson.content_type === "canva" ? Presentation : lesson.content_type === "game" ? Gamepad2 : lesson.content_type === "interactive_video" ? Film : lesson.content_type === "whiteboard" ? PenTool : BookOpen;
+  const TypeIcon = lesson.content_type === "video" ? Play : lesson.content_type === "pdf" ? FileText : lesson.content_type === "canva" ? Presentation : lesson.content_type === "game" ? Gamepad2 : lesson.content_type === "interactive_video" ? Film : lesson.content_type === "whiteboard" ? PenTool : lesson.content_type === "assignment" ? FileText : BookOpen;
 
   const getCanvaEmbedUrl = (url: string) => {
     if (!url) return "";
@@ -171,7 +220,7 @@ export default function LessonViewerPage({ params }: { params: Promise<{ id: str
           <ArrowLeft className="h-4 w-4" /> Kembali ke Daftar Bab
         </Link>
         <div className="flex items-center gap-2 text-[var(--text-tertiary)] bg-[var(--bg-secondary)] px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider">
-          <TypeIcon className="h-3.5 w-3.5" /> {lesson.content_type === 'canva' ? 'presentasi' : lesson.content_type === 'game' ? 'AI Game' : lesson.content_type === "interactive_video" ? 'Int. Video' : lesson.content_type === "whiteboard" ? 'Whiteboard' : lesson.content_type}
+          <TypeIcon className="h-3.5 w-3.5" /> {lesson.content_type === 'canva' ? 'presentasi' : lesson.content_type === 'game' ? 'AI Game' : lesson.content_type === "interactive_video" ? 'Int. Video' : lesson.content_type === "whiteboard" ? 'Whiteboard' : lesson.content_type === "assignment" ? 'Tugas' : lesson.content_type}
         </div>
       </header>
 
@@ -186,6 +235,63 @@ export default function LessonViewerPage({ params }: { params: Promise<{ id: str
         {/* CONTENT RENDERER */}
         <div className="bg-white border border-[var(--border)] rounded-2xl overflow-hidden shadow-sm">
           
+          {lesson.content_type === "assignment" && (
+            <div className="flex flex-col">
+              <div className="p-8 prose prose-slate max-w-none text-[var(--text-primary)] leading-relaxed border-b border-[var(--border)]">
+                <h3 className="text-xl font-bold mb-4 flex items-center gap-2">Instruksi Tugas</h3>
+                {lesson.body_text ? (
+                  <div dangerouslySetInnerHTML={{ __html: lesson.body_text.replace(/\n/g, '<br />') }} />
+                ) : (
+                  <p className="text-[var(--text-tertiary)] italic">Tidak ada instruksi khusus.</p>
+                )}
+                {lesson.due_date && (
+                  <div className="mt-6 p-4 bg-amber-50 rounded-xl border border-amber-200">
+                    <p className="text-sm font-bold text-amber-800">Tenggat Waktu (Due Date):</p>
+                    <p className="text-amber-900">{new Date(lesson.due_date).toLocaleString('id-ID', { dateStyle: 'full', timeStyle: 'short' })}</p>
+                  </div>
+                )}
+              </div>
+              <div className="p-8 bg-[var(--bg-secondary)]">
+                <div className="flex items-center justify-between mb-4">
+                  <h3 className="text-lg font-bold">Pengumpulan Jawaban</h3>
+                  {submission && (
+                    <span className={`px-3 py-1 rounded-full text-xs font-bold ${submission.score !== null ? "bg-green-100 text-green-700" : "bg-blue-100 text-blue-700"}`}>
+                      {submission.score !== null ? `Dinilai: ${submission.score}` : "Terkumpul"}
+                    </span>
+                  )}
+                </div>
+
+                {submission?.feedback && (
+                  <div className="mb-4 p-4 bg-green-50 border border-green-200 rounded-xl">
+                    <p className="text-xs font-bold text-green-800 uppercase tracking-wider mb-1">Ulasan Guru:</p>
+                    <p className="text-sm text-green-900">{submission.feedback}</p>
+                  </div>
+                )}
+
+                <p className="text-sm text-[var(--text-secondary)] mb-4">Silakan ketik jawaban Anda di bawah, atau tempelkan (paste) tautan Google Drive / Docs yang berisi *file* jawaban Anda.</p>
+                <textarea 
+                  rows={6}
+                  value={answerText}
+                  onChange={(e) => setAnswerText(e.target.value)}
+                  placeholder="Ketik jawaban atau tempel link dokumen di sini..."
+                  className="w-full p-4 rounded-xl border border-[var(--border)] outline-none bg-white font-medium resize-y focus:border-[var(--accent)] transition-colors"
+                  disabled={submission?.score !== null || submitting}
+                ></textarea>
+                
+                {submission?.score === null || !submission ? (
+                  <Button 
+                    className="mt-4 px-8" 
+                    onClick={handleSubmitAssignment}
+                    disabled={submitting || !answerText.trim()}
+                  >
+                    {submitting ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : null}
+                    {submission ? "Perbarui Jawaban" : "Kumpulkan Tugas"}
+                  </Button>
+                ) : null}
+              </div>
+            </div>
+          )}
+
           {lesson.content_type === "whiteboard" && (
             <div className="w-full flex flex-col">
               <div className="bg-[var(--warning)]/10 text-[var(--warning-dark)] px-4 py-3 text-sm font-bold flex items-center gap-2 border-b border-[var(--warning)]/20">

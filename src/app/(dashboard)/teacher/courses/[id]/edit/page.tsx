@@ -35,13 +35,14 @@ interface Lesson {
   id: string;
   chapter_id: string | null;
   title: string;
-  content_type: "text" | "video" | "pdf" | "canva" | "game" | "interactive_video" | "whiteboard";
+  content_type: "text" | "video" | "pdf" | "canva" | "game" | "interactive_video" | "whiteboard" | "assignment";
   body_text?: string;
   video_url?: string;
   pdf_url?: string;
   interactive_quiz_data?: any[];
   order_index: number;
   xp_reward: number;
+  due_date?: string | null;
 }
 
 interface Quiz {
@@ -153,6 +154,7 @@ export default function EditCoursePage() {
       pdf_url: editingLesson.pdf_url,
       interactive_quiz_data: editingLesson.interactive_quiz_data || [],
       xp_reward: editingLesson.xp_reward || 10,
+      due_date: editingLesson.due_date || null,
       order_index: editingLesson.id ? editingLesson.order_index : lessons.length,
     };
 
@@ -295,10 +297,15 @@ export default function EditCoursePage() {
                                 <Card key={lesson.id} className="p-3 hover:border-[var(--accent)]/30 transition-all flex items-center justify-between group">
                                   <div className="flex items-center gap-3">
                                     <GripVertical className="h-4 w-4 text-[var(--text-tertiary)] cursor-grab" />
-                                    {lesson.content_type === "video" ? <Video className="h-4 w-4 text-[var(--accent)]" /> : lesson.content_type === "canva" ? <Presentation className="h-4 w-4 text-[var(--accent)]" /> : lesson.content_type === "game" ? <Presentation className="h-4 w-4 text-purple-500" /> : <FileText className="h-4 w-4 text-[var(--accent)]" />}
+                                    {lesson.content_type === "video" ? <Video className="h-4 w-4 text-[var(--accent)]" /> : lesson.content_type === "canva" ? <Presentation className="h-4 w-4 text-[var(--accent)]" /> : lesson.content_type === "game" ? <Presentation className="h-4 w-4 text-purple-500" /> : lesson.content_type === "assignment" ? <FileText className="h-4 w-4 text-amber-500" /> : <FileText className="h-4 w-4 text-[var(--accent)]" />}
                                     <span className="text-sm font-medium text-[var(--text-primary)]">{lesson.title}</span>
                                   </div>
                                   <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-all">
+                                    {lesson.content_type === "assignment" && (
+                                      <Link href={`/teacher/courses/${id}/assignments/${lesson.id}`}>
+                                        <button className="p-1.5 hover:bg-amber-100 text-amber-600 rounded-lg text-xs font-bold px-2 mr-2 border border-amber-200">Beri Nilai Tugas</button>
+                                      </Link>
+                                    )}
                                     <button onClick={() => { setEditingLesson(lesson); setShowLessonModal(true); }} className="p-1.5 hover:bg-[var(--bg-tertiary)] rounded-lg"><Edit3 className="h-3.5 w-3.5" /></button>
                                     <button onClick={() => deleteLesson(lesson.id)} className="p-1.5 hover:bg-[var(--error-light)] text-[var(--error)] rounded-lg"><Trash2 className="h-3.5 w-3.5" /></button>
                                   </div>
@@ -409,14 +416,14 @@ export default function EditCoursePage() {
           </div>
           <div>
             <label className="block text-sm font-medium mb-1.5">Type</label>
-            <div className="grid grid-cols-7 gap-2">
-              {(["text", "video", "pdf", "canva", "game", "interactive_video", "whiteboard"] as const).map(t => (
+            <div className="grid grid-cols-4 sm:grid-cols-8 gap-2">
+              {(["text", "video", "pdf", "canva", "game", "interactive_video", "whiteboard", "assignment"] as const).map(t => (
                 <button 
                   key={t}
                   onClick={() => setEditingLesson({ ...editingLesson, content_type: t })}
                   className={`p-3 rounded-xl border-2 transition-all flex flex-col items-center gap-1 ${editingLesson?.content_type === t ? "border-[var(--accent)] bg-[var(--accent-light)] text-[var(--accent)]" : "border-[var(--border)]"}`}
                 >
-                  <span className="text-[10px] font-bold uppercase text-center">{t === "canva" ? "presentasi" : t === "game" ? "AI Game" : t === "interactive_video" ? "Int. Video" : t === "whiteboard" ? "Whiteboard" : t}</span>
+                  <span className="text-[10px] font-bold uppercase text-center">{t === "canva" ? "presentasi" : t === "game" ? "AI Game" : t === "interactive_video" ? "Int. Video" : t === "whiteboard" ? "Whiteboard" : t === "assignment" ? "Tugas" : t}</span>
                 </button>
               ))}
             </div>
@@ -490,6 +497,30 @@ export default function EditCoursePage() {
                 Ruangan rahasia untuk papan tulis ini akan <strong>dibuat secara otomatis</strong> saat Anda menyimpan materi. 
                 Siswa yang membuka materi ini akan langsung bergabung ke kanvas interaktif yang sama dengan Anda secara real-time.
               </p>
+            </div>
+          )}
+
+          {editingLesson?.content_type === "assignment" && (
+            <div className="space-y-4">
+              <div>
+                <label className="block text-sm font-medium mb-1.5">Instruksi Tugas (Markdown)</label>
+                <textarea 
+                  rows={4}
+                  value={editingLesson?.body_text || ""} 
+                  onChange={e => setEditingLesson({ ...editingLesson, body_text: e.target.value })}
+                  className="w-full p-4 rounded-xl bg-[var(--bg-secondary)] border border-[var(--border)] outline-none resize-none"
+                  placeholder="Tuliskan instruksi tugas secara detail..."
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium mb-1.5">Batas Waktu (Tenggat Waktu)</label>
+                <input 
+                  type="datetime-local" 
+                  value={editingLesson?.due_date ? new Date(new Date(editingLesson.due_date).getTime() - new Date().getTimezoneOffset() * 60000).toISOString().slice(0, 16) : ""}
+                  onChange={e => setEditingLesson({ ...editingLesson, due_date: new Date(e.target.value).toISOString() })}
+                  className="w-full h-11 px-4 rounded-xl bg-[var(--bg-secondary)] border border-[var(--border)] outline-none"
+                />
+              </div>
             </div>
           )}
 
