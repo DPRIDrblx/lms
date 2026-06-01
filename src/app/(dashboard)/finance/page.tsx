@@ -2,10 +2,6 @@
 
 import { useAuth } from "@/lib/auth-context";
 import { createClient } from "@/lib/supabase";
-import { Card } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
-import { StatCard } from "@/components/ui/stat-card";
-import { Button } from "@/components/ui/button";
 import { formatCurrency } from "@/lib/utils";
 import { motion } from "framer-motion";
 import { CreditCard, CheckCircle, AlertCircle, Wallet } from "lucide-react";
@@ -66,64 +62,116 @@ export default function FinancePage() {
   const outstanding = bills.filter((b) => b.status === "unpaid").reduce((s, b) => s + b.amount, 0);
 
   return (
-    <div className="space-y-6 max-w-5xl">
-      <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }}>
-        <h1 className="text-2xl font-bold text-[var(--text-primary)]">Finance & Billing</h1>
-        <p className="text-sm text-[var(--text-secondary)] mt-1">Manage your tuition payments (SPP).</p>
+    <div className="space-y-6 max-w-5xl font-sans">
+      <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} className="flex flex-col md:flex-row md:items-end justify-between gap-4">
+        <div>
+          <h1 className="text-3xl font-bold text-slate-800 dark:text-white tracking-tight">Finance & Billing</h1>
+          <p className="text-sm font-medium text-slate-500 dark:text-slate-400 mt-1">Manage your tuition payments and wallet balance.</p>
+        </div>
       </motion.div>
 
-      <div className="grid grid-cols-1 sm:grid-cols-4 gap-4">
-        <StatCard label="Canteen Wallet" value={formatCurrency(wallet?.balance || 0)} icon={Wallet} color="#10B981" />
-        <StatCard label="Outstanding SPP" value={formatCurrency(outstanding)} icon={AlertCircle} color={outstanding > 0 ? "#DC2626" : "#059669"} />
-        <StatCard label="Total Paid" value={formatCurrency(totalPaid)} icon={CheckCircle} color="#4F46E5" />
-        <StatCard label="Total Billing" value={formatCurrency(totalPaid + outstanding)} icon={CreditCard} color="#6366F1" />
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
+        {/* Wallet */}
+        <div className="bg-white/60 dark:bg-slate-900/60 backdrop-blur-lg p-6 rounded-3xl border border-white/40 dark:border-slate-700/50 shadow-sm hover:shadow-md transition-all">
+          <div className="flex items-start justify-between mb-4">
+            <div className="p-3 rounded-2xl bg-emerald-100/50 dark:bg-emerald-500/20 text-emerald-600 dark:text-emerald-400">
+              <Wallet className="h-5 w-5" />
+            </div>
+          </div>
+          <div>
+            <h3 className="text-2xl font-black text-slate-800 dark:text-white tracking-tight mb-1">{formatCurrency(wallet?.balance || 0)}</h3>
+            <p className="text-sm font-medium text-slate-500 dark:text-slate-400">Canteen Wallet</p>
+          </div>
+        </div>
+
+        {/* Outstanding */}
+        <div className="bg-white/60 dark:bg-slate-900/60 backdrop-blur-lg p-6 rounded-3xl border border-white/40 dark:border-slate-700/50 shadow-sm hover:shadow-md transition-all">
+          <div className="flex items-start justify-between mb-4">
+            <div className={`p-3 rounded-2xl ${outstanding > 0 ? "bg-rose-100/50 dark:bg-rose-500/20 text-rose-600 dark:text-rose-400" : "bg-emerald-100/50 dark:bg-emerald-500/20 text-emerald-600 dark:text-emerald-400"}`}>
+              <AlertCircle className="h-5 w-5" />
+            </div>
+          </div>
+          <div>
+            <h3 className="text-2xl font-black text-slate-800 dark:text-white tracking-tight mb-1">{formatCurrency(outstanding)}</h3>
+            <p className="text-sm font-medium text-slate-500 dark:text-slate-400">Outstanding SPP</p>
+          </div>
+        </div>
+
+        {/* Total Paid */}
+        <div className="bg-white/60 dark:bg-slate-900/60 backdrop-blur-lg p-6 rounded-3xl border border-white/40 dark:border-slate-700/50 shadow-sm hover:shadow-md transition-all">
+          <div className="flex items-start justify-between mb-4">
+            <div className="p-3 rounded-2xl bg-indigo-100/50 dark:bg-indigo-500/20 text-indigo-600 dark:text-indigo-400">
+              <CheckCircle className="h-5 w-5" />
+            </div>
+          </div>
+          <div>
+            <h3 className="text-2xl font-black text-slate-800 dark:text-white tracking-tight mb-1">{formatCurrency(totalPaid)}</h3>
+            <p className="text-sm font-medium text-slate-500 dark:text-slate-400">Total Paid</p>
+          </div>
+        </div>
+
+        {/* Total Billing */}
+        <div className="bg-white/60 dark:bg-slate-900/60 backdrop-blur-lg p-6 rounded-3xl border border-white/40 dark:border-slate-700/50 shadow-sm hover:shadow-md transition-all">
+          <div className="flex items-start justify-between mb-4">
+            <div className="p-3 rounded-2xl bg-purple-100/50 dark:bg-purple-500/20 text-purple-600 dark:text-purple-400">
+              <CreditCard className="h-5 w-5" />
+            </div>
+          </div>
+          <div>
+            <h3 className="text-2xl font-black text-slate-800 dark:text-white tracking-tight mb-1">{formatCurrency(totalPaid + outstanding)}</h3>
+            <p className="text-sm font-medium text-slate-500 dark:text-slate-400">Total Billing</p>
+          </div>
+        </div>
       </div>
 
-      <Card>
-        <div className="flex items-center justify-between mb-4">
-          <h2 className="text-lg font-semibold text-[var(--text-primary)]">Billing History</h2>
-          <div className="flex items-center gap-1 text-xs text-[var(--text-tertiary)]">
+      <div className="bg-white/60 dark:bg-slate-900/60 backdrop-blur-lg rounded-3xl p-6 md:p-8 border border-white/40 dark:border-slate-700/50 shadow-sm">
+        <div className="flex items-center justify-between mb-6">
+          <h2 className="text-xl font-bold text-slate-800 dark:text-white">Billing History</h2>
+          <div className="flex items-center gap-1.5 text-xs font-medium text-slate-500 dark:text-slate-400 bg-slate-100 dark:bg-slate-800 px-3 py-1.5 rounded-full">
             <Wallet className="h-3.5 w-3.5" /> SPP Records
           </div>
         </div>
 
         {loading ? (
-          <div className="space-y-3">
-            {[1, 2, 3].map((i) => <div key={i} className="skeleton h-14" />)}
+          <div className="space-y-4">
+            {[1, 2, 3].map((i) => <div key={i} className="h-16 bg-slate-100 dark:bg-slate-800/50 rounded-2xl animate-pulse" />)}
           </div>
         ) : bills.length === 0 ? (
-          <p className="py-8 text-center text-[var(--text-tertiary)]">No billing records found.</p>
+          <div className="py-12 text-center">
+             <CreditCard className="h-12 w-12 text-slate-300 dark:text-slate-600 mx-auto mb-3" />
+             <p className="text-sm font-medium text-slate-500 dark:text-slate-400">No billing records found.</p>
+          </div>
         ) : (
           <div className="overflow-x-auto">
             <table className="w-full text-sm">
               <thead>
-                <tr className="text-left text-[var(--text-tertiary)] border-b border-[var(--border)]">
-                  <th className="pb-3 font-medium">Month</th>
-                  <th className="pb-3 font-medium">Amount</th>
-                  <th className="pb-3 font-medium">Status</th>
-                  <th className="pb-3 font-medium">Method</th>
-                  <th className="pb-3 font-medium text-right">Action</th>
+                <tr className="text-left text-slate-500 dark:text-slate-400 border-b border-slate-200 dark:border-slate-800">
+                  <th className="pb-4 font-semibold uppercase tracking-wider text-[11px]">Month</th>
+                  <th className="pb-4 font-semibold uppercase tracking-wider text-[11px]">Amount</th>
+                  <th className="pb-4 font-semibold uppercase tracking-wider text-[11px]">Status</th>
+                  <th className="pb-4 font-semibold uppercase tracking-wider text-[11px]">Method</th>
+                  <th className="pb-4 font-semibold uppercase tracking-wider text-[11px] text-right">Action</th>
                 </tr>
               </thead>
-              <tbody>
+              <tbody className="divide-y divide-slate-100 dark:divide-slate-800/50">
                 {bills.map((bill) => (
-                  <tr key={bill.id} className="border-b border-[var(--border)] last:border-0 hover:bg-[var(--bg-secondary)] transition-colors">
-                    <td className="py-3 font-medium text-[var(--text-primary)]">{bill.month}</td>
-                    <td className="py-3 text-[var(--text-secondary)]">{formatCurrency(bill.amount)}</td>
-                    <td className="py-3">
-                      <Badge variant={bill.status === "paid" ? "success" : "warning"}>
+                  <tr key={bill.id} className="hover:bg-slate-50/50 dark:hover:bg-slate-800/30 transition-colors">
+                    <td className="py-4 font-bold text-slate-800 dark:text-white">{bill.month}</td>
+                    <td className="py-4 font-medium text-slate-600 dark:text-slate-300">{formatCurrency(bill.amount)}</td>
+                    <td className="py-4">
+                      <span className={`px-2.5 py-1 rounded-md text-[10px] font-bold uppercase tracking-wider shadow-sm border ${bill.status === "paid" ? 'bg-emerald-50 dark:bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border-emerald-200 dark:border-emerald-500/20' : 'bg-rose-50 dark:bg-rose-500/10 text-rose-600 dark:text-rose-400 border-rose-200 dark:border-rose-500/20'}`}>
                         {bill.status === "paid" ? "Paid" : "Unpaid"}
-                      </Badge>
+                      </span>
                     </td>
-                    <td className="py-3 text-[var(--text-secondary)] capitalize">{bill.payment_method || "—"}</td>
-                    <td className="py-3 text-right">
+                    <td className="py-4 text-slate-500 dark:text-slate-400 capitalize font-medium">{bill.payment_method || "—"}</td>
+                    <td className="py-4 text-right">
                       {bill.status === "unpaid" ? (
-                        <Link href={`/finance/checkout/${bill.id}`}>
-                          <Button size="sm">Pay Now</Button>
+                        <Link href={`/finance/checkout/${bill.id}`} className="inline-flex items-center justify-center px-4 py-2 bg-indigo-500 hover:bg-indigo-600 text-white text-xs font-bold rounded-xl transition-colors shadow-sm">
+                          Pay Now
                         </Link>
                       ) : (
-                        <Link href={`/finance/receipt/${bill.id}`}>
-                          <Button size="sm" variant="ghost">Receipt</Button>
+                        <Link href={`/finance/receipt/${bill.id}`} className="inline-flex items-center justify-center px-4 py-2 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 text-xs font-bold rounded-xl transition-colors shadow-sm">
+                          Receipt
                         </Link>
                       )}
                     </td>
@@ -133,7 +181,7 @@ export default function FinancePage() {
             </table>
           </div>
         )}
-      </Card>
+      </div>
     </div>
   );
 }

@@ -2,7 +2,6 @@
 
 import { useAuth } from "@/lib/auth-context";
 import { createClient } from "@/lib/supabase";
-import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { 
@@ -161,46 +160,46 @@ export default function AdvancedChatPortal() {
   };
 
   return (
-    <div className="h-[calc(100vh-140px)] flex gap-6 overflow-hidden">
+    <div className="h-[calc(100vh-140px)] flex gap-6 overflow-hidden font-sans">
       {/* Sidebar: Navigation & Directory */}
-      <Card padding="none" className="w-80 flex flex-col shrink-0 border-none shadow-xl overflow-hidden">
-         <div className="p-4 border-b border-[var(--border)] space-y-4">
-            <div className="flex bg-[var(--bg-secondary)] p-1 rounded-xl">
+      <div className="w-80 flex flex-col shrink-0 bg-white/60 dark:bg-slate-900/60 backdrop-blur-lg rounded-3xl border border-white/40 dark:border-slate-700/50 shadow-sm overflow-hidden">
+         <div className="p-5 border-b border-white/40 dark:border-slate-700/50 space-y-5 bg-white/30 dark:bg-slate-800/30">
+            <div className="flex bg-slate-100/50 dark:bg-slate-800/50 p-1.5 rounded-xl border border-slate-200/50 dark:border-slate-700/50">
                <button 
                  onClick={() => setTab("chats")}
-                 className={`flex-1 flex items-center justify-center gap-2 py-2 text-xs font-bold rounded-lg transition-all ${tab === 'chats' ? "bg-white shadow-sm text-[var(--accent)]" : "text-[var(--text-tertiary)]"}`}
+                 className={`flex-1 flex items-center justify-center gap-2 py-2.5 text-xs font-bold rounded-lg transition-all ${tab === 'chats' ? "bg-white dark:bg-slate-700 shadow-sm text-indigo-600 dark:text-indigo-400" : "text-slate-500 dark:text-slate-400 hover:bg-white/50 dark:hover:bg-slate-700/50"}`}
                >
-                  <MessageSquare className="h-3.5 w-3.5" /> Chats
+                  <MessageSquare className="h-4 w-4" /> Chats
                </button>
                <button 
                  onClick={() => setTab("directory")}
-                 className={`flex-1 flex items-center justify-center gap-2 py-2 text-xs font-bold rounded-lg transition-all ${tab === 'directory' ? "bg-white shadow-sm text-[var(--accent)]" : "text-[var(--text-tertiary)]"}`}
+                 className={`flex-1 flex items-center justify-center gap-2 py-2.5 text-xs font-bold rounded-lg transition-all ${tab === 'directory' ? "bg-white dark:bg-slate-700 shadow-sm text-indigo-600 dark:text-indigo-400" : "text-slate-500 dark:text-slate-400 hover:bg-white/50 dark:hover:bg-slate-700/50"}`}
                >
-                  <Users className="h-3.5 w-3.5" /> Directory
+                  <Users className="h-4 w-4" /> Directory
                </button>
             </div>
             <div className="relative">
-               <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-[var(--text-tertiary)]" />
-               <input placeholder="Search..." className="w-full h-10 pl-9 pr-4 rounded-xl bg-[var(--bg-secondary)] border-none text-xs outline-none focus:ring-2 focus:ring-[var(--accent)]/20" />
+               <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400 dark:text-slate-500" />
+               <input placeholder="Search directory..." className="w-full h-11 pl-10 pr-4 rounded-xl bg-white/50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700 text-sm outline-none focus:ring-2 focus:ring-indigo-500/50 text-slate-800 dark:text-white placeholder:text-slate-400 dark:placeholder:text-slate-500 transition-all" />
             </div>
          </div>
 
-         <div className="flex-1 overflow-y-auto p-2">
+         <div className="flex-1 overflow-y-auto p-3 custom-scrollbar">
             {tab === 'chats' ? (
-               <div className="space-y-1">
-                  <p className="px-3 py-2 text-[10px] font-black uppercase text-[var(--text-tertiary)] tracking-widest">Active Channels</p>
+               <div className="space-y-1.5">
+                  <p className="px-3 py-2 text-[10px] font-black uppercase text-slate-400 dark:text-slate-500 tracking-widest mt-2 mb-1">Active Channels</p>
                   {groups.map(group => (
                      <button
                        key={group.id}
                        onClick={() => setSelectedGroup(group)}
-                       className={`w-full flex items-center gap-3 p-3 rounded-xl transition-all ${selectedGroup?.id === group.id ? "bg-[var(--accent-light)] text-[var(--accent)]" : "hover:bg-[var(--bg-secondary)]"}`}
+                       className={`w-full flex items-center gap-4 p-3 rounded-2xl transition-all ${selectedGroup?.id === group.id ? "bg-indigo-50 dark:bg-indigo-500/10 text-indigo-600 dark:text-indigo-400" : "hover:bg-white/50 dark:hover:bg-slate-800/50"}`}
                      >
-                        <div className={`w-10 h-10 rounded-xl flex items-center justify-center ${selectedGroup?.id === group.id ? "bg-[var(--accent)] text-white" : "bg-[var(--bg-tertiary)] text-[var(--text-tertiary)]"}`}>
+                        <div className={`w-11 h-11 rounded-xl flex items-center justify-center shadow-sm ${selectedGroup?.id === group.id ? "bg-indigo-500 text-white shadow-indigo-500/20" : "bg-white dark:bg-slate-800 text-slate-500 dark:text-slate-400 border border-slate-200 dark:border-slate-700"}`}>
                            <Hash className="h-5 w-5" />
                         </div>
-                        <div className="flex-1 text-left">
-                           <p className="text-sm font-bold truncate">{group.name}</p>
-                           <p className="text-[10px] opacity-60 uppercase font-black">{group.type}</p>
+                        <div className="flex-1 text-left min-w-0">
+                           <p className={`text-sm font-bold truncate ${selectedGroup?.id === group.id ? "text-indigo-700 dark:text-indigo-300" : "text-slate-700 dark:text-slate-200"}`}>{group.name}</p>
+                           <p className={`text-[10px] uppercase font-black tracking-wider mt-0.5 ${selectedGroup?.id === group.id ? "text-indigo-500/70 dark:text-indigo-400/70" : "text-slate-400 dark:text-slate-500"}`}>{group.type}</p>
                         </div>
                      </button>
                   ))}
@@ -213,46 +212,51 @@ export default function AdvancedChatPortal() {
                </div>
             )}
          </div>
-      </Card>
+      </div>
 
       {/* Main Chat Area */}
-      <Card padding="none" className="flex-1 flex flex-col border-none shadow-xl overflow-hidden relative">
+      <div className="flex-1 flex flex-col bg-white/60 dark:bg-slate-900/60 backdrop-blur-lg rounded-3xl border border-white/40 dark:border-slate-700/50 shadow-sm overflow-hidden relative">
          {selectedGroup ? (
             <>
-               <div className="p-4 border-b border-[var(--border)] flex items-center justify-between bg-white/50 backdrop-blur-md sticky top-0 z-10">
+               <div className="p-5 border-b border-white/40 dark:border-slate-700/50 flex items-center justify-between bg-white/30 dark:bg-slate-800/30 sticky top-0 z-10 backdrop-blur-md">
                   <div className="flex items-center gap-4">
-                     <div className="w-12 h-12 rounded-2xl bg-[var(--accent)] flex items-center justify-center text-white shadow-lg shadow-[var(--accent)]/20">
+                     <div className="w-12 h-12 rounded-2xl bg-indigo-500 flex items-center justify-center text-white shadow-lg shadow-indigo-500/30">
                         <Hash className="h-6 w-6" />
                      </div>
                      <div>
-                        <h2 className="text-base font-black text-[var(--text-primary)]">{selectedGroup.name}</h2>
-                        <div className="flex items-center gap-2">
-                           <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
-                           <p className="text-[10px] font-bold text-[var(--text-tertiary)] uppercase tracking-wider">{selectedGroup.type} channel active</p>
+                        <h2 className="text-lg font-bold text-slate-800 dark:text-white tracking-tight">{selectedGroup.name}</h2>
+                        <div className="flex items-center gap-2 mt-0.5">
+                           <span className="w-2 h-2 rounded-full bg-emerald-500 shadow-[0_0_8px_rgba(16,185,129,0.5)] animate-pulse" />
+                           <p className="text-[11px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">{selectedGroup.type} channel active</p>
                         </div>
                      </div>
                   </div>
-                  <Button variant="ghost" size="sm" icon={<UserPlus className="h-4 w-4" />}>Add Member</Button>
+                  <Button variant="outline" size="sm" className="bg-white/50 dark:bg-slate-800/50 border-slate-200 dark:border-slate-700 shadow-sm rounded-xl">
+                     <UserPlus className="h-4 w-4 mr-2" /> Add Member
+                  </Button>
                </div>
 
-               <div className="flex-1 overflow-y-auto p-6 space-y-6 bg-[var(--bg-secondary)]/30">
+               <div className="flex-1 overflow-y-auto p-6 space-y-6">
                   {messages.map((msg, i) => {
                      const isOwn = msg.sender_id === profile?.id;
                      return (
                         <div key={msg.id} className={`flex flex-col ${isOwn ? "items-end" : "items-start"}`}>
                            {!isOwn && (
-                              <p className="text-[10px] font-black text-[var(--text-tertiary)] mb-1 uppercase tracking-widest ml-2">
-                                 {msg.profiles?.full_name} • <span className="text-[var(--accent)]">{msg.profiles?.role}</span>
-                              </p>
+                              <div className="flex items-center gap-2 mb-1.5 ml-1">
+                                 <p className="text-[11px] font-black text-slate-500 dark:text-slate-400 uppercase tracking-wider">
+                                    {msg.profiles?.full_name}
+                                 </p>
+                                 <span className="text-[9px] px-1.5 py-0.5 bg-indigo-100 dark:bg-indigo-500/20 text-indigo-600 dark:text-indigo-400 rounded font-bold uppercase tracking-widest">{msg.profiles?.role}</span>
+                              </div>
                            )}
                            <div className={`max-w-[70%] p-4 rounded-2xl text-sm leading-relaxed shadow-sm ${
                               isOwn 
-                                ? "bg-[var(--accent)] text-white rounded-tr-none" 
-                                : "bg-white text-[var(--text-primary)] border border-[var(--border)] rounded-tl-none"
+                                ? "bg-indigo-600 text-white rounded-tr-sm shadow-indigo-600/20" 
+                                : "bg-white dark:bg-slate-800 text-slate-800 dark:text-slate-200 border border-slate-200 dark:border-slate-700 rounded-tl-sm"
                            }`}>
                               {msg.content}
                            </div>
-                           <p className="text-[9px] font-bold text-[var(--text-tertiary)] mt-1.5 px-2">
+                           <p className="text-[10px] font-bold text-slate-400 dark:text-slate-500 mt-2 px-2">
                               {format(new Date(msg.created_at), "HH:mm")}
                            </p>
                         </div>
@@ -261,15 +265,15 @@ export default function AdvancedChatPortal() {
                   <div ref={scrollRef} />
                </div>
 
-               <div className="p-4 bg-white border-t border-[var(--border)]">
+               <div className="p-5 bg-white/50 dark:bg-slate-800/50 backdrop-blur-md border-t border-white/40 dark:border-slate-700/50">
                   <form onSubmit={handleSend} className="flex gap-3">
                      <input 
                        value={newMessage}
                        onChange={e => setNewMessage(e.target.value)}
                        placeholder="Message into channel..."
-                       className="flex-1 h-12 px-6 rounded-xl bg-[var(--bg-secondary)] border-none text-sm outline-none focus:ring-2 focus:ring-[var(--accent)]/20"
+                       className="flex-1 h-14 px-6 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 text-sm outline-none focus:ring-2 focus:ring-indigo-500/50 shadow-sm text-slate-800 dark:text-white placeholder:text-slate-400 transition-all"
                      />
-                     <Button type="submit" className="h-12 w-12 rounded-xl shrink-0 p-0" loading={sending}>
+                     <Button type="submit" className="h-14 w-14 rounded-2xl shrink-0 p-0 bg-indigo-600 hover:bg-indigo-700 text-white shadow-lg shadow-indigo-500/30" loading={sending}>
                         <Send className="h-5 w-5" />
                      </Button>
                   </form>
@@ -277,16 +281,16 @@ export default function AdvancedChatPortal() {
             </>
          ) : (
             <div className="flex-1 flex flex-col items-center justify-center text-center p-12">
-               <div className="w-24 h-24 rounded-3xl bg-[var(--bg-secondary)] flex items-center justify-center mb-6">
-                  <MessageSquare className="h-12 w-12 text-[var(--text-tertiary)] opacity-20" />
+               <div className="w-32 h-32 rounded-3xl bg-white/50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700 flex items-center justify-center mb-8 shadow-sm">
+                  <MessageSquare className="h-14 w-14 text-indigo-500 dark:text-indigo-400 opacity-60" />
                </div>
-               <h3 className="text-xl font-black text-[var(--text-primary)]">Academy Secure Communications</h3>
-               <p className="text-sm text-[var(--text-secondary)] mt-2 max-w-sm">
+               <h3 className="text-2xl font-bold text-slate-800 dark:text-white tracking-tight">Secure Communications</h3>
+               <p className="text-sm font-medium text-slate-500 dark:text-slate-400 mt-3 max-w-sm leading-relaxed">
                   Select a class channel or search the directory to begin professional collaboration with teachers, students, and parents.
                </p>
             </div>
          )}
-      </Card>
+      </div>
     </div>
   );
 }
@@ -294,22 +298,22 @@ export default function AdvancedChatPortal() {
 function DirectorySection({ title, items, icon: Icon, color, onSelect }: any) {
    return (
       <div className="space-y-3">
-         <div className="flex items-center justify-between px-2">
-            <h4 className="text-[10px] font-black uppercase text-[var(--text-tertiary)] tracking-widest flex items-center gap-2">
-               <Icon className={`h-3 w-3 ${color}`} /> {title}
+         <div className="flex items-center justify-between px-3">
+            <h4 className="text-[10px] font-black uppercase text-slate-400 dark:text-slate-500 tracking-widest flex items-center gap-2">
+               <Icon className={`h-3.5 w-3.5 ${color}`} /> {title}
             </h4>
-            <span className="text-[9px] font-bold bg-[var(--bg-secondary)] px-1.5 py-0.5 rounded text-[var(--text-tertiary)]">{items.length}</span>
+            <span className="text-[9px] font-bold bg-slate-200 dark:bg-slate-700 px-2 py-0.5 rounded-full text-slate-500 dark:text-slate-400">{items.length}</span>
          </div>
-         <div className="space-y-1">
+         <div className="space-y-1.5">
             {items.map((item: any) => (
-               <button onClick={() => onSelect?.(item)} key={item.id} className="w-full flex items-center text-left gap-3 p-2 rounded-xl hover:bg-[var(--bg-secondary)] transition-all group">
-                  <div className="w-8 h-8 rounded-lg bg-[var(--bg-tertiary)] flex items-center justify-center text-xs font-bold text-[var(--text-tertiary)] shrink-0">
+               <button onClick={() => onSelect?.(item)} key={item.id} className="w-full flex items-center text-left gap-3 p-2.5 rounded-xl hover:bg-white/60 dark:hover:bg-slate-800/60 border border-transparent hover:border-slate-200 dark:hover:border-slate-700 transition-all group shadow-sm hover:shadow-md">
+                  <div className="w-9 h-9 rounded-xl bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 flex items-center justify-center text-xs font-black text-slate-600 dark:text-slate-300 shrink-0">
                      {item.full_name?.charAt(0)}
                   </div>
                   <div className="flex-1 min-w-0">
-                     <p className="text-xs font-bold text-[var(--text-primary)] truncate">{item.full_name}</p>
+                     <p className="text-sm font-bold text-slate-700 dark:text-slate-200 truncate">{item.full_name}</p>
                   </div>
-                  <ChevronRight className="h-3 w-3 text-[var(--text-tertiary)] opacity-0 group-hover:opacity-100 transition-all shrink-0" />
+                  <ChevronRight className="h-4 w-4 text-slate-400 opacity-0 group-hover:opacity-100 transition-all shrink-0 -translate-x-2 group-hover:translate-x-0" />
                </button>
             ))}
          </div>

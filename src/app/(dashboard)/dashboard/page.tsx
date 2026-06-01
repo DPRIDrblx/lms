@@ -162,129 +162,134 @@ export default function DashboardPage() {
   const nextRank = getNextRank(xp);
   const completedCount = progressData.filter(p => p.completed).length;
 
-  return (
     <div className="space-y-8 max-w-6xl font-sans">
-      {/* Student Welcome Banner */}
+      {/* Student Welcome Banner (Glassmorphism) */}
       <motion.div 
         initial={{ opacity: 0, y: 12 }} 
         animate={{ opacity: 1, y: 0 }}
-        className="relative overflow-hidden rounded-[2rem] bg-gradient-to-r from-indigo-500 via-purple-500 to-pink-500 p-8 md:p-10 text-white shadow-lg"
+        className="relative overflow-hidden rounded-3xl bg-gradient-to-br from-indigo-50/80 via-white/60 to-purple-50/80 dark:from-slate-900/80 dark:via-slate-800/60 dark:to-indigo-950/80 border border-white/40 dark:border-slate-700/50 p-8 md:p-10 backdrop-blur-xl shadow-[0_8px_30px_rgb(0,0,0,0.04)] dark:shadow-[0_8px_30px_rgb(0,0,0,0.2)]"
       >
-        <div className="absolute top-0 right-0 w-64 h-64 bg-white/10 rounded-full blur-3xl -mr-20 -mt-20 pointer-events-none"></div>
-        <div className="absolute bottom-0 left-0 w-48 h-48 bg-black/10 rounded-full blur-2xl -ml-10 -mb-10 pointer-events-none"></div>
+        <div className="absolute top-0 right-0 w-96 h-96 bg-indigo-400/10 dark:bg-indigo-500/10 rounded-full blur-3xl -mr-20 -mt-20 pointer-events-none"></div>
+        <div className="absolute bottom-0 left-0 w-64 h-64 bg-purple-400/10 dark:bg-purple-500/10 rounded-full blur-3xl -ml-20 -mb-20 pointer-events-none"></div>
         
         <div className="relative z-10 flex flex-col md:flex-row items-start md:items-center justify-between gap-6">
-          <div className="flex items-center gap-5">
-            <div className="w-16 h-16 rounded-2xl bg-white/20 backdrop-blur-md border border-white/30 flex items-center justify-center shrink-0 shadow-inner">
-              <Trophy className="h-8 w-8 text-yellow-300 drop-shadow-md" />
+          <div className="flex items-center gap-6">
+            <div className="w-16 h-16 rounded-2xl bg-white/50 dark:bg-slate-800/50 backdrop-blur-md border border-white/60 dark:border-slate-700/50 flex items-center justify-center shrink-0 shadow-sm">
+              <Trophy className="h-8 w-8 text-indigo-500 dark:text-indigo-400" />
             </div>
             <div>
-              <h1 className="text-3xl font-black mb-1 drop-shadow-sm">
-                Welcome back, {profile.full_name?.split(" ")[0]}! 🚀
+              <h1 className="text-3xl font-bold text-slate-800 dark:text-white mb-2 tracking-tight">
+                Welcome back, {profile.full_name?.split(" ")[0]}
               </h1>
-              <p className="text-indigo-50 font-medium text-sm md:text-base opacity-90">
-                Ready to conquer your next learning mission?
+              <p className="text-slate-500 dark:text-slate-400 font-medium text-sm md:text-base">
+                Your learning progress overview for today.
               </p>
             </div>
           </div>
         </div>
       </motion.div>
 
-      {/* Gamified Stats */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+      {/* Gamified Stats (Glass & Flow) */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
         {/* Total XP */}
-        <div className="bg-white dark:bg-slate-900 p-5 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm relative overflow-hidden group">
-          <div className="absolute top-0 left-0 w-1 h-full bg-indigo-500"></div>
-          <div className="flex items-start justify-between">
-            <div>
-              <p className="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-1">Total XP</p>
-              <h3 className="text-2xl font-black text-slate-800 dark:text-white">{xp.toLocaleString()}</h3>
-              <p className="text-xs font-semibold text-emerald-500 mt-2">↑ +25 today</p>
-            </div>
-            <div className="p-3 rounded-xl bg-indigo-50 dark:bg-indigo-500/10 text-indigo-600 dark:text-indigo-400">
+        <div className="bg-white/60 dark:bg-slate-900/60 backdrop-blur-lg p-6 rounded-3xl border border-white/40 dark:border-slate-700/50 shadow-sm hover:shadow-md transition-all group">
+          <div className="flex items-start justify-between mb-4">
+            <div className="p-3 rounded-2xl bg-indigo-100/50 dark:bg-indigo-500/20 text-indigo-600 dark:text-indigo-400">
               <Star className="h-5 w-5" />
             </div>
+            <span className="px-2.5 py-1 rounded-full bg-emerald-100/50 dark:bg-emerald-500/20 text-emerald-600 dark:text-emerald-400 text-xs font-bold flex items-center gap-1">
+              ↑ 25
+            </span>
+          </div>
+          <div>
+            <h3 className="text-3xl font-black text-slate-800 dark:text-white tracking-tight mb-1">{xp.toLocaleString()}</h3>
+            <p className="text-sm font-medium text-slate-500 dark:text-slate-400">Total XP</p>
           </div>
         </div>
 
         {/* Current Rank */}
-        <div className="bg-white dark:bg-slate-900 p-5 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm relative overflow-hidden group">
-          <div className="absolute top-0 left-0 w-1 h-full bg-amber-500"></div>
-          <div className="flex items-start justify-between">
-            <div>
-              <p className="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-1">Current Rank</p>
-              <h3 className="text-2xl font-black text-slate-800 dark:text-white">{rank}</h3>
-            </div>
-            <div className="p-3 rounded-xl bg-amber-50 dark:bg-amber-500/10 text-amber-600 dark:text-amber-400">
+        <div className="bg-white/60 dark:bg-slate-900/60 backdrop-blur-lg p-6 rounded-3xl border border-white/40 dark:border-slate-700/50 shadow-sm hover:shadow-md transition-all group">
+          <div className="flex items-start justify-between mb-4">
+            <div className="p-3 rounded-2xl bg-amber-100/50 dark:bg-amber-500/20 text-amber-600 dark:text-amber-400">
               <Trophy className="h-5 w-5" />
             </div>
+          </div>
+          <div>
+            <h3 className="text-2xl font-black text-slate-800 dark:text-white tracking-tight mb-1">{rank}</h3>
+            <p className="text-sm font-medium text-slate-500 dark:text-slate-400">Current Rank</p>
           </div>
         </div>
 
         {/* Lessons Done */}
-        <div className="bg-white dark:bg-slate-900 p-5 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm relative overflow-hidden group">
-          <div className="absolute top-0 left-0 w-1 h-full bg-emerald-500"></div>
-          <div className="flex items-start justify-between">
-            <div>
-              <p className="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-1">Missions Cleared</p>
-              <h3 className="text-2xl font-black text-slate-800 dark:text-white">{completedCount}</h3>
-            </div>
-            <div className="p-3 rounded-xl bg-emerald-50 dark:bg-emerald-500/10 text-emerald-600 dark:text-emerald-400">
+        <div className="bg-white/60 dark:bg-slate-900/60 backdrop-blur-lg p-6 rounded-3xl border border-white/40 dark:border-slate-700/50 shadow-sm hover:shadow-md transition-all group">
+          <div className="flex items-start justify-between mb-4">
+            <div className="p-3 rounded-2xl bg-emerald-100/50 dark:bg-emerald-500/20 text-emerald-600 dark:text-emerald-400">
               <BookOpen className="h-5 w-5" />
             </div>
+          </div>
+          <div>
+            <h3 className="text-3xl font-black text-slate-800 dark:text-white tracking-tight mb-1">{completedCount}</h3>
+            <p className="text-sm font-medium text-slate-500 dark:text-slate-400">Missions Cleared</p>
           </div>
         </div>
 
         {/* Day Streak */}
-        <div className="bg-white dark:bg-slate-900 p-5 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm relative overflow-hidden group">
-          <div className="absolute top-0 left-0 w-1 h-full bg-rose-500"></div>
-          <div className="flex items-start justify-between">
-            <div>
-              <p className="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-1">Day Streak</p>
-              <h3 className="text-2xl font-black text-slate-800 dark:text-white">7 Days</h3>
-              <p className="text-xs font-semibold text-rose-500 mt-2">Keep the fire burning!</p>
-            </div>
-            <div className="p-3 rounded-xl bg-rose-50 dark:bg-rose-500/10 text-rose-600 dark:text-rose-400">
+        <div className="bg-white/60 dark:bg-slate-900/60 backdrop-blur-lg p-6 rounded-3xl border border-white/40 dark:border-slate-700/50 shadow-sm hover:shadow-md transition-all group">
+          <div className="flex items-start justify-between mb-4">
+            <div className="p-3 rounded-2xl bg-rose-100/50 dark:bg-rose-500/20 text-rose-600 dark:text-rose-400">
               <Flame className="h-5 w-5" />
             </div>
+            <span className="px-2.5 py-1 rounded-full bg-rose-100/50 dark:bg-rose-500/20 text-rose-600 dark:text-rose-400 text-xs font-bold flex items-center gap-1 animate-pulse">
+              Active
+            </span>
+          </div>
+          <div>
+            <h3 className="text-3xl font-black text-slate-800 dark:text-white tracking-tight mb-1">7</h3>
+            <p className="text-sm font-medium text-slate-500 dark:text-slate-400">Day Streak</p>
           </div>
         </div>
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        <div className="lg:col-span-2 bg-white dark:bg-slate-900 rounded-3xl p-6 md:p-8 border border-slate-200 dark:border-slate-800 shadow-sm relative">
-          <div className="flex items-center justify-between mb-6">
-            <h2 className="text-xl font-bold text-slate-800 dark:text-white flex items-center gap-2">
-              <TrendingUp className="h-5 w-5 text-indigo-500" /> Rank Progress
-            </h2>
-            <div className="px-3 py-1 bg-indigo-50 dark:bg-indigo-500/10 text-indigo-700 dark:text-indigo-300 rounded-full text-xs font-bold uppercase tracking-wider">
+        <div className="lg:col-span-2 bg-white/60 dark:bg-slate-900/60 backdrop-blur-lg rounded-3xl p-6 md:p-8 border border-white/40 dark:border-slate-700/50 shadow-sm relative">
+          <div className="flex items-center justify-between mb-8">
+            <div>
+              <h2 className="text-xl font-bold text-slate-800 dark:text-white flex items-center gap-2 mb-1">
+                Rank Progress
+              </h2>
+              <p className="text-sm font-medium text-slate-500 dark:text-slate-400">Earn XP to reach the next tier</p>
+            </div>
+            <div className="px-4 py-2 bg-indigo-100/50 dark:bg-indigo-500/20 text-indigo-700 dark:text-indigo-300 rounded-2xl text-sm font-bold tracking-wide border border-indigo-200/50 dark:border-indigo-500/30">
               {rank}
             </div>
           </div>
-          <div className="bg-slate-50 dark:bg-slate-800/50 p-6 rounded-2xl border border-slate-100 dark:border-slate-700/50">
+          <div className="relative">
              <ProgressBar value={nextRank.progress} showLabel size="lg" color="#6366f1" />
-             <p className="text-sm font-medium text-slate-500 dark:text-slate-400 mt-4 text-center">
+             <p className="text-sm font-medium text-slate-500 dark:text-slate-400 mt-6 flex justify-between items-center">
+               <span>Next milestone: <strong className="text-slate-800 dark:text-slate-200">{nextRank.name}</strong></span>
                {nextRank.xpNeeded > 0 ? (
-                 <>You need <span className="font-bold text-indigo-600 dark:text-indigo-400">{nextRank.xpNeeded} XP</span> to reach <span className="font-bold text-slate-700 dark:text-slate-200">{nextRank.name}</span>!</>
-               ) : "You've reached the highest rank!"}
+                 <span className="bg-slate-100 dark:bg-slate-800 px-3 py-1 rounded-full text-xs font-bold">{nextRank.xpNeeded} XP left</span>
+               ) : (
+                 <span className="bg-indigo-100 dark:bg-indigo-900/50 text-indigo-600 dark:text-indigo-400 px-3 py-1 rounded-full text-xs font-bold">Max Rank</span>
+               )}
              </p>
           </div>
         </div>
 
-        <div className="bg-white dark:bg-slate-900 rounded-3xl p-6 border border-slate-200 dark:border-slate-800 shadow-sm">
+        <div className="bg-white/60 dark:bg-slate-900/60 backdrop-blur-lg rounded-3xl p-6 md:p-8 border border-white/40 dark:border-slate-700/50 shadow-sm">
           <div className="flex items-center justify-between mb-6">
             <h2 className="text-lg font-bold text-slate-800 dark:text-white">Upcoming Events</h2>
-            <Link href="/events" className="text-xs text-indigo-600 dark:text-indigo-400 font-bold uppercase tracking-wider hover:underline">View All</Link>
+            <Link href="/events" className="text-xs text-indigo-600 dark:text-indigo-400 font-bold hover:underline">View All</Link>
           </div>
-          <div className="space-y-3">
+          <div className="space-y-4">
             {events.length > 0 ? events.map((event) => (
-              <div key={event.id} className="flex items-start gap-3 p-3 rounded-2xl hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors border border-transparent hover:border-slate-100 dark:hover:border-slate-700">
-                <div className="p-2 rounded-xl bg-indigo-50 dark:bg-indigo-500/10">
-                  <Calendar className="h-4 w-4 text-indigo-500 dark:text-indigo-400" />
+              <div key={event.id} className="flex items-start gap-4 group">
+                <div className="w-12 h-12 rounded-2xl bg-indigo-50 dark:bg-indigo-500/10 flex items-center justify-center shrink-0 border border-indigo-100/50 dark:border-indigo-500/20 group-hover:bg-indigo-100 dark:group-hover:bg-indigo-500/20 transition-colors">
+                  <Calendar className="h-5 w-5 text-indigo-500 dark:text-indigo-400" />
                 </div>
-                <div>
-                  <p className="text-sm font-semibold text-slate-800 dark:text-white">{event.title}</p>
-                  <p className="text-[11px] text-slate-500 dark:text-slate-400 font-bold uppercase tracking-wider mt-1">
+                <div className="pt-1">
+                  <p className="text-sm font-semibold text-slate-800 dark:text-white mb-1 group-hover:text-indigo-600 dark:group-hover:text-indigo-400 transition-colors line-clamp-1">{event.title}</p>
+                  <p className="text-xs text-slate-500 dark:text-slate-400 font-medium">
                     {new Date(event.event_date).toLocaleDateString(undefined, { weekday: 'short', day: 'numeric', month: 'short' })}
                   </p>
                 </div>
@@ -304,26 +309,27 @@ export default function DashboardPage() {
 
       {leadership && (
         <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }}>
-          <div className="bg-emerald-50 dark:bg-emerald-950/30 border border-emerald-200 dark:border-emerald-900/50 rounded-3xl p-6 md:p-8">
+          <div className="bg-emerald-50/80 dark:bg-emerald-950/20 backdrop-blur-md border border-emerald-200/60 dark:border-emerald-900/40 rounded-3xl p-6 md:p-8">
             <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-6">
               <div>
-                <h2 className="text-xl font-bold text-emerald-900 dark:text-emerald-100 flex items-center gap-2">
-                  <Star className="h-6 w-6 text-emerald-600 dark:text-emerald-400" /> Class Leadership Portal
+                <h2 className="text-xl font-bold text-emerald-900 dark:text-emerald-100 flex items-center gap-2 mb-1">
+                  Class Leadership Portal
                 </h2>
-                <p className="text-sm font-medium text-emerald-700 dark:text-emerald-300/80 mt-1">Class {leadership.name} Management Tools</p>
+                <p className="text-sm font-medium text-emerald-700 dark:text-emerald-400/80">Managing Class {leadership.name}</p>
               </div>
-              <div className="px-3 py-1 bg-emerald-200/50 dark:bg-emerald-900/50 text-emerald-800 dark:text-emerald-200 rounded-full text-xs font-bold uppercase tracking-wider w-fit">
+              <div className="px-4 py-1.5 bg-emerald-200/50 dark:bg-emerald-900/50 text-emerald-800 dark:text-emerald-200 rounded-full text-xs font-bold flex items-center gap-2 w-fit">
+                 <div className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></div>
                  Active Duty
               </div>
             </div>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                <Link href="/student/leadership/attendance">
-                  <Button variant="secondary" className="w-full h-14 bg-white dark:bg-slate-900 text-emerald-900 dark:text-emerald-100 border border-emerald-200 dark:border-emerald-800 hover:bg-emerald-100 dark:hover:bg-emerald-900/60 shadow-sm" icon={<CalendarCheck className="h-4 w-4" />}>
+                  <Button variant="secondary" className="w-full h-14 bg-white/80 dark:bg-slate-900/80 backdrop-blur-sm text-emerald-900 dark:text-emerald-100 border border-emerald-200/50 dark:border-emerald-800/50 hover:bg-white dark:hover:bg-slate-800 shadow-sm" icon={<CalendarCheck className="h-4 w-4" />}>
                      Manage Class Attendance
                   </Button>
                </Link>
                <Link href="/chat">
-                  <Button variant="secondary" className="w-full h-14 bg-white dark:bg-slate-900 text-emerald-900 dark:text-emerald-100 border border-emerald-200 dark:border-emerald-800 hover:bg-emerald-100 dark:hover:bg-emerald-900/60 shadow-sm" icon={<ChevronRight className="h-4 w-4" />}>
+                  <Button variant="secondary" className="w-full h-14 bg-white/80 dark:bg-slate-900/80 backdrop-blur-sm text-emerald-900 dark:text-emerald-100 border border-emerald-200/50 dark:border-emerald-800/50 hover:bg-white dark:hover:bg-slate-800 shadow-sm" icon={<ChevronRight className="h-4 w-4" />}>
                      Broadcast Announcement
                   </Button>
                </Link>
@@ -333,36 +339,48 @@ export default function DashboardPage() {
       )}
 
       <div>
-        <div className="flex items-center justify-between mb-6">
-          <h2 className="text-xl font-bold text-slate-800 dark:text-white flex items-center gap-2">
-             <BookOpen className="h-5 w-5 text-indigo-500" /> Continue Learning
-          </h2>
-          <Link href="/courses" className="text-sm font-bold text-indigo-600 dark:text-indigo-400 hover:text-indigo-700 dark:hover:text-indigo-300 transition-colors uppercase tracking-wider">
-            View all courses →
+        <div className="flex items-end justify-between mb-6">
+          <div>
+            <h2 className="text-xl font-bold text-slate-800 dark:text-white mb-1">
+               Continue Learning
+            </h2>
+            <p className="text-sm font-medium text-slate-500 dark:text-slate-400">Pick up where you left off</p>
+          </div>
+          <Link href="/courses" className="text-sm font-bold text-indigo-600 dark:text-indigo-400 hover:text-indigo-700 dark:hover:text-indigo-300 transition-colors">
+            View All Courses
           </Link>
         </div>
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
           {courses.map((course) => {
             const done = progressData.filter(p => p.course_id === course.id && p.completed).length;
+            const progressPercent = Math.round((done / (course.lessons_count || 1)) * 100);
             return (
               <Link key={course.id} href={`/courses/${course.id}`} className="group block h-full">
-                <div className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 overflow-hidden shadow-sm hover:shadow-xl hover:-translate-y-1 transition-all duration-300 h-full flex flex-col">
-                  <div className="aspect-video bg-slate-100 dark:bg-slate-800 relative overflow-hidden">
-                     {course.cover_image && <img src={course.cover_image} alt="" className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" />}
-                     <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent"></div>
-                     <div className="absolute bottom-3 left-4">
-                        <span className="px-2 py-1 bg-white/20 backdrop-blur-md rounded-md text-[10px] font-bold text-white uppercase tracking-wider">
+                <div className="bg-white/60 dark:bg-slate-900/60 backdrop-blur-lg rounded-3xl border border-white/40 dark:border-slate-700/50 overflow-hidden shadow-sm hover:shadow-lg hover:-translate-y-1 transition-all duration-300 h-full flex flex-col">
+                  <div className="aspect-[16/9] bg-slate-100 dark:bg-slate-800 relative overflow-hidden">
+                     {course.cover_image ? (
+                       <img src={course.cover_image} alt="" className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700" />
+                     ) : (
+                       <div className="w-full h-full bg-indigo-50 dark:bg-indigo-900/20 flex items-center justify-center">
+                         <BookOpen className="h-8 w-8 text-indigo-200 dark:text-indigo-800" />
+                       </div>
+                     )}
+                     <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent opacity-80"></div>
+                     <div className="absolute bottom-4 left-5 right-5">
+                        <span className="px-2.5 py-1 bg-white/20 backdrop-blur-md rounded-lg text-[10px] font-bold text-white uppercase tracking-wider border border-white/20 shadow-sm">
                            {course.category}
                         </span>
                      </div>
                   </div>
-                  <div className="p-5 flex-1 flex flex-col">
-                    <h3 className="text-base font-bold text-slate-800 dark:text-white mb-4 line-clamp-2 leading-snug group-hover:text-indigo-600 dark:group-hover:text-indigo-400 transition-colors">{course.title}</h3>
-                    <div className="mt-auto">
-                       <ProgressBar value={done} max={course.lessons_count || 1} size="sm" color="#6366f1" />
-                       <div className="flex justify-between items-center mt-2">
-                          <p className="text-xs font-medium text-slate-500 dark:text-slate-400">{done}/{course.lessons_count} missions</p>
-                          <p className="text-xs font-bold text-indigo-600 dark:text-indigo-400">{Math.round((done / (course.lessons_count || 1)) * 100)}%</p>
+                  <div className="p-6 flex-1 flex flex-col">
+                    <h3 className="text-lg font-bold text-slate-800 dark:text-white mb-4 line-clamp-2 leading-snug group-hover:text-indigo-600 dark:group-hover:text-indigo-400 transition-colors">{course.title}</h3>
+                    <div className="mt-auto pt-4 border-t border-slate-100 dark:border-slate-800/50">
+                       <div className="flex justify-between items-center mb-2">
+                          <p className="text-xs font-semibold text-slate-500 dark:text-slate-400">{done}/{course.lessons_count} missions</p>
+                          <p className="text-xs font-black text-indigo-600 dark:text-indigo-400">{progressPercent}%</p>
+                       </div>
+                       <div className="h-2 w-full bg-slate-100 dark:bg-slate-800 rounded-full overflow-hidden">
+                         <div className="h-full bg-indigo-500 rounded-full transition-all duration-1000 ease-out" style={{ width: `${progressPercent}%` }}></div>
                        </div>
                     </div>
                   </div>
