@@ -27,6 +27,7 @@ import {
   X
 } from "lucide-react";
 import Link from "next/link";
+import toast from "react-hot-toast";
 import { useParams, useRouter } from "next/navigation";
 import { useEffect, useState, useCallback } from "react";
 import { motion, AnimatePresence } from "framer-motion";
@@ -159,16 +160,25 @@ export default function EditCoursePage() {
       order_index: editingLesson.id ? editingLesson.order_index : lessons.length,
     };
 
-    if (editingLesson.id) {
-      await supabase.from("lessons").update(lessonData).eq("id", editingLesson.id);
-    } else {
-      await supabase.from("lessons").insert(lessonData);
-    }
+    try {
+      if (editingLesson.id) {
+        const { error } = await supabase.from("lessons").update(lessonData).eq("id", editingLesson.id);
+        if (error) throw error;
+      } else {
+        const { error } = await supabase.from("lessons").insert(lessonData);
+        if (error) throw error;
+      }
 
-    await fetchData();
-    setShowLessonModal(false);
-    setEditingLesson(null);
-    setSaving(false);
+      await fetchData();
+      setShowLessonModal(false);
+      setEditingLesson(null);
+      toast.success("Materi berhasil disimpan!");
+    } catch (error: any) {
+      console.error(error);
+      toast.error(`Gagal menyimpan: ${error.message || "Terjadi kesalahan"}`);
+    } finally {
+      setSaving(false);
+    }
   };
 
   const deleteLesson = async (lId: string) => {
