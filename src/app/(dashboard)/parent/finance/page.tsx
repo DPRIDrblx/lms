@@ -103,18 +103,18 @@ export default function ParentFinancePage() {
         <div className="lg:col-span-2 space-y-6">
            {/* Summary Cards */}
            <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
-              <Card className="p-8 bg-indigo-600 text-white border-none shadow-xl shadow-indigo-500/20 relative overflow-hidden">
+              <div className="rounded-2xl p-8 bg-indigo-600 text-white border-none shadow-xl shadow-indigo-500/20 relative overflow-hidden transition-all duration-200">
                  <div className="absolute -right-4 -bottom-4 opacity-10"><CreditCard className="h-32 w-32" /></div>
                  <p className="text-[10px] font-black uppercase tracking-widest opacity-80 mb-2">Total Outstanding Fees</p>
                  <h2 className="text-3xl font-black">{formatCurrency(outstanding)}</h2>
                  <p className="text-[10px] mt-4 font-bold bg-white/20 w-fit px-2 py-1 rounded">Next due: 15th Next Month</p>
-              </Card>
-              <Card className="p-8 bg-emerald-600 text-white border-none shadow-xl shadow-emerald-500/20 relative overflow-hidden">
+              </div>
+              <div className="rounded-2xl p-8 bg-emerald-600 text-white border-none shadow-xl shadow-emerald-500/20 relative overflow-hidden transition-all duration-200">
                  <div className="absolute -right-4 -bottom-4 opacity-10"><Wallet className="h-32 w-32" /></div>
                  <p className="text-[10px] font-black uppercase tracking-widest opacity-80 mb-2">Canteen Wallet Balance</p>
                  <h2 className="text-3xl font-black">{formatCurrency(wallet?.balance || 0)}</h2>
                  <Button onClick={() => setIsTopUpOpen(true)} variant="secondary" className="mt-4 bg-white/20 text-white border-none hover:bg-white/30 text-[10px] h-8">Top Up Now</Button>
-              </Card>
+              </div>
            </div>
 
            {/* Billing History */}
@@ -183,13 +183,13 @@ export default function ParentFinancePage() {
               </div>
            </Card>
 
-           <Card className="p-6 bg-slate-900 text-white border-none shadow-xl">
+           <div className="rounded-2xl p-6 bg-slate-900 text-white border-none shadow-xl transition-all duration-200">
               <h4 className="text-sm font-bold mb-2">Automated Billing</h4>
               <p className="text-xs opacity-60 leading-relaxed mb-4">
                  Enable auto-debit from your child's canteen wallet for seamless monthly fee settlements.
               </p>
               <Button className="w-full bg-[var(--accent)] hover:bg-[var(--accent)]/90 border-none">Enable Auto-Pay</Button>
-           </Card>
+           </div>
         </div>
       </div>
 
