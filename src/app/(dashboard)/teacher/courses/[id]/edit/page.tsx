@@ -516,15 +516,16 @@ export default function EditCoursePage() {
                     
                     <div className="grid grid-cols-1 sm:grid-cols-4 gap-3 pr-8">
                       <div className="sm:col-span-1">
-                        <label className="block text-[10px] font-bold uppercase tracking-wider text-[var(--text-secondary)] mb-1">Muncul di Detik</label>
+                        <label className="block text-[10px] font-bold uppercase tracking-wider text-[var(--text-secondary)] mb-1">Waktu (MM:SS / Detik)</label>
                         <input 
-                          type="number" 
+                          type="text" 
                           value={q.timestamp} 
                           onChange={(e) => {
                             const newData = [...((editingLesson.interactive_quiz_data as any[]) || [])];
-                            newData[index].timestamp = parseInt(e.target.value) || 0;
+                            newData[index].timestamp = e.target.value;
                             setEditingLesson({ ...editingLesson, interactive_quiz_data: newData });
                           }}
+                          placeholder="e.g. 02:38 atau 158"
                           className="w-full h-9 px-3 rounded-lg text-sm border border-[var(--border)] outline-none focus:border-[var(--accent)]" 
                         />
                       </div>

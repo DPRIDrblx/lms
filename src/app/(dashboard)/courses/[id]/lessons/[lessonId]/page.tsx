@@ -25,7 +25,8 @@ import toast from "react-hot-toast";
 import { useRouter } from "next/navigation";
 import dynamic from "next/dynamic";
 
-const Player = dynamic(() => import("react-player"), { ssr: false }) as any;
+// @ts-ignore
+const Player = dynamic(() => import("react-player/youtube"), { ssr: false }) as any;
 
 export default function LessonViewerPage({ params }: { params: Promise<{ id: string; lessonId: string }> }) {
   const { id, lessonId } = use(params);
@@ -168,8 +169,14 @@ export default function LessonViewerPage({ params }: { params: Promise<{ id: str
     // Check if there is a question at the current timestamp
     for (let i = 0; i < lesson.interactive_quiz_data.length; i++) {
       const q = lesson.interactive_quiz_data[i];
+      let targetSeconds = parseFloat(q.timestamp);
+      if (typeof q.timestamp === 'string' && q.timestamp.includes(':')) {
+        const parts = q.timestamp.split(':');
+        targetSeconds = parseInt(parts[0]) * 60 + parseInt(parts[1]);
+      }
+
       // Trigger if within 1 second window
-      if (!answeredQuestions.has(i) && Math.abs(state.playedSeconds - q.timestamp) < 1.0) {
+      if (!answeredQuestions.has(i) && Math.abs(state.playedSeconds - targetSeconds) < 1.0) {
         setPlaying(false);
         setActiveQuestion({ ...q, index: i });
         break;
