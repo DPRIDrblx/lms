@@ -9,8 +9,8 @@ import { motion } from "framer-motion";
 export function ClassGuard({ children }: { children: React.ReactNode }) {
   const { profile } = useAuth();
 
-  // TU, Parents, and Teachers are never blocked from general access
-  if (profile?.role === "tu" || profile?.role === "parent" || profile?.role === "teacher") {
+  // TU, Parents, Teachers, and Principals are never blocked from general access
+  if (profile?.role === "tu" || profile?.role === "parent" || profile?.role === "teacher" || profile?.role === "principal") {
     return <>{children}</>;
   }
 
