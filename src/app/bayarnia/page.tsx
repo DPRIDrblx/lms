@@ -2,8 +2,10 @@
 
 import React, { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Search, BookOpen, Target, Sparkles, CheckCircle2, ChevronRight, GraduationCap, Calculator, Globe, X } from "lucide-react";
+import { Search, BookOpen, Target, Sparkles, CheckCircle2, ChevronRight, GraduationCap, Calculator, Globe, X, Loader2 } from "lucide-react";
 import { XenditPaymentModal } from "@/components/finance/XenditPaymentModal";
+import { createClient } from "@/lib/supabase";
+import toast from "react-hot-toast";
 
 // Mock Data for Packages
 const PACKAGES = [
@@ -46,6 +48,8 @@ export default function BayarNiaPage() {
   const [selectedLevel, setSelectedLevel] = useState("Semua");
   const [selectedPackage, setSelectedPackage] = useState<any>(null);
   const [showCheckout, setShowCheckout] = useState(false);
+  const supabase = createClient();
+  const [isProcessingSignup, setIsProcessingSignup] = useState(false);
 
   // Mock Checkout State
   const [form, setForm] = useState({ name: "", email: "", password: "", voucher: "" });
@@ -57,10 +61,69 @@ export default function BayarNiaPage() {
     setSelectedPackage(pkg);
     setShowCheckout(true);
     setCheckoutStep(1);
+    setForm({ name: "", email: "", password: "", voucher: "" });
   };
 
   const processPayment = () => {
+    if (!form.name || !form.email || !form.password) {
+      toast.error("Mohon lengkapi Nama, Email, dan Password");
+      return;
+    }
+    if (form.password.length < 6) {
+      toast.error("Password minimal 6 karakter");
+      return;
+    }
     setCheckoutStep(2); // Show Xendit Mock
+  };
+
+  const handlePaymentSuccess = async () => {
+    setIsProcessingSignup(true);
+    
+    try {
+      // 1. Sign Up User
+      const { data: authData, error: authError } = await supabase.auth.signUp({
+        email: form.email,
+        password: form.password,
+        options: {
+          data: {
+            full_name: form.name,
+            role: "sobat_nia"
+          }
+        }
+      });
+
+      if (authError) throw authError;
+
+      if (authData.user) {
+        // Ensure role is set in profiles table (trigger might only do basics)
+        await supabase.from("profiles").update({
+          full_name: form.name,
+          role: "sobat_nia"
+        }).eq("id", authData.user.id);
+
+        // 2. Add Subscription
+        const startDate = new Date();
+        const endDate = new Date();
+        endDate.setFullYear(startDate.getFullYear() + 1); // 1 year duration
+
+        const { error: subError } = await supabase.from("nia_subscriptions").insert({
+          user_id: authData.user.id,
+          package_id: selectedPackage.id,
+          status: "active",
+          start_date: startDate.toISOString(),
+          end_date: endDate.toISOString()
+        });
+
+        if (subError) throw subError;
+      }
+      
+      setCheckoutStep(3);
+    } catch (error: any) {
+      toast.error("Gagal membuat akun: " + error.message);
+      setCheckoutStep(1);
+    } finally {
+      setIsProcessingSignup(false);
+    }
   };
 
   return (
@@ -264,15 +327,15 @@ export default function BayarNiaPage() {
                     <div className="space-y-4">
                       <div>
                         <label className="block text-sm font-bold text-slate-700 mb-1.5">Nama Lengkap</label>
-                        <input type="text" className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-orange-500 focus:border-orange-500 outline-none transition-all" placeholder="John Doe" />
+                        <input type="text" value={form.name} onChange={e => setForm({...form, name: e.target.value})} className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-orange-500 focus:border-orange-500 outline-none transition-all" placeholder="John Doe" />
                       </div>
                       <div>
                         <label className="block text-sm font-bold text-slate-700 mb-1.5">Email</label>
-                        <input type="email" className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-orange-500 focus:border-orange-500 outline-none transition-all" placeholder="john@example.com" />
+                        <input type="email" value={form.email} onChange={e => setForm({...form, email: e.target.value})} className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-orange-500 focus:border-orange-500 outline-none transition-all" placeholder="john@example.com" />
                       </div>
                       <div>
                         <label className="block text-sm font-bold text-slate-700 mb-1.5">Password</label>
-                        <input type="password" className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-orange-500 focus:border-orange-500 outline-none transition-all" placeholder="Minimal 8 karakter" />
+                        <input type="password" value={form.password} onChange={e => setForm({...form, password: e.target.value})} className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-orange-500 focus:border-orange-500 outline-none transition-all" placeholder="Minimal 8 karakter" />
                       </div>
                       <div>
                         <label className="block text-sm font-bold text-slate-700 mb-1.5">Kode Voucher (Opsional)</label>
@@ -294,16 +357,25 @@ export default function BayarNiaPage() {
 
                 {checkoutStep === 2 && (
                   <div className="h-full min-h-[400px] flex flex-col items-center justify-center text-center space-y-6">
-                    <div className="text-slate-500 font-medium">
-                      Membuka gerbang pembayaran...
-                    </div>
-                    <XenditPaymentModal
-                      isOpen={true}
-                      onClose={() => setCheckoutStep(1)}
-                      amount={selectedPackage?.price || 0}
-                      onSuccess={() => setCheckoutStep(3)}
-                      title="NIA Tutoring"
-                    />
+                    {isProcessingSignup ? (
+                      <div className="flex flex-col items-center justify-center space-y-4">
+                        <Loader2 className="w-10 h-10 text-orange-500 animate-spin" />
+                        <div className="text-slate-500 font-medium">Sedang menyiapkan akun belajarmu...</div>
+                      </div>
+                    ) : (
+                      <>
+                        <div className="text-slate-500 font-medium">
+                          Membuka gerbang pembayaran...
+                        </div>
+                        <XenditPaymentModal
+                          isOpen={true}
+                          onClose={() => setCheckoutStep(1)}
+                          amount={selectedPackage?.price || 0}
+                          onSuccess={handlePaymentSuccess}
+                          title="NIA Tutoring"
+                        />
+                      </>
+                    )}
                   </div>
                 )}
 
