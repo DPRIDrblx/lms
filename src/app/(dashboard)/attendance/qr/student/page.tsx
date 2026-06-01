@@ -188,13 +188,15 @@ export default function QRStudentPage() {
 
   return (
     <div className="max-w-lg mx-auto space-y-6 font-sans">
-      <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} className="text-center">
-        <h1 className="text-3xl font-bold text-[var(--text-primary)] tracking-tight">QR Check-in</h1>
-        <p className="text-sm font-medium text-[var(--text-secondary)] mt-2">
-          {phase === "form" && formType === "feedback" 
-            ? "Great job today! Please leave some feedback." 
-            : "Scan your teacher's QR code to mark attendance."}
-        </p>
+      <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} className="flex flex-col md:flex-row md:items-end justify-between gap-4 text-center md:text-left">
+        <div>
+          <h1 className="text-2xl sm:text-3xl font-bold text-[var(--text-primary)] tracking-tight">QR & Face Check In</h1>
+          <p className="text-sm font-medium text-[var(--text-secondary)] mt-1">
+            {phase === "form" && formType === "feedback" 
+              ? "Great job today! Please leave some feedback." 
+              : "Check into your classes instantly via secure scanners."}
+          </p>
+        </div>
       </motion.div>
 
       <AnimatePresence mode="wait">

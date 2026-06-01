@@ -174,15 +174,15 @@ export default function DashboardPage() {
         <div className="absolute bottom-0 left-0 w-64 h-64 bg-purple-400/10 dark:bg-purple-500/10 rounded-full blur-3xl -ml-20 -mb-20 pointer-events-none"></div>
         
         <div className="relative z-10 flex flex-col md:flex-row items-start md:items-center justify-between gap-6">
-          <div className="flex items-center gap-6">
-            <div className="w-16 h-16 rounded-2xl bg-[var(--bg-primary)] backdrop-blur-md border border-white/60 dark:border-slate-700/50 flex items-center justify-center shrink-0 shadow-sm">
-              <Trophy className="h-8 w-8 text-indigo-500 dark:text-indigo-400" />
+          <div className="flex items-center gap-4 sm:gap-6">
+            <div className="w-12 h-12 sm:w-16 sm:h-16 rounded-2xl bg-[var(--bg-primary)] backdrop-blur-md border border-white/60 dark:border-slate-700/50 flex items-center justify-center shrink-0 shadow-sm">
+              <Trophy className="h-6 w-6 sm:h-8 sm:w-8 text-indigo-500 dark:text-indigo-400" />
             </div>
             <div>
-              <h1 className="text-3xl font-bold text-[var(--text-primary)] mb-2 tracking-tight">
+              <h1 className="text-2xl sm:text-3xl font-bold text-[var(--text-primary)] mb-1 sm:mb-2 tracking-tight">
                 Welcome back, {profile.full_name?.split(" ")[0]}
               </h1>
-              <p className="text-[var(--text-secondary)] font-medium text-sm md:text-base">
+              <p className="text-[var(--text-secondary)] font-medium text-xs sm:text-sm md:text-base">
                 Your learning progress overview for today.
               </p>
             </div>
@@ -191,9 +191,9 @@ export default function DashboardPage() {
       </motion.div>
 
       {/* Gamified Stats (Glass & Flow) */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-5">
         {/* Total XP */}
-        <div className="bg-[var(--bg-secondary)] backdrop-blur-lg p-6 rounded-3xl border border-[var(--border)] shadow-sm hover:shadow-md transition-all group">
+        <div className="bg-[var(--bg-secondary)] backdrop-blur-lg p-4 sm:p-6 rounded-2xl sm:rounded-3xl border border-[var(--border)] shadow-sm hover:shadow-md transition-all group">
           <div className="flex items-start justify-between mb-4">
             <div className="p-3 rounded-2xl bg-indigo-100/50 dark:bg-indigo-500/20 text-indigo-600 dark:text-indigo-400">
               <Star className="h-5 w-5" />
@@ -203,39 +203,39 @@ export default function DashboardPage() {
             </span>
           </div>
           <div>
-            <h3 className="text-3xl font-black text-[var(--text-primary)] tracking-tight mb-1">{xp.toLocaleString()}</h3>
-            <p className="text-sm font-medium text-[var(--text-secondary)]">Total XP</p>
+            <h3 className="text-2xl sm:text-3xl font-black text-[var(--text-primary)] tracking-tight mb-1">{xp.toLocaleString()}</h3>
+            <p className="text-xs sm:text-sm font-medium text-[var(--text-secondary)]">Total XP</p>
           </div>
         </div>
 
         {/* Current Rank */}
-        <div className="bg-[var(--bg-secondary)] backdrop-blur-lg p-6 rounded-3xl border border-[var(--border)] shadow-sm hover:shadow-md transition-all group">
+        <div className="bg-[var(--bg-secondary)] backdrop-blur-lg p-4 sm:p-6 rounded-2xl sm:rounded-3xl border border-[var(--border)] shadow-sm hover:shadow-md transition-all group">
           <div className="flex items-start justify-between mb-4">
             <div className="p-3 rounded-2xl bg-amber-100/50 dark:bg-amber-500/20 text-amber-600 dark:text-amber-400">
               <Trophy className="h-5 w-5" />
             </div>
           </div>
           <div>
-            <h3 className="text-2xl font-black text-[var(--text-primary)] tracking-tight mb-1">{rank}</h3>
-            <p className="text-sm font-medium text-[var(--text-secondary)]">Current Rank</p>
+            <h3 className="text-xl sm:text-2xl font-black text-[var(--text-primary)] tracking-tight mb-1">{rank}</h3>
+            <p className="text-xs sm:text-sm font-medium text-[var(--text-secondary)]">Current Rank</p>
           </div>
         </div>
 
         {/* Lessons Done */}
-        <div className="bg-[var(--bg-secondary)] backdrop-blur-lg p-6 rounded-3xl border border-[var(--border)] shadow-sm hover:shadow-md transition-all group">
+        <div className="bg-[var(--bg-secondary)] backdrop-blur-lg p-4 sm:p-6 rounded-2xl sm:rounded-3xl border border-[var(--border)] shadow-sm hover:shadow-md transition-all group">
           <div className="flex items-start justify-between mb-4">
             <div className="p-3 rounded-2xl bg-emerald-100/50 dark:bg-emerald-500/20 text-emerald-600 dark:text-emerald-400">
               <BookOpen className="h-5 w-5" />
             </div>
           </div>
           <div>
-            <h3 className="text-3xl font-black text-[var(--text-primary)] tracking-tight mb-1">{completedCount}</h3>
-            <p className="text-sm font-medium text-[var(--text-secondary)]">Missions Cleared</p>
+            <h3 className="text-2xl sm:text-3xl font-black text-[var(--text-primary)] tracking-tight mb-1">{completedCount}</h3>
+            <p className="text-xs sm:text-sm font-medium text-[var(--text-secondary)]">Missions Cleared</p>
           </div>
         </div>
 
         {/* Day Streak */}
-        <div className="bg-[var(--bg-secondary)] backdrop-blur-lg p-6 rounded-3xl border border-[var(--border)] shadow-sm hover:shadow-md transition-all group">
+        <div className="bg-[var(--bg-secondary)] backdrop-blur-lg p-4 sm:p-6 rounded-2xl sm:rounded-3xl border border-[var(--border)] shadow-sm hover:shadow-md transition-all group">
           <div className="flex items-start justify-between mb-4">
             <div className="p-3 rounded-2xl bg-rose-100/50 dark:bg-rose-500/20 text-rose-600 dark:text-rose-400">
               <Flame className="h-5 w-5" />
@@ -245,33 +245,33 @@ export default function DashboardPage() {
             </span>
           </div>
           <div>
-            <h3 className="text-3xl font-black text-[var(--text-primary)] tracking-tight mb-1">7</h3>
-            <p className="text-sm font-medium text-[var(--text-secondary)]">Day Streak</p>
+            <h3 className="text-2xl sm:text-3xl font-black text-[var(--text-primary)] tracking-tight mb-1">7</h3>
+            <p className="text-xs sm:text-sm font-medium text-[var(--text-secondary)]">Day Streak</p>
           </div>
         </div>
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         <div className="lg:col-span-2 bg-[var(--bg-secondary)] backdrop-blur-lg rounded-3xl p-6 md:p-8 border border-[var(--border)] shadow-sm relative">
-          <div className="flex items-center justify-between mb-8">
+          <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 sm:gap-0 mb-8">
             <div>
-              <h2 className="text-xl font-bold text-[var(--text-primary)] flex items-center gap-2 mb-1">
+              <h2 className="text-lg sm:text-xl font-bold text-[var(--text-primary)] flex items-center gap-2 mb-1">
                 Rank Progress
               </h2>
-              <p className="text-sm font-medium text-[var(--text-secondary)]">Earn XP to reach the next tier</p>
+              <p className="text-xs sm:text-sm font-medium text-[var(--text-secondary)]">Earn XP to reach the next tier</p>
             </div>
-            <div className="px-4 py-2 bg-indigo-100/50 dark:bg-indigo-500/20 text-indigo-700 dark:text-indigo-300 rounded-2xl text-sm font-bold tracking-wide border border-indigo-200/50 dark:border-indigo-500/30">
+            <div className="px-4 py-2 bg-indigo-100/50 dark:bg-indigo-500/20 text-indigo-700 dark:text-indigo-300 rounded-2xl text-xs sm:text-sm font-bold tracking-wide border border-indigo-200/50 dark:border-indigo-500/30">
               {rank}
             </div>
           </div>
           <div className="relative">
              <ProgressBar value={nextRank.progress} showLabel size="lg" color="#6366f1" />
-             <p className="text-sm font-medium text-[var(--text-secondary)] mt-6 flex justify-between items-center">
+             <p className="text-xs sm:text-sm font-medium text-[var(--text-secondary)] mt-6 flex justify-between items-center">
                <span>Next milestone: <strong className="text-slate-800 dark:text-slate-200">{nextRank.name}</strong></span>
                {nextRank.xpNeeded > 0 ? (
-                 <span className="bg-[var(--bg-tertiary)] px-3 py-1 rounded-full text-xs font-bold">{nextRank.xpNeeded} XP left</span>
+                 <span className="bg-[var(--bg-tertiary)] px-3 py-1 rounded-full text-[10px] sm:text-xs font-bold">{nextRank.xpNeeded} XP left</span>
                ) : (
-                 <span className="bg-indigo-100 dark:bg-indigo-900/50 text-indigo-600 dark:text-indigo-400 px-3 py-1 rounded-full text-xs font-bold">Max Rank</span>
+                 <span className="bg-indigo-100 dark:bg-indigo-900/50 text-indigo-600 dark:text-indigo-400 px-3 py-1 rounded-full text-[10px] sm:text-xs font-bold">Max Rank</span>
                )}
              </p>
           </div>

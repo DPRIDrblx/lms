@@ -92,7 +92,7 @@ export default function CoursesPage() {
     <div className="space-y-6 max-w-6xl font-sans">
       <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} className="flex flex-col md:flex-row md:items-end justify-between gap-4">
         <div>
-          <h1 className="text-3xl font-bold text-[var(--text-primary)] tracking-tight">Course Portal</h1>
+          <h1 className="text-2xl sm:text-3xl font-bold text-[var(--text-primary)] tracking-tight">Course Portal</h1>
           <p className="text-sm font-medium text-[var(--text-secondary)] mt-1">Explore your learning missions and track progress.</p>
         </div>
       </motion.div>
@@ -167,7 +167,7 @@ export default function CoursesPage() {
                       </div>
                     </div>
                     <div className="p-6 flex-1 flex flex-col">
-                      <h3 className="text-lg font-bold text-[var(--text-primary)] mb-2 line-clamp-2 leading-snug group-hover:text-indigo-600 dark:group-hover:text-indigo-400 transition-colors">{course.title}</h3>
+                      <h2 className="text-base sm:text-lg font-bold text-[var(--text-primary)] mb-2 line-clamp-2 leading-snug group-hover:text-indigo-600 dark:group-hover:text-indigo-400 transition-colors">{course.title}</h2>
                       <p className="text-sm text-[var(--text-secondary)] line-clamp-2 mb-6 flex-1 leading-relaxed">{course.description}</p>
                       <div className="pt-4 border-t border-[var(--border)]">
                         <div className="flex items-center justify-between mb-2">

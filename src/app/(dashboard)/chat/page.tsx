@@ -160,9 +160,9 @@ export default function AdvancedChatPortal() {
   };
 
   return (
-    <div className="h-[calc(100vh-140px)] flex gap-6 overflow-hidden font-sans">
+    <div className="min-h-[calc(100vh-140px)] md:h-[calc(100vh-140px)] flex flex-col md:flex-row gap-6 font-sans">
       {/* Sidebar: Navigation & Directory */}
-      <div className="w-80 flex flex-col shrink-0 bg-[var(--bg-secondary)] backdrop-blur-lg rounded-3xl border border-[var(--border)] shadow-sm overflow-hidden">
+      <div className="w-full md:w-80 h-[400px] md:h-full flex flex-col shrink-0 bg-[var(--bg-secondary)] backdrop-blur-lg rounded-3xl border border-[var(--border)] shadow-sm overflow-hidden">
          <div className="p-5 border-b border-[var(--border)] space-y-5 bg-[var(--bg-primary)]">
             <div className="flex bg-[var(--bg-tertiary)] p-1.5 rounded-xl border border-slate-200/50 dark:border-slate-700/50">
                <button 
@@ -215,7 +215,7 @@ export default function AdvancedChatPortal() {
       </div>
 
       {/* Main Chat Area */}
-      <div className="flex-1 flex flex-col bg-[var(--bg-secondary)] backdrop-blur-lg rounded-3xl border border-[var(--border)] shadow-sm overflow-hidden relative">
+      <div className="flex-1 min-h-[500px] md:min-h-0 flex flex-col bg-[var(--bg-secondary)] backdrop-blur-lg rounded-3xl border border-[var(--border)] shadow-sm overflow-hidden relative">
          {selectedGroup ? (
             <>
                <div className="p-5 border-b border-[var(--border)] flex items-center justify-between bg-[var(--bg-primary)] sticky top-0 z-10 backdrop-blur-md">
