@@ -360,26 +360,26 @@ export default function LessonViewerPage({ params }: { params: Promise<{ id: str
                         initial={{ opacity: 0 }}
                         animate={{ opacity: 1 }}
                         exit={{ opacity: 0 }}
-                        className="absolute inset-0 bg-black/80 backdrop-blur-sm flex items-center justify-center p-6 z-10"
+                        className="fixed md:absolute inset-0 bg-black/80 backdrop-blur-sm flex items-center justify-center p-4 sm:p-6 z-[100]"
                       >
                         <motion.div 
                           initial={{ scale: 0.9, y: 20 }}
                           animate={{ scale: 1, y: 0 }}
-                          className="bg-white rounded-2xl p-6 md:p-8 max-w-lg w-full text-center"
+                          className="bg-[var(--bg-primary)] rounded-2xl p-5 sm:p-6 md:p-8 max-w-lg w-full text-center max-h-[90vh] md:max-h-[90%] overflow-y-auto shadow-2xl"
                         >
-                          <div className="mb-6">
-                            <h3 className="text-xl font-bold text-[var(--text-primary)]">{activeQuestion.question}</h3>
+                          <div className="mb-4 sm:mb-6">
+                            <h3 className="text-lg sm:text-xl font-bold text-[var(--text-primary)]">{activeQuestion.question}</h3>
                           </div>
                           
-                          <div className="space-y-3">
+                          <div className="space-y-2 sm:space-y-3">
                             {activeQuestion.options.map((opt: string, idx: number) => (
                               <button
                                 key={idx}
                                 onClick={() => setSelectedAnswer(idx)}
-                                className={`w-full p-4 rounded-xl border-2 text-left transition-all ${
+                                className={`w-full p-3 sm:p-4 rounded-xl border-2 text-left text-sm sm:text-base transition-all ${
                                   selectedAnswer === idx 
                                     ? "border-[var(--accent)] bg-[var(--accent-light)] text-[var(--accent)]" 
-                                    : "border-[var(--border)] hover:border-[var(--border-hover)] text-[var(--text-primary)]"
+                                    : "border-[var(--border)] hover:border-[var(--border-hover)] text-[var(--text-primary)] bg-[var(--bg-secondary)]"
                                 }`}
                               >
                                 {opt}
@@ -387,23 +387,23 @@ export default function LessonViewerPage({ params }: { params: Promise<{ id: str
                             ))}
                           </div>
 
-                          <div className="mt-6 flex flex-col items-center gap-3">
+                          <div className="mt-5 sm:mt-6 flex flex-col items-center gap-3">
                             <Button 
                               onClick={handleAnswerSubmit} 
                               disabled={selectedAnswer === null}
-                              className="w-full h-12"
+                              className="w-full h-12 bg-[var(--accent)] hover:bg-[var(--accent-hover)] text-white"
                             >
                               Jawab
                             </Button>
 
                             <AnimatePresence>
                               {feedback === "correct" && (
-                                <motion.p initial={{ opacity: 0, y: 5 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }} className="text-[var(--success)] font-bold flex items-center gap-2">
-                                  <CheckCircle2 className="h-5 w-5" /> Jawaban Benar! Melanjutkan video...
+                                <motion.p initial={{ opacity: 0, y: 5 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }} className="text-[var(--success)] font-bold flex items-center gap-2 text-sm sm:text-base">
+                                  <CheckCircle2 className="h-5 w-5" /> Jawaban Benar! Melanjutkan...
                                 </motion.p>
                               )}
                               {feedback === "wrong" && (
-                                <motion.p initial={{ opacity: 0, y: 5 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }} className="text-[var(--error)] font-bold">
+                                <motion.p initial={{ opacity: 0, y: 5 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }} className="text-[var(--error)] font-bold text-sm sm:text-base">
                                   Jawaban Salah. Coba lagi!
                                 </motion.p>
                               )}
