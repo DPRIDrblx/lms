@@ -213,6 +213,12 @@ export default function LessonViewerPage({ params }: { params: Promise<{ id: str
     return cleanUrl + (cleanUrl.includes('canva.com/design') ? '/view?embed' : '');
   };
 
+  const formatVideoUrl = (url: string) => {
+    if (!url) return "";
+    if (url.includes("http://") || url.includes("https://")) return url;
+    return `https://www.youtube.com/watch?v=${url}`;
+  };
+
   return (
     <div className="max-w-4xl mx-auto space-y-6 pb-32">
       <header className="flex items-center justify-between border-b border-[var(--border)] pb-4">
@@ -317,7 +323,7 @@ export default function LessonViewerPage({ params }: { params: Promise<{ id: str
                 <>
                   <Player 
                     ref={playerRef}
-                    url={lesson.video_url}
+                    url={formatVideoUrl(lesson.video_url)}
                     playing={playing}
                     onPlay={() => setPlaying(true)}
                     onPause={() => setPlaying(false)}
