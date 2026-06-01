@@ -29,8 +29,10 @@ export async function middleware(request: NextRequest) {
     request.nextUrl.pathname.startsWith("/login") ||
     request.nextUrl.pathname.startsWith("/auth");
 
+  const isPublicRoute = request.nextUrl.pathname.startsWith("/bayarnia");
+
   // Bypass for static assets and public routes
-  if (isAuthPage) return supabaseResponse;
+  if (isAuthPage || isPublicRoute) return supabaseResponse;
 
   // Leniency: Check if session cookies exist before hitting Supabase
   // This helps break the redirect loop if cookies are still being propagated
