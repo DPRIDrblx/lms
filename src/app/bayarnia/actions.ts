@@ -52,10 +52,14 @@ export async function registerSobatNiaAction(formData: {
     }).eq("id", userId);
 
     // 3. Add subscription
+    const validUntil = new Date();
+    validUntil.setFullYear(validUntil.getFullYear() + 1); // 1 year
+
     const { error: subError } = await supabaseAdmin.from("nia_subscriptions").insert({
-      user_id: userId,
+      student_id: userId,
       package_id: packageId,
-      status: "active"
+      status: "active",
+      valid_until: validUntil.toISOString()
     });
 
     if (subError) throw subError;

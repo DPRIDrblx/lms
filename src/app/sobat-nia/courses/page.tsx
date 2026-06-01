@@ -21,7 +21,7 @@ export default function SobatNiaCoursesPage() {
       const { data: subs } = await supabase
         .from("nia_subscriptions")
         .select("package_id")
-        .eq("user_id", profile.id)
+        .eq("student_id", profile.id)
         .eq("status", "active");
 
       if (!subs || subs.length === 0) {
