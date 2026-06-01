@@ -22,7 +22,9 @@ import {
   FileText,
   Settings,
   MessageSquare,
-  LogOut
+  LogOut,
+  ShieldAlert,
+  Building
 } from "lucide-react";
 import { useState, useEffect } from "react";
 
@@ -66,6 +68,8 @@ const tuNav = [
   { href: "/tu/reports", label: "Report Cards", icon: FileText },
   { href: "/tu/account-generator", label: "Account Generator", icon: Users },
   { href: "/tu/cards", label: "Card Inventory", icon: CreditCard },
+  { href: "/tu/classes", label: "Classroom", icon: Building },
+  { href: "/tu/verifications", label: "Verifikasi Akun", icon: ShieldAlert },
   { href: "/settings", label: "Settings", icon: Settings },
 ];
 

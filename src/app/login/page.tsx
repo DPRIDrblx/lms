@@ -31,7 +31,7 @@ export default function LoginPage() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [fullName, setFullName] = useState("");
-  const [role, setRole] = useState<"student" | "teacher">("student");
+  const [role, setRole] = useState<"student" | "teacher" | "principal">("student");
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -158,8 +158,8 @@ export default function LoginPage() {
                 </div>
                 <div>
                   <label className="block text-sm font-medium text-[var(--text-primary)] mb-1.5">Role</label>
-                  <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-                    {(["student", "teacher", "parent", "tu"] as const).map((r) => (
+                  <div className="grid grid-cols-3 md:grid-cols-5 gap-2">
+                    {(["student", "teacher", "parent", "tu", "principal"] as const).map((r) => (
                       <button
                         key={r}
                         type="button"
