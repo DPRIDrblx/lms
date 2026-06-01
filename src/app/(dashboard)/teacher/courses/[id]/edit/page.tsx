@@ -23,7 +23,8 @@ import {
   Award,
   ChevronDown,
   ChevronUp,
-  Presentation
+  Presentation,
+  X
 } from "lucide-react";
 import Link from "next/link";
 import { useParams, useRouter } from "next/navigation";
@@ -393,7 +394,7 @@ export default function EditCoursePage() {
 
       {/* Lesson Modal */}
       <Modal isOpen={showLessonModal} onClose={() => { setShowLessonModal(false); setEditingLesson(null); }} title={editingLesson?.id ? "Edit Lesson" : "Add Lesson"}>
-        <div className="space-y-4">
+        <div className="space-y-4 max-h-[75vh] overflow-y-auto pr-2">
           <div>
             <label className="block text-sm font-medium mb-1.5">Chapter (Optional)</label>
             <select 
@@ -467,25 +468,130 @@ export default function EditCoursePage() {
                   placeholder="https://youtube.com/..."
                 />
               </div>
-              <div className="p-4 bg-[var(--bg-secondary)] rounded-xl border border-[var(--border)] space-y-3">
+              <div className="space-y-3 pt-2">
                 <div className="flex items-center justify-between">
-                  <h4 className="text-sm font-bold text-[var(--text-primary)]">Daftar Pertanyaan (Format JSON)</h4>
+                  <h4 className="text-sm font-bold text-[var(--text-primary)]">Kuis di Dalam Video</h4>
+                  <Button 
+                    type="button" 
+                    size="sm" 
+                    variant="secondary"
+                    className="h-8 text-xs"
+                    onClick={() => {
+                      const currentData = (editingLesson?.interactive_quiz_data as any[]) || [];
+                      const newData = [...currentData, { timestamp: 0, question: "", options: ["", ""], correct_index: 0 }];
+                      setEditingLesson({ ...editingLesson, interactive_quiz_data: newData });
+                    }}
+                  >
+                    <Plus className="h-3 w-3 mr-1" /> Tambah Soal
+                  </Button>
                 </div>
-                <p className="text-xs text-[var(--text-secondary)]">Untuk prototipe awal, silakan gunakan JSON murni. Contoh: <br/><code className="text-[10px] bg-white p-1 rounded">[{'{"timestamp":10, "question":"Apa?", "options":["A","B"], "correct_index":0}'}]</code></p>
-                <textarea 
-                  rows={4}
-                  value={editingLesson?.interactive_quiz_data ? JSON.stringify(editingLesson.interactive_quiz_data) : "[]"} 
-                  onChange={e => {
-                    try {
-                      const parsed = JSON.parse(e.target.value);
-                      setEditingLesson({ ...editingLesson, interactive_quiz_data: parsed });
-                    } catch(err) {
-                      // ignore parse errors while typing
-                    }
-                  }}
-                  className="w-full p-4 rounded-xl bg-white border border-[var(--border)] outline-none resize-y font-mono text-xs"
-                  placeholder="[]"
-                />
+                
+                {!(editingLesson?.interactive_quiz_data?.length) && (
+                   <p className="text-xs text-[var(--text-tertiary)] italic">Belum ada pertanyaan interaktif. Klik tombol "Tambah Soal".</p>
+                )}
+
+                {(editingLesson?.interactive_quiz_data || []).map((q: any, index: number) => (
+                  <div key={index} className="p-4 bg-[var(--bg-secondary)] border border-[var(--border)] rounded-xl relative space-y-3">
+                    <button 
+                      type="button"
+                      className="absolute top-3 right-3 text-[var(--text-tertiary)] hover:text-red-600 bg-white p-1 rounded-md shadow-sm border border-[var(--border)]"
+                      onClick={() => {
+                        const newData = [...((editingLesson.interactive_quiz_data as any[]) || [])];
+                        newData.splice(index, 1);
+                        setEditingLesson({ ...editingLesson, interactive_quiz_data: newData });
+                      }}
+                    >
+                      <X className="h-3 w-3" />
+                    </button>
+                    
+                    <div className="grid grid-cols-1 sm:grid-cols-4 gap-3 pr-8">
+                      <div className="sm:col-span-1">
+                        <label className="block text-[10px] font-bold uppercase tracking-wider text-[var(--text-secondary)] mb-1">Muncul di Detik</label>
+                        <input 
+                          type="number" 
+                          value={q.timestamp} 
+                          onChange={(e) => {
+                            const newData = [...((editingLesson.interactive_quiz_data as any[]) || [])];
+                            newData[index].timestamp = parseInt(e.target.value) || 0;
+                            setEditingLesson({ ...editingLesson, interactive_quiz_data: newData });
+                          }}
+                          className="w-full h-9 px-3 rounded-lg text-sm border border-[var(--border)] outline-none focus:border-[var(--accent)]" 
+                        />
+                      </div>
+                      <div className="sm:col-span-3">
+                        <label className="block text-[10px] font-bold uppercase tracking-wider text-[var(--text-secondary)] mb-1">Pertanyaan</label>
+                        <input 
+                          type="text" 
+                          value={q.question} 
+                          onChange={(e) => {
+                            const newData = [...((editingLesson.interactive_quiz_data as any[]) || [])];
+                            newData[index].question = e.target.value;
+                            setEditingLesson({ ...editingLesson, interactive_quiz_data: newData });
+                          }}
+                          className="w-full h-9 px-3 rounded-lg text-sm border border-[var(--border)] outline-none focus:border-[var(--accent)]" 
+                          placeholder="Ketik pertanyaan di sini..."
+                        />
+                      </div>
+                    </div>
+
+                    <div>
+                      <label className="block text-[10px] font-bold uppercase tracking-wider text-[var(--text-secondary)] mb-2">Pilihan Jawaban (Pilih yang benar)</label>
+                      <div className="space-y-2">
+                        {q.options.map((opt: string, optIndex: number) => (
+                          <div key={optIndex} className="flex items-center gap-2">
+                            <input 
+                              type="radio" 
+                              name={`correct_${index}`} 
+                              checked={q.correct_index === optIndex}
+                              onChange={() => {
+                                const newData = [...((editingLesson.interactive_quiz_data as any[]) || [])];
+                                newData[index].correct_index = optIndex;
+                                setEditingLesson({ ...editingLesson, interactive_quiz_data: newData });
+                              }}
+                              className="w-4 h-4 text-[var(--accent)]"
+                            />
+                            <input 
+                              type="text" 
+                              value={opt} 
+                              onChange={(e) => {
+                                const newData = [...((editingLesson.interactive_quiz_data as any[]) || [])];
+                                newData[index].options[optIndex] = e.target.value;
+                                setEditingLesson({ ...editingLesson, interactive_quiz_data: newData });
+                              }}
+                              className="flex-1 h-8 px-3 rounded-lg text-sm border border-[var(--border)] outline-none focus:border-[var(--accent)]" 
+                              placeholder={`Opsi ${optIndex + 1}`}
+                            />
+                            <button 
+                              type="button" 
+                              className="p-1.5 text-[var(--text-tertiary)] hover:text-red-500 rounded bg-white border border-[var(--border)]"
+                              onClick={() => {
+                                const newData = [...((editingLesson.interactive_quiz_data as any[]) || [])];
+                                newData[index].options.splice(optIndex, 1);
+                                if (newData[index].correct_index >= newData[index].options.length) {
+                                  newData[index].correct_index = Math.max(0, newData[index].options.length - 1);
+                                }
+                                setEditingLesson({ ...editingLesson, interactive_quiz_data: newData });
+                              }}
+                            >
+                              <X className="h-3 w-3" />
+                            </button>
+                          </div>
+                        ))}
+                        <button 
+                          type="button" 
+                          className="text-[10px] font-bold text-[var(--accent)] hover:text-indigo-600 mt-1"
+                          onClick={() => {
+                            const newData = [...((editingLesson.interactive_quiz_data as any[]) || [])];
+                            newData[index].options.push("");
+                            setEditingLesson({ ...editingLesson, interactive_quiz_data: newData });
+                          }}
+                        >
+                          + Tambah Opsi Jawaban
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                ))}
               </div>
             </div>
           )}
