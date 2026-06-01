@@ -163,55 +163,139 @@ export default function DashboardPage() {
   const completedCount = progressData.filter(p => p.completed).length;
 
   return (
-    <div className="space-y-8 max-w-6xl">
-      <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }}>
-        <h1 className="text-2xl font-bold text-[var(--text-primary)]">
-          Welcome back, {profile.full_name?.split(" ")[0]} 👋
-        </h1>
-        <p className="text-sm text-[var(--text-secondary)] mt-1">Here&apos;s your learning progress overview.</p>
+    <div className="space-y-8 max-w-6xl font-sans">
+      {/* Student Welcome Banner */}
+      <motion.div 
+        initial={{ opacity: 0, y: 12 }} 
+        animate={{ opacity: 1, y: 0 }}
+        className="relative overflow-hidden rounded-[2rem] bg-gradient-to-r from-indigo-500 via-purple-500 to-pink-500 p-8 md:p-10 text-white shadow-lg"
+      >
+        <div className="absolute top-0 right-0 w-64 h-64 bg-white/10 rounded-full blur-3xl -mr-20 -mt-20 pointer-events-none"></div>
+        <div className="absolute bottom-0 left-0 w-48 h-48 bg-black/10 rounded-full blur-2xl -ml-10 -mb-10 pointer-events-none"></div>
+        
+        <div className="relative z-10 flex flex-col md:flex-row items-start md:items-center justify-between gap-6">
+          <div className="flex items-center gap-5">
+            <div className="w-16 h-16 rounded-2xl bg-white/20 backdrop-blur-md border border-white/30 flex items-center justify-center shrink-0 shadow-inner">
+              <Trophy className="h-8 w-8 text-yellow-300 drop-shadow-md" />
+            </div>
+            <div>
+              <h1 className="text-3xl font-black mb-1 drop-shadow-sm">
+                Welcome back, {profile.full_name?.split(" ")[0]}! 🚀
+              </h1>
+              <p className="text-indigo-50 font-medium text-sm md:text-base opacity-90">
+                Ready to conquer your next learning mission?
+              </p>
+            </div>
+          </div>
+        </div>
       </motion.div>
 
-      {/* Stats */}
+      {/* Gamified Stats */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-        <StatCard label="Total XP" value={xp.toLocaleString()} icon={Trophy} color="#4F46E5" trend={{ value: "+25 today", positive: true }} />
-        <StatCard label="Current Rank" value={rank} icon={Star} color="#F59E0B" />
-        <StatCard label="Lessons Done" value={completedCount} icon={BookOpen} color="#10B981" />
-        <StatCard label="Day Streak" value="7" icon={Flame} color="#EF4444" trend={{ value: "Keep going!", positive: true }} />
+        {/* Total XP */}
+        <div className="bg-white dark:bg-slate-900 p-5 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm relative overflow-hidden group">
+          <div className="absolute top-0 left-0 w-1 h-full bg-indigo-500"></div>
+          <div className="flex items-start justify-between">
+            <div>
+              <p className="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-1">Total XP</p>
+              <h3 className="text-2xl font-black text-slate-800 dark:text-white">{xp.toLocaleString()}</h3>
+              <p className="text-xs font-semibold text-emerald-500 mt-2">↑ +25 today</p>
+            </div>
+            <div className="p-3 rounded-xl bg-indigo-50 dark:bg-indigo-500/10 text-indigo-600 dark:text-indigo-400">
+              <Star className="h-5 w-5" />
+            </div>
+          </div>
+        </div>
+
+        {/* Current Rank */}
+        <div className="bg-white dark:bg-slate-900 p-5 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm relative overflow-hidden group">
+          <div className="absolute top-0 left-0 w-1 h-full bg-amber-500"></div>
+          <div className="flex items-start justify-between">
+            <div>
+              <p className="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-1">Current Rank</p>
+              <h3 className="text-2xl font-black text-slate-800 dark:text-white">{rank}</h3>
+            </div>
+            <div className="p-3 rounded-xl bg-amber-50 dark:bg-amber-500/10 text-amber-600 dark:text-amber-400">
+              <Trophy className="h-5 w-5" />
+            </div>
+          </div>
+        </div>
+
+        {/* Lessons Done */}
+        <div className="bg-white dark:bg-slate-900 p-5 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm relative overflow-hidden group">
+          <div className="absolute top-0 left-0 w-1 h-full bg-emerald-500"></div>
+          <div className="flex items-start justify-between">
+            <div>
+              <p className="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-1">Missions Cleared</p>
+              <h3 className="text-2xl font-black text-slate-800 dark:text-white">{completedCount}</h3>
+            </div>
+            <div className="p-3 rounded-xl bg-emerald-50 dark:bg-emerald-500/10 text-emerald-600 dark:text-emerald-400">
+              <BookOpen className="h-5 w-5" />
+            </div>
+          </div>
+        </div>
+
+        {/* Day Streak */}
+        <div className="bg-white dark:bg-slate-900 p-5 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm relative overflow-hidden group">
+          <div className="absolute top-0 left-0 w-1 h-full bg-rose-500"></div>
+          <div className="flex items-start justify-between">
+            <div>
+              <p className="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-1">Day Streak</p>
+              <h3 className="text-2xl font-black text-slate-800 dark:text-white">7 Days</h3>
+              <p className="text-xs font-semibold text-rose-500 mt-2">Keep the fire burning!</p>
+            </div>
+            <div className="p-3 rounded-xl bg-rose-50 dark:bg-rose-500/10 text-rose-600 dark:text-rose-400">
+              <Flame className="h-5 w-5" />
+            </div>
+          </div>
+        </div>
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        <Card className="lg:col-span-2">
-          <div className="flex items-center justify-between mb-4">
-            <h2 className="text-lg font-semibold text-[var(--text-primary)]">Rank Progress</h2>
-            <Badge variant="info">{rank}</Badge>
+        <div className="lg:col-span-2 bg-white dark:bg-slate-900 rounded-3xl p-6 md:p-8 border border-slate-200 dark:border-slate-800 shadow-sm relative">
+          <div className="flex items-center justify-between mb-6">
+            <h2 className="text-xl font-bold text-slate-800 dark:text-white flex items-center gap-2">
+              <TrendingUp className="h-5 w-5 text-indigo-500" /> Rank Progress
+            </h2>
+            <div className="px-3 py-1 bg-indigo-50 dark:bg-indigo-500/10 text-indigo-700 dark:text-indigo-300 rounded-full text-xs font-bold uppercase tracking-wider">
+              {rank}
+            </div>
           </div>
-          <ProgressBar value={nextRank.progress} showLabel size="lg" color="#4F46E5" />
-          <p className="text-xs text-[var(--text-secondary)] mt-2">
-            {nextRank.xpNeeded > 0 ? `${nextRank.xpNeeded} XP to ${nextRank.name}` : "You've reached the highest rank!"}
-          </p>
-        </Card>
+          <div className="bg-slate-50 dark:bg-slate-800/50 p-6 rounded-2xl border border-slate-100 dark:border-slate-700/50">
+             <ProgressBar value={nextRank.progress} showLabel size="lg" color="#6366f1" />
+             <p className="text-sm font-medium text-slate-500 dark:text-slate-400 mt-4 text-center">
+               {nextRank.xpNeeded > 0 ? (
+                 <>You need <span className="font-bold text-indigo-600 dark:text-indigo-400">{nextRank.xpNeeded} XP</span> to reach <span className="font-bold text-slate-700 dark:text-slate-200">{nextRank.name}</span>!</>
+               ) : "You've reached the highest rank!"}
+             </p>
+          </div>
+        </div>
 
-        <Card>
-          <div className="flex items-center justify-between mb-4">
-            <h2 className="text-lg font-semibold text-[var(--text-primary)]">School Events</h2>
-            <Link href="/events" className="text-xs text-[var(--accent)] font-bold uppercase tracking-wider">All</Link>
+        <div className="bg-white dark:bg-slate-900 rounded-3xl p-6 border border-slate-200 dark:border-slate-800 shadow-sm">
+          <div className="flex items-center justify-between mb-6">
+            <h2 className="text-lg font-bold text-slate-800 dark:text-white">Upcoming Events</h2>
+            <Link href="/events" className="text-xs text-indigo-600 dark:text-indigo-400 font-bold uppercase tracking-wider hover:underline">View All</Link>
           </div>
           <div className="space-y-3">
             {events.length > 0 ? events.map((event) => (
-              <div key={event.id} className="flex items-start gap-3 p-2.5 rounded-xl hover:bg-[var(--bg-secondary)] transition-colors">
-                <div className="p-1.5 rounded-lg bg-[var(--accent-light)]">
-                  <Calendar className="h-4 w-4 text-[var(--accent)]" />
+              <div key={event.id} className="flex items-start gap-3 p-3 rounded-2xl hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors border border-transparent hover:border-slate-100 dark:hover:border-slate-700">
+                <div className="p-2 rounded-xl bg-indigo-50 dark:bg-indigo-500/10">
+                  <Calendar className="h-4 w-4 text-indigo-500 dark:text-indigo-400" />
                 </div>
                 <div>
-                  <p className="text-sm font-medium text-[var(--text-primary)]">{event.title}</p>
-                  <p className="text-[10px] text-[var(--text-tertiary)] font-bold uppercase mt-0.5">
+                  <p className="text-sm font-semibold text-slate-800 dark:text-white">{event.title}</p>
+                  <p className="text-[11px] text-slate-500 dark:text-slate-400 font-bold uppercase tracking-wider mt-1">
                     {new Date(event.event_date).toLocaleDateString(undefined, { weekday: 'short', day: 'numeric', month: 'short' })}
                   </p>
                 </div>
               </div>
-            )) : <p className="text-xs text-[var(--text-tertiary)] py-4 text-center">No upcoming events.</p>}
+            )) : (
+              <div className="text-center py-8">
+                 <p className="text-sm text-slate-400 dark:text-slate-500">No upcoming events.</p>
+              </div>
+            )}
           </div>
-        </Card>
+        </div>
       </div>
 
       <div className="w-full">
@@ -220,55 +304,69 @@ export default function DashboardPage() {
 
       {leadership && (
         <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }}>
-          <Card className="bg-emerald-50 border-emerald-200">
-            <div className="flex items-center justify-between mb-4">
+          <div className="bg-emerald-50 dark:bg-emerald-950/30 border border-emerald-200 dark:border-emerald-900/50 rounded-3xl p-6 md:p-8">
+            <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-6">
               <div>
-                <h2 className="text-lg font-bold text-emerald-900 flex items-center gap-2">
-                  <Star className="h-5 w-5" /> Class Leadership Portal
+                <h2 className="text-xl font-bold text-emerald-900 dark:text-emerald-100 flex items-center gap-2">
+                  <Star className="h-6 w-6 text-emerald-600 dark:text-emerald-400" /> Class Leadership Portal
                 </h2>
-                <p className="text-sm text-emerald-700 mt-1">Class {leadership.name} Management Tools</p>
+                <p className="text-sm font-medium text-emerald-700 dark:text-emerald-300/80 mt-1">Class {leadership.name} Management Tools</p>
               </div>
-              <Badge variant="success">Active Duty</Badge>
+              <div className="px-3 py-1 bg-emerald-200/50 dark:bg-emerald-900/50 text-emerald-800 dark:text-emerald-200 rounded-full text-xs font-bold uppercase tracking-wider w-fit">
+                 Active Duty
+              </div>
             </div>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                <Link href="/student/leadership/attendance">
-                  <Button variant="secondary" className="w-full h-12 bg-white text-emerald-900 border-emerald-200 hover:bg-emerald-100" icon={<CalendarCheck className="h-4 w-4" />}>
+                  <Button variant="secondary" className="w-full h-14 bg-white dark:bg-slate-900 text-emerald-900 dark:text-emerald-100 border border-emerald-200 dark:border-emerald-800 hover:bg-emerald-100 dark:hover:bg-emerald-900/60 shadow-sm" icon={<CalendarCheck className="h-4 w-4" />}>
                      Manage Class Attendance
                   </Button>
                </Link>
                <Link href="/chat">
-                  <Button variant="secondary" className="w-full h-12 bg-white text-emerald-900 border-emerald-200 hover:bg-emerald-100" icon={<ChevronRight className="h-4 w-4" />}>
+                  <Button variant="secondary" className="w-full h-14 bg-white dark:bg-slate-900 text-emerald-900 dark:text-emerald-100 border border-emerald-200 dark:border-emerald-800 hover:bg-emerald-100 dark:hover:bg-emerald-900/60 shadow-sm" icon={<ChevronRight className="h-4 w-4" />}>
                      Broadcast Announcement
                   </Button>
                </Link>
             </div>
-          </Card>
+          </div>
         </motion.div>
       )}
 
       <div>
-        <div className="flex items-center justify-between mb-4">
-          <h2 className="text-lg font-semibold text-[var(--text-primary)]">Continue Learning</h2>
-          <Link href="/courses" className="text-sm font-medium text-[var(--accent)] hover:text-[var(--accent-hover)] transition-colors">
-            View all →
+        <div className="flex items-center justify-between mb-6">
+          <h2 className="text-xl font-bold text-slate-800 dark:text-white flex items-center gap-2">
+             <BookOpen className="h-5 w-5 text-indigo-500" /> Continue Learning
+          </h2>
+          <Link href="/courses" className="text-sm font-bold text-indigo-600 dark:text-indigo-400 hover:text-indigo-700 dark:hover:text-indigo-300 transition-colors uppercase tracking-wider">
+            View all courses →
           </Link>
         </div>
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
           {courses.map((course) => {
             const done = progressData.filter(p => p.course_id === course.id && p.completed).length;
             return (
-              <Link key={course.id} href={`/courses/${course.id}`}>
-                <Card hover padding="none">
-                  <div className="aspect-video bg-[var(--bg-tertiary)] relative overflow-hidden rounded-t-2xl">
-                     {course.cover_image && <img src={course.cover_image} alt="" className="w-full h-full object-cover" />}
+              <Link key={course.id} href={`/courses/${course.id}`} className="group block h-full">
+                <div className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 overflow-hidden shadow-sm hover:shadow-xl hover:-translate-y-1 transition-all duration-300 h-full flex flex-col">
+                  <div className="aspect-video bg-slate-100 dark:bg-slate-800 relative overflow-hidden">
+                     {course.cover_image && <img src={course.cover_image} alt="" className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" />}
+                     <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent"></div>
+                     <div className="absolute bottom-3 left-4">
+                        <span className="px-2 py-1 bg-white/20 backdrop-blur-md rounded-md text-[10px] font-bold text-white uppercase tracking-wider">
+                           {course.category}
+                        </span>
+                     </div>
                   </div>
-                  <div className="p-5">
-                    <p className="text-xs font-medium text-[var(--text-tertiary)] uppercase tracking-wide mb-1">{course.category}</p>
-                    <h3 className="text-base font-semibold text-[var(--text-primary)] mb-1 truncate">{course.title}</h3>
-                    <ProgressBar value={done} max={course.lessons_count || 1} size="sm" color="var(--accent)" />
-                    <p className="text-xs text-[var(--text-tertiary)] mt-1.5">{done}/{course.lessons_count} missions</p>
+                  <div className="p-5 flex-1 flex flex-col">
+                    <h3 className="text-base font-bold text-slate-800 dark:text-white mb-4 line-clamp-2 leading-snug group-hover:text-indigo-600 dark:group-hover:text-indigo-400 transition-colors">{course.title}</h3>
+                    <div className="mt-auto">
+                       <ProgressBar value={done} max={course.lessons_count || 1} size="sm" color="#6366f1" />
+                       <div className="flex justify-between items-center mt-2">
+                          <p className="text-xs font-medium text-slate-500 dark:text-slate-400">{done}/{course.lessons_count} missions</p>
+                          <p className="text-xs font-bold text-indigo-600 dark:text-indigo-400">{Math.round((done / (course.lessons_count || 1)) * 100)}%</p>
+                       </div>
+                    </div>
                   </div>
-                </Card>
+                </div>
               </Link>
             );
           })}
