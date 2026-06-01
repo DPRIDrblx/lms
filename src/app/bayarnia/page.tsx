@@ -3,7 +3,7 @@
 import React, { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Search, BookOpen, Target, Sparkles, CheckCircle2, ChevronRight, GraduationCap, Calculator, Globe, X } from "lucide-react";
-import { MockPaymentModal } from "@/components/finance/MockPaymentModal";
+import { XenditPaymentModal } from "@/components/finance/XenditPaymentModal";
 
 // Mock Data for Packages
 const PACKAGES = [
@@ -297,7 +297,7 @@ export default function BayarNiaPage() {
                     <div className="text-slate-500 font-medium">
                       Membuka gerbang pembayaran...
                     </div>
-                    <MockPaymentModal
+                    <XenditPaymentModal
                       isOpen={true}
                       onClose={() => setCheckoutStep(1)}
                       amount={selectedPackage?.price || 0}
