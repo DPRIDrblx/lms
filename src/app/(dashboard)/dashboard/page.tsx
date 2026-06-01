@@ -25,6 +25,7 @@ import {
 } from "lucide-react";
 import { useEffect, useState, useCallback } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 
 interface CourseRecord {
   id: string;
@@ -45,6 +46,7 @@ interface SchoolEvent {
 export default function DashboardPage() {
   const { profile } = useAuth();
   const supabase = createClient();
+  const router = useRouter();
   
   const [courses, setCourses] = useState<CourseRecord[]>([]);
   const [progressData, setProgressData] = useState<any[]>([]);
@@ -62,6 +64,21 @@ export default function DashboardPage() {
 
   const fetchData = useCallback(async () => {
     if (!profile) return;
+    
+    // Redirect non-students to their respective dashboards
+    if (profile.role === "teacher") {
+      router.push("/teacher");
+      return;
+    } else if (profile.role === "principal") {
+      router.push("/principal");
+      return;
+    } else if (profile.role === "tu") {
+      router.push("/tu/dashboard");
+      return;
+    } else if (profile.role === "parent") {
+      router.push("/parent/dashboard");
+      return;
+    }
 
     // 1. Fetch Courses
     const { data: courseData } = await supabase
@@ -96,7 +113,7 @@ export default function DashboardPage() {
     if (leadershipData) setLeadership(leadershipData);
     
     setLoading(false);
-  }, [profile, supabase]);
+  }, [profile, supabase, router]);
 
   useEffect(() => {
     fetchData();

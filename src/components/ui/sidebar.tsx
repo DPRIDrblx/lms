@@ -39,7 +39,7 @@ const studentNav = [
 ];
 
 const teacherNav = [
-  { href: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
+  { href: "/teacher", label: "Dashboard", icon: LayoutDashboard },
   { href: "/teacher/classroom", label: "Classroom", icon: Users },
   { href: "/teacher/homeroom", label: "Homeroom Authority", icon: Award },
   { href: "/chat", label: "Communications", icon: MessageSquare },
@@ -104,19 +104,39 @@ export function Sidebar() {
 
 const SidebarContent = ({ navItems, pathname, profile, setMobileOpen }: any) => {
   const isExecutive = profile?.role === "principal";
+  const isEducator = profile?.role === "teacher";
+
+  // Dynamic classes based on role
+  const sidebarBg = isExecutive ? "bg-slate-900 text-slate-300" : isEducator ? "bg-teal-950 text-teal-100/80" : "bg-white";
+  const borderClass = isExecutive ? "border-slate-800" : isEducator ? "border-teal-900" : "border-[var(--border)]";
+  const iconBg = isExecutive ? "bg-amber-500" : isEducator ? "bg-teal-500" : "bg-[var(--accent)]";
+  const titleColor = isExecutive ? "text-white" : isEducator ? "text-white" : "text-[var(--text-primary)]";
+  const subtitleColor = isExecutive ? "text-amber-500" : isEducator ? "text-teal-400" : "text-[var(--text-tertiary)]";
+  
+  const getSubTitle = () => {
+    if (isExecutive) return "Executive Board";
+    if (isEducator) return "Educator Portal";
+    return "International Academy";
+  };
+  
+  const getLinkHref = () => {
+    if (isExecutive) return "/principal";
+    if (isEducator) return "/teacher";
+    return "/dashboard";
+  };
 
   return (
-    <div className={cn("flex flex-col h-full", isExecutive ? "bg-slate-900 text-slate-300" : "bg-white")}>
+    <div className={cn("flex flex-col h-full", sidebarBg)}>
       {/* Logo */}
-      <div className={cn("p-5 border-b", isExecutive ? "border-slate-800" : "border-[var(--border)]")}>
-        <Link href={isExecutive ? "/principal" : "/dashboard"} className="flex items-center gap-3">
-          <div className={cn("w-9 h-9 rounded-xl flex items-center justify-center", isExecutive ? "bg-amber-500" : "bg-[var(--accent)]")}>
+      <div className={cn("p-5 border-b", borderClass)}>
+        <Link href={getLinkHref()} className="flex items-center gap-3">
+          <div className={cn("w-9 h-9 rounded-xl flex items-center justify-center shadow-lg", iconBg, isEducator && "shadow-teal-500/20")}>
             <GraduationCap className="h-5 w-5 text-white" />
           </div>
           <div>
-            <h1 className={cn("text-sm font-bold leading-tight", isExecutive ? "text-white" : "text-[var(--text-primary)]")}>Nusantara</h1>
-            <p className={cn("text-[10px] font-medium uppercase tracking-wider", isExecutive ? "text-amber-500" : "text-[var(--text-tertiary)]")}>
-              {isExecutive ? "Executive Board" : "International Academy"}
+            <h1 className={cn("text-sm font-bold leading-tight", titleColor)}>Nusantara</h1>
+            <p className={cn("text-[10px] font-bold uppercase tracking-wider", subtitleColor)}>
+              {getSubTitle()}
             </p>
           </div>
         </Link>
@@ -124,11 +144,22 @@ const SidebarContent = ({ navItems, pathname, profile, setMobileOpen }: any) => 
 
       {/* Navigation */}
       <nav className="flex-1 p-3 space-y-0.5 overflow-y-auto">
-        <p className={cn("px-3 pt-3 pb-2 text-[10px] font-semibold uppercase tracking-wider", isExecutive ? "text-slate-500" : "text-[var(--text-tertiary)]")}>
+        <p className={cn("px-3 pt-3 pb-2 text-[10px] font-semibold uppercase tracking-wider", isExecutive ? "text-slate-500" : isEducator ? "text-teal-700" : "text-[var(--text-tertiary)]")}>
           Menu
         </p>
         {navItems.map((item: any) => {
-          const isActive = pathname === item.href || (item.href !== "/dashboard" && item.href !== "/principal" && pathname.startsWith(item.href));
+          const isActive = pathname === item.href || (item.href !== "/dashboard" && item.href !== "/principal" && item.href !== "/teacher" && pathname.startsWith(item.href));
+          
+          let activeClass = "bg-[var(--accent-light)] text-[var(--accent)]";
+          let inactiveClass = "text-[var(--text-secondary)] hover:text-[var(--text-primary)] hover:bg-[var(--bg-tertiary)]";
+          
+          if (isExecutive) {
+            activeClass = "bg-amber-500/10 text-amber-500";
+            inactiveClass = "text-slate-400 hover:text-white hover:bg-slate-800";
+          } else if (isEducator) {
+            activeClass = "bg-teal-500/10 text-teal-400 border border-teal-500/20";
+            inactiveClass = "text-teal-100/60 hover:text-white hover:bg-teal-900";
+          }
           
           return (
             <Link
@@ -137,9 +168,7 @@ const SidebarContent = ({ navItems, pathname, profile, setMobileOpen }: any) => 
               onClick={() => setMobileOpen(false)}
               className={cn(
                 "flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-all duration-200",
-                isActive
-                  ? (isExecutive ? "bg-amber-500/10 text-amber-500" : "bg-[var(--accent-light)] text-[var(--accent)]")
-                  : (isExecutive ? "text-slate-400 hover:text-white hover:bg-slate-800" : "text-[var(--text-secondary)] hover:text-[var(--text-primary)] hover:bg-[var(--bg-tertiary)]")
+                isActive ? activeClass : inactiveClass
               )}
             >
               <item.icon className="h-[18px] w-[18px]" />
@@ -151,22 +180,34 @@ const SidebarContent = ({ navItems, pathname, profile, setMobileOpen }: any) => 
 
       {/* User Footer */}
       {/* User Profile */}
-      <div className={cn("p-4 border-t", isExecutive ? "border-slate-800" : "border-[var(--border)]")}>
+      <div className={cn("p-4 border-t", borderClass)}>
         <div className="flex items-center gap-3 px-2">
           {profile?.avatar_url ? (
-            <img src={profile.avatar_url} alt="Profile" className={cn("w-10 h-10 rounded-full object-cover border-2", isExecutive ? "border-amber-500" : "border-[var(--accent)]")} />
+            <img src={profile.avatar_url} alt="Profile" className={cn("w-10 h-10 rounded-full object-cover border-2", isExecutive ? "border-amber-500" : isEducator ? "border-teal-500" : "border-[var(--accent)]")} />
           ) : (
-            <div className={cn("w-10 h-10 rounded-full flex items-center justify-center font-bold text-sm", isExecutive ? "bg-amber-500 text-white" : "bg-[var(--accent-light)] text-[var(--accent)]")}>
+            <div className={cn("w-10 h-10 rounded-full flex items-center justify-center font-bold text-sm shadow-inner", 
+              isExecutive ? "bg-amber-500 text-white" : 
+              isEducator ? "bg-teal-800 text-teal-100" : 
+              "bg-[var(--accent-light)] text-[var(--accent)]"
+            )}>
               {profile?.full_name?.charAt(0).toUpperCase()}
             </div>
           )}
           <div className="flex-1 min-w-0">
-            <h3 className={cn("text-sm font-bold truncate", isExecutive ? "text-white" : "text-[var(--text-primary)]")}>{profile?.full_name}</h3>
-            <p className={cn("text-[10px] font-medium uppercase tracking-wider truncate", isExecutive ? "text-amber-500" : "text-[var(--text-tertiary)]")}>
+            <h3 className={cn("text-sm font-bold truncate", titleColor)}>{profile?.full_name}</h3>
+            <p className={cn("text-[10px] font-bold uppercase tracking-wider truncate", subtitleColor)}>
               {profile?.role}
             </p>
           </div>
-          <button onClick={() => supabase.auth.signOut()} className={cn("p-2 rounded-lg transition-colors", isExecutive ? "text-slate-500 hover:text-red-400 hover:bg-slate-800" : "text-[var(--text-tertiary)] hover:text-red-500 hover:bg-red-50")}>
+          <button 
+            onClick={() => supabase.auth.signOut()} 
+            className={cn(
+              "p-2 rounded-lg transition-colors", 
+              isExecutive ? "text-slate-500 hover:text-red-400 hover:bg-slate-800" : 
+              isEducator ? "text-teal-600 hover:text-red-400 hover:bg-teal-900" : 
+              "text-[var(--text-tertiary)] hover:text-red-500 hover:bg-red-50"
+            )}
+          >
             <LogOut className="h-4 w-4" />
           </button>
         </div>
@@ -215,10 +256,15 @@ const SidebarContent = ({ navItems, pathname, profile, setMobileOpen }: any) => 
         )}
       </AnimatePresence>
 
-      {/* Desktop sidebar */}
-      <aside className="hidden lg:flex lg:flex-col w-[260px] min-h-screen bg-white border-r border-[var(--border)] fixed inset-y-0 left-0 z-30 print:hidden">
+      {/* Desktop Sidebar */}
+      <div className={cn(
+        "hidden md:block fixed inset-y-0 left-0 w-64 z-40 transition-colors border-r",
+        profile?.role === "principal" ? "bg-slate-900 border-slate-800" : 
+        profile?.role === "teacher" ? "bg-teal-950 border-teal-900" : 
+        "bg-white border-[var(--border)]"
+      )}>
         <SidebarContent navItems={navItems} pathname={pathname} profile={profile} setMobileOpen={setMobileOpen} />
-      </aside>
+      </div>
     </>
   );
 }
