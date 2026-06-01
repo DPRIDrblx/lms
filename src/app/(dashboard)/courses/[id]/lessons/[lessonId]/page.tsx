@@ -16,7 +16,8 @@ import {
   ExternalLink,
   Presentation,
   Gamepad2,
-  Film
+  Film,
+  PenTool
 } from "lucide-react";
 import { useEffect, useState, use, useRef } from "react";
 import Link from "next/link";
@@ -147,7 +148,7 @@ export default function LessonViewerPage({ params }: { params: Promise<{ id: str
   if (loading) return <div className="h-[80vh] flex items-center justify-center"><Loader2 className="h-8 w-8 animate-spin text-[var(--accent)]" /></div>;
   if (!lesson) return <div className="py-20 text-center text-[var(--text-tertiary)] font-bold">Materi tidak ditemukan.</div>;
 
-  const TypeIcon = lesson.content_type === "video" ? Play : lesson.content_type === "pdf" ? FileText : lesson.content_type === "canva" ? Presentation : lesson.content_type === "game" ? Gamepad2 : lesson.content_type === "interactive_video" ? Film : BookOpen;
+  const TypeIcon = lesson.content_type === "video" ? Play : lesson.content_type === "pdf" ? FileText : lesson.content_type === "canva" ? Presentation : lesson.content_type === "game" ? Gamepad2 : lesson.content_type === "interactive_video" ? Film : lesson.content_type === "whiteboard" ? PenTool : BookOpen;
 
   const getCanvaEmbedUrl = (url: string) => {
     if (!url) return "";
@@ -170,7 +171,7 @@ export default function LessonViewerPage({ params }: { params: Promise<{ id: str
           <ArrowLeft className="h-4 w-4" /> Kembali ke Daftar Bab
         </Link>
         <div className="flex items-center gap-2 text-[var(--text-tertiary)] bg-[var(--bg-secondary)] px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider">
-          <TypeIcon className="h-3.5 w-3.5" /> {lesson.content_type === 'canva' ? 'presentasi' : lesson.content_type === 'game' ? 'AI Game' : lesson.content_type === "interactive_video" ? 'Int. Video' : lesson.content_type}
+          <TypeIcon className="h-3.5 w-3.5" /> {lesson.content_type === 'canva' ? 'presentasi' : lesson.content_type === 'game' ? 'AI Game' : lesson.content_type === "interactive_video" ? 'Int. Video' : lesson.content_type === "whiteboard" ? 'Whiteboard' : lesson.content_type}
         </div>
       </header>
 
@@ -185,6 +186,25 @@ export default function LessonViewerPage({ params }: { params: Promise<{ id: str
         {/* CONTENT RENDERER */}
         <div className="bg-white border border-[var(--border)] rounded-2xl overflow-hidden shadow-sm">
           
+          {lesson.content_type === "whiteboard" && (
+            <div className="w-full flex flex-col">
+              <div className="bg-[var(--warning)]/10 text-[var(--warning-dark)] px-4 py-3 text-sm font-bold flex items-center gap-2 border-b border-[var(--warning)]/20">
+                <span>⚠️</span> Ini adalah Papan Tulis Kolaboratif Live. Semua perubahan akan langsung terlihat oleh anggota kelas lain.
+                <a href={`https://wbo.ophir.dev/boards/${lesson.video_url}`} target="_blank" rel="noopener noreferrer" className="ml-auto inline-flex items-center gap-1 text-[var(--accent)] hover:underline">
+                  Buka di Tab Baru <ExternalLink className="h-4 w-4" />
+                </a>
+              </div>
+              <div className="w-full h-[600px] bg-[var(--bg-secondary)] relative">
+                <iframe 
+                  src={`https://wbo.ophir.dev/boards/${lesson.video_url}`}
+                  className="w-full h-full border-none absolute inset-0"
+                  allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                  allowFullScreen
+                ></iframe>
+              </div>
+            </div>
+          )}
+
           {lesson.content_type === "interactive_video" && (
             <div className="aspect-video w-full bg-black relative">
               {lesson.video_url ? (

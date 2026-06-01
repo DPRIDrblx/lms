@@ -35,7 +35,7 @@ interface Lesson {
   id: string;
   chapter_id: string | null;
   title: string;
-  content_type: "text" | "video" | "pdf" | "canva" | "game" | "interactive_video";
+  content_type: "text" | "video" | "pdf" | "canva" | "game" | "interactive_video" | "whiteboard";
   body_text?: string;
   video_url?: string;
   pdf_url?: string;
@@ -138,13 +138,18 @@ export default function EditCoursePage() {
     if (!editingLesson || !editingLesson.title) return;
     setSaving(true);
 
+    let finalVideoUrl = editingLesson.video_url;
+    if (editingLesson.content_type === "whiteboard" && !finalVideoUrl) {
+      finalVideoUrl = `lms-board-${Math.random().toString(36).substring(2, 10)}-${Date.now()}`;
+    }
+
     const lessonData = {
       course_id: id,
       chapter_id: editingLesson.chapter_id,
       title: editingLesson.title,
       content_type: editingLesson.content_type === 'canva' ? 'video' : editingLesson.content_type,
       body_text: editingLesson.body_text,
-      video_url: editingLesson.video_url,
+      video_url: finalVideoUrl,
       pdf_url: editingLesson.pdf_url,
       interactive_quiz_data: editingLesson.interactive_quiz_data || [],
       xp_reward: editingLesson.xp_reward || 10,
@@ -404,14 +409,14 @@ export default function EditCoursePage() {
           </div>
           <div>
             <label className="block text-sm font-medium mb-1.5">Type</label>
-            <div className="grid grid-cols-6 gap-2">
-              {(["text", "video", "pdf", "canva", "game", "interactive_video"] as const).map(t => (
+            <div className="grid grid-cols-7 gap-2">
+              {(["text", "video", "pdf", "canva", "game", "interactive_video", "whiteboard"] as const).map(t => (
                 <button 
                   key={t}
                   onClick={() => setEditingLesson({ ...editingLesson, content_type: t })}
                   className={`p-3 rounded-xl border-2 transition-all flex flex-col items-center gap-1 ${editingLesson?.content_type === t ? "border-[var(--accent)] bg-[var(--accent-light)] text-[var(--accent)]" : "border-[var(--border)]"}`}
                 >
-                  <span className="text-[10px] font-bold uppercase text-center">{t === "canva" ? "presentasi" : t === "game" ? "AI Game" : t === "interactive_video" ? "Int. Video" : t}</span>
+                  <span className="text-[10px] font-bold uppercase text-center">{t === "canva" ? "presentasi" : t === "game" ? "AI Game" : t === "interactive_video" ? "Int. Video" : t === "whiteboard" ? "Whiteboard" : t}</span>
                 </button>
               ))}
             </div>
@@ -475,6 +480,16 @@ export default function EditCoursePage() {
                   placeholder="[]"
                 />
               </div>
+            </div>
+          )}
+
+          {editingLesson?.content_type === "whiteboard" && (
+            <div className="p-4 bg-[var(--bg-secondary)] rounded-xl border border-[var(--border)] space-y-2">
+              <h4 className="text-sm font-bold text-[var(--text-primary)]">Papan Tulis Kolaboratif 🖍️</h4>
+              <p className="text-xs text-[var(--text-secondary)] leading-relaxed">
+                Ruangan rahasia untuk papan tulis ini akan <strong>dibuat secara otomatis</strong> saat Anda menyimpan materi. 
+                Siswa yang membuka materi ini akan langsung bergabung ke kanvas interaktif yang sama dengan Anda secara real-time.
+              </p>
             </div>
           )}
 
