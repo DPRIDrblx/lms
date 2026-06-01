@@ -105,23 +105,26 @@ export function Sidebar() {
 const SidebarContent = ({ navItems, pathname, profile, setMobileOpen }: any) => {
   const isExecutive = profile?.role === "principal";
   const isEducator = profile?.role === "teacher";
+  const isParent = profile?.role === "parent";
 
   // Dynamic classes based on role
-  const sidebarBg = isExecutive ? "bg-slate-900 text-slate-300" : isEducator ? "bg-teal-950 text-teal-100/80" : "bg-white";
-  const borderClass = isExecutive ? "border-slate-800" : isEducator ? "border-teal-900" : "border-[var(--border)]";
-  const iconBg = isExecutive ? "bg-amber-500" : isEducator ? "bg-teal-500" : "bg-[var(--accent)]";
-  const titleColor = isExecutive ? "text-white" : isEducator ? "text-white" : "text-[var(--text-primary)]";
-  const subtitleColor = isExecutive ? "text-amber-500" : isEducator ? "text-teal-400" : "text-[var(--text-tertiary)]";
+  const sidebarBg = isExecutive ? "bg-slate-900 text-slate-300" : isEducator ? "bg-teal-950 text-teal-100/80" : isParent ? "bg-indigo-950 text-indigo-100/80" : "bg-white";
+  const borderClass = isExecutive ? "border-slate-800" : isEducator ? "border-teal-900" : isParent ? "border-indigo-900" : "border-[var(--border)]";
+  const iconBg = isExecutive ? "bg-amber-500" : isEducator ? "bg-teal-500" : isParent ? "bg-pink-500" : "bg-[var(--accent)]";
+  const titleColor = isExecutive ? "text-white" : isEducator ? "text-white" : isParent ? "text-white" : "text-[var(--text-primary)]";
+  const subtitleColor = isExecutive ? "text-amber-500" : isEducator ? "text-teal-400" : isParent ? "text-pink-400" : "text-[var(--text-tertiary)]";
   
   const getSubTitle = () => {
     if (isExecutive) return "Executive Board";
     if (isEducator) return "Educator Portal";
+    if (isParent) return "Family Hub";
     return "International Academy";
   };
   
   const getLinkHref = () => {
     if (isExecutive) return "/principal";
     if (isEducator) return "/teacher";
+    if (isParent) return "/parent/dashboard";
     return "/dashboard";
   };
 
@@ -130,7 +133,7 @@ const SidebarContent = ({ navItems, pathname, profile, setMobileOpen }: any) => 
       {/* Logo */}
       <div className={cn("p-5 border-b", borderClass)}>
         <Link href={getLinkHref()} className="flex items-center gap-3">
-          <div className={cn("w-9 h-9 rounded-xl flex items-center justify-center shadow-lg", iconBg, isEducator && "shadow-teal-500/20")}>
+          <div className={cn("w-9 h-9 rounded-xl flex items-center justify-center shadow-lg", iconBg, isEducator && "shadow-teal-500/20", isParent && "shadow-pink-500/20")}>
             <GraduationCap className="h-5 w-5 text-white" />
           </div>
           <div>
@@ -144,7 +147,7 @@ const SidebarContent = ({ navItems, pathname, profile, setMobileOpen }: any) => 
 
       {/* Navigation */}
       <nav className="flex-1 p-3 space-y-0.5 overflow-y-auto">
-        <p className={cn("px-3 pt-3 pb-2 text-[10px] font-semibold uppercase tracking-wider", isExecutive ? "text-slate-500" : isEducator ? "text-teal-700" : "text-[var(--text-tertiary)]")}>
+        <p className={cn("px-3 pt-3 pb-2 text-[10px] font-semibold uppercase tracking-wider", isExecutive ? "text-slate-500" : isEducator ? "text-teal-700" : isParent ? "text-indigo-400" : "text-[var(--text-tertiary)]")}>
           Menu
         </p>
         {navItems.map((item: any) => {
@@ -159,6 +162,9 @@ const SidebarContent = ({ navItems, pathname, profile, setMobileOpen }: any) => 
           } else if (isEducator) {
             activeClass = "bg-teal-500/10 text-teal-400 border border-teal-500/20";
             inactiveClass = "text-teal-100/60 hover:text-white hover:bg-teal-900";
+          } else if (isParent) {
+            activeClass = "bg-pink-500/10 text-pink-400 border border-pink-500/20";
+            inactiveClass = "text-indigo-200/60 hover:text-white hover:bg-indigo-900";
           }
           
           return (
@@ -183,11 +189,12 @@ const SidebarContent = ({ navItems, pathname, profile, setMobileOpen }: any) => 
       <div className={cn("p-4 border-t", borderClass)}>
         <div className="flex items-center gap-3 px-2">
           {profile?.avatar_url ? (
-            <img src={profile.avatar_url} alt="Profile" className={cn("w-10 h-10 rounded-full object-cover border-2", isExecutive ? "border-amber-500" : isEducator ? "border-teal-500" : "border-[var(--accent)]")} />
+            <img src={profile.avatar_url} alt="Profile" className={cn("w-10 h-10 rounded-full object-cover border-2", isExecutive ? "border-amber-500" : isEducator ? "border-teal-500" : isParent ? "border-pink-500" : "border-[var(--accent)]")} />
           ) : (
             <div className={cn("w-10 h-10 rounded-full flex items-center justify-center font-bold text-sm shadow-inner", 
               isExecutive ? "bg-amber-500 text-white" : 
               isEducator ? "bg-teal-800 text-teal-100" : 
+              isParent ? "bg-pink-600 text-pink-100" : 
               "bg-[var(--accent-light)] text-[var(--accent)]"
             )}>
               {profile?.full_name?.charAt(0).toUpperCase()}
