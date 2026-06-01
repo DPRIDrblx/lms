@@ -18,10 +18,17 @@ export default function LoginPage() {
         router.push("/auth/change-password");
         return;
       }
-      // If we have user, we should navigate. Wait a tiny bit for profile to load 
       // so we can catch force_password_change, but don't wait forever.
       const timer = setTimeout(() => {
-        router.push("/dashboard");
+        if (profile?.role === 'sobat_nia') {
+          router.push('/sobat-nia');
+        } else if (profile?.role === 'operator_les') {
+          router.push('/operator-les');
+        } else if (profile?.role === 'pengurus_nia') {
+          router.push('/pengurus-nia');
+        } else {
+          router.push("/dashboard");
+        }
       }, profile ? 0 : 1500);
       return () => clearTimeout(timer);
     }
