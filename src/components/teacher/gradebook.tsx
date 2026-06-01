@@ -48,7 +48,7 @@ export function Gradebook({ courseId, classId }: { courseId: string; classId: st
   const [newColWeight, setNewColWeight] = useState("1");
   const [newColLinkedQuiz, setNewColLinkedQuiz] = useState<string>("none");
   const [addingCol, setAddingCol] = useState(false);
-  const [courseQuizzes, setCourseQuizzes] = useState<any[]>([]);
+  const [courseAssessments, setCourseAssessments] = useState<any[]>([]);
 
   const fetchData = useCallback(async () => {
     // 1. Get all students in the class
@@ -66,9 +66,11 @@ export function Gradebook({ courseId, classId }: { courseId: string; classId: st
       .eq("course_id", courseId)
       .order("created_at");
       
-    // 2.5 Get quizzes for the dropdown
+    // 2.5 Get quizzes and assignments for the dropdown
     const { data: qzs } = await supabase.from("quizzes").select("id, title").eq("course_id", courseId);
-    if (qzs) setCourseQuizzes(qzs);
+    const { data: asgs } = await supabase.from("lessons").select("id, title").eq("course_id", courseId).eq("content_type", "assignment");
+    
+    setCourseAssessments([...(qzs || []), ...(asgs || []).map((a: any) => ({ ...a, title: `${a.title} (Tugas)` }))]);
 
     if (stds) setStudents(stds);
     if (cols) {
@@ -311,14 +313,14 @@ export function Gradebook({ courseId, classId }: { courseId: string; classId: st
             />
           </div>
           <div className="flex-1 min-w-[200px]">
-            <label className="text-xs font-bold text-[var(--text-tertiary)] uppercase mb-1 block">Tautkan Kuis (Otomatis)</label>
+            <label className="text-xs font-bold text-[var(--text-tertiary)] uppercase mb-1 block">Tautkan Kuis / Tugas (Otomatis)</label>
             <select 
               value={newColLinkedQuiz}
               onChange={e => setNewColLinkedQuiz(e.target.value)}
               className="w-full p-2 rounded-lg border border-[var(--border)] bg-[var(--bg-primary)] focus:outline-[var(--accent)]"
             >
                <option value="none">-- Jangan Tautkan (Manual) --</option>
-               {courseQuizzes.map(q => (
+               {courseAssessments.map(q => (
                   <option key={q.id} value={q.id}>{q.title}</option>
                ))}
             </select>

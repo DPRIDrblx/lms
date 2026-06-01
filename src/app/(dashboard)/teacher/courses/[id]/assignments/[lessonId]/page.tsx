@@ -58,6 +58,16 @@ export default function AssignmentGradingPage({ params }: { params: Promise<{ id
       })
       .eq("id", selectedSubmission.id);
 
+    // Sync to student_scores for Gradebook auto-sync
+    if (!error) {
+      await supabase.from("student_scores").upsert({
+        student_id: selectedSubmission.student_id,
+        target_id: lessonId,
+        score: numScore,
+        target_type: "assignment"
+      }, { onConflict: 'student_id,target_id' });
+    }
+
     if (error) {
       toast.error(`Gagal: ${error.message}`, { id: toastId });
     } else {
