@@ -3,6 +3,7 @@
 import React, { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Search, BookOpen, Target, Sparkles, CheckCircle2, ChevronRight, GraduationCap, Calculator, Globe, X } from "lucide-react";
+import { MockPaymentModal } from "@/components/finance/MockPaymentModal";
 
 // Mock Data for Packages
 const PACKAGES = [
@@ -60,9 +61,6 @@ export default function BayarNiaPage() {
 
   const processPayment = () => {
     setCheckoutStep(2); // Show Xendit Mock
-    setTimeout(() => {
-      setCheckoutStep(3); // Success
-    }, 3000);
   };
 
   return (
@@ -296,22 +294,16 @@ export default function BayarNiaPage() {
 
                 {checkoutStep === 2 && (
                   <div className="h-full min-h-[400px] flex flex-col items-center justify-center text-center space-y-6">
-                    {/* Mock Xendit UI */}
-                    <div className="w-full max-w-sm bg-blue-600 rounded-3xl p-6 text-white shadow-2xl shadow-blue-600/30">
-                      <div className="flex justify-between items-center mb-8">
-                        <span className="font-black text-xl tracking-tight">xendit<span className="text-blue-300 font-medium"> mock</span></span>
-                        <div className="w-8 h-8 rounded-full border-2 border-white/20 border-t-white animate-spin"></div>
-                      </div>
-                      <div className="text-left space-y-2 mb-8">
-                        <p className="text-blue-200 text-sm font-medium">Merchant</p>
-                        <p className="font-bold text-lg">NIA Tutoring</p>
-                        <p className="text-blue-200 text-sm font-medium mt-4">Total Amount</p>
-                        <p className="font-black text-3xl">Rp {selectedPackage?.price.toLocaleString()}</p>
-                      </div>
-                      <div className="bg-white/10 rounded-xl p-4 text-sm backdrop-blur-md">
-                        Simulating payment processing... Please do not close this window.
-                      </div>
+                    <div className="text-slate-500 font-medium">
+                      Membuka gerbang pembayaran...
                     </div>
+                    <MockPaymentModal
+                      isOpen={true}
+                      onClose={() => setCheckoutStep(1)}
+                      amount={selectedPackage?.price || 0}
+                      onSuccess={() => setCheckoutStep(3)}
+                      title="NIA Tutoring"
+                    />
                   </div>
                 )}
 
