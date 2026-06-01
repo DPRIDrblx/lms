@@ -215,6 +215,7 @@ export default function LessonViewerPage({ params }: { params: Promise<{ id: str
 
   const formatVideoUrl = (url: string) => {
     if (!url) return "";
+    url = url.trim();
     
     // Normalize youtu.be to youtube.com/watch?v=
     if (url.includes("youtu.be/")) {
