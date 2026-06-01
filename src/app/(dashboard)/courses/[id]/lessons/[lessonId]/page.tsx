@@ -25,8 +25,7 @@ import toast from "react-hot-toast";
 import { useRouter } from "next/navigation";
 import dynamic from "next/dynamic";
 
-// @ts-ignore
-const Player = dynamic(() => import("react-player/youtube"), { ssr: false }) as any;
+const Player = dynamic(() => import("react-player"), { ssr: false }) as any;
 
 export default function LessonViewerPage({ params }: { params: Promise<{ id: string; lessonId: string }> }) {
   const { id, lessonId } = use(params);
