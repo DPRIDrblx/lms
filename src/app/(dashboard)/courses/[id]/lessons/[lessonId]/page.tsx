@@ -301,7 +301,7 @@ export default function LessonViewerPage({ params }: { params: Promise<{ id: str
                   onChange={(e) => setAnswerText(e.target.value)}
                   placeholder="Ketik jawaban atau tempel link dokumen di sini..."
                   className="w-full p-4 rounded-xl border border-[var(--border)] outline-none bg-white font-medium resize-y focus:border-[var(--accent)] transition-colors"
-                  disabled={submission?.score !== null || submitting}
+                  disabled={(submission && submission.score !== null) || submitting}
                 ></textarea>
                 
                 {submission?.score === null || !submission ? (
