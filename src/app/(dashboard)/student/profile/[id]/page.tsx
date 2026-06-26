@@ -16,6 +16,8 @@ export default function PublicProfilePage() {
 
   const [profile, setProfile] = useState<any>(null);
   const [posts, setPosts] = useState<any[]>([]);
+  const [followers, setFollowers] = useState(0);
+  const [following, setFollowing] = useState(0);
   
   const [isFollowing, setIsFollowing] = useState(false);
   const [isMutual, setIsMutual] = useState(false); // Can chat if mutual
@@ -40,6 +42,13 @@ export default function PublicProfilePage() {
     // Get posts
     const { data: pst } = await supabase.from("posts").select("*").eq("user_id", id).order("created_at", { ascending: false });
     if (pst) setPosts(pst);
+
+    // Fetch stats
+    const { count: f1 } = await supabase.from("friendships").select("*", { count: "exact", head: true }).eq("following_id", id);
+    const { count: f2 } = await supabase.from("friendships").select("*", { count: "exact", head: true }).eq("follower_id", id);
+    
+    setFollowers(f1 || 0);
+    setFollowing(f2 || 0);
   };
 
   const checkFollowStatus = async () => {
@@ -106,7 +115,23 @@ export default function PublicProfilePage() {
             </div>
           </div>
           <h1 className="text-3xl font-black mb-1 drop-shadow-md">{profile?.full_name}</h1>
-          <p className="text-indigo-200 font-bold capitalize bg-indigo-600/50 px-4 py-1 rounded-full mb-6">{profile?.role}</p>
+          <p className="text-indigo-200 font-bold capitalize bg-indigo-600/50 px-4 py-1 rounded-full mb-2">{profile?.role}</p>
+          <p className="text-indigo-100 font-semibold text-sm mb-6 text-center max-w-sm">
+            Warga <span className="font-bold text-white">Mainan Middle International School</span><br/>
+            <span className="text-xs opacity-75">Nusantara International Academy (NIA)</span>
+          </p>
+
+          {/* Social Stats */}
+          <div className="flex items-center gap-6 mb-6">
+            <div className="text-center cursor-pointer hover:scale-105 transition-transform bg-indigo-600/30 px-6 py-2 rounded-2xl">
+              <p className="text-2xl font-black">{followers}</p>
+              <p className="text-xs font-bold text-indigo-200 uppercase tracking-wider">Pengikut</p>
+            </div>
+            <div className="text-center cursor-pointer hover:scale-105 transition-transform bg-indigo-600/30 px-6 py-2 rounded-2xl">
+              <p className="text-2xl font-black">{following}</p>
+              <p className="text-xs font-bold text-indigo-200 uppercase tracking-wider">Diikuti</p>
+            </div>
+          </div>
 
           <div className="flex gap-4">
             <button 
