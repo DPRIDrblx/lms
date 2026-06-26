@@ -3,8 +3,8 @@ import confetti from "canvas-confetti";
 
 export const checkAndUpdateStreak = async (supabase: SupabaseClient, profileId: string, currentStreak: number, lastLoginDate: string | null) => {
   const today = new Date();
-  today.setHours(0, 0, 0, 0);
-  const todayStr = today.toISOString().split("T")[0];
+  // Get local date string YYYY-MM-DD
+  const todayStr = new Date(today.getTime() - (today.getTimezoneOffset() * 60000)).toISOString().split("T")[0];
   
   if (!lastLoginDate) {
     // First time login
@@ -15,10 +15,15 @@ export const checkAndUpdateStreak = async (supabase: SupabaseClient, profileId: 
     return 1;
   }
 
+  if (lastLoginDate === todayStr) {
+    // Same day login, no streak change
+    return currentStreak;
+  }
+
   const lastLogin = new Date(lastLoginDate);
-  lastLogin.setHours(0, 0, 0, 0);
-  
-  const diffTime = Math.abs(today.getTime() - lastLogin.getTime());
+  // Calculate difference based on UTC to avoid daylight saving issues since we only care about the date string
+  const todayUTC = new Date(todayStr);
+  const diffTime = Math.abs(todayUTC.getTime() - lastLogin.getTime());
   const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24)); 
   
   if (diffDays === 1) {
@@ -43,8 +48,6 @@ export const checkAndUpdateStreak = async (supabase: SupabaseClient, profileId: 
     }).eq("id", profileId);
     return 1;
   }
-  
-  // Same day login
   return currentStreak;
 };
 
@@ -72,10 +75,9 @@ export const triggerConfetti = () => {
   }, 250);
 };
 
-export const generateDailyQuests = async (supabase: SupabaseClient, profileId: string, currentQuests: any[], lastQuestReset: string | null) => {
+export const generateDailyQuests = async (supabase: SupabaseClient, profileId: string, currentQuests: any[], lastQuestReset: string | null, currentXp: number = 0) => {
   const today = new Date();
-  today.setHours(0, 0, 0, 0);
-  const todayStr = today.toISOString().split("T")[0];
+  const todayStr = new Date(today.getTime() - (today.getTimezoneOffset() * 60000)).toISOString().split("T")[0];
   
   if (lastQuestReset !== todayStr) {
     // Generate new quests
@@ -88,7 +90,7 @@ export const generateDailyQuests = async (supabase: SupabaseClient, profileId: s
     await supabase.from("profiles").update({ 
       daily_quests: newQuests, 
       last_quest_reset: todayStr,
-      xp: 10 // Give initial XP for login
+      xp: currentXp + 10 // Add 10 XP for login instead of resetting to 10
     }).eq("id", profileId);
     
     return newQuests;

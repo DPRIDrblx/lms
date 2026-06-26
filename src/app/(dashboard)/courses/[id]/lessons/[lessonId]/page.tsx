@@ -241,26 +241,27 @@ export default function LessonViewerPage({ params }: { params: Promise<{ id: str
 
   return (
     <div className="max-w-4xl mx-auto space-y-6 pb-32">
-      <header className="flex items-center justify-between border-b border-[var(--border)] pb-4">
-        <Link href={`/courses/${id}`} className="inline-flex items-center gap-2 text-sm font-bold text-[var(--text-secondary)] hover:text-[var(--text-primary)] transition-colors">
-          <ArrowLeft className="h-4 w-4" /> Kembali ke Daftar Bab
+      <header className="flex items-center justify-between pb-6">
+        <Link href={`/courses/${id}`}>
+          <button className="inline-flex items-center gap-2 text-sm font-bold text-slate-500 bg-white border-2 border-slate-200 px-4 py-2 rounded-xl shadow-[0_4px_0_rgb(226,232,240)] hover:-translate-y-1 hover:shadow-[0_6px_0_rgb(226,232,240)] active:translate-y-1 active:shadow-none transition-all">
+            <ArrowLeft className="h-4 w-4" /> Kembali
+          </button>
         </Link>
-        <div className="flex items-center gap-2 text-[var(--text-tertiary)] bg-[var(--bg-secondary)] px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider">
-          <TypeIcon className="h-3.5 w-3.5" /> {lesson.content_type === 'canva' ? 'presentasi' : lesson.content_type === 'game' ? 'AI Game' : lesson.content_type === "interactive_video" ? 'Int. Video' : lesson.content_type === "whiteboard" ? 'Whiteboard' : lesson.content_type === "assignment" ? 'Tugas' : lesson.content_type}
+        <div className="flex items-center gap-2 text-indigo-500 bg-indigo-50 border-2 border-indigo-100 px-4 py-2 rounded-xl text-xs font-black uppercase tracking-wider shadow-sm">
+          <TypeIcon className="h-4 w-4" /> {lesson.content_type === 'canva' ? 'presentasi' : lesson.content_type === 'game' ? 'AI Game' : lesson.content_type === "interactive_video" ? 'Int. Video' : lesson.content_type === "whiteboard" ? 'Whiteboard' : lesson.content_type === "assignment" ? 'Tugas' : lesson.content_type}
         </div>
       </header>
 
       <div className="space-y-8">
         <div>
-          <h1 className="text-3xl font-black text-[var(--text-primary)] mb-2">{lesson.title}</h1>
-          <div className="flex items-center gap-2 text-[var(--warning)] font-bold bg-[var(--warning)]/10 px-3 py-1.5 rounded-lg w-max">
-            <Trophy className="h-4 w-4" /> Hadiah: +{lesson.xp_reward} XP
+          <h1 className="text-4xl font-black text-slate-800 mb-4">{lesson.title}</h1>
+          <div className="flex items-center gap-2 text-amber-500 font-black bg-amber-100 border-2 border-amber-200 px-4 py-2 rounded-xl w-max">
+            <Trophy className="h-5 w-5" /> Hadiah: +{lesson.xp_reward} XP
           </div>
         </div>
 
         {/* CONTENT RENDERER */}
-        <div className="bg-white border border-[var(--border)] rounded-2xl overflow-hidden shadow-sm">
-          
+        <div className="bg-white border-2 border-slate-200 rounded-[2rem] overflow-hidden shadow-[0_8px_0_rgb(226,232,240)] relative">
           {lesson.content_type === "assignment" && (
             <div className="flex flex-col">
               <div className="p-8 prose prose-slate max-w-none text-[var(--text-primary)] leading-relaxed border-b border-[var(--border)]">
@@ -511,25 +512,25 @@ export default function LessonViewerPage({ params }: { params: Promise<{ id: str
         </div>
 
         {/* ACTIONS */}
-        <div className="flex items-center justify-between pt-8 border-t border-[var(--border)]">
-          <Link href={`/courses/${id}`}>
-            <Button variant="secondary" className="h-12 px-6">
+        <div className="flex flex-col sm:flex-row items-center justify-between pt-8 gap-4">
+          <Link href={`/courses/${id}`} className="w-full sm:w-auto">
+            <button className="w-full sm:w-auto px-6 py-4 bg-white border-2 border-slate-200 text-slate-600 font-black rounded-2xl shadow-[0_6px_0_rgb(226,232,240)] hover:-translate-y-1 hover:shadow-[0_8px_0_rgb(226,232,240)] active:translate-y-2 active:shadow-[0_0px_0_rgb(226,232,240)] transition-all">
               Kembali ke Daftar
-            </Button>
+            </button>
           </Link>
 
           {!isCompleted && lesson.content_type !== 'game' ? (
-            <Button 
-              className="h-12 px-8 font-bold shadow-lg" 
+            <button 
+              className="w-full sm:w-auto px-8 py-4 bg-emerald-500 border-2 border-emerald-600 text-white font-black rounded-2xl shadow-[0_6px_0_rgb(5,150,105)] hover:-translate-y-1 hover:shadow-[0_8px_0_rgb(5,150,105)] active:translate-y-2 active:shadow-[0_0px_0_rgb(5,150,105)] transition-all flex items-center justify-center gap-2 text-lg"
               onClick={handleComplete}
-              loading={completing}
+              disabled={completing}
             >
-              <CheckCircle2 className="h-5 w-5 mr-2" />
+              {completing ? <Loader2 className="h-6 w-6 animate-spin" /> : <CheckCircle2 className="h-6 w-6" />}
               Tandai Selesai (+{lesson.xp_reward} XP)
-            </Button>
+            </button>
           ) : (
-            <div className="flex items-center gap-2 px-6 py-3 bg-[var(--success-light)] text-[var(--success)] rounded-xl font-bold border border-[var(--success)]/20">
-              <CheckCircle2 className="h-5 w-5" /> Selesai
+            <div className="w-full sm:w-auto flex items-center justify-center gap-2 px-8 py-4 bg-emerald-100 text-emerald-600 border-2 border-emerald-200 rounded-2xl font-black text-lg">
+              <CheckCircle2 className="h-6 w-6" /> Misi Selesai!
             </div>
           )}
         </div>

@@ -116,7 +116,7 @@ export default function DashboardPage() {
     
     if (fullProfile) {
        const newStreak = await checkAndUpdateStreak(supabase, profile.id, fullProfile.current_streak, fullProfile.last_login_date);
-       const newQuests = await generateDailyQuests(supabase, profile.id, fullProfile.daily_quests, fullProfile.last_quest_reset);
+       const newQuests = await generateDailyQuests(supabase, profile.id, fullProfile.daily_quests, fullProfile.last_quest_reset, fullProfile.xp || 0);
        setStreak(newStreak);
        setQuests(newQuests);
     }
