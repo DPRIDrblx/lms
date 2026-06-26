@@ -2,6 +2,8 @@
 
 import { Sidebar } from "@/components/ui/sidebar";
 import { TopBar } from "@/components/ui/top-bar";
+import { StudentSidebar } from "./student-sidebar";
+import { StudentTopBar } from "./student-top-bar";
 import { ClassGuard } from "./class-guard";
 import { usePathname, useRouter } from "next/navigation";
 import { useAuth } from "@/lib/auth-context";
@@ -56,6 +58,23 @@ export function AppShell({ children }: { children: React.ReactNode }) {
     );
   }
 
+  if (profile?.role === "student") {
+    return (
+      <div className="min-h-screen bg-slate-50 text-[var(--text-primary)] pb-24 lg:pb-0">
+        <StudentSidebar />
+        <div className="lg:pl-[260px] flex flex-col min-h-screen">
+          <StudentTopBar />
+          <main className="flex-1 p-4 sm:p-6 lg:p-8 max-w-5xl mx-auto w-full">
+            <ClassGuard>
+              {children}
+            </ClassGuard>
+          </main>
+        </div>
+      </div>
+    );
+  }
+
+  // Legacy layout for Teacher/Principal/Admin
   return (
     <div className="min-h-screen saas-bg print:bg-white text-[var(--text-primary)]">
       <div className="print:hidden">

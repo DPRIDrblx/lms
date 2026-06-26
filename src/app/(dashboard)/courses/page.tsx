@@ -106,7 +106,7 @@ export default function CoursesPage() {
             placeholder="Search courses..."
             value={search}
             onChange={(e) => setSearch(e.target.value)}
-            className="w-full h-12 pl-11 pr-4 rounded-2xl bg-[var(--bg-secondary)] backdrop-blur-md border border-[var(--border)] text-sm text-[var(--text-primary)] placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-indigo-500/50 focus:border-indigo-500/50 transition-all shadow-sm"
+            className="w-full h-14 pl-12 pr-4 rounded-2xl bg-white border-2 border-slate-200 text-sm font-bold text-slate-700 placeholder:text-slate-400 focus:outline-none focus:border-indigo-500 transition-all shadow-[0_4px_0_rgb(226,232,240)]"
           />
         </div>
         <div className="flex gap-1.5 bg-[var(--bg-secondary)] backdrop-blur-md border border-[var(--border)] rounded-2xl p-1.5 shadow-sm overflow-x-auto shrink-0">
@@ -114,10 +114,10 @@ export default function CoursesPage() {
             <button
               key={f}
               onClick={() => setFilter(f)}
-              className={`px-4 py-2 rounded-xl text-xs font-bold transition-all capitalize whitespace-nowrap ${
+              className={`px-4 py-3 rounded-2xl text-xs font-black transition-all capitalize whitespace-nowrap border-2 ${
                 filter === f
-                  ? "bg-indigo-500 text-white shadow-md shadow-indigo-500/20"
-                  : "text-[var(--text-secondary)] hover:text-[var(--text-primary)] hover:bg-[var(--bg-tertiary)]"
+                  ? "bg-indigo-500 text-white border-indigo-600 shadow-[0_4px_0_rgb(79,70,229)] transform translate-y-1"
+                  : "bg-white text-slate-500 border-slate-200 shadow-[0_4px_0_rgb(226,232,240)] hover:-translate-y-1 hover:shadow-[0_6px_0_rgb(226,232,240)]"
               }`}
             >
               {f.replace("-", " ")}
@@ -147,8 +147,8 @@ export default function CoursesPage() {
                 transition={{ delay: i * 0.05 }}
               >
                 <Link href={`/courses/${course.id}`} className="block h-full group">
-                  <div className="bg-[var(--bg-secondary)] backdrop-blur-lg rounded-3xl border border-[var(--border)] overflow-hidden shadow-sm hover:shadow-xl hover:-translate-y-1 transition-all duration-300 h-full flex flex-col">
-                    <div className="aspect-[16/9] flex items-center justify-center relative bg-[var(--bg-tertiary)] overflow-hidden">
+                  <div className="bg-white rounded-3xl border-2 border-slate-200 overflow-hidden shadow-[0_8px_0_rgb(226,232,240)] transform transition-all duration-150 hover:-translate-y-1 active:translate-y-2 active:shadow-none h-full flex flex-col">
+                    <div className="aspect-[16/9] flex items-center justify-center relative bg-indigo-50 overflow-hidden">
                       {course.cover_image ? (
                         <img src={course.cover_image} alt="" className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700" />
                       ) : (
@@ -166,9 +166,9 @@ export default function CoursesPage() {
                         </span>
                       </div>
                     </div>
-                    <div className="p-6 flex-1 flex flex-col">
-                      <h2 className="text-base sm:text-lg font-bold text-[var(--text-primary)] mb-2 line-clamp-2 leading-snug group-hover:text-indigo-600 dark:group-hover:text-indigo-400 transition-colors">{course.title}</h2>
-                      <p className="text-sm text-[var(--text-secondary)] line-clamp-2 mb-6 flex-1 leading-relaxed">{course.description}</p>
+                    <div className="p-6 flex-1 flex flex-col bg-white">
+                      <h2 className="text-base sm:text-xl font-black text-slate-800 mb-2 line-clamp-2 leading-snug group-hover:text-indigo-500 transition-colors">{course.title}</h2>
+                      <p className="text-sm font-bold text-slate-500 line-clamp-2 mb-6 flex-1 leading-relaxed">{course.description}</p>
                       <div className="pt-4 border-t border-[var(--border)]">
                         <div className="flex items-center justify-between mb-2">
                           <p className="text-xs font-medium text-[var(--text-tertiary)] truncate mr-2">By <span className="font-semibold text-[var(--text-secondary)]">{course.profiles?.full_name}</span></p>

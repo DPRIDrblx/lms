@@ -22,7 +22,8 @@ import {
   TrendingUp,
   Loader2,
   Calendar,
-  ArrowRight
+  ArrowRight,
+  Shield
 } from "lucide-react";
 import { useEffect, useState, useCallback } from "react";
 import Link from "next/link";
@@ -176,274 +177,146 @@ export default function DashboardPage() {
   const completedCount = progressData.filter(p => p.completed).length;
 
   return (
-    <div className="space-y-8 max-w-6xl font-sans">
-      {/* Student Welcome Banner (Glassmorphism) */}
-      <motion.div 
-        initial={{ opacity: 0, y: 12 }} 
-        animate={{ opacity: 1, y: 0 }}
-        className="relative overflow-hidden rounded-3xl bg-gradient-to-br from-indigo-50/80 via-white/60 to-purple-50/80 dark:from-slate-900/80 dark:via-slate-800/60 dark:to-indigo-950/80 border border-[var(--border)] p-8 md:p-10 backdrop-blur-xl shadow-[0_8px_30px_rgb(0,0,0,0.04)] dark:shadow-[0_8px_30px_rgb(0,0,0,0.2)]"
-      >
-        <div className="absolute top-0 right-0 w-96 h-96 bg-indigo-400/10 dark:bg-indigo-500/10 rounded-full blur-3xl -mr-20 -mt-20 pointer-events-none"></div>
-        <div className="absolute bottom-0 left-0 w-64 h-64 bg-purple-400/10 dark:bg-purple-500/10 rounded-full blur-3xl -ml-20 -mb-20 pointer-events-none"></div>
-        
-        <div className="relative z-10 flex flex-col md:flex-row items-start md:items-center justify-between gap-6">
-          <div className="flex items-center gap-4 sm:gap-6">
-            <div className="w-12 h-12 sm:w-16 sm:h-16 rounded-2xl bg-[var(--bg-primary)] backdrop-blur-md border border-white/60 dark:border-slate-700/50 flex items-center justify-center shrink-0 shadow-sm">
-              <Trophy className="h-6 w-6 sm:h-8 sm:w-8 text-indigo-500 dark:text-indigo-400" />
-            </div>
-            <div>
-              <h1 className="text-2xl sm:text-3xl font-bold text-[var(--text-primary)] mb-1 sm:mb-2 tracking-tight">
-                Welcome back, {profile.full_name?.split(" ")[0]}
-              </h1>
-              <p className="text-[var(--text-secondary)] font-medium text-xs sm:text-sm md:text-base">
-                Your learning progress overview for today.
-              </p>
-            </div>
-          </div>
-        </div>
-      </motion.div>
+    <div className="flex flex-col lg:flex-row gap-8 max-w-6xl mx-auto font-sans pb-20">
+      
+      {/* LEFT COLUMN: THE LEARNING PATH */}
+      <div className="flex-1 flex flex-col items-center py-12 relative min-h-screen">
+         <div className="text-center mb-16 relative z-10 w-full max-w-md">
+           <div className="bg-emerald-500 rounded-3xl p-6 shadow-[0_8px_0_rgb(4,120,87)] border-2 border-emerald-600 text-white flex justify-between items-center transform transition-transform hover:-translate-y-1 active:translate-y-2 active:shadow-[0_0px_0_rgb(4,120,87)]">
+             <div className="text-left">
+               <h2 className="text-2xl font-black mb-1">Unit 1</h2>
+               <p className="font-bold text-emerald-100">Welcome to Academia!</p>
+             </div>
+             <BookOpen className="w-12 h-12 text-emerald-200" />
+           </div>
+         </div>
 
-      {/* Gamified Stats (Glass & Flow) */}
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-5">
-        {/* Total XP */}
-        <div className="bg-[var(--bg-secondary)] backdrop-blur-lg p-4 sm:p-6 rounded-2xl sm:rounded-3xl border border-[var(--border)] shadow-sm hover:shadow-md transition-all group">
-          <div className="flex items-start justify-between mb-4">
-            <div className="p-3 rounded-2xl bg-indigo-100/50 dark:bg-indigo-500/20 text-indigo-600 dark:text-indigo-400">
-              <Star className="h-5 w-5" />
-            </div>
-            <span className="px-2.5 py-1 rounded-full bg-emerald-100/50 dark:bg-emerald-500/20 text-emerald-600 dark:text-emerald-400 text-xs font-bold flex items-center gap-1">
-              ↑ 25
-            </span>
-          </div>
-          <div>
-            <h3 className="text-2xl sm:text-3xl font-black text-[var(--text-primary)] tracking-tight mb-1">{xp.toLocaleString()}</h3>
-            <p className="text-xs sm:text-sm font-medium text-[var(--text-secondary)]">Total XP</p>
-          </div>
-        </div>
+         {/* Path container */}
+         <div className="relative w-full max-w-md flex flex-col items-center gap-10">
+            {courses.length === 0 ? (
+               <div className="p-8 text-center bg-slate-100 rounded-3xl border-2 border-slate-200 border-dashed text-slate-500 font-bold">
+                 No courses available yet!
+               </div>
+            ) : (
+               courses.map((course, idx) => {
+                 const done = progressData.filter(p => p.course_id === course.id && p.completed).length;
+                 const progressPercent = Math.round((done / (course.lessons_count || 1)) * 100);
+                 const isCompleted = progressPercent === 100;
+                 
+                 // Create a zig-zag pattern
+                 const offsetX = idx % 2 === 0 ? (idx % 4 === 0 ? '-translate-x-12' : 'translate-x-12') : 'translate-x-0';
+                 
+                 const colors = [
+                   { bg: 'bg-indigo-500', shadow: 'shadow-[0_8px_0_rgb(67,56,202)]', border: 'border-indigo-600', ring: 'ring-indigo-200' },
+                   { bg: 'bg-rose-500', shadow: 'shadow-[0_8px_0_rgb(190,18,60)]', border: 'border-rose-600', ring: 'ring-rose-200' },
+                   { bg: 'bg-amber-500', shadow: 'shadow-[0_8px_0_rgb(180,83,9)]', border: 'border-amber-600', ring: 'ring-amber-200' },
+                   { bg: 'bg-emerald-500', shadow: 'shadow-[0_8px_0_rgb(4,120,87)]', border: 'border-emerald-600', ring: 'ring-emerald-200' },
+                 ];
+                 const color = colors[idx % colors.length];
 
-        {/* Current Rank */}
-        <div className="bg-[var(--bg-secondary)] backdrop-blur-lg p-4 sm:p-6 rounded-2xl sm:rounded-3xl border border-[var(--border)] shadow-sm hover:shadow-md transition-all group">
-          <div className="flex items-start justify-between mb-4">
-            <div className="p-3 rounded-2xl bg-amber-100/50 dark:bg-amber-500/20 text-amber-600 dark:text-amber-400">
-              <Trophy className="h-5 w-5" />
-            </div>
-          </div>
-          <div>
-            <h3 className="text-xl sm:text-2xl font-black text-[var(--text-primary)] tracking-tight mb-1">{rank}</h3>
-            <p className="text-xs sm:text-sm font-medium text-[var(--text-secondary)]">Current Rank</p>
-          </div>
-        </div>
-
-        {/* Lessons Done */}
-        <div className="bg-[var(--bg-secondary)] backdrop-blur-lg p-4 sm:p-6 rounded-2xl sm:rounded-3xl border border-[var(--border)] shadow-sm hover:shadow-md transition-all group">
-          <div className="flex items-start justify-between mb-4">
-            <div className="p-3 rounded-2xl bg-emerald-100/50 dark:bg-emerald-500/20 text-emerald-600 dark:text-emerald-400">
-              <BookOpen className="h-5 w-5" />
-            </div>
-          </div>
-          <div>
-            <h3 className="text-2xl sm:text-3xl font-black text-[var(--text-primary)] tracking-tight mb-1">{completedCount}</h3>
-            <p className="text-xs sm:text-sm font-medium text-[var(--text-secondary)]">Missions Cleared</p>
-          </div>
-        </div>
-
-        {/* Day Streak */}
-        <div className="bg-[var(--bg-secondary)] backdrop-blur-lg p-4 sm:p-6 rounded-2xl sm:rounded-3xl border border-[var(--border)] shadow-sm hover:shadow-md transition-all group relative overflow-hidden">
-          <div className="absolute top-0 right-0 p-4 opacity-5 pointer-events-none group-hover:opacity-10 transition-opacity">
-            <Flame className="h-24 w-24 text-rose-500" />
-          </div>
-          <div className="flex items-start justify-between mb-4 relative z-10">
-            <div className="p-3 rounded-2xl bg-rose-100/50 dark:bg-rose-500/20 text-rose-600 dark:text-rose-400">
-              <Flame className="h-5 w-5" />
-            </div>
-            <span className="px-2.5 py-1 rounded-full bg-rose-100/50 dark:bg-rose-500/20 text-rose-600 dark:text-rose-400 text-xs font-bold flex items-center gap-1 animate-pulse">
-              Active
-            </span>
-          </div>
-          <div className="relative z-10">
-            <h3 className="text-2xl sm:text-3xl font-black text-[var(--text-primary)] tracking-tight mb-1">{streak}</h3>
-            <p className="text-xs sm:text-sm font-medium text-[var(--text-secondary)]">Day Streak</p>
-          </div>
-        </div>
-      </div>
-
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        {/* Daily Quests Section */}
-        <div className="bg-[var(--bg-secondary)] backdrop-blur-lg rounded-3xl p-6 md:p-8 border border-[var(--border)] shadow-sm">
-          <div className="flex flex-col mb-6">
-            <h2 className="text-lg font-bold text-[var(--text-primary)] flex items-center gap-2 mb-1">
-               <Star className="h-5 w-5 text-amber-500" /> Daily Quests
-            </h2>
-            <p className="text-xs font-medium text-[var(--text-secondary)]">Complete tasks to earn XP</p>
-          </div>
-          <div className="space-y-4">
-             {quests.length > 0 ? quests.map((q: any) => (
-                <div key={q.id} className="p-4 rounded-2xl bg-[var(--bg-primary)] border border-[var(--border)] relative overflow-hidden">
-                   {q.is_claimed && (
-                     <div className="absolute inset-0 bg-emerald-50/50 dark:bg-emerald-900/10 pointer-events-none"></div>
-                   )}
-                   <div className="flex items-center justify-between mb-3 relative z-10">
-                      <p className={`text-sm font-bold ${q.is_claimed ? 'text-emerald-700 dark:text-emerald-400 line-through opacity-80' : 'text-[var(--text-primary)]'}`}>
-                         {q.title}
-                      </p>
-                      <span className="px-2 py-1 rounded-md bg-amber-100/50 dark:bg-amber-500/20 text-amber-600 dark:text-amber-400 text-xs font-black">
-                         +{q.xp_reward} XP
-                      </span>
-                   </div>
-                   <div className="relative z-10">
-                      <div className="flex justify-between items-center mb-1">
-                         <span className="text-[10px] font-bold text-[var(--text-secondary)]">Progress</span>
-                         <span className="text-[10px] font-bold text-[var(--text-secondary)]">{q.progress} / {q.target}</span>
-                      </div>
-                      <ProgressBar value={Math.min(100, Math.round((q.progress / q.target) * 100))} color={q.is_claimed ? "#10B981" : "#F59E0B"} size="sm" />
-                   </div>
-                </div>
-             )) : (
-                <div className="text-center py-6">
-                   <p className="text-xs text-[var(--text-tertiary)]">No quests available today.</p>
-                </div>
-             )}
-          </div>
-        </div>
-
-        <div className="lg:col-span-2 bg-[var(--bg-secondary)] backdrop-blur-lg rounded-3xl p-6 md:p-8 border border-[var(--border)] shadow-sm relative">
-          <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 sm:gap-0 mb-8">
-            <div>
-              <h2 className="text-lg sm:text-xl font-bold text-[var(--text-primary)] flex items-center gap-2 mb-1">
-                Rank Progress
-              </h2>
-              <p className="text-xs sm:text-sm font-medium text-[var(--text-secondary)]">Earn XP to reach the next tier</p>
-            </div>
-            <div className="px-4 py-2 bg-indigo-100/50 dark:bg-indigo-500/20 text-indigo-700 dark:text-indigo-300 rounded-2xl text-xs sm:text-sm font-bold tracking-wide border border-indigo-200/50 dark:border-indigo-500/30">
-              {rank}
-            </div>
-          </div>
-          <div className="relative">
-             <ProgressBar value={nextRank.progress} showLabel size="lg" color="#6366f1" />
-             <p className="text-xs sm:text-sm font-medium text-[var(--text-secondary)] mt-6 flex justify-between items-center">
-               <span>Next milestone: <strong className="text-slate-800 dark:text-slate-200">{nextRank.name}</strong></span>
-               {nextRank.xpNeeded > 0 ? (
-                 <span className="bg-[var(--bg-tertiary)] px-3 py-1 rounded-full text-[10px] sm:text-xs font-bold">{nextRank.xpNeeded} XP left</span>
-               ) : (
-                 <span className="bg-indigo-100 dark:bg-indigo-900/50 text-indigo-600 dark:text-indigo-400 px-3 py-1 rounded-full text-[10px] sm:text-xs font-bold">Max Rank</span>
-               )}
-             </p>
-          </div>
-        </div>
-
-        <div className="bg-[var(--bg-secondary)] backdrop-blur-lg rounded-3xl p-6 md:p-8 border border-[var(--border)] shadow-sm">
-          <div className="flex items-center justify-between mb-6">
-            <h2 className="text-lg font-bold text-[var(--text-primary)]">Upcoming Events</h2>
-            <Link href="/events" className="text-xs text-indigo-600 dark:text-indigo-400 font-bold hover:underline">View All</Link>
-          </div>
-          <div className="space-y-4">
-            {events.length > 0 ? events.map((event) => (
-              <div key={event.id} className="flex items-start gap-4 group">
-                <div className="w-12 h-12 rounded-2xl bg-indigo-50 dark:bg-indigo-500/10 flex items-center justify-center shrink-0 border border-indigo-100/50 dark:border-indigo-500/20 group-hover:bg-indigo-100 dark:group-hover:bg-indigo-500/20 transition-colors">
-                  <Calendar className="h-5 w-5 text-indigo-500 dark:text-indigo-400" />
-                </div>
-                <div className="pt-1">
-                  <p className="text-sm font-semibold text-[var(--text-primary)] mb-1 group-hover:text-indigo-600 dark:group-hover:text-indigo-400 transition-colors line-clamp-1">{event.title}</p>
-                  <p className="text-xs text-[var(--text-secondary)] font-medium">
-                    {new Date(event.event_date).toLocaleDateString(undefined, { weekday: 'short', day: 'numeric', month: 'short' })}
-                  </p>
-                </div>
-              </div>
-            )) : (
-              <div className="text-center py-8">
-                 <p className="text-sm text-[var(--text-tertiary)]">No upcoming events.</p>
-              </div>
-            )}
-          </div>
-        </div>
-      </div>
-
-      <div className="w-full">
-        <AnnouncementBoard />
-      </div>
-
-      {leadership && (
-        <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }}>
-          <div className="bg-emerald-50/80 dark:bg-emerald-950/20 backdrop-blur-md border border-emerald-200/60 dark:border-emerald-900/40 rounded-3xl p-6 md:p-8">
-            <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-6">
-              <div>
-                <h2 className="text-xl font-bold text-emerald-900 dark:text-emerald-100 flex items-center gap-2 mb-1">
-                  Class Leadership Portal
-                </h2>
-                <p className="text-sm font-medium text-emerald-700 dark:text-emerald-400/80">Managing Class {leadership.name}</p>
-              </div>
-              <div className="px-4 py-1.5 bg-emerald-200/50 dark:bg-emerald-900/50 text-emerald-800 dark:text-emerald-200 rounded-full text-xs font-bold flex items-center gap-2 w-fit">
-                 <div className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></div>
-                 Active Duty
-              </div>
-            </div>
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-               <Link href="/student/leadership/attendance">
-                  <Button variant="secondary" className="w-full h-14 bg-[var(--bg-primary)] backdrop-blur-sm text-emerald-900 dark:text-emerald-100 border border-emerald-200/50 dark:border-emerald-800/50 hover:bg-white dark:hover:bg-slate-800 shadow-sm" icon={<CalendarCheck className="h-4 w-4" />}>
-                     Manage Class Attendance
-                  </Button>
-               </Link>
-               <Link href="/chat">
-                  <Button variant="secondary" className="w-full h-14 bg-[var(--bg-primary)] backdrop-blur-sm text-emerald-900 dark:text-emerald-100 border border-emerald-200/50 dark:border-emerald-800/50 hover:bg-white dark:hover:bg-slate-800 shadow-sm" icon={<ChevronRight className="h-4 w-4" />}>
-                     Broadcast Announcement
-                  </Button>
-               </Link>
-            </div>
-          </div>
-        </motion.div>
-      )}
-
-      <div>
-        <div className="flex items-end justify-between mb-6">
-          <div>
-            <h2 className="text-xl font-bold text-[var(--text-primary)] mb-1">
-               Continue Learning
-            </h2>
-            <p className="text-sm font-medium text-[var(--text-secondary)]">Pick up where you left off</p>
-          </div>
-          <Link href="/courses" className="text-sm font-bold text-indigo-600 dark:text-indigo-400 hover:text-indigo-700 dark:hover:text-indigo-300 transition-colors">
-            View All Courses
-          </Link>
-        </div>
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-          {courses.map((course) => {
-            const done = progressData.filter(p => p.course_id === course.id && p.completed).length;
-            const progressPercent = Math.round((done / (course.lessons_count || 1)) * 100);
-            return (
-              <Link key={course.id} href={`/courses/${course.id}`} className="group block h-full">
-                <div className="bg-[var(--bg-secondary)] backdrop-blur-lg rounded-3xl border border-[var(--border)] overflow-hidden shadow-sm hover:shadow-lg hover:-translate-y-1 transition-all duration-300 h-full flex flex-col">
-                  <div className="aspect-[16/9] bg-[var(--bg-tertiary)] relative overflow-hidden">
-                     {course.cover_image ? (
-                       <img src={course.cover_image} alt="" className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700" />
-                     ) : (
-                       <div className="w-full h-full bg-indigo-50 dark:bg-indigo-900/20 flex items-center justify-center">
-                         <BookOpen className="h-8 w-8 text-indigo-200 dark:text-indigo-800" />
-                       </div>
+                 return (
+                   <div key={course.id} className={`relative flex flex-col items-center group cursor-pointer ${offsetX}`}>
+                     {/* Connecting Line to next item */}
+                     {idx < courses.length - 1 && (
+                       <div className="absolute top-24 h-16 w-4 bg-slate-200 -z-10 rounded-full" />
                      )}
-                     <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent opacity-80"></div>
-                     <div className="absolute bottom-4 left-5 right-5">
-                        <span className="px-2.5 py-1 bg-white/20 backdrop-blur-md rounded-lg text-[10px] font-bold text-white uppercase tracking-wider border border-white/20 shadow-sm">
-                           {course.category}
-                        </span>
+                     
+                     <div className="relative">
+                       {/* Floating Label */}
+                       <div className="absolute -top-12 left-1/2 -translate-x-1/2 bg-white px-4 py-2 rounded-xl border-2 border-slate-200 shadow-sm whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity z-20 pointer-events-none">
+                         <div className="font-bold text-slate-700">{course.title}</div>
+                         <div className="text-xs font-bold text-slate-400 text-center">{done}/{course.lessons_count} Missions</div>
+                         <div className="absolute -bottom-2 left-1/2 -translate-x-1/2 w-4 h-4 bg-white border-b-2 border-r-2 border-slate-200 rotate-45"></div>
+                       </div>
+                       
+                       {/* Circular 3D Button */}
+                       <Link href={`/courses/${course.id}`}>
+                         <div className={`w-24 h-24 rounded-full flex items-center justify-center border-4 ${color.border} ${color.bg} ${color.shadow} transform transition-all duration-150 active:translate-y-2 active:shadow-none hover:ring-8 ${color.ring} z-10`}>
+                           {isCompleted ? (
+                             <Trophy className="w-10 h-10 text-white/90 drop-shadow-md" />
+                           ) : (
+                             <Star className="w-10 h-10 text-white/90 drop-shadow-md" />
+                           )}
+                         </div>
+                       </Link>
                      </div>
-                  </div>
-                  <div className="p-6 flex-1 flex flex-col">
-                    <h3 className="text-lg font-bold text-[var(--text-primary)] mb-4 line-clamp-2 leading-snug group-hover:text-indigo-600 dark:group-hover:text-indigo-400 transition-colors">{course.title}</h3>
-                    <div className="mt-auto pt-4 border-t border-[var(--border)]">
-                       <div className="flex justify-between items-center mb-2">
-                          <p className="text-xs font-semibold text-[var(--text-secondary)]">{done}/{course.lessons_count} missions</p>
-                          <p className="text-xs font-black text-indigo-600 dark:text-indigo-400">{progressPercent}%</p>
-                       </div>
-                       <div className="h-2 w-full bg-[var(--bg-tertiary)] rounded-full overflow-hidden">
-                         <div className="h-full bg-indigo-500 rounded-full transition-all duration-1000 ease-out" style={{ width: `${progressPercent}%` }}></div>
-                       </div>
-                    </div>
-                  </div>
-                </div>
-              </Link>
-            );
-          })}
+                   </div>
+                 );
+               })
+            )}
+            
+            {/* Locked Future Stage */}
+            <div className="relative flex flex-col items-center mt-12 opacity-50 grayscale">
+              <div className="w-24 h-24 rounded-full flex items-center justify-center border-4 border-slate-300 bg-slate-200 shadow-[0_8px_0_rgb(203,213,225)] z-10">
+                <div className="w-10 h-10 rounded-full bg-slate-400"></div>
+              </div>
+            </div>
+         </div>
+      </div>
+
+      {/* RIGHT COLUMN: QUESTS & LEAGUES */}
+      <div className="w-full lg:w-[350px] shrink-0 space-y-6 pt-12 px-4 lg:px-0">
+        
+        {/* League Box */}
+        <div className="bg-white rounded-[2rem] border-2 border-slate-200 p-6 shadow-sm">
+           <div className="flex items-center justify-between mb-4 border-b-2 border-slate-100 pb-4">
+              <h2 className="text-xl font-black text-slate-800">League</h2>
+              <span className="text-sm font-bold text-indigo-500 uppercase">View All</span>
+           </div>
+           <div className="flex items-center gap-4">
+             <div className="w-16 h-16 bg-amber-100 rounded-2xl flex items-center justify-center border-2 border-amber-200">
+               <Shield className="w-8 h-8 text-amber-500" />
+             </div>
+             <div>
+               <h3 className="font-bold text-slate-800 text-lg">{rank}</h3>
+               <p className="text-slate-500 text-sm font-medium">{xp} Total XP</p>
+             </div>
+           </div>
+           <div className="mt-4 pt-4 border-t-2 border-slate-100">
+              <div className="flex justify-between items-center mb-2">
+                 <span className="text-xs font-bold text-slate-400 uppercase tracking-wider">Next Tier</span>
+                 <span className="text-xs font-black text-slate-700">{nextRank.name}</span>
+              </div>
+              <div className="h-3 w-full bg-slate-100 rounded-full overflow-hidden">
+                <div className="h-full bg-amber-400 rounded-full" style={{ width: `${nextRank.progress}%` }}></div>
+              </div>
+           </div>
         </div>
+
+        {/* Daily Quests Box */}
+        <div className="bg-white rounded-[2rem] border-2 border-slate-200 p-6 shadow-sm">
+           <div className="flex items-center justify-between mb-6 border-b-2 border-slate-100 pb-4">
+              <h2 className="text-xl font-black text-slate-800">Daily Quests</h2>
+              <span className="text-sm font-bold text-indigo-500 uppercase">View All</span>
+           </div>
+           <div className="space-y-6">
+              {quests.length > 0 ? quests.map((q: any) => {
+                 const percent = Math.min(100, Math.round((q.progress / q.target) * 100));
+                 return (
+                   <div key={q.id} className="flex gap-4 items-center">
+                     <div className="w-14 h-14 bg-indigo-50 rounded-2xl flex flex-col items-center justify-center border-2 border-indigo-100 shrink-0">
+                       <span className="text-xs font-black text-indigo-400 leading-none mb-1">XP</span>
+                       <span className="text-lg font-black text-indigo-600 leading-none">{q.xp_reward}</span>
+                     </div>
+                     <div className="flex-1">
+                       <p className={`font-bold text-[15px] mb-2 leading-tight ${q.is_claimed ? 'text-emerald-500' : 'text-slate-700'}`}>
+                         {q.title}
+                       </p>
+                       <div className="h-3 w-full bg-slate-100 rounded-full overflow-hidden relative">
+                         <div className={`h-full rounded-full transition-all duration-1000 ${q.is_claimed ? 'bg-emerald-500' : 'bg-indigo-500'}`} style={{ width: `${percent}%` }}></div>
+                       </div>
+                       <p className="text-right text-xs font-bold text-slate-400 mt-1">{q.progress} / {q.target}</p>
+                     </div>
+                   </div>
+                 );
+              }) : (
+                 <div className="text-center py-4 text-slate-400 font-bold">
+                   No quests available.
+                 </div>
+              )}
+           </div>
+        </div>
+
       </div>
     </div>
   );
