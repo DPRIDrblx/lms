@@ -27,6 +27,7 @@ CREATE TABLE IF NOT EXISTS public.live_quiz_participants (
     student_id UUID REFERENCES public.profiles(id) ON DELETE CASCADE,
     score INTEGER DEFAULT 0,
     answers JSONB DEFAULT '{}'::jsonb, -- to store fast answers
+    avatar_seed TEXT,
     joined_at TIMESTAMPTZ DEFAULT NOW(),
     UNIQUE(session_id, student_id)
 );

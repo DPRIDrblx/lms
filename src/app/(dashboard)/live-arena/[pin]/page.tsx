@@ -6,8 +6,11 @@ import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { useState, useEffect, useCallback } from "react";
 import { useParams, useRouter } from "next/navigation";
-import { CheckCircle, AlertTriangle, Loader2, Trophy } from "lucide-react";
+import { CheckCircle, AlertTriangle, Loader2, Trophy, Shuffle } from "lucide-react";
 import { toast } from "react-hot-toast";
+import { motion, AnimatePresence } from "framer-motion";
+import { createAvatar } from '@dicebear/core';
+import { funEmoji } from '@dicebear/collection';
 
 export default function LiveArenaPlayPage() {
   const params = useParams();
@@ -114,25 +117,48 @@ export default function LiveArenaPlayPage() {
   if (loading) return <div className="min-h-[80vh] flex items-center justify-center"><Loader2 className="w-12 h-12 text-indigo-500 animate-spin" /></div>;
 
   if (session?.status === "waiting") {
+     const avatarSvg = createAvatar(funEmoji, { seed: participant?.avatar_seed || profile?.full_name || "Hero" }).toString();
+     
+     const shuffleAvatar = async () => {
+        const newSeed = Math.random().toString(36).substring(7);
+        await supabase.from("live_quiz_participants").update({ avatar_seed: newSeed }).eq("id", participant?.id);
+     };
+
      return (
        <div className="min-h-[80vh] flex flex-col items-center justify-center p-4">
-          <div className="w-24 h-24 bg-amber-100 rounded-full flex items-center justify-center mb-8 animate-bounce">
-             <AlertTriangle className="w-12 h-12 text-amber-600" />
-          </div>
-          <h1 className="text-3xl font-black text-slate-900 mb-2 text-center">You're in!</h1>
-          <p className="text-lg text-slate-500 font-medium text-center">Look at the projector. Waiting for teacher to start...</p>
+          <motion.div 
+             animate={{ y: [0, -20, 0] }} 
+             transition={{ repeat: Infinity, duration: 2, ease: "easeInOut" }}
+             className="w-40 h-40 bg-indigo-100 rounded-full flex items-center justify-center mb-6 overflow-hidden shadow-xl"
+             dangerouslySetInnerHTML={{ __html: avatarSvg }}
+          />
+          <h1 className="text-3xl font-black text-slate-900 mb-2 text-center">You're in, {profile?.full_name?.split(" ")[0]}!</h1>
+          <p className="text-lg text-slate-500 font-medium text-center mb-8">Look at the projector. Waiting for teacher to start...</p>
+          <Button onClick={shuffleAvatar} variant="secondary" size="lg" className="rounded-2xl" icon={<Shuffle className="w-5 h-5" />}>
+             Shuffle Avatar
+          </Button>
+          
+          <audio autoPlay loop src="https://cdn.pixabay.com/download/audio/2022/02/10/audio_fc48af67b2.mp3?filename=lofi-study-112191.mp3" />
        </div>
      );
   }
 
   if (session?.status === "finished") {
      return (
-       <div className="min-h-[80vh] flex flex-col items-center justify-center p-4">
-          <Trophy className="w-32 h-32 text-amber-500 mb-8" />
+       <motion.div 
+          initial={{ scale: 0.8, opacity: 0 }}
+          animate={{ scale: 1, opacity: 1 }}
+          className="min-h-[80vh] flex flex-col items-center justify-center p-4"
+       >
+          <motion.div animate={{ rotate: [0, 10, -10, 0] }} transition={{ repeat: Infinity, duration: 1 }}>
+             <Trophy className="w-32 h-32 text-amber-500 mb-8" />
+          </motion.div>
           <h1 className="text-5xl font-black text-slate-900 mb-4 text-center">Arena Finished!</h1>
           <p className="text-2xl text-slate-600 font-bold mb-8">Your Final Score: <span className="text-indigo-600">{participant?.score}</span></p>
-          <Button onClick={() => router.push("/dashboard")} size="lg" className="rounded-2xl">Return to Dashboard</Button>
-       </div>
+          <Button onClick={() => router.push("/dashboard")} size="lg" className="rounded-2xl bg-indigo-600 hover:bg-indigo-700">Return to Dashboard</Button>
+          
+          <audio autoPlay src="https://cdn.pixabay.com/download/audio/2021/08/04/audio_0625c1539c.mp3?filename=success-1-6297.mp3" />
+       </motion.div>
      );
   }
 
@@ -141,7 +167,16 @@ export default function LiveArenaPlayPage() {
   if (!currentQ) return null;
 
   return (
-    <div className="max-w-3xl mx-auto space-y-8 min-h-[80vh] flex flex-col justify-center">
+    <AnimatePresence mode="wait">
+    <motion.div 
+      key={session.current_question_index}
+      initial={{ opacity: 0, y: 20 }}
+      animate={{ opacity: 1, y: 0 }}
+      exit={{ opacity: 0, x: -20 }}
+      className="max-w-3xl mx-auto space-y-8 min-h-[80vh] flex flex-col justify-center"
+    >
+      <audio autoPlay loop src="https://cdn.pixabay.com/download/audio/2022/10/18/audio_31c2730ebb.mp3?filename=sneaky-snitch-114995.mp3" />
+      
       {!hasAnswered ? (
         <>
           <div className="text-center mb-8">
@@ -226,7 +261,11 @@ export default function LiveArenaPlayPage() {
           </div>
         </>
       ) : (
-        <div className="text-center p-12 bg-white rounded-3xl shadow-xl border border-slate-100">
+        <motion.div 
+           initial={{ scale: 0.9, opacity: 0 }}
+           animate={{ scale: 1, opacity: 1 }}
+           className="text-center p-12 bg-white rounded-3xl shadow-xl border border-slate-100"
+        >
            {isCorrect ? (
              <>
                <div className="w-24 h-24 bg-emerald-100 rounded-full mx-auto flex items-center justify-center mb-6">
@@ -244,9 +283,10 @@ export default function LiveArenaPlayPage() {
                <p className="text-slate-500 font-bold">Better luck next question!</p>
              </>
            )}
-           <p className="mt-8 font-medium text-slate-400">Waiting for teacher...</p>
-        </div>
+            <p className="mt-8 font-medium text-slate-400">Waiting for teacher...</p>
+        </motion.div>
       )}
-    </div>
+    </motion.div>
+    </AnimatePresence>
   );
 }
