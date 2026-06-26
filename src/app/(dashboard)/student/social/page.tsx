@@ -3,7 +3,7 @@
 import { useAuth } from "@/lib/auth-context";
 import { createClient } from "@/lib/supabase";
 import { useState, useEffect } from "react";
-import { Search, Heart, MessageCircle, UserPlus, Image as ImageIcon } from "lucide-react";
+import { Search, Heart, MessageCircle, UserPlus, Image as ImageIcon, Users } from "lucide-react";
 import Link from "next/link";
 import toast from "react-hot-toast";
 
@@ -26,7 +26,7 @@ export default function SocialPage() {
     setLoading(true);
     // Get posts from people I follow + my own posts
     const { data: following } = await supabase.from("friendships").select("following_id").eq("follower_id", profile?.id);
-    const followingIds = following?.map(f => f.following_id) || [];
+    const followingIds = following?.map((f: any) => f.following_id) || [];
     followingIds.push(profile?.id);
 
     const { data: posts } = await supabase
@@ -155,5 +155,3 @@ export default function SocialPage() {
     </div>
   );
 }
-// We need Users icon imported
-import { Users } from "lucide-react";

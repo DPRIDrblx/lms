@@ -2,12 +2,12 @@
 
 import { useAuth } from "@/lib/auth-context";
 import { createClient } from "@/lib/supabase";
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, Suspense } from "react";
 import { Send, ArrowLeft, Loader2, MessageCircle } from "lucide-react";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 
-export default function MessagesPage() {
+function MessagesContent() {
   const { profile } = useAuth();
   const supabase = createClient();
   const searchParams = useSearchParams();
@@ -226,5 +226,13 @@ export default function MessagesPage() {
         )}
       </div>
     </div>
+  );
+}
+
+export default function MessagesPage() {
+  return (
+    <Suspense fallback={<div className="h-screen flex items-center justify-center"><Loader2 className="w-10 h-10 animate-spin text-indigo-500" /></div>}>
+      <MessagesContent />
+    </Suspense>
   );
 }
