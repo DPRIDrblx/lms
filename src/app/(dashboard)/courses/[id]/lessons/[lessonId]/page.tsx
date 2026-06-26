@@ -136,20 +136,33 @@ export default function LessonViewerPage({ params }: { params: Promise<{ id: str
   const handleComplete = async () => {
     if (!profile || isCompleted || !lesson || !course) return;
     setCompleting(true);
+    const toastId = toast.loading("Menyimpan progres...");
 
-    await supabase.from("course_progress").upsert({
+    const { error: progressError } = await supabase.from("course_progress").upsert({
       student_id: profile.id,
       course_id: course.id,
       lesson_id: lesson.id,
       completed: true,
       completed_at: new Date().toISOString(),
-      xp_earned: lesson.xp_reward,
+      xp_earned: lesson.xp_reward || 0,
     });
 
-    await supabase
+    if (progressError) {
+      toast.error(`Gagal menyimpan progres: ${progressError.message}`, { id: toastId });
+      setCompleting(false);
+      return;
+    }
+
+    const { error: profileError } = await supabase
       .from("profiles")
-      .update({ xp: (profile.xp || 0) + lesson.xp_reward })
+      .update({ xp: (profile.xp || 0) + (lesson.xp_reward || 0) })
       .eq("id", profile.id);
+
+    if (profileError) {
+      toast.error(`Gagal menambah XP: ${profileError.message}`, { id: toastId });
+    } else {
+      toast.success(`Berhasil! +${lesson.xp_reward || 0} XP`, { id: toastId });
+    }
 
     setIsCompleted(true);
     refreshProfile();
@@ -158,7 +171,7 @@ export default function LessonViewerPage({ params }: { params: Promise<{ id: str
     // Redirect back to course page after short delay
     setTimeout(() => {
       router.push(`/courses/${id}`);
-    }, 1000);
+    }, 1500);
   };
 
   const handleVideoProgress = (state: any) => {
@@ -526,7 +539,7 @@ export default function LessonViewerPage({ params }: { params: Promise<{ id: str
               disabled={completing}
             >
               {completing ? <Loader2 className="h-6 w-6 animate-spin" /> : <CheckCircle2 className="h-6 w-6" />}
-              Tandai Selesai (+{lesson.xp_reward} XP)
+              Tandai Selesai (+{lesson.xp_reward || 0} XP)
             </button>
           ) : (
             <div className="w-full sm:w-auto flex items-center justify-center gap-2 px-8 py-4 bg-emerald-100 text-emerald-600 border-2 border-emerald-200 rounded-2xl font-black text-lg">
