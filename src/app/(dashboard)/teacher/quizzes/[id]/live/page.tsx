@@ -108,21 +108,27 @@ export default function TeacherLiveArenaPage() {
 
   // Timer Effect
   useEffect(() => {
-     let interval: NodeJS.Timeout;
-     if (session?.status === "active" && timeLeft > 0) {
-        interval = setInterval(() => {
-           setTimeLeft(prev => {
-              if (prev <= 1) {
-                 // Time is up! Move to leaderboard
-                 supabase.from("live_quiz_sessions").update({ status: "leaderboard" }).eq("id", session.id).then();
-                 return 0;
-              }
-              return prev - 1;
-           });
-        }, 1000);
-     }
+     if (session?.status !== "active" || timeLeft <= 0) return;
+     const interval = setInterval(() => {
+        setTimeLeft(prev => prev - 1);
+     }, 1000);
      return () => clearInterval(interval);
-  }, [session?.status, session?.id, supabase, timeLeft]);
+  }, [session?.status, timeLeft]);
+
+  // Transition to Leaderboard when time is up
+  useEffect(() => {
+     if (session?.status === "active" && timeLeft === 0) {
+        supabase.from("live_quiz_sessions")
+           .update({ status: "leaderboard" })
+           .eq("id", session.id)
+           .then(({ error }) => {
+              if (error) {
+                 console.error("Failed to update status to leaderboard:", error);
+                 alert("GAGAL PINDAH KE LEADERBOARD! Pastikan kamu sudah menjalankan perintah SQL ALTER TABLE di Supabase untuk mengizinkan status 'leaderboard'. Error: " + error.message);
+              }
+           });
+     }
+  }, [timeLeft, session?.status, session?.id, supabase]);
 
   const startQuiz = async () => {
     setTimeLeft(20);
@@ -140,6 +146,12 @@ export default function TeacherLiveArenaPage() {
          current_question_index: session.current_question_index + 1,
          status: "active"
       }).eq("id", session.id);
+    }
+  };
+
+  const endQuizEarly = async () => {
+    if (confirm("Are you sure you want to end this quiz early?")) {
+      await supabase.from("live_quiz_sessions").update({ status: "finished" }).eq("id", session.id);
     }
   };
 
@@ -298,6 +310,15 @@ export default function TeacherLiveArenaPage() {
                             })}
                          </AnimatePresence>
                       </div>
+                   </div>
+                )}
+
+                {/* End Quiz Button for Teacher */}
+                {session?.status !== "waiting" && session?.status !== "finished" && (
+                   <div className="mt-8 flex justify-end">
+                      <Button onClick={endQuizEarly} variant="destructive" className="font-bold border-2 border-red-200">
+                         End Quiz Early
+                      </Button>
                    </div>
                 )}
              </Card>

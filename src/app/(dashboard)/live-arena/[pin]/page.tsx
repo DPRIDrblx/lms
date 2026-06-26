@@ -96,12 +96,10 @@ export default function LiveArenaPlayPage() {
 
   // Timer Effect for Student
   useEffect(() => {
-     let interval: NodeJS.Timeout;
-     if (session?.status === "active" && timeLeft > 0 && !hasAnswered) {
-        interval = setInterval(() => {
-           setTimeLeft(prev => prev > 0 ? prev - 1 : 0);
-        }, 1000);
-     }
+     if (session?.status !== "active" || timeLeft <= 0 || hasAnswered) return;
+     const interval = setInterval(() => {
+        setTimeLeft(prev => prev > 0 ? prev - 1 : 0);
+     }, 1000);
      return () => clearInterval(interval);
   }, [session?.status, timeLeft, hasAnswered]);
 
