@@ -1,7 +1,8 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { Heart, MessageCircle, Send, MoreHorizontal, CornerDownRight } from "lucide-react";
+import { Heart, MessageCircle, Send, MoreHorizontal, CornerDownRight, Smile } from "lucide-react";
+import EmojiPicker, { Theme } from "emoji-picker-react";
 import Link from "next/link";
 import { createClient } from "@/lib/supabase";
 import toast from "react-hot-toast";
@@ -22,6 +23,7 @@ export function PostCard({ post, currentUserProfile }: PostCardProps) {
   const [newComment, setNewComment] = useState("");
   const [replyingTo, setReplyingTo] = useState<{ id: string, name: string } | null>(null);
   const [sending, setSending] = useState(false);
+  const [showEmojiPicker, setShowEmojiPicker] = useState(false);
 
   useEffect(() => {
     if (showComments) {
@@ -63,15 +65,48 @@ export function PostCard({ post, currentUserProfile }: PostCardProps) {
       setComments(prev => [...prev, data]);
       setNewComment("");
       setReplyingTo(null);
+      setShowEmojiPicker(false);
     }
     setSending(false);
   };
 
-  // Group comments into threads (parent comments with their replies)
-  const threads = comments.filter(c => !c.parent_id).map(parent => ({
-    ...parent,
-    replies: comments.filter(c => c.parent_id === parent.id)
-  }));
+  // Root comments
+  const rootComments = comments.filter(c => !c.parent_id);
+
+  // Recursive Comment Component
+  const CommentItem = ({ comment, depth = 0 }: { comment: any, depth?: number }) => {
+    const replies = comments.filter(c => c.parent_id === comment.id);
+    
+    return (
+      <div className={`space-y-2 ${depth > 0 ? 'ml-6' : ''}`}>
+        <div className="flex gap-3">
+          <img src={comment.profiles?.avatar_url || `https://ui-avatars.com/api/?name=${comment.profiles?.full_name}&background=random`} className={`${depth > 0 ? 'w-6 h-6 mt-1' : 'w-8 h-8'} rounded-full border-2 border-slate-200 object-cover object-top`} />
+          <div className="flex-1">
+            <div className={`bg-white p-2.5 rounded-2xl rounded-tl-sm border-2 border-slate-200 shadow-sm`}>
+              <p className={`font-black text-slate-800 ${depth > 0 ? 'text-xs' : 'text-sm'}`}>{comment.profiles?.full_name}</p>
+              <p className="text-slate-600 font-medium text-sm mt-0.5">{comment.content}</p>
+            </div>
+            <div className="flex gap-4 mt-1 ml-2">
+              <span className="text-[10px] font-bold text-slate-400">{new Date(comment.created_at).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}</span>
+              <button 
+                onClick={() => setReplyingTo({ id: comment.id, name: comment.profiles?.full_name })}
+                className="text-[10px] font-black text-slate-400 hover:text-indigo-500"
+              >
+                Balas
+              </button>
+            </div>
+          </div>
+        </div>
+        {replies.length > 0 && (
+          <div className="mt-2 space-y-2">
+            {replies.map(reply => (
+              <CommentItem key={reply.id} comment={reply} depth={depth + 1} />
+            ))}
+          </div>
+        )}
+      </div>
+    );
+  };
 
   return (
     <div className="bg-white rounded-3xl border-2 border-slate-200 shadow-[0_6px_0_rgb(226,232,240)] overflow-hidden transition-all hover:shadow-[0_8px_0_rgb(226,232,240)]">
@@ -136,45 +171,11 @@ export function PostCard({ post, currentUserProfile }: PostCardProps) {
           <div className="space-y-4 mb-4">
             {loadingComments ? (
               <div className="text-center py-4 font-bold text-slate-400">Memuat komentar...</div>
-            ) : threads.length === 0 ? (
+            ) : rootComments.length === 0 ? (
               <div className="text-center py-6 font-bold text-slate-400 border-2 border-dashed border-slate-200 rounded-2xl bg-white">Belum ada komentar. Jadilah yang pertama!</div>
             ) : (
-              threads.map(thread => (
-                <div key={thread.id} className="space-y-2">
-                  {/* Parent Comment */}
-                  <div className="flex gap-3">
-                    <img src={thread.profiles?.avatar_url || `https://ui-avatars.com/api/?name=${thread.profiles?.full_name}&background=random`} className="w-8 h-8 rounded-full border-2 border-slate-200 object-cover object-top" />
-                    <div className="flex-1">
-                      <div className="bg-white p-3 rounded-2xl rounded-tl-sm border-2 border-slate-200 shadow-sm">
-                        <p className="font-black text-sm text-slate-800">{thread.profiles?.full_name}</p>
-                        <p className="text-slate-600 font-medium text-sm mt-0.5">{thread.content}</p>
-                      </div>
-                      <div className="flex gap-4 mt-1 ml-2">
-                        <span className="text-[10px] font-bold text-slate-400">{new Date(thread.created_at).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}</span>
-                        <button 
-                          onClick={() => setReplyingTo({ id: thread.id, name: thread.profiles?.full_name })}
-                          className="text-[10px] font-black text-slate-400 hover:text-indigo-500"
-                        >
-                          Balas
-                        </button>
-                      </div>
-                    </div>
-                  </div>
-
-                  {/* Replies */}
-                  {thread.replies?.map((reply: any) => (
-                    <div key={reply.id} className="flex gap-3 ml-10">
-                      <img src={reply.profiles?.avatar_url || `https://ui-avatars.com/api/?name=${reply.profiles?.full_name}&background=random`} className="w-6 h-6 rounded-full border-2 border-slate-200 object-cover object-top mt-1" />
-                      <div className="flex-1">
-                        <div className="bg-white p-2.5 rounded-2xl rounded-tl-sm border-2 border-slate-200 shadow-sm">
-                          <p className="font-black text-xs text-slate-800">{reply.profiles?.full_name}</p>
-                          <p className="text-slate-600 font-medium text-sm mt-0.5">{reply.content}</p>
-                        </div>
-                        <span className="text-[10px] font-bold text-slate-400 ml-2 mt-1 block">{new Date(reply.created_at).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}</span>
-                      </div>
-                    </div>
-                  ))}
-                </div>
+              rootComments.map(comment => (
+                <CommentItem key={comment.id} comment={comment} />
               ))
             )}
           </div>
@@ -195,6 +196,22 @@ export function PostCard({ post, currentUserProfile }: PostCardProps) {
                 placeholder={replyingTo ? "Tulis balasanmu..." : "Tulis komentarmu..."} 
                 className={`flex-1 bg-white border-2 border-slate-200 px-4 py-3 font-bold text-slate-700 outline-none focus:border-indigo-400 focus:shadow-[0_3px_0_rgb(129,140,248)] transition-all ${replyingTo ? 'rounded-b-xl rounded-tr-none' : 'rounded-xl'}`}
               />
+              <button
+                type="button"
+                onClick={() => setShowEmojiPicker(!showEmojiPicker)}
+                className="p-3 text-slate-400 hover:text-amber-500 hover:bg-amber-50 rounded-xl transition-all"
+              >
+                <Smile className="w-6 h-6" />
+              </button>
+
+              {showEmojiPicker && (
+                <div className="absolute bottom-full right-16 mb-2 z-50">
+                  <EmojiPicker 
+                    onEmojiClick={(emojiData) => setNewComment(prev => prev + emojiData.emoji)}
+                    theme={Theme.LIGHT}
+                  />
+                </div>
+              )}
               <button 
                 type="submit" 
                 disabled={sending || !newComment.trim()}

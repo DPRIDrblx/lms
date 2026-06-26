@@ -1,8 +1,9 @@
 "use client";
 
 import { useAuth } from "@/lib/auth-context";
-import { Flame, Diamond, Lock, Edit2, Loader2, Image as ImageIcon, Send, Trash2 } from "lucide-react";
+import { Flame, Diamond, Lock, Edit2, Loader2, Image as ImageIcon, Send, Trash2, X } from "lucide-react";
 import { PostCard } from "@/components/social/post-card";
+import Link from "next/link";
 import { useState, useEffect, useRef } from "react";
 import { createClient } from "@/lib/supabase";
 import toast from "react-hot-toast";
@@ -21,6 +22,8 @@ export default function ProfilePage() {
   const [activeTab, setActiveTab] = useState<"stats" | "posts">("stats");
   const [followers, setFollowers] = useState(0);
   const [following, setFollowing] = useState(0);
+  
+  const [followModal, setFollowModal] = useState<{ type: "followers" | "following", title: string, users: any[] } | null>(null);
   
   const [isEditingAvatar, setIsEditingAvatar] = useState(false);
   const [isChangingPassword, setIsChangingPassword] = useState(false);
@@ -49,6 +52,20 @@ export default function ProfilePage() {
       
     setFollowers(f1 || 0);
     setFollowing(f2 || 0);
+  };
+
+  const openFollowModal = async (type: "followers" | "following") => {
+    setLoading(true);
+    let users: any[] = [];
+    if (type === "followers") {
+      const { data } = await supabase.from("friendships").select("follower_id, profiles!friendships_follower_id_fkey(id, full_name, avatar_url, role)").eq("following_id", profile?.id);
+      users = data?.map((d: any) => d.profiles) || [];
+    } else {
+      const { data } = await supabase.from("friendships").select("following_id, profiles!friendships_following_id_fkey(id, full_name, avatar_url, role)").eq("follower_id", profile?.id);
+      users = data?.map((d: any) => d.profiles) || [];
+    }
+    setFollowModal({ type, title: type === "followers" ? "Pengikut" : "Diikuti", users });
+    setLoading(false);
   };
 
   const handleAvatarSelect = async (avatar: string) => {
@@ -159,11 +176,11 @@ export default function ProfilePage() {
           
           {/* Social Stats */}
           <div className="flex items-center gap-6 mb-6">
-            <div className="text-center cursor-pointer hover:scale-105 transition-transform bg-indigo-600/30 px-6 py-2 rounded-2xl">
+            <div onClick={() => openFollowModal("followers")} className="text-center cursor-pointer hover:scale-105 transition-transform bg-indigo-600/30 px-6 py-2 rounded-2xl">
               <p className="text-2xl font-black">{followers}</p>
               <p className="text-xs font-bold text-indigo-200 uppercase tracking-wider">Pengikut</p>
             </div>
-            <div className="text-center cursor-pointer hover:scale-105 transition-transform bg-indigo-600/30 px-6 py-2 rounded-2xl">
+            <div onClick={() => openFollowModal("following")} className="text-center cursor-pointer hover:scale-105 transition-transform bg-indigo-600/30 px-6 py-2 rounded-2xl">
               <p className="text-2xl font-black">{following}</p>
               <p className="text-xs font-bold text-indigo-200 uppercase tracking-wider">Diikuti</p>
             </div>
@@ -268,6 +285,44 @@ export default function ProfilePage() {
               </div>
             );
           })}
+        </div>
+      )}
+
+      {/* Follow Modal */}
+      {followModal && (
+        <div className="fixed inset-0 bg-slate-900/50 backdrop-blur-sm flex items-center justify-center p-4 z-50">
+          <div className="bg-white rounded-[2rem] p-6 max-w-md w-full border-2 border-slate-200 shadow-2xl animate-in zoom-in-95 duration-200 max-h-[80vh] flex flex-col">
+            <div className="flex items-center justify-between mb-4">
+              <h2 className="text-2xl font-black text-slate-800">{followModal.title}</h2>
+              <button onClick={() => setFollowModal(null)} className="p-2 bg-slate-100 text-slate-500 rounded-full hover:bg-slate-200 transition-colors">
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+            
+            <div className="overflow-y-auto space-y-2 flex-1 pr-2">
+              {followModal.users.length === 0 ? (
+                <div className="text-center py-10 font-bold text-slate-400">Belum ada data.</div>
+              ) : (
+                followModal.users.map((user: any) => (
+                  <Link key={user.id} href={`/student/profile/${user.id}`} onClick={() => setFollowModal(null)}>
+                    <div className="flex items-center gap-3 p-3 hover:bg-slate-50 rounded-2xl transition-all cursor-pointer border-2 border-transparent hover:border-slate-100">
+                      {user.avatar_url && user.avatar_url.includes('/avatars/') ? (
+                        <img src={user.avatar_url} className="w-12 h-12 rounded-full object-cover object-top border-2 border-slate-200" />
+                      ) : (
+                        <div className="w-12 h-12 rounded-full bg-indigo-100 flex items-center justify-center font-bold text-indigo-600 border-2 border-slate-200">
+                          {user.full_name?.charAt(0)}
+                        </div>
+                      )}
+                      <div>
+                        <p className="font-bold text-slate-800 text-sm leading-tight">{user.full_name}</p>
+                        <p className="text-xs font-bold text-slate-400 capitalize mt-0.5">{user.role}</p>
+                      </div>
+                    </div>
+                  </Link>
+                ))
+              )}
+            </div>
+          </div>
         </div>
       )}
 

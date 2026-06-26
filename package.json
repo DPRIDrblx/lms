@@ -20,6 +20,7 @@
     "canvas-confetti": "^1.9.4",
     "clsx": "^2.1.1",
     "date-fns": "^4.1.0",
+    "emoji-picker-react": "^4.19.1",
     "face-api.js": "^0.22.2",
     "framer-motion": "^12.38.0",
     "html5-qrcode": "^2.3.8",

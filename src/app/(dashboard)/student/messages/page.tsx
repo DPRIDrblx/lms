@@ -3,7 +3,8 @@
 import { useAuth } from "@/lib/auth-context";
 import { createClient } from "@/lib/supabase";
 import { useState, useEffect, useRef, Suspense } from "react";
-import { Send, ArrowLeft, Loader2, MessageCircle, Sparkles } from "lucide-react";
+import { Send, ArrowLeft, Loader2, MessageCircle, Sparkles, Smile } from "lucide-react";
+import EmojiPicker, { Theme } from "emoji-picker-react";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 
@@ -18,6 +19,7 @@ function MessagesContent() {
   const [messages, setMessages] = useState<any[]>([]);
   const [newMessage, setNewMessage] = useState("");
   const [sending, setSending] = useState(false);
+  const [showEmojiPicker, setShowEmojiPicker] = useState(false);
   
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
@@ -106,18 +108,19 @@ function MessagesContent() {
     }, 100);
   };
 
-  const handleSendMessage = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!newMessage.trim() || !selectedFriend) return;
+  const handleSendMessage = async (e?: React.FormEvent) => {
+    if (e) e.preventDefault();
+    if (!newMessage.trim() || !profile?.id || !selectedFriend?.id) return;
     
     setSending(true);
-    const text = newMessage;
-    setNewMessage(""); // Optimistic clear
+    const content = newMessage.trim();
+    setNewMessage("");
+    setShowEmojiPicker(false);
     
     await supabase.from("direct_messages").insert({
       sender_id: profile?.id,
       receiver_id: selectedFriend.id,
-      content: text
+      content: content
     });
     
     setSending(false);
@@ -245,6 +248,24 @@ function MessagesContent() {
                     }
                   }}
                 />
+                
+                <button
+                  type="button"
+                  onClick={() => setShowEmojiPicker(!showEmojiPicker)}
+                  className="p-3 text-slate-400 hover:text-amber-500 hover:bg-amber-50 rounded-xl transition-all"
+                >
+                  <Smile className="w-6 h-6" />
+                </button>
+
+                {showEmojiPicker && (
+                  <div className="absolute bottom-full right-16 mb-2 z-50">
+                    <EmojiPicker 
+                      onEmojiClick={(emojiData) => setNewMessage(prev => prev + emojiData.emoji)}
+                      theme={Theme.LIGHT}
+                    />
+                  </div>
+                )}
+
                 <button 
                   type="submit" 
                   disabled={sending || !newMessage.trim()}
