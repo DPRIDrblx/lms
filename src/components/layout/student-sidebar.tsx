@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Home, Shield, Swords, User, Compass } from "lucide-react";
+import { Home, Shield, Swords, User, Compass, Users, MessageCircle } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 export function StudentSidebar() {
@@ -12,6 +12,8 @@ export function StudentSidebar() {
     { name: "Learn", href: "/dashboard", icon: Home },
     { name: "Quests", href: "/student/quests", icon: Swords },
     { name: "Leaderboard", href: "/student/leaderboard", icon: Shield },
+    { name: "Social", href: "/student/social", icon: Users },
+    { name: "Messages", href: "/student/messages", icon: MessageCircle },
     { name: "Explore", href: "/courses", icon: Compass },
     { name: "Profile", href: "/student/profile", icon: User },
   ];

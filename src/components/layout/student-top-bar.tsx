@@ -81,7 +81,9 @@ export function StudentTopBar() {
             className="flex items-center gap-2.5 p-1.5 pr-3 rounded-2xl hover:bg-slate-100 transition-all border-2 border-transparent hover:border-slate-200"
           >
             {profile?.avatar_url ? (
-              profile.avatar_url.startsWith("http") ? (
+              profile.avatar_url.includes("/avatars/") ? (
+                <img src={profile.avatar_url} alt="" className="w-9 h-9 rounded-full object-cover object-top" />
+              ) : profile.avatar_url.startsWith("http") ? (
                 <img src={profile.avatar_url} alt="" className="w-9 h-9 rounded-full object-cover" />
               ) : (
                 <div className="w-9 h-9 rounded-full bg-emerald-100 flex items-center justify-center text-xl shadow-inner">

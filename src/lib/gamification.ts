@@ -15,7 +15,7 @@ export const checkAndUpdateStreak = async (supabase: SupabaseClient, profileId: 
     return 1;
   }
 
-  if (lastLoginDate === todayStr) {
+  if (lastLoginDate && lastLoginDate.split("T")[0] === todayStr) {
     // Same day login, no streak change
     return currentStreak;
   }

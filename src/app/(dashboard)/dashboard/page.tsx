@@ -56,6 +56,7 @@ export default function DashboardPage() {
   const [leadership, setLeadership] = useState<any>(null);
   const [streak, setStreak] = useState(0);
   const [quests, setQuests] = useState<any[]>([]);
+  const [drills, setDrills] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [profileTimeout, setProfileTimeout] = useState(false);
 
@@ -119,6 +120,23 @@ export default function DashboardPage() {
        const newQuests = await generateDailyQuests(supabase, profile.id, fullProfile.daily_quests, fullProfile.last_quest_reset, fullProfile.xp || 0);
        setStreak(newStreak);
        setQuests(newQuests);
+       
+       if (fullProfile.class_id) {
+         const { data: dls } = await supabase
+           .from("drills")
+           .select("*, drill_submissions(is_completed, student_id)")
+           .eq("class_id", fullProfile.class_id)
+           .gte("due_date", new Date().toISOString())
+           .order("due_date", { ascending: true });
+           
+         if (dls) {
+           const processedDrills = dls.map(d => {
+             const submission = d.drill_submissions?.find((s: any) => s.student_id === profile.id);
+             return { ...d, is_completed: submission?.is_completed || false };
+           });
+           setDrills(processedDrills);
+         }
+       }
     }
 
     if (courseData) setCourses(courseData.map((c: any) => ({ ...c, lessons_count: c.lessons[0]?.count || 0 })));
@@ -193,6 +211,37 @@ export default function DashboardPage() {
 
          {/* Path container */}
          <div className="relative w-full max-w-md flex flex-col items-center gap-10">
+            {/* Drills Section */}
+            {drills.length > 0 && drills.map((drill, idx) => {
+              const isCompleted = drill.is_completed;
+              return (
+                <div key={`drill-${drill.id}`} className="relative flex flex-col items-center group cursor-pointer w-full mb-4">
+                  <div className="absolute top-24 h-16 w-4 bg-slate-200 -z-10 rounded-full" />
+                  <div className="relative w-full px-4">
+                    <Link href={isCompleted ? '#' : `/student/drills/${drill.id}`}>
+                      <div className={`w-full rounded-[2rem] p-6 border-4 flex items-center gap-4 transition-all ${
+                        isCompleted 
+                        ? 'bg-emerald-50 border-emerald-200 opacity-70' 
+                        : 'bg-white border-amber-300 shadow-[0_8px_0_rgb(252,211,77)] hover:-translate-y-1 hover:shadow-[0_10px_0_rgb(252,211,77)] active:translate-y-2 active:shadow-none'
+                      }`}>
+                        <div className={`w-16 h-16 rounded-2xl flex items-center justify-center shrink-0 ${isCompleted ? 'bg-emerald-100' : 'bg-amber-100 animate-pulse'}`}>
+                          {isCompleted ? <Trophy className="w-8 h-8 text-emerald-500" /> : <Flame className="w-8 h-8 text-amber-500" />}
+                        </div>
+                        <div>
+                          <h3 className="text-xl font-black text-slate-800 mb-1">{drill.title}</h3>
+                          {isCompleted ? (
+                            <p className="text-emerald-600 font-bold text-sm">Misi Selesai!</p>
+                          ) : (
+                            <p className="text-amber-600 font-bold text-sm">Drill Mingguan! (+{drill.xp_reward} XP)</p>
+                          )}
+                        </div>
+                      </div>
+                    </Link>
+                  </div>
+                </div>
+              );
+            })}
+
             {courses.length === 0 ? (
                <div className="p-8 text-center bg-slate-100 rounded-3xl border-2 border-slate-200 border-dashed text-slate-500 font-bold">
                  No courses available yet!
