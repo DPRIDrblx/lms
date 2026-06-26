@@ -3,7 +3,7 @@
 import { useAuth } from "@/lib/auth-context";
 import { createClient } from "@/lib/supabase";
 import { useState, useEffect, useRef } from "react";
-import { Send, ArrowLeft, Loader2 } from "lucide-react";
+import { Send, ArrowLeft, Loader2, MessageCircle } from "lucide-react";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 
@@ -33,7 +33,7 @@ export default function MessagesPage() {
       
       const channel = supabase
         .channel(`dms:${profile?.id}:${selectedFriend.id}`)
-        .on("postgres_changes", { event: "INSERT", schema: "public", table: "direct_messages" }, payload => {
+        .on("postgres_changes", { event: "INSERT", schema: "public", table: "direct_messages" }, (payload: any) => {
           const msg = payload.new;
           if (
             (msg.sender_id === profile?.id && msg.receiver_id === selectedFriend.id) ||
@@ -57,14 +57,14 @@ export default function MessagesPage() {
   const loadMutualFriends = async () => {
     // I follow them
     const { data: iFollow } = await supabase.from("friendships").select("following_id").eq("follower_id", profile?.id);
-    const followingIds = iFollow?.map(f => f.following_id) || [];
+    const followingIds = iFollow?.map((f: any) => f.following_id) || [];
     
     // They follow me
     const { data: theyFollow } = await supabase.from("friendships").select("follower_id").eq("following_id", profile?.id);
-    const followerIds = theyFollow?.map(f => f.follower_id) || [];
+    const followerIds = theyFollow?.map((f: any) => f.follower_id) || [];
 
     // Mutuals
-    const mutualIds = followingIds.filter(id => followerIds.includes(id));
+    const mutualIds = followingIds.filter((id: any) => followerIds.includes(id));
     
     if (mutualIds.length > 0) {
       const { data: friends } = await supabase
@@ -75,7 +75,7 @@ export default function MessagesPage() {
       setMutualFriends(friends || []);
       
       if (initialUserId && mutualIds.includes(initialUserId)) {
-        const friend = friends?.find(f => f.id === initialUserId);
+        const friend = friends?.find((f: any) => f.id === initialUserId);
         if (friend) setSelectedFriend(friend);
       }
     }
@@ -94,7 +94,7 @@ export default function MessagesPage() {
     scrollToBottom();
     
     // Mark unread as read
-    const unreadIds = data?.filter(m => m.receiver_id === profile.id && !m.read).map(m => m.id) || [];
+    const unreadIds = data?.filter((m: any) => m.receiver_id === profile.id && !m.read).map((m: any) => m.id) || [];
     if (unreadIds.length > 0) {
       await supabase.from("direct_messages").update({ read: true }).in("id", unreadIds);
     }

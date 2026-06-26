@@ -130,7 +130,7 @@ export default function DashboardPage() {
            .order("due_date", { ascending: true });
            
          if (dls) {
-           const processedDrills = dls.map(d => {
+           const processedDrills = dls.map((d: any) => {
              const submission = d.drill_submissions?.find((s: any) => s.student_id === profile.id);
              return { ...d, is_completed: submission?.is_completed || false };
            });

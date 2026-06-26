@@ -3,7 +3,7 @@
 import { useAuth } from "@/lib/auth-context";
 import { createClient } from "@/lib/supabase";
 import { useState, useEffect } from "react";
-import { X, Check, ArrowRight, Loader2, Trophy, Heart } from "lucide-react";
+import { X, Check, ArrowRight, Loader2, Trophy, Heart, Flame } from "lucide-react";
 import { useParams, useRouter } from "next/navigation";
 import toast from "react-hot-toast";
 
