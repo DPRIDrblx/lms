@@ -25,6 +25,9 @@ export default function TeacherLiveArenaPage() {
   const [loading, setLoading] = useState(true);
   const [quiz, setQuiz] = useState<any>(null);
   
+  // Timer State
+  const [timeLeft, setTimeLeft] = useState(20);
+  
   const generatePin = () => Math.floor(100000 + Math.random() * 900000).toString();
 
   const fetchSession = useCallback(async () => {
@@ -103,17 +106,40 @@ export default function TeacherLiveArenaPage() {
     return () => { supabase.removeChannel(channel); };
   }, [fetchSession, supabase, session?.id]);
 
+  // Timer Effect
+  useEffect(() => {
+     let interval: NodeJS.Timeout;
+     if (session?.status === "active" && timeLeft > 0) {
+        interval = setInterval(() => {
+           setTimeLeft(prev => {
+              if (prev <= 1) {
+                 // Time is up! Move to leaderboard
+                 supabase.from("live_quiz_sessions").update({ status: "leaderboard" }).eq("id", session.id).then();
+                 return 0;
+              }
+              return prev - 1;
+           });
+        }, 1000);
+     }
+     return () => clearInterval(interval);
+  }, [session?.status, session?.id, supabase, timeLeft]);
+
   const startQuiz = async () => {
+    setTimeLeft(20);
     await supabase.from("live_quiz_sessions").update({ status: "active", current_question_index: 0 }).eq("id", session.id);
   };
 
   const nextQuestion = async () => {
     if (!quiz || !session) return;
-    const nextIdx = session.current_question_index + 1;
-    if (nextIdx >= quiz.questions.length) {
+    const isLast = session.current_question_index >= quiz.questions.length - 1;
+    if (isLast) {
       await supabase.from("live_quiz_sessions").update({ status: "finished" }).eq("id", session.id);
     } else {
-      await supabase.from("live_quiz_sessions").update({ current_question_index: nextIdx }).eq("id", session.id);
+      setTimeLeft(20);
+      await supabase.from("live_quiz_sessions").update({ 
+         current_question_index: session.current_question_index + 1,
+         status: "active"
+      }).eq("id", session.id);
     }
   };
 
@@ -160,9 +186,17 @@ export default function TeacherLiveArenaPage() {
                <h2 className="text-2xl font-black flex items-center gap-3 text-slate-800">
                   <Users className="text-indigo-500 w-8 h-8" /> Participants ({participants.length})
                </h2>
+               {session?.status === "active" && (
+                  <div className="flex items-center gap-4 bg-indigo-50 px-6 py-3 rounded-full">
+                     <span className="font-bold text-indigo-900">TIME LEFT:</span>
+                     <span className={`text-3xl font-black ${timeLeft <= 5 ? 'text-rose-500 animate-ping' : 'text-indigo-600'}`}>
+                        {timeLeft}s
+                     </span>
+                  </div>
+               )}
             </div>
             
-            <div className="flex flex-wrap gap-6 justify-center">
+            {session?.status !== "leaderboard" && (
                <AnimatePresence>
                  {participants.map(p => {
                     const avatarSvg = createAvatar(adventurer, { seed: p.avatar_seed || p.profiles?.full_name || "Hero", backgroundColor: ['b6e3f4','c0aede','d1d4f9','ffdfbf','ffd5dc'] }).toString();
@@ -197,6 +231,38 @@ export default function TeacherLiveArenaPage() {
                   </div>
                )}
             </div>
+            )}
+
+            {session?.status === "leaderboard" && (
+               <div className="w-full max-w-2xl mx-auto space-y-4">
+                  <h3 className="text-3xl font-black text-center mb-8 text-indigo-900 drop-shadow-sm">TOP RANKINGS</h3>
+                  <div className="flex flex-col gap-3">
+                     <AnimatePresence>
+                        {participants.slice(0, 5).map((p, index) => {
+                           const avatarSvg = createAvatar(adventurer, { seed: p.avatar_seed || p.profiles?.full_name || "Hero", backgroundColor: ['b6e3f4','c0aede','d1d4f9','ffdfbf','ffd5dc'] }).toString();
+                           return (
+                              <motion.div
+                                 key={p.id}
+                                 layout
+                                 initial={{ opacity: 0, x: -50 }}
+                                 animate={{ opacity: 1, x: 0 }}
+                                 exit={{ opacity: 0, scale: 0.5 }}
+                                 transition={{ type: "spring", stiffness: 300, damping: 20 }}
+                                 className={`flex items-center justify-between p-4 rounded-2xl shadow-md ${index === 0 ? 'bg-gradient-to-r from-yellow-400 to-yellow-200 border-2 border-yellow-500' : 'bg-white border border-slate-100'}`}
+                              >
+                                 <div className="flex items-center gap-4">
+                                    <div className="font-black text-2xl w-8 text-center text-slate-400">{index + 1}</div>
+                                    <div className="w-16 h-16 rounded-full bg-white shadow-inner overflow-hidden border-2 border-slate-200" dangerouslySetInnerHTML={{ __html: avatarSvg }} />
+                                    <span className={`text-xl font-black ${index === 0 ? 'text-yellow-900' : 'text-slate-700'}`}>{p.profiles?.full_name}</span>
+                                 </div>
+                                 <span className={`text-2xl font-black ${index === 0 ? 'text-yellow-700' : 'text-indigo-600'}`}>{p.score} pts</span>
+                              </motion.div>
+                           );
+                        })}
+                     </AnimatePresence>
+                  </div>
+               </div>
+            )}
          </Card>
          
          <Card className="p-8 border-none shadow-2xl flex flex-col justify-center items-center text-center bg-white/10 backdrop-blur-xl border-white/20">
@@ -214,6 +280,15 @@ export default function TeacherLiveArenaPage() {
                   <h3 className="text-3xl font-black mb-8 text-white">
                      {quiz?.questions[session.current_question_index]?.question_text}
                   </h3>
+                  {timeLeft <= 5 && <div className="text-rose-400 font-black text-4xl animate-bounce mb-4">{timeLeft} SECONDS!</div>}
+               </>
+            )}
+
+            {session?.status === "leaderboard" && (
+               <>
+                  <Trophy className="w-24 h-24 text-yellow-400 mb-6 animate-pulse" />
+                  <h3 className="text-3xl font-black mb-4 text-white">Scores Updated!</h3>
+                  <p className="text-indigo-200 font-medium mb-8">Get ready for the next question.</p>
                   <Button onClick={nextQuestion} size="lg" className="w-full text-2xl font-black h-24 rounded-3xl bg-indigo-600 hover:bg-indigo-500 shadow-[0_0_40px_rgba(79,70,229,0.5)] hover:scale-105 transition-all" icon={<ArrowRight className="h-8 w-8" />}>
                      NEXT QUESTION
                   </Button>

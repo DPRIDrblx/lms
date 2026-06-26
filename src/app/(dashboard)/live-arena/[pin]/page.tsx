@@ -29,6 +29,8 @@ export default function LiveArenaPlayPage() {
   const [essayAnswer, setEssayAnswer] = useState("");
   const [complexSelection, setComplexSelection] = useState<number[]>([]);
   const [matchingAnswers, setMatchingAnswers] = useState<Record<number, string>>({});
+  const [timeLeft, setTimeLeft] = useState(20);
+  const [pointsEarned, setPointsEarned] = useState(0);
 
   const fetchInitial = useCallback(async () => {
     if (!profile) return;
@@ -74,7 +76,14 @@ export default function LiveArenaPlayPage() {
             setEssayAnswer("");
             setComplexSelection([]);
             setMatchingAnswers({});
+            setTimeLeft(20);
          }
+         
+         // If status becomes active, make sure time is 20
+         if (payload.new.status === "active" && session.status !== "active") {
+            setTimeLeft(20);
+         }
+
          setSession(payload.new);
       })
       .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'live_quiz_participants', filter: `id=eq.${participant?.id}` }, (payload: any) => {
@@ -83,7 +92,18 @@ export default function LiveArenaPlayPage() {
       .subscribe();
       
     return () => { supabase.removeChannel(channel); };
-  }, [fetchInitial, supabase, session?.id, session?.current_question_index, participant?.id]);
+  }, [fetchInitial, supabase, session?.id, session?.current_question_index, participant?.id, session?.status]);
+
+  // Timer Effect for Student
+  useEffect(() => {
+     let interval: NodeJS.Timeout;
+     if (session?.status === "active" && timeLeft > 0 && !hasAnswered) {
+        interval = setInterval(() => {
+           setTimeLeft(prev => prev > 0 ? prev - 1 : 0);
+        }, 1000);
+     }
+     return () => clearInterval(interval);
+  }, [session?.status, timeLeft, hasAnswered]);
 
   const submitAnswer = async (selectedOptionIndex?: number) => {
     if (hasAnswered || !quiz || !session || !participant) return;
@@ -109,9 +129,14 @@ export default function LiveArenaPlayPage() {
     setHasAnswered(true);
     
     if (correct) {
-      // Calculate score based on speed (simplification: 1000 pts)
-      const newScore = (participant.score || 0) + 1000;
+      // Calculate score based on speed: base 500 + speed up to 500
+      const speedBonus = Math.max(0, Math.round((timeLeft / 20) * 500));
+      const earned = 500 + speedBonus;
+      setPointsEarned(earned);
+      const newScore = (participant.score || 0) + earned;
       await supabase.from("live_quiz_participants").update({ score: newScore }).eq("id", participant.id);
+    } else {
+      setPointsEarned(0);
     }
   };
 
@@ -181,6 +206,42 @@ export default function LiveArenaPlayPage() {
      );
   }
 
+  if (session?.status === "leaderboard") {
+     return (
+       <div className="min-h-screen bg-indigo-600 flex flex-col items-center justify-center p-4">
+          <motion.div 
+             initial={{ scale: 0.8, opacity: 0 }}
+             animate={{ scale: 1, opacity: 1 }}
+             className="bg-white rounded-3xl p-12 text-center max-w-lg w-full shadow-2xl"
+          >
+             <h2 className="text-4xl font-black text-indigo-900 mb-4">TIME IS UP!</h2>
+             {hasAnswered ? (
+                isCorrect ? (
+                   <>
+                      <CheckCircle className="w-20 h-20 text-emerald-500 mx-auto mb-4" />
+                      <p className="text-2xl font-bold text-emerald-600 mb-2">CORRECT</p>
+                      <p className="text-xl font-bold text-slate-500">+{pointsEarned} Points</p>
+                   </>
+                ) : (
+                   <>
+                      <AlertTriangle className="w-20 h-20 text-rose-500 mx-auto mb-4" />
+                      <p className="text-2xl font-bold text-rose-600 mb-2">INCORRECT</p>
+                   </>
+                )
+             ) : (
+                <>
+                   <p className="text-2xl font-bold text-slate-500 mb-2">You didn't answer in time!</p>
+                </>
+             )}
+             <div className="mt-8 pt-8 border-t-2 border-slate-100">
+                <p className="text-lg font-bold text-slate-400">Total Score: <span className="text-indigo-600">{participant?.score}</span></p>
+                <p className="text-slate-500 mt-2">Look at the projector for rankings!</p>
+             </div>
+          </motion.div>
+       </div>
+     );
+  }
+
   const currentQ = quiz?.questions?.[session?.current_question_index];
   
   if (!currentQ) return null;
@@ -198,6 +259,16 @@ export default function LiveArenaPlayPage() {
       >
         <audio autoPlay loop src="https://cdn.pixabay.com/download/audio/2022/10/18/audio_31c2730ebb.mp3?filename=sneaky-snitch-114995.mp3" />
         
+        {/* Timer Bar */}
+        <div className="w-full bg-slate-200 h-4 rounded-full overflow-hidden shadow-inner">
+           <motion.div 
+              className={`h-full ${timeLeft <= 5 ? 'bg-rose-500' : 'bg-indigo-500'}`}
+              initial={{ width: "100%" }}
+              animate={{ width: `${(timeLeft / 20) * 100}%` }}
+              transition={{ duration: 1, ease: "linear" }}
+           />
+        </div>
+
         {!hasAnswered ? (
         <>
           <div className="text-center mb-8">
@@ -293,7 +364,7 @@ export default function LiveArenaPlayPage() {
                  <CheckCircle className="w-12 h-12 text-emerald-600" />
                </div>
                <h2 className="text-4xl font-black text-emerald-600 mb-2">CORRECT!</h2>
-               <p className="text-slate-500 font-bold">+1000 Points</p>
+               <p className="text-slate-500 font-bold">+{pointsEarned} Points</p>
              </>
            ) : (
              <>
