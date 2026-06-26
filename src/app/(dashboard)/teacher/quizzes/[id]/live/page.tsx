@@ -158,10 +158,15 @@ export default function TeacherLiveArenaPage() {
   if (loading) return <div className="p-20 text-center animate-pulse">Initializing Arena...</div>;
 
   return (
-    <div className="min-h-screen -m-8 p-8 bg-gradient-to-br from-slate-900 via-indigo-900 to-purple-900 text-white relative overflow-hidden">
+    <div className="min-h-screen -m-8 p-8 bg-slate-900 font-sans relative overflow-hidden">
+      {/* Background Animated Gradient Mesh */}
+      <div className="absolute inset-0 bg-gradient-to-br from-indigo-900 via-purple-900 to-slate-900 opacity-90" />
+      <motion.div animate={{ scale: [1, 1.2, 1], rotate: [0, 90, 0] }} transition={{ duration: 25, repeat: Infinity, ease: "linear" }} className="absolute -top-[20%] -left-[10%] w-[60vw] h-[60vw] bg-indigo-500/20 rounded-full blur-[120px] mix-blend-screen" />
+      <motion.div animate={{ scale: [1, 1.5, 1], rotate: [0, -90, 0] }} transition={{ duration: 30, repeat: Infinity, ease: "linear" }} className="absolute -bottom-[20%] right-[10%] w-[50vw] h-[50vw] bg-pink-500/20 rounded-full blur-[100px] mix-blend-screen" />
+      
       <div className="absolute inset-0 bg-[url('https://www.transparenttextures.com/patterns/cubes.png')] opacity-10"></div>
       
-      <div className="max-w-7xl mx-auto space-y-12 relative z-10">
+      <div className="max-w-[90rem] mx-auto space-y-12 relative z-10">
       {/* Audio Players */}
       {session?.status === "waiting" && (
          <audio autoPlay loop src="https://cdn.pixabay.com/download/audio/2022/02/10/audio_fc48af67b2.mp3?filename=lofi-study-112191.mp3" />
@@ -175,14 +180,16 @@ export default function TeacherLiveArenaPage() {
 
       {session?.status === "waiting" ? (
          <div className="flex flex-col items-center justify-start min-h-[85vh] relative z-20 w-full pt-12">
-             <div className="w-full text-center p-12 bg-white/10 backdrop-blur-2xl rounded-[3rem] shadow-2xl border border-white/20 z-20 max-w-5xl mx-auto mb-16 relative overflow-hidden">
-                <div className="absolute top-0 right-0 p-8 opacity-10">
-                   <Trophy className="w-64 h-64" />
+             <div className="w-full text-center p-12 bg-white/10 backdrop-blur-3xl rounded-[3rem] shadow-[0_0_80px_rgba(99,102,241,0.2)] border border-white/20 z-20 max-w-5xl mx-auto mb-16 relative overflow-hidden">
+                <div className="absolute -top-10 -right-10 opacity-10">
+                   <Trophy className="w-80 h-80" />
                 </div>
-                <h1 className="text-5xl md:text-7xl font-black text-white mb-6 tracking-tight drop-shadow-lg">JOIN AT: ARENA.LMS</h1>
+                <div className="inline-block bg-white/10 px-8 py-3 rounded-full border border-white/20 mb-8">
+                   <h1 className="text-3xl md:text-5xl font-black text-white tracking-tight drop-shadow-md">JOIN AT <span className="text-transparent bg-clip-text bg-gradient-to-r from-emerald-300 to-teal-300">ARENA.LMS</span></h1>
+                </div>
                 <div className="flex flex-col items-center justify-center">
-                   <p className="text-2xl text-white/90 font-bold mb-4 uppercase tracking-widest">Game PIN:</p>
-                   <div className="text-9xl md:text-[10rem] font-black text-yellow-400 tracking-tighter drop-shadow-[0_0_50px_rgba(250,204,21,0.8)]">
+                   <p className="text-2xl text-indigo-200 font-bold mb-2 uppercase tracking-widest">Game PIN:</p>
+                   <div className="text-9xl md:text-[12rem] font-black text-white tracking-[0.1em] drop-shadow-[0_0_50px_rgba(255,255,255,0.5)]">
                       {session?.pin_code}
                    </div>
                 </div>
@@ -234,8 +241,8 @@ export default function TeacherLiveArenaPage() {
              </div>
          </div>
       ) : (
-         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 relative z-10 w-full max-w-7xl mx-auto">
-             <Card className="p-8 border-none shadow-xl lg:col-span-2 min-h-[400px]">
+         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 relative z-10 w-full mx-auto">
+             <Card className="p-10 border border-white/10 shadow-2xl lg:col-span-2 min-h-[500px] bg-white/10 backdrop-blur-2xl rounded-[3rem]">
                 <div className="flex items-center justify-between mb-8">
                    <h2 className="text-2xl font-black flex items-center gap-3 text-slate-800">
                       <Users className="text-indigo-500 w-8 h-8" /> Participants ({participants.length})
@@ -323,7 +330,7 @@ export default function TeacherLiveArenaPage() {
                 )}
              </Card>
              
-             <Card className="p-8 border-none shadow-2xl flex flex-col justify-center items-center text-center bg-white/10 backdrop-blur-xl border-white/20">
+             <Card className="p-10 border border-white/10 shadow-[0_0_80px_rgba(0,0,0,0.5)] flex flex-col justify-center items-center text-center bg-white/10 backdrop-blur-3xl rounded-[3rem] min-h-[500px]">
                 {session?.status === "active" && (
                    <>
                       <div className="text-9xl font-black text-yellow-400 mb-6 drop-shadow-[0_0_30px_rgba(250,204,21,0.6)]">Q{session.current_question_index + 1}</div>
