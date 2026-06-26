@@ -22,6 +22,9 @@ export default function LiveArenaPlayPage() {
   const [loading, setLoading] = useState(true);
   const [hasAnswered, setHasAnswered] = useState(false);
   const [isCorrect, setIsCorrect] = useState<boolean | null>(null);
+  const [essayAnswer, setEssayAnswer] = useState("");
+  const [complexSelection, setComplexSelection] = useState<number[]>([]);
+  const [matchingAnswers, setMatchingAnswers] = useState<Record<number, string>>({});
 
   const fetchInitial = useCallback(async () => {
     if (!profile) return;
@@ -64,6 +67,9 @@ export default function LiveArenaPlayPage() {
          if (payload.new.current_question_index !== session.current_question_index) {
             setHasAnswered(false);
             setIsCorrect(null);
+            setEssayAnswer("");
+            setComplexSelection([]);
+            setMatchingAnswers({});
          }
          setSession(payload.new);
       })
@@ -75,14 +81,26 @@ export default function LiveArenaPlayPage() {
     return () => { supabase.removeChannel(channel); };
   }, [fetchInitial, supabase, session?.id, session?.current_question_index, participant?.id]);
 
-  const submitAnswer = async (selectedOptionIndex: number) => {
+  const submitAnswer = async (selectedOptionIndex?: number) => {
     if (hasAnswered || !quiz || !session || !participant) return;
     
     const currentQ = quiz.questions[session.current_question_index];
     if (!currentQ) return;
     
-    const selectedOpt = currentQ.options[selectedOptionIndex];
-    const correct = selectedOpt?.is_correct === true;
+    let correct = false;
+
+    if (currentQ.question_type === "mcq") {
+       const selectedOpt = currentQ.options[selectedOptionIndex!];
+       correct = selectedOpt?.is_correct === true;
+    } else if (currentQ.question_type === "essay") {
+       correct = essayAnswer.length > 10; // Simple validation for essay
+    } else if (currentQ.question_type === "complex_mcq") {
+       const correctIndices = currentQ.options.map((o: any, i: number) => o.is_correct ? i : -1).filter((i: number) => i !== -1);
+       correct = complexSelection.length === correctIndices.length && complexSelection.every(i => correctIndices.includes(i));
+    } else if (currentQ.question_type === "matching") {
+       correct = currentQ.options.every((opt: any, idx: number) => matchingAnswers[idx] === opt.match_pair);
+    }
+
     setIsCorrect(correct);
     setHasAnswered(true);
     
@@ -133,20 +151,78 @@ export default function LiveArenaPlayPage() {
              <h2 className="text-3xl md:text-4xl font-bold text-slate-900">{currentQ.question_text}</h2>
           </div>
           
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-             {currentQ.options?.map((opt: any, idx: number) => {
-               const colors = ['bg-rose-500', 'bg-blue-500', 'bg-emerald-500', 'bg-amber-500'];
-               const colorClass = colors[idx % colors.length];
-               return (
-                 <button 
-                   key={idx}
-                   onClick={() => submitAnswer(idx)}
-                   className={`w-full p-8 rounded-3xl ${colorClass} hover:opacity-90 transition-all text-white font-black text-2xl shadow-xl shadow-slate-200 min-h-[160px] active:scale-95`}
-                 >
-                   {opt.text}
-                 </button>
-               );
-             })}
+          <div className="w-full text-left">
+             {currentQ.question_type === "mcq" && (
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                   {currentQ.options?.map((opt: any, idx: number) => {
+                     const colors = ['bg-rose-500', 'bg-blue-500', 'bg-emerald-500', 'bg-amber-500'];
+                     const colorClass = colors[idx % colors.length];
+                     return (
+                       <button 
+                         key={idx}
+                         onClick={() => submitAnswer(idx)}
+                         className={`w-full p-8 rounded-3xl ${colorClass} hover:opacity-90 transition-all text-white font-black text-2xl shadow-xl shadow-slate-200 min-h-[160px] active:scale-95`}
+                       >
+                         {opt.text}
+                       </button>
+                     );
+                   })}
+                </div>
+             )}
+
+             {currentQ.question_type === "complex_mcq" && (
+                <div className="space-y-4">
+                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                     {currentQ.options?.map((opt: any, idx: number) => {
+                       const isSelected = complexSelection.includes(idx);
+                       return (
+                         <button 
+                           key={idx}
+                           onClick={() => setComplexSelection(prev => isSelected ? prev.filter(i => i !== idx) : [...prev, idx])}
+                           className={`w-full p-6 rounded-3xl border-4 transition-all font-bold text-xl min-h-[100px] ${isSelected ? 'border-indigo-600 bg-indigo-50 text-indigo-900' : 'border-slate-200 bg-white text-slate-700 hover:border-indigo-300'}`}
+                         >
+                           {opt.text}
+                         </button>
+                       );
+                     })}
+                   </div>
+                   <Button onClick={() => submitAnswer()} size="lg" className="w-full h-16 text-xl rounded-2xl bg-indigo-600">Submit Answers</Button>
+                </div>
+             )}
+
+             {currentQ.question_type === "essay" && (
+                <div className="space-y-4">
+                   <textarea
+                     value={essayAnswer}
+                     onChange={(e) => setEssayAnswer(e.target.value)}
+                     placeholder="Type your answer here..."
+                     className="w-full h-48 p-6 rounded-3xl border-2 border-slate-200 text-lg focus:border-indigo-500 focus:ring-4 focus:ring-indigo-500/20 outline-none resize-none"
+                   />
+                   <Button onClick={() => submitAnswer()} disabled={!essayAnswer.trim()} size="lg" className="w-full h-16 text-xl rounded-2xl bg-indigo-600">Submit Essay</Button>
+                </div>
+             )}
+
+             {currentQ.question_type === "matching" && (
+                <div className="space-y-4 bg-white p-6 rounded-3xl shadow-sm border border-slate-100">
+                   {currentQ.options?.map((opt: any, idx: number) => (
+                     <div key={idx} className="flex flex-col sm:flex-row items-center gap-4 p-4 bg-slate-50 rounded-2xl">
+                        <div className="flex-1 font-bold text-lg text-slate-800">{opt.text}</div>
+                        <select
+                          value={matchingAnswers[idx] || ""}
+                          onChange={(e) => setMatchingAnswers({ ...matchingAnswers, [idx]: e.target.value })}
+                          className="flex-1 p-3 rounded-xl border-2 border-slate-200 outline-none focus:border-indigo-500"
+                        >
+                          <option value="" disabled>Select match...</option>
+                          {/* Shuffle visually or just show all match_pairs */}
+                          {currentQ.options.map((o: any, oIdx: number) => (
+                             <option key={oIdx} value={o.match_pair}>{o.match_pair}</option>
+                          ))}
+                        </select>
+                     </div>
+                   ))}
+                   <Button onClick={() => submitAnswer()} size="lg" className="w-full h-16 text-xl rounded-2xl bg-indigo-600 mt-4">Submit Matches</Button>
+                </div>
+             )}
           </div>
         </>
       ) : (
