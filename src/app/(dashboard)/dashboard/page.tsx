@@ -23,7 +23,9 @@ import {
   Loader2,
   Calendar,
   ArrowRight,
-  Shield
+  Shield,
+  ScanFace,
+  QrCode
 } from "lucide-react";
 import { useEffect, useState, useCallback } from "react";
 import Link from "next/link";
@@ -361,7 +363,28 @@ export default function DashboardPage() {
                  </div>
               )}
            </div>
-        </div>
+         </div>
+
+         {/* Quick Tools Box */}
+         <div className="bg-white rounded-[2rem] border-2 border-slate-200 p-6 shadow-sm">
+            <div className="flex items-center justify-between mb-6 border-b-2 border-slate-100 pb-4">
+               <h2 className="text-xl font-black text-slate-800">Quick Tools</h2>
+            </div>
+            <div className="grid grid-cols-2 gap-4">
+               <Link href="/attendance/ai" className="flex flex-col items-center justify-center p-4 rounded-2xl bg-indigo-50 hover:bg-indigo-100 border-2 border-indigo-200 transition-colors text-center gap-2 group">
+                 <div className="w-12 h-12 bg-indigo-200 rounded-full flex items-center justify-center group-hover:scale-110 transition-transform">
+                   <ScanFace className="w-6 h-6 text-indigo-600" />
+                 </div>
+                 <span className="font-bold text-sm text-indigo-900">Absensi Wajah AI</span>
+               </Link>
+               <Link href="/attendance/qr/student" className="flex flex-col items-center justify-center p-4 rounded-2xl bg-emerald-50 hover:bg-emerald-100 border-2 border-emerald-200 transition-colors text-center gap-2 group">
+                 <div className="w-12 h-12 bg-emerald-200 rounded-full flex items-center justify-center group-hover:scale-110 transition-transform">
+                   <QrCode className="w-6 h-6 text-emerald-600" />
+                 </div>
+                 <span className="font-bold text-sm text-emerald-900">Scan QR</span>
+               </Link>
+            </div>
+         </div>
 
       </div>
     </div>
