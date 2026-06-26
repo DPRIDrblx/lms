@@ -37,7 +37,7 @@ export default function TeacherDrillsPage() {
     const { data: cls } = await supabase
       .from("classes")
       .select("*")
-      .eq("homeroom_teacher_id", profile?.id);
+      .or(`wali_kelas_id.eq.${profile?.id},co_homeroom_id.eq.${profile?.id}`);
       
     if (cls) {
       setClasses(cls);
