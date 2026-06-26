@@ -58,7 +58,7 @@ export default function TUReportGenerationPage() {
     if (!selectedClass) return;
     const { error } = await supabase
       .from("report_cards")
-      .update({ is_published: true })
+      .update({ is_published: true, published_at: new Date().toISOString() })
       .eq("class_id", selectedClass.id);
     
     if (error) toast.error(error.message);
