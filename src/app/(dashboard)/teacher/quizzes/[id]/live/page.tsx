@@ -121,7 +121,7 @@ export default function TeacherLiveArenaPage() {
         supabase.from("live_quiz_sessions")
            .update({ status: "leaderboard" })
            .eq("id", session.id)
-           .then(({ error }) => {
+           .then(({ error }: { error: any }) => {
               if (error) {
                  console.error("Failed to update status to leaderboard:", error);
                  alert("GAGAL PINDAH KE LEADERBOARD! Pastikan kamu sudah menjalankan perintah SQL ALTER TABLE di Supabase untuk mengizinkan status 'leaderboard'. Error: " + error.message);
@@ -316,7 +316,7 @@ export default function TeacherLiveArenaPage() {
                 {/* End Quiz Button for Teacher */}
                 {session?.status !== "waiting" && session?.status !== "finished" && (
                    <div className="mt-8 flex justify-end">
-                      <Button onClick={endQuizEarly} variant="destructive" className="font-bold border-2 border-red-200">
+                      <Button onClick={endQuizEarly} variant="danger" className="font-bold border-2 border-red-200">
                          End Quiz Early
                       </Button>
                    </div>

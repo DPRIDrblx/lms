@@ -206,34 +206,39 @@ export default function LiveArenaPlayPage() {
 
   if (session?.status === "leaderboard") {
      return (
-       <div className="min-h-screen bg-indigo-600 flex flex-col items-center justify-center p-4">
+       <div className="min-h-screen bg-slate-900 flex flex-col items-center justify-center p-4 relative overflow-hidden">
+          <div className="absolute inset-0 bg-gradient-to-tr from-indigo-900 via-purple-900 to-slate-900 animate-gradient-xy opacity-80"></div>
+          
           <motion.div 
-             initial={{ scale: 0.8, opacity: 0 }}
-             animate={{ scale: 1, opacity: 1 }}
-             className="bg-white rounded-3xl p-12 text-center max-w-lg w-full shadow-2xl"
+             initial={{ scale: 0, opacity: 0, rotate: -10 }}
+             animate={{ scale: 1, opacity: 1, rotate: 0 }}
+             transition={{ type: "spring", bounce: 0.6 }}
+             className="relative z-10 bg-white/10 backdrop-blur-3xl rounded-[3rem] p-16 text-center max-w-2xl w-full shadow-[0_0_80px_rgba(0,0,0,0.5)] border border-white/20"
           >
-             <h2 className="text-4xl font-black text-indigo-900 mb-4">TIME IS UP!</h2>
+             <h2 className="text-5xl font-black text-white mb-12 tracking-tight drop-shadow-md">TIME IS UP!</h2>
              {hasAnswered ? (
                 isCorrect ? (
-                   <>
-                      <CheckCircle className="w-20 h-20 text-emerald-500 mx-auto mb-4" />
-                      <p className="text-2xl font-bold text-emerald-600 mb-2">CORRECT</p>
-                      <p className="text-xl font-bold text-slate-500">+{pointsEarned} Points</p>
-                   </>
+                   <motion.div initial={{ scale: 0 }} animate={{ scale: 1 }} transition={{ type: "spring", delay: 0.3 }}>
+                      <CheckCircle className="w-32 h-32 text-emerald-400 mx-auto mb-6 drop-shadow-[0_0_30px_rgba(52,211,153,0.8)]" />
+                      <p className="text-4xl font-black text-emerald-300 mb-2 tracking-widest uppercase">CORRECT</p>
+                      <p className="text-3xl font-bold text-white/80">+{pointsEarned} Points</p>
+                   </motion.div>
                 ) : (
-                   <>
-                      <AlertTriangle className="w-20 h-20 text-rose-500 mx-auto mb-4" />
-                      <p className="text-2xl font-bold text-rose-600 mb-2">INCORRECT</p>
-                   </>
+                   <motion.div initial={{ scale: 0 }} animate={{ scale: 1 }} transition={{ type: "spring", delay: 0.3 }}>
+                      <AlertTriangle className="w-32 h-32 text-rose-500 mx-auto mb-6 drop-shadow-[0_0_30px_rgba(244,63,94,0.8)]" />
+                      <p className="text-4xl font-black text-rose-400 mb-2 tracking-widest uppercase">INCORRECT</p>
+                   </motion.div>
                 )
              ) : (
-                <>
-                   <p className="text-2xl font-bold text-slate-500 mb-2">You didn't answer in time!</p>
-                </>
+                <motion.div initial={{ scale: 0 }} animate={{ scale: 1 }} transition={{ type: "spring", delay: 0.3 }}>
+                   <Clock className="w-32 h-32 text-amber-500 mx-auto mb-6 drop-shadow-[0_0_30px_rgba(245,158,11,0.8)]" />
+                   <p className="text-4xl font-black text-amber-400 mb-2 tracking-widest uppercase">TOO SLOW!</p>
+                </motion.div>
              )}
-             <div className="mt-8 pt-8 border-t-2 border-slate-100">
-                <p className="text-lg font-bold text-slate-400">Total Score: <span className="text-indigo-600">{participant?.score}</span></p>
-                <p className="text-slate-500 mt-2">Look at the projector for rankings!</p>
+             <div className="mt-12 pt-8 border-t-2 border-white/10 flex flex-col items-center">
+                <p className="text-2xl font-bold text-white/60 uppercase tracking-widest mb-2">Total Score</p>
+                <p className="text-6xl font-black text-yellow-400 drop-shadow-[0_0_20px_rgba(250,204,21,0.5)]">{participant?.score}</p>
+                <p className="text-white/50 mt-6 text-lg">Look at the projector for rankings!</p>
              </div>
           </motion.div>
        </div>
@@ -245,7 +250,13 @@ export default function LiveArenaPlayPage() {
   if (!currentQ) return null;
 
   return (
-    <div className="min-h-screen bg-slate-100 flex flex-col items-center justify-center p-4">
+    <div className="min-h-screen bg-slate-50 flex flex-col items-center justify-center p-4 relative overflow-hidden">
+      {/* Dynamic Background Blurs */}
+      <div className="absolute inset-0 z-0 overflow-hidden">
+          <div className="absolute top-[-20%] left-[-10%] w-[60%] h-[60%] bg-indigo-400/20 blur-[120px] rounded-full animate-pulse"></div>
+          <div className="absolute bottom-[-20%] right-[-10%] w-[60%] h-[60%] bg-rose-400/20 blur-[120px] rounded-full animate-pulse" style={{ animationDelay: '2s' }}></div>
+      </div>
+      
       <AnimatePresence mode="wait">
       <motion.div 
         key={session.current_question_index}
@@ -253,7 +264,7 @@ export default function LiveArenaPlayPage() {
         animate={{ opacity: 1, scale: 1, y: 0 }}
         exit={{ opacity: 0, scale: 1.1, filter: "blur(10px)" }}
         transition={{ type: "spring", duration: 0.6 }}
-        className="max-w-4xl w-full mx-auto space-y-8"
+        className="max-w-4xl w-full mx-auto space-y-8 relative z-10"
       >
         <audio autoPlay loop src="https://cdn.pixabay.com/download/audio/2022/10/18/audio_31c2730ebb.mp3?filename=sneaky-snitch-114995.mp3" />
         
@@ -269,24 +280,26 @@ export default function LiveArenaPlayPage() {
 
         {!hasAnswered ? (
         <>
-          <div className="text-center mb-8">
-             <div className="inline-block px-6 py-2 bg-indigo-100 text-indigo-800 rounded-full font-black text-lg mb-6">
+          <div className="text-center mb-8 bg-white/70 backdrop-blur-xl p-8 rounded-[2rem] shadow-xl border border-white/50">
+             <div className="inline-block px-6 py-2 bg-indigo-100 text-indigo-800 rounded-full font-black text-lg mb-6 shadow-sm">
                 Question {session.current_question_index + 1} of {quiz.questions.length}
              </div>
-             <h2 className="text-3xl md:text-4xl font-bold text-slate-900">{currentQ.question_text}</h2>
+             <h2 className="text-3xl md:text-5xl font-black text-slate-900 tracking-tight leading-tight">{currentQ.question_text}</h2>
           </div>
           
           <div className="w-full text-left">
              {currentQ.question_type === "mcq" && (
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                   {currentQ.options?.map((opt: any, idx: number) => {
-                     const colors = ['bg-rose-500', 'bg-blue-500', 'bg-emerald-500', 'bg-amber-500'];
+                    {currentQ.options?.map((opt: any, idx: number) => {
+                     const colors = ['bg-rose-500', 'bg-blue-500', 'bg-amber-500', 'bg-emerald-500'];
+                     const hoverColors = ['hover:bg-rose-600', 'hover:bg-blue-600', 'hover:bg-amber-600', 'hover:bg-emerald-600'];
                      const colorClass = colors[idx % colors.length];
+                     const hoverClass = hoverColors[idx % colors.length];
                      return (
                        <button 
                          key={idx}
                          onClick={() => submitAnswer(idx)}
-                         className={`w-full p-8 rounded-3xl ${colorClass} hover:opacity-90 transition-all text-white font-black text-2xl shadow-xl shadow-slate-200 min-h-[160px] active:scale-95`}
+                         className={`w-full p-8 rounded-[2rem] ${colorClass} ${hoverClass} transition-all text-white font-black text-3xl md:text-4xl shadow-[0_15px_30px_rgba(0,0,0,0.15)] min-h-[180px] active:scale-95 border-b-8 border-black/20 flex items-center justify-center drop-shadow-md`}
                        >
                          {opt.text}
                        </button>
@@ -354,26 +367,14 @@ export default function LiveArenaPlayPage() {
         <motion.div 
            initial={{ scale: 0.9, opacity: 0 }}
            animate={{ scale: 1, opacity: 1 }}
-           className="text-center p-12 bg-white rounded-3xl shadow-xl border border-slate-100"
+           className="w-full max-w-4xl mx-auto"
         >
-           {isCorrect ? (
-             <>
-               <div className="w-24 h-24 bg-emerald-100 rounded-full mx-auto flex items-center justify-center mb-6">
-                 <CheckCircle className="w-12 h-12 text-emerald-600" />
-               </div>
-               <h2 className="text-4xl font-black text-emerald-600 mb-2">CORRECT!</h2>
-               <p className="text-slate-500 font-bold">+{pointsEarned} Points</p>
-             </>
-           ) : (
-             <>
-               <div className="w-24 h-24 bg-rose-100 rounded-full mx-auto flex items-center justify-center mb-6">
-                 <AlertTriangle className="w-12 h-12 text-rose-600" />
-               </div>
-               <h2 className="text-4xl font-black text-rose-600 mb-2">INCORRECT</h2>
-               <p className="text-slate-500 font-bold">Better luck next question!</p>
-             </>
-           )}
-            <p className="mt-8 font-medium text-slate-400">Waiting for teacher...</p>
+           <div className="text-center py-32 bg-indigo-600 rounded-[3rem] shadow-2xl relative overflow-hidden border-4 border-indigo-400">
+             <div className="absolute inset-0 bg-[url('https://www.transparenttextures.com/patterns/cubes.png')] opacity-10"></div>
+             <Loader2 className="w-32 h-32 text-white animate-spin mx-auto mb-10 drop-shadow-lg" />
+             <h2 className="text-5xl font-black text-white tracking-tight drop-shadow-md">WAITING FOR OTHERS...</h2>
+             <p className="text-indigo-200 text-2xl font-bold mt-4">You're fast! Sit tight until time runs out.</p>
+           </div>
         </motion.div>
       )}
       </motion.div>
