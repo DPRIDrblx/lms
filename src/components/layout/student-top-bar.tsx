@@ -1,16 +1,30 @@
 "use client";
 
 import { useAuth } from "@/lib/auth-context";
-import { Flame, Diamond, Heart } from "lucide-react";
-import { useEffect, useState } from "react";
+import { Flame, Diamond, Heart, LogOut } from "lucide-react";
+import { useEffect, useState, useRef } from "react";
 import { createClient } from "@/lib/supabase";
-import { UserMenu } from "@/components/ui/user-menu";
+import { getInitials } from "@/lib/utils";
+import { motion, AnimatePresence } from "framer-motion";
 
 export function StudentTopBar() {
-  const { profile } = useAuth();
+  const { profile, signOut } = useAuth();
   const supabase = createClient();
   const [streak, setStreak] = useState(0);
   const [xp, setXp] = useState(0);
+  
+  const [dropdownOpen, setDropdownOpen] = useState(false);
+  const dropdownRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const handleClick = (e: MouseEvent) => {
+      if (dropdownRef.current && !dropdownRef.current.contains(e.target as Node)) {
+        setDropdownOpen(false);
+      }
+    };
+    document.addEventListener("mousedown", handleClick);
+    return () => document.removeEventListener("mousedown", handleClick);
+  }, []);
 
   useEffect(() => {
     if (profile?.id) {
@@ -26,7 +40,7 @@ export function StudentTopBar() {
 
       // Listen for updates
       const channel = supabase.channel("profile_stats")
-        .on("postgres_changes", { event: "UPDATE", schema: "public", table: "profiles", filter: `id=eq.${profile.id}` }, (payload) => {
+        .on("postgres_changes", { event: "UPDATE", schema: "public", table: "profiles", filter: `id=eq.${profile.id}` }, (payload: any) => {
           if (payload.new.current_streak !== undefined) setStreak(payload.new.current_streak);
           if (payload.new.xp !== undefined) setXp(payload.new.xp);
         })
@@ -61,8 +75,43 @@ export function StudentTopBar() {
         </div>
 
         {/* User Menu */}
-        <div className="ml-2 lg:ml-6">
-          <UserMenu />
+        <div className="ml-2 lg:ml-6 relative" ref={dropdownRef}>
+          <button
+            onClick={() => setDropdownOpen(!dropdownOpen)}
+            className="flex items-center gap-2.5 p-1.5 pr-3 rounded-2xl hover:bg-slate-100 transition-all border-2 border-transparent hover:border-slate-200"
+          >
+            {profile?.avatar_url ? (
+              <img src={profile.avatar_url} alt="" className="w-9 h-9 rounded-full object-cover" />
+            ) : (
+              <div className="w-9 h-9 rounded-full bg-emerald-100 flex items-center justify-center text-sm font-black text-emerald-600">
+                {getInitials(profile?.full_name || "U")}
+              </div>
+            )}
+          </button>
+
+          <AnimatePresence>
+            {dropdownOpen && (
+              <motion.div
+                initial={{ opacity: 0, y: 10, scale: 0.95 }}
+                animate={{ opacity: 1, y: 0, scale: 1 }}
+                exit={{ opacity: 0, y: 10, scale: 0.95 }}
+                transition={{ duration: 0.15 }}
+                className="absolute right-0 mt-3 w-56 bg-white border-2 border-slate-200 shadow-xl rounded-2xl py-2 overflow-hidden z-50"
+              >
+                <div className="px-4 py-3 border-b-2 border-slate-100 mb-2">
+                  <p className="text-sm font-black text-slate-800 truncate">{profile?.full_name}</p>
+                  <p className="text-xs font-bold text-slate-400 capitalize">{profile?.role}</p>
+                </div>
+                <button
+                  onClick={() => { signOut(); setDropdownOpen(false); }}
+                  className="flex items-center gap-3 w-full px-4 py-3 text-sm font-bold text-rose-500 hover:bg-rose-50 hover:text-rose-600 transition-colors"
+                >
+                  <LogOut className="h-5 w-5" />
+                  Sign out
+                </button>
+              </motion.div>
+            )}
+          </AnimatePresence>
         </div>
       </div>
     </div>
