@@ -83,6 +83,11 @@ export default function TeacherQuizzesPage() {
                     </div>
                   </div>
                   <div className="flex items-center gap-2">
+                    <Link href={`/teacher/quizzes/${quiz.id}/live`}>
+                      <Button variant="ghost" size="sm" icon={<Award className="h-3.5 w-3.5 text-indigo-500" />}>
+                         <span className="text-indigo-600 font-bold">Live Arena</span>
+                      </Button>
+                    </Link>
                     <Link href={`/teacher/quizzes/${quiz.id}/proctor`}>
                       <Button variant="ghost" size="sm" icon={<Eye className="h-3.5 w-3.5" />}>Live Monitor</Button>
                     </Link>

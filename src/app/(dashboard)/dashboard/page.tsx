@@ -9,6 +9,7 @@ import { Badge } from "@/components/ui/badge";
 import { AnnouncementBoard } from "@/components/dashboard/announcement-board";
 import { ProgressBar } from "@/components/ui/progress-bar";
 import { getRank, getNextRank } from "@/lib/utils";
+import { checkAndUpdateStreak, generateDailyQuests } from "@/lib/gamification";
 import { motion, AnimatePresence } from "framer-motion";
 import { 
   BookOpen, 
@@ -52,6 +53,8 @@ export default function DashboardPage() {
   const [progressData, setProgressData] = useState<any[]>([]);
   const [events, setEvents] = useState<SchoolEvent[]>([]);
   const [leadership, setLeadership] = useState<any>(null);
+  const [streak, setStreak] = useState(0);
+  const [quests, setQuests] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [profileTimeout, setProfileTimeout] = useState(false);
 
@@ -106,6 +109,16 @@ export default function DashboardPage() {
       .select("*")
       .or(`president_id.eq.${profile.id},vice_president_id.eq.${profile.id},secretary_1_id.eq.${profile.id},secretary_2_id.eq.${profile.id}`)
       .single();
+
+    // 5. Fetch Full Profile for Gamification (Streak & Quests)
+    const { data: fullProfile } = await supabase.from("profiles").select("*").eq("id", profile.id).single();
+    
+    if (fullProfile) {
+       const newStreak = await checkAndUpdateStreak(supabase, profile.id, fullProfile.current_streak, fullProfile.last_login_date);
+       const newQuests = await generateDailyQuests(supabase, profile.id, fullProfile.daily_quests, fullProfile.last_quest_reset);
+       setStreak(newStreak);
+       setQuests(newQuests);
+    }
 
     if (courseData) setCourses(courseData.map((c: any) => ({ ...c, lessons_count: c.lessons[0]?.count || 0 })));
     if (progData) setProgressData(progData);
@@ -235,8 +248,11 @@ export default function DashboardPage() {
         </div>
 
         {/* Day Streak */}
-        <div className="bg-[var(--bg-secondary)] backdrop-blur-lg p-4 sm:p-6 rounded-2xl sm:rounded-3xl border border-[var(--border)] shadow-sm hover:shadow-md transition-all group">
-          <div className="flex items-start justify-between mb-4">
+        <div className="bg-[var(--bg-secondary)] backdrop-blur-lg p-4 sm:p-6 rounded-2xl sm:rounded-3xl border border-[var(--border)] shadow-sm hover:shadow-md transition-all group relative overflow-hidden">
+          <div className="absolute top-0 right-0 p-4 opacity-5 pointer-events-none group-hover:opacity-10 transition-opacity">
+            <Flame className="h-24 w-24 text-rose-500" />
+          </div>
+          <div className="flex items-start justify-between mb-4 relative z-10">
             <div className="p-3 rounded-2xl bg-rose-100/50 dark:bg-rose-500/20 text-rose-600 dark:text-rose-400">
               <Flame className="h-5 w-5" />
             </div>
@@ -244,14 +260,52 @@ export default function DashboardPage() {
               Active
             </span>
           </div>
-          <div>
-            <h3 className="text-2xl sm:text-3xl font-black text-[var(--text-primary)] tracking-tight mb-1">7</h3>
+          <div className="relative z-10">
+            <h3 className="text-2xl sm:text-3xl font-black text-[var(--text-primary)] tracking-tight mb-1">{streak}</h3>
             <p className="text-xs sm:text-sm font-medium text-[var(--text-secondary)]">Day Streak</p>
           </div>
         </div>
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        {/* Daily Quests Section */}
+        <div className="bg-[var(--bg-secondary)] backdrop-blur-lg rounded-3xl p-6 md:p-8 border border-[var(--border)] shadow-sm">
+          <div className="flex flex-col mb-6">
+            <h2 className="text-lg font-bold text-[var(--text-primary)] flex items-center gap-2 mb-1">
+               <Star className="h-5 w-5 text-amber-500" /> Daily Quests
+            </h2>
+            <p className="text-xs font-medium text-[var(--text-secondary)]">Complete tasks to earn XP</p>
+          </div>
+          <div className="space-y-4">
+             {quests.length > 0 ? quests.map((q: any) => (
+                <div key={q.id} className="p-4 rounded-2xl bg-[var(--bg-primary)] border border-[var(--border)] relative overflow-hidden">
+                   {q.is_claimed && (
+                     <div className="absolute inset-0 bg-emerald-50/50 dark:bg-emerald-900/10 pointer-events-none"></div>
+                   )}
+                   <div className="flex items-center justify-between mb-3 relative z-10">
+                      <p className={`text-sm font-bold ${q.is_claimed ? 'text-emerald-700 dark:text-emerald-400 line-through opacity-80' : 'text-[var(--text-primary)]'}`}>
+                         {q.title}
+                      </p>
+                      <span className="px-2 py-1 rounded-md bg-amber-100/50 dark:bg-amber-500/20 text-amber-600 dark:text-amber-400 text-xs font-black">
+                         +{q.xp_reward} XP
+                      </span>
+                   </div>
+                   <div className="relative z-10">
+                      <div className="flex justify-between items-center mb-1">
+                         <span className="text-[10px] font-bold text-[var(--text-secondary)]">Progress</span>
+                         <span className="text-[10px] font-bold text-[var(--text-secondary)]">{q.progress} / {q.target}</span>
+                      </div>
+                      <ProgressBar value={Math.min(100, Math.round((q.progress / q.target) * 100))} color={q.is_claimed ? "#10B981" : "#F59E0B"} size="sm" />
+                   </div>
+                </div>
+             )) : (
+                <div className="text-center py-6">
+                   <p className="text-xs text-[var(--text-tertiary)]">No quests available today.</p>
+                </div>
+             )}
+          </div>
+        </div>
+
         <div className="lg:col-span-2 bg-[var(--bg-secondary)] backdrop-blur-lg rounded-3xl p-6 md:p-8 border border-[var(--border)] shadow-sm relative">
           <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 sm:gap-0 mb-8">
             <div>
