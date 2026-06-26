@@ -31,7 +31,7 @@ export default function ProfilePage() {
                 <Flame className="w-8 h-8 text-orange-500" />
               </div>
               <div>
-                <p className="text-2xl font-black text-slate-700">{profile?.current_streak || 0}</p>
+                <p className="text-2xl font-black text-slate-700">{(profile as any)?.current_streak || 0}</p>
                 <p className="text-sm font-bold text-slate-400">Day Streak</p>
               </div>
             </div>
@@ -40,7 +40,7 @@ export default function ProfilePage() {
                 <Diamond className="w-8 h-8 text-blue-500" />
               </div>
               <div>
-                <p className="text-2xl font-black text-slate-700">{profile?.xp || 0}</p>
+                <p className="text-2xl font-black text-slate-700">{(profile as any)?.xp || 0}</p>
                 <p className="text-sm font-bold text-slate-400">Total XP</p>
               </div>
             </div>
