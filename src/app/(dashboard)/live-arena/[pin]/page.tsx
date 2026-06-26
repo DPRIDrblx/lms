@@ -6,7 +6,7 @@ import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { useState, useEffect, useCallback } from "react";
 import { useParams, useRouter } from "next/navigation";
-import { CheckCircle, AlertTriangle, Loader2, Trophy, Shuffle } from "lucide-react";
+import { CheckCircle, AlertTriangle, Loader2, Trophy, Shuffle, Clock } from "lucide-react";
 import { toast } from "react-hot-toast";
 import { motion, AnimatePresence } from "framer-motion";
 import { createAvatar } from '@dicebear/core';
