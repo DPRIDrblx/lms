@@ -2,6 +2,7 @@
 
 import { useAuth } from "@/lib/auth-context";
 import { Flame, Diamond, MessageCircle, UserPlus, UserCheck, Loader2 } from "lucide-react";
+import { PostCard } from "@/components/social/post-card";
 import { useState, useEffect } from "react";
 import { createClient } from "@/lib/supabase";
 import { useParams, useRouter } from "next/navigation";
@@ -164,20 +165,11 @@ export default function PublicProfilePage() {
             <p className="font-bold text-slate-400">Belum ada postingan.</p>
           </div>
         ) : (
-          posts.map(post => (
-            <div key={post.id} className="bg-white rounded-3xl border-2 border-slate-200 shadow-[0_6px_0_rgb(226,232,240)] overflow-hidden">
-              {post.media_url && (
-                <div className="w-full bg-slate-50 border-b-2 border-slate-100">
-                  <img src={post.media_url} alt="Post" className="w-full h-auto max-h-96 object-contain" />
-                </div>
-              )}
-              {post.content && (
-                <div className="p-4 pb-2">
-                  <p className="text-slate-700 font-medium leading-relaxed">{post.content}</p>
-                </div>
-              )}
-            </div>
-          ))
+          posts.map(post => {
+            // Need to mock the post.profiles data because the profile page query didn't fetch it
+            const postWithProfile = { ...post, profiles: { full_name: profile.full_name, avatar_url: profile.avatar_url, id: profile.id } };
+            return <PostCard key={post.id} post={postWithProfile} currentUserProfile={currentUser} />;
+          })
         )}
       </div>
     </div>

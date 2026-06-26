@@ -1,7 +1,8 @@
 "use client";
 
 import { useAuth } from "@/lib/auth-context";
-import { Flame, Diamond, Lock, Edit2, Loader2, Image as ImageIcon, Send, Heart, Trash2 } from "lucide-react";
+import { Flame, Diamond, Lock, Edit2, Loader2, Image as ImageIcon, Send, Trash2 } from "lucide-react";
+import { PostCard } from "@/components/social/post-card";
 import { useState, useEffect, useRef } from "react";
 import { createClient } from "@/lib/supabase";
 import toast from "react-hot-toast";
@@ -231,46 +232,21 @@ export default function ProfilePage() {
             </div>
           </form>
 
-          {posts.map(post => (
-            <div key={post.id} className="bg-white rounded-3xl border-2 border-slate-200 shadow-[0_6px_0_rgb(226,232,240)] overflow-hidden">
-              <div className="p-4 flex items-center justify-between border-b-2 border-slate-100">
-                <div className="flex items-center gap-3">
-                  {profile?.avatar_url && profile.avatar_url.includes('/avatars/') ? (
-                    <img src={profile.avatar_url} className="w-10 h-10 rounded-full object-cover object-top border-2 border-slate-200" />
-                  ) : (
-                    <div className="w-10 h-10 rounded-full bg-indigo-100 flex items-center justify-center font-bold text-indigo-600">
-                      {profile?.full_name?.charAt(0)}
-                    </div>
-                  )}
-                  <div>
-                    <p className="font-bold text-slate-800">{profile?.full_name}</p>
-                    <p className="text-xs font-bold text-slate-400">{new Date(post.created_at).toLocaleDateString()}</p>
-                  </div>
-                </div>
-                <button onClick={() => handleDeletePost(post.id)} className="text-slate-300 hover:text-rose-500 transition-colors">
+          {posts.map(post => {
+            const postWithProfile = { ...post, profiles: { full_name: profile?.full_name, avatar_url: profile?.avatar_url, id: profile?.id } };
+            return (
+              <div key={post.id} className="relative group">
+                <PostCard post={postWithProfile} currentUserProfile={profile} />
+                <button 
+                  onClick={() => handleDeletePost(post.id)} 
+                  className="absolute top-4 right-4 text-slate-300 hover:text-rose-500 transition-colors z-10 bg-white/80 p-2 rounded-full"
+                  title="Hapus postingan"
+                >
                   <Trash2 className="w-5 h-5" />
                 </button>
               </div>
-              
-              {post.media_url && (
-                <div className="w-full bg-slate-50 border-b-2 border-slate-100">
-                  <img src={post.media_url} alt="Post" className="w-full h-auto max-h-96 object-contain" />
-                </div>
-              )}
-
-              {post.content && (
-                <div className="p-4 pb-2">
-                  <p className="text-slate-700 font-medium leading-relaxed">{post.content}</p>
-                </div>
-              )}
-              
-              <div className="p-4 pt-2">
-                <button className="flex items-center gap-1.5 text-slate-400 font-bold">
-                  <Heart className="w-5 h-5" /> <span className="text-sm">Suka</span>
-                </button>
-              </div>
-            </div>
-          ))}
+            );
+          })}
         </div>
       )}
 

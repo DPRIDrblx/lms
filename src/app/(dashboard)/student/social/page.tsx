@@ -4,6 +4,7 @@ import { useAuth } from "@/lib/auth-context";
 import { createClient } from "@/lib/supabase";
 import { useState, useEffect } from "react";
 import { Search, Heart, MessageCircle, UserPlus, Image as ImageIcon, Users } from "lucide-react";
+import { PostCard } from "@/components/social/post-card";
 import Link from "next/link";
 import toast from "react-hot-toast";
 
@@ -108,47 +109,7 @@ export default function SocialPage() {
           </div>
         ) : (
           feed.map(post => (
-            <div key={post.id} className="bg-white rounded-3xl border-2 border-slate-200 shadow-[0_6px_0_rgb(226,232,240)] overflow-hidden">
-              {/* Post Header */}
-              <div className="p-4 flex items-center gap-3 border-b-2 border-slate-100">
-                <Link href={`/student/profile/${post.user_id}`}>
-                  {post.profiles?.avatar_url && post.profiles.avatar_url.includes('/avatars/') ? (
-                    <img src={post.profiles.avatar_url} className="w-10 h-10 rounded-full object-cover object-top border-2 border-slate-200" />
-                  ) : (
-                    <div className="w-10 h-10 rounded-full bg-indigo-100 flex items-center justify-center font-bold text-indigo-600">
-                      {post.profiles?.full_name?.charAt(0)}
-                    </div>
-                  )}
-                </Link>
-                <div>
-                  <Link href={`/student/profile/${post.user_id}`}>
-                    <p className="font-bold text-slate-800 hover:text-indigo-600 transition-colors">{post.profiles?.full_name}</p>
-                  </Link>
-                  <p className="text-xs font-bold text-slate-400">{new Date(post.created_at).toLocaleDateString()}</p>
-                </div>
-              </div>
-              
-              {/* Post Image */}
-              {post.media_url && (
-                <div className="w-full bg-slate-50 border-b-2 border-slate-100">
-                  <img src={post.media_url} alt="Post" className="w-full h-auto max-h-96 object-contain" />
-                </div>
-              )}
-
-              {/* Post Content */}
-              {post.content && (
-                <div className="p-4 pb-2">
-                  <p className="text-slate-700 font-medium leading-relaxed">{post.content}</p>
-                </div>
-              )}
-
-              {/* Post Actions (Cosmetic for now) */}
-              <div className="p-4 pt-2 flex gap-4">
-                <button className="flex items-center gap-1.5 text-slate-400 hover:text-rose-500 font-bold transition-colors group">
-                  <Heart className="w-5 h-5 group-hover:fill-rose-500" /> <span className="text-sm">Suka</span>
-                </button>
-              </div>
-            </div>
+            <PostCard key={post.id} post={post} currentUserProfile={profile} />
           ))
         )}
       </div>
