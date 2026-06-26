@@ -163,31 +163,29 @@ export default function CourseDetailPage({ params }: { params: Promise<{ id: str
       </Link>
 
       <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }}>
-        <Card padding="none" className="overflow-hidden shadow-xl border border-[var(--border)]">
-          <div className="h-56 relative overflow-hidden flex items-center px-8">
-            {course.cover_image ? (
+        <div className="bg-white rounded-[2rem] overflow-hidden border-2 border-slate-200 shadow-[0_8px_0_rgb(226,232,240)]">
+          <div className="h-56 relative overflow-hidden flex items-center px-8 bg-indigo-500">
+            {course.cover_image && (
               <>
                 <div className="absolute inset-0 bg-black/40 z-10" />
                 <img src={course.cover_image} alt="" className="absolute inset-0 w-full h-full object-cover blur-[2px]" />
               </>
-            ) : (
-              <div className="absolute inset-0 bg-gradient-to-br from-[var(--accent)] to-slate-900 z-10" />
             )}
             <div className="relative z-20">
               <Badge variant="info" className="mb-3 backdrop-blur-md bg-white/20 border-white/30 text-white shadow-lg">{course.category}</Badge>
               <h1 className="text-4xl font-black text-white drop-shadow-md mb-2">{course.title}</h1>
-              <p className="text-sm text-white/90 font-medium drop-shadow-sm">Taught by <span className="font-bold">{course.profiles?.full_name}</span></p>
+              <p className="text-sm text-white/90 font-bold drop-shadow-sm">Taught by {course.profiles?.full_name}</p>
             </div>
           </div>
-          <div className="px-8 py-5 border-t border-[var(--border)] flex items-center gap-6 bg-white">
+          <div className="px-8 py-5 border-t-2 border-slate-100 flex items-center gap-6 bg-white">
             <div className="flex-1">
-              <ProgressBar value={doneCount} max={totalCount || 1} showLabel color="var(--accent)" />
+              <ProgressBar value={doneCount} max={totalCount || 1} showLabel color="#10B981" size="lg" />
             </div>
-            <p className="text-sm font-bold text-[var(--text-secondary)] whitespace-nowrap bg-[var(--bg-secondary)] px-4 py-2 rounded-xl">
-              {doneCount} / {totalCount} <span className="font-medium opacity-70">Missions Completed</span>
+            <p className="text-sm font-black text-slate-500 whitespace-nowrap bg-slate-100 px-4 py-2 rounded-xl">
+              {doneCount} / {totalCount} <span className="font-bold opacity-70">Missions Completed</span>
             </p>
           </div>
-        </Card>
+        </div>
       </motion.div>
 
       <div className="space-y-6 mt-8">
@@ -208,19 +206,19 @@ export default function CourseDetailPage({ params }: { params: Promise<{ id: str
               return (
                 <div key={chapter.id} className="space-y-3">
                   <div 
-                    className="flex items-center justify-between p-4 bg-white border border-[var(--border)] rounded-2xl cursor-pointer hover:border-[var(--accent)]/50 hover:shadow-md transition-all group"
+                    className={`flex items-center justify-between p-4 bg-white border-2 rounded-2xl cursor-pointer transition-all group ${isExpanded ? 'border-indigo-200 bg-indigo-50 shadow-[0_4px_0_rgb(199,210,254)]' : 'border-slate-200 shadow-[0_4px_0_rgb(226,232,240)] hover:shadow-[0_6px_0_rgb(226,232,240)] hover:-translate-y-1'}`}
                     onClick={() => toggleChapter(chapter.id)}
                   >
                     <div className="flex items-center gap-4">
-                      <div className="h-8 w-8 rounded-full bg-[var(--bg-secondary)] flex items-center justify-center text-[var(--text-tertiary)] group-hover:text-[var(--accent)] group-hover:bg-[var(--accent-light)] transition-colors">
-                        {isExpanded ? <ChevronUp className="h-5 w-5" /> : <ChevronDown className="h-5 w-5" />}
+                      <div className={`h-10 w-10 rounded-xl flex items-center justify-center transition-colors ${isExpanded ? 'bg-indigo-100 text-indigo-500' : 'bg-slate-100 text-slate-400 group-hover:bg-indigo-100 group-hover:text-indigo-500'}`}>
+                        {isExpanded ? <ChevronUp className="h-6 w-6" /> : <ChevronDown className="h-6 w-6" />}
                       </div>
                       <div>
-                        <h3 className="font-bold text-[var(--text-primary)] text-lg">{chapter.title}</h3>
-                        <p className="text-xs font-medium text-[var(--text-tertiary)] mt-0.5">{chapterDoneCount}/{chapterMissions.length} completed</p>
+                        <h3 className="font-black text-slate-800 text-lg">{chapter.title}</h3>
+                        <p className="text-sm font-bold text-slate-400 mt-0.5">{chapterDoneCount}/{chapterMissions.length} completed</p>
                       </div>
                     </div>
-                    <ProgressBar value={chapterDoneCount} max={chapterMissions.length || 1} className="w-24 hidden sm:block" />
+                    <ProgressBar value={chapterDoneCount} max={chapterMissions.length || 1} className="w-24 hidden sm:block" color="#6366f1" />
                   </div>
 
                   <AnimatePresence>
@@ -248,39 +246,39 @@ export default function CourseDetailPage({ params }: { params: Promise<{ id: str
                                 )}
                               </div>
                               
-                              <Card className={`ml-10 w-full border ${done ? "border-[var(--success)]/30 bg-[var(--success-light)]/5" : "hover:border-[var(--accent)]/30 hover:shadow-sm transition-all"}`}>
+                              <div className={`ml-10 w-full p-4 rounded-2xl border-2 ${done ? 'border-emerald-200 bg-emerald-50' : 'bg-white border-slate-200 shadow-[0_4px_0_rgb(226,232,240)]'}`}>
                                 <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
                                   <div className="flex-1 min-w-0">
                                     <div className="flex items-center gap-2 mb-1">
-                                      <TypeIcon className="h-4 w-4 text-[var(--text-tertiary)]" />
-                                      <span className="text-[10px] font-bold text-[var(--text-tertiary)] uppercase tracking-wider">
+                                      <TypeIcon className="h-4 w-4 text-slate-400" />
+                                      <span className="text-[10px] font-black text-slate-400 uppercase tracking-wider">
                                         {isQuiz ? "Assessment" : (m.content_type === "canva" ? "presentasi" : m.content_type)}
                                       </span>
                                     </div>
-                                    <h3 className={`text-base font-bold ${done ? "text-[var(--text-secondary)] line-through opacity-70" : "text-[var(--text-primary)]"}`}>{m.title}</h3>
+                                    <h3 className={`text-base font-black ${done ? "text-emerald-700 opacity-80" : "text-slate-700"}`}>{m.title}</h3>
                                     <div className="flex items-center gap-1 mt-1">
-                                      <Trophy className="h-3.5 w-3.5 text-[var(--warning)]" />
-                                      <span className="text-xs font-bold text-[var(--warning)]">+{m.xp_reward} XP</span>
+                                      <Trophy className="h-3.5 w-3.5 text-amber-500" />
+                                      <span className="text-xs font-black text-amber-500">+{m.xp_reward} XP</span>
                                     </div>
                                   </div>
 
                                   {profile?.role === "student" && (
                                     isQuiz ? (
                                       <Link href={`/quizzes/${m.id}`}>
-                                        <Button size="sm" variant={done ? "secondary" : "primary"} icon={<ChevronRight className="h-4 w-4" />}>
-                                          {done ? "Lihat Nilai" : "Mulai Ujian"}
-                                        </Button>
+                                        <button className={`px-4 py-2 rounded-xl font-bold text-sm transition-all border-2 ${done ? 'bg-slate-100 text-slate-500 border-slate-200' : 'bg-indigo-500 text-white border-indigo-600 shadow-[0_4px_0_rgb(79,70,229)] hover:-translate-y-1 hover:shadow-[0_6px_0_rgb(79,70,229)] active:translate-y-1 active:shadow-none'} flex items-center gap-1`}>
+                                          {done ? "Lihat Nilai" : "Mulai Ujian"} <ChevronRight className="h-4 w-4" />
+                                        </button>
                                       </Link>
                                     ) : (
                                       <Link href={`/courses/${id}/lessons/${m.id}`}>
-                                        <Button size="sm" variant={done ? "secondary" : "primary"} icon={<ChevronRight className="h-4 w-4" />}>
-                                          {done ? "Pelajari Ulang" : btnLabel}
-                                        </Button>
+                                        <button className={`px-4 py-2 rounded-xl font-bold text-sm transition-all border-2 ${done ? 'bg-slate-100 text-slate-500 border-slate-200' : 'bg-indigo-500 text-white border-indigo-600 shadow-[0_4px_0_rgb(79,70,229)] hover:-translate-y-1 hover:shadow-[0_6px_0_rgb(79,70,229)] active:translate-y-1 active:shadow-none'} flex items-center gap-1`}>
+                                          {done ? "Pelajari Ulang" : btnLabel} <ChevronRight className="h-4 w-4" />
+                                        </button>
                                       </Link>
                                     )
                                   )}
                                 </div>
-                              </Card>
+                              </div>
                             </div>
                           );
                         })}
@@ -300,16 +298,16 @@ export default function CourseDetailPage({ params }: { params: Promise<{ id: str
             {missions.filter(m => !m.chapter_id).length > 0 && (
               <div className="space-y-3 mt-6">
                 <div 
-                  className="flex items-center justify-between p-4 bg-white border border-[var(--warning)]/30 rounded-2xl cursor-pointer hover:border-[var(--warning)]/50 hover:shadow-md transition-all group"
+                  className={`flex items-center justify-between p-4 bg-white border-2 rounded-2xl cursor-pointer transition-all group ${expandedChapters.has("assessments") ? 'border-amber-200 bg-amber-50 shadow-[0_4px_0_rgb(253,230,138)]' : 'border-slate-200 shadow-[0_4px_0_rgb(226,232,240)] hover:shadow-[0_6px_0_rgb(226,232,240)] hover:-translate-y-1'}`}
                   onClick={() => toggleChapter("assessments")}
                 >
                   <div className="flex items-center gap-4">
-                    <div className="h-8 w-8 rounded-full bg-[var(--warning)]/10 flex items-center justify-center text-[var(--warning)] group-hover:bg-[var(--warning)]/20 transition-colors">
-                      {expandedChapters.has("assessments") ? <ChevronUp className="h-5 w-5" /> : <ChevronDown className="h-5 w-5" />}
+                    <div className={`h-10 w-10 rounded-xl flex items-center justify-center transition-colors ${expandedChapters.has("assessments") ? 'bg-amber-200 text-amber-600' : 'bg-amber-100 text-amber-500 group-hover:bg-amber-200 group-hover:text-amber-600'}`}>
+                      {expandedChapters.has("assessments") ? <ChevronUp className="h-6 w-6" /> : <ChevronDown className="h-6 w-6" />}
                     </div>
                     <div>
-                      <h3 className="font-bold text-[var(--text-primary)] text-lg">Ujian & Asesmen (CBT)</h3>
-                      <p className="text-xs font-medium text-[var(--text-tertiary)] mt-0.5">Ujian kompetensi akhir</p>
+                      <h3 className="font-black text-slate-800 text-lg">Ujian & Asesmen (CBT)</h3>
+                      <p className="text-sm font-bold text-slate-400 mt-0.5">Ujian kompetensi akhir</p>
                     </div>
                   </div>
                 </div>
@@ -339,39 +337,39 @@ export default function CourseDetailPage({ params }: { params: Promise<{ id: str
                               )}
                             </div>
                             
-                            <Card className={`ml-10 w-full border ${done ? "border-[var(--success)]/30 bg-[var(--success-light)]/5" : "hover:border-[var(--accent)]/30 hover:shadow-sm transition-all"}`}>
+                            <div className={`ml-10 w-full p-4 rounded-2xl border-2 ${done ? 'border-emerald-200 bg-emerald-50' : 'bg-white border-slate-200 shadow-[0_4px_0_rgb(226,232,240)]'}`}>
                               <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
                                 <div className="flex-1 min-w-0">
                                   <div className="flex items-center gap-2 mb-1">
-                                    <TypeIcon className="h-4 w-4 text-[var(--text-tertiary)]" />
-                                    <span className="text-[10px] font-bold text-[var(--text-tertiary)] uppercase tracking-wider">
+                                    <TypeIcon className="h-4 w-4 text-slate-400" />
+                                    <span className="text-[10px] font-black text-slate-400 uppercase tracking-wider">
                                       {isQuiz ? "Assessment CBT" : (m.content_type === "canva" ? "presentasi" : m.content_type)}
                                     </span>
                                   </div>
-                                  <h3 className={`text-base font-bold ${done ? "text-[var(--text-secondary)] line-through opacity-70" : "text-[var(--text-primary)]"}`}>{m.title}</h3>
+                                  <h3 className={`text-base font-black ${done ? "text-emerald-700 opacity-80" : "text-slate-700"}`}>{m.title}</h3>
                                   <div className="flex items-center gap-1 mt-1">
-                                    <Trophy className="h-3.5 w-3.5 text-[var(--warning)]" />
-                                    <span className="text-xs font-bold text-[var(--warning)]">+{m.xp_reward} XP</span>
+                                    <Trophy className="h-3.5 w-3.5 text-amber-500" />
+                                    <span className="text-xs font-black text-amber-500">+{m.xp_reward} XP</span>
                                   </div>
                                 </div>
 
                                 {profile?.role === "student" && (
                                   isQuiz ? (
                                     <Link href={`/quizzes/${m.id}`}>
-                                      <Button size="sm" variant={done ? "secondary" : "primary"} icon={<ChevronRight className="h-4 w-4" />}>
-                                        {done ? "Lihat Nilai" : "Mulai Ujian"}
-                                      </Button>
+                                      <button className={`px-4 py-2 rounded-xl font-bold text-sm transition-all border-2 ${done ? 'bg-slate-100 text-slate-500 border-slate-200' : 'bg-amber-500 text-white border-amber-600 shadow-[0_4px_0_rgb(217,119,6)] hover:-translate-y-1 hover:shadow-[0_6px_0_rgb(217,119,6)] active:translate-y-1 active:shadow-none'} flex items-center gap-1`}>
+                                        {done ? "Lihat Nilai" : "Mulai Ujian"} <ChevronRight className="h-4 w-4" />
+                                      </button>
                                     </Link>
                                   ) : (
                                     <Link href={`/courses/${id}/lessons/${m.id}`}>
-                                      <Button size="sm" variant={done ? "secondary" : "primary"} icon={<ChevronRight className="h-4 w-4" />}>
-                                        {done ? "Pelajari Ulang" : btnLabel}
-                                      </Button>
+                                      <button className={`px-4 py-2 rounded-xl font-bold text-sm transition-all border-2 ${done ? 'bg-slate-100 text-slate-500 border-slate-200' : 'bg-indigo-500 text-white border-indigo-600 shadow-[0_4px_0_rgb(79,70,229)] hover:-translate-y-1 hover:shadow-[0_6px_0_rgb(79,70,229)] active:translate-y-1 active:shadow-none'} flex items-center gap-1`}>
+                                        {done ? "Pelajari Ulang" : btnLabel} <ChevronRight className="h-4 w-4" />
+                                      </button>
                                     </Link>
                                   )
                                 )}
                               </div>
-                            </Card>
+                            </div>
                           </div>
                         );
                       })}
@@ -395,45 +393,45 @@ export default function CourseDetailPage({ params }: { params: Promise<{ id: str
                   <motion.div key={m.id} initial={{ opacity: 0, x: -12 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: i * 0.05 }} className="relative">
                     <div className="absolute -left-8 top-4 z-10">
                       {done ? (
-                        <CheckCircle2 className="h-7 w-7 text-[var(--success)] bg-[var(--bg-secondary)] rounded-full" />
+                        <CheckCircle2 className="h-7 w-7 text-emerald-500 bg-white rounded-full" />
                       ) : (
-                        <Circle className="h-7 w-7 text-[var(--border)] bg-[var(--bg-secondary)] rounded-full" />
+                        <Circle className="h-7 w-7 text-slate-300 bg-white rounded-full" />
                       )}
                     </div>
 
-                    <Card className={`border ${done ? "border-[var(--success)]/30 bg-[var(--success-light)]/10" : "hover:border-[var(--accent)]/30 transition-all"}`}>
+                    <div className={`w-full p-4 rounded-2xl border-2 ${done ? 'border-emerald-200 bg-emerald-50' : 'bg-white border-slate-200 shadow-[0_4px_0_rgb(226,232,240)]'}`}>
                       <div className="flex items-start justify-between gap-4">
                         <div className="flex-1 min-w-0">
                           <div className="flex items-center gap-2 mb-1">
-                            <TypeIcon className="h-4 w-4 text-[var(--text-tertiary)]" />
-                            <span className="text-[10px] font-semibold text-[var(--text-tertiary)] uppercase tracking-wider">
+                            <TypeIcon className="h-4 w-4 text-slate-400" />
+                            <span className="text-[10px] font-black text-slate-400 uppercase tracking-wider">
                               {isQuiz ? "Assessment" : (m.content_type === "canva" ? "presentasi" : m.content_type)}
                             </span>
                           </div>
-                          <h3 className={`text-base font-semibold ${done ? "text-[var(--text-secondary)] line-through opacity-70" : "text-[var(--text-primary)]"}`}>{m.title}</h3>
+                          <h3 className={`text-base font-black ${done ? "text-emerald-700 opacity-80" : "text-slate-700"}`}>{m.title}</h3>
                           <div className="flex items-center gap-1 mt-2">
-                            <Trophy className="h-3.5 w-3.5 text-[var(--warning)]" />
-                            <span className="text-xs font-medium text-[var(--warning)]">+{m.xp_reward} XP Reward</span>
+                            <Trophy className="h-3.5 w-3.5 text-amber-500" />
+                            <span className="text-xs font-black text-amber-500">+{m.xp_reward} XP Reward</span>
                           </div>
                         </div>
 
                         {profile?.role === "student" && (
                           isQuiz ? (
                             <Link href={`/quizzes/${m.id}`}>
-                              <Button size="sm" variant={done ? "secondary" : "primary"} icon={<ChevronRight className="h-4 w-4" />}>
-                                {done ? "Lihat Nilai" : "Mulai Ujian"}
-                              </Button>
+                              <button className={`px-4 py-2 rounded-xl font-bold text-sm transition-all border-2 ${done ? 'bg-slate-100 text-slate-500 border-slate-200' : 'bg-amber-500 text-white border-amber-600 shadow-[0_4px_0_rgb(217,119,6)] hover:-translate-y-1 hover:shadow-[0_6px_0_rgb(217,119,6)] active:translate-y-1 active:shadow-none'} flex items-center gap-1`}>
+                                {done ? "Lihat Nilai" : "Mulai Ujian"} <ChevronRight className="h-4 w-4" />
+                              </button>
                             </Link>
                           ) : (
                             <Link href={`/courses/${id}/lessons/${m.id}`}>
-                              <Button size="sm" variant={done ? "secondary" : "primary"} icon={<ChevronRight className="h-4 w-4" />}>
-                                {done ? "Pelajari Ulang" : btnLabel}
-                              </Button>
+                              <button className={`px-4 py-2 rounded-xl font-bold text-sm transition-all border-2 ${done ? 'bg-slate-100 text-slate-500 border-slate-200' : 'bg-indigo-500 text-white border-indigo-600 shadow-[0_4px_0_rgb(79,70,229)] hover:-translate-y-1 hover:shadow-[0_6px_0_rgb(79,70,229)] active:translate-y-1 active:shadow-none'} flex items-center gap-1`}>
+                                {done ? "Pelajari Ulang" : btnLabel} <ChevronRight className="h-4 w-4" />
+                              </button>
                             </Link>
                           )
                         )}
                       </div>
-                    </Card>
+                    </div>
                   </motion.div>
                 );
               })}

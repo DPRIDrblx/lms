@@ -184,8 +184,8 @@ export default function DashboardPage() {
          <div className="text-center mb-16 relative z-10 w-full max-w-md">
            <div className="bg-emerald-500 rounded-3xl p-6 shadow-[0_8px_0_rgb(4,120,87)] border-2 border-emerald-600 text-white flex justify-between items-center transform transition-transform hover:-translate-y-1 active:translate-y-2 active:shadow-[0_0px_0_rgb(4,120,87)]">
              <div className="text-left">
-               <h2 className="text-2xl font-black mb-1">Unit 1</h2>
-               <p className="font-bold text-emerald-100">Welcome to Academia!</p>
+               <h2 className="text-2xl font-black mb-1">Your Learning Path</h2>
+               <p className="font-bold text-emerald-100">Continue your journey!</p>
              </div>
              <BookOpen className="w-12 h-12 text-emerald-200" />
            </div>
@@ -222,21 +222,18 @@ export default function DashboardPage() {
                      )}
                      
                      <div className="relative">
-                       {/* Floating Label */}
-                       <div className="absolute -top-12 left-1/2 -translate-x-1/2 bg-white px-4 py-2 rounded-xl border-2 border-slate-200 shadow-sm whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity z-20 pointer-events-none">
-                         <div className="font-bold text-slate-700">{course.title}</div>
-                         <div className="text-xs font-bold text-slate-400 text-center">{done}/{course.lessons_count} Missions</div>
-                         <div className="absolute -bottom-2 left-1/2 -translate-x-1/2 w-4 h-4 bg-white border-b-2 border-r-2 border-slate-200 rotate-45"></div>
-                       </div>
-                       
                        {/* Circular 3D Button */}
-                       <Link href={`/courses/${course.id}`}>
-                         <div className={`w-24 h-24 rounded-full flex items-center justify-center border-4 ${color.border} ${color.bg} ${color.shadow} transform transition-all duration-150 active:translate-y-2 active:shadow-none hover:ring-8 ${color.ring} z-10`}>
+                       <Link href={`/courses/${course.id}`} className="flex flex-col items-center">
+                         <div className={`w-24 h-24 rounded-full flex items-center justify-center border-4 ${color.border} ${color.bg} ${color.shadow} transform transition-all duration-150 active:translate-y-2 active:shadow-none hover:ring-8 ${color.ring} z-10 mb-3`}>
                            {isCompleted ? (
                              <Trophy className="w-10 h-10 text-white/90 drop-shadow-md" />
                            ) : (
                              <Star className="w-10 h-10 text-white/90 drop-shadow-md" />
                            )}
+                         </div>
+                         <div className="bg-white px-4 py-2 rounded-xl border-2 border-slate-200 shadow-sm text-center min-w-[120px] z-20">
+                           <div className="font-black text-slate-700 text-sm line-clamp-1">{course.title}</div>
+                           <div className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">{done}/{course.lessons_count} Missions</div>
                          </div>
                        </Link>
                      </div>
