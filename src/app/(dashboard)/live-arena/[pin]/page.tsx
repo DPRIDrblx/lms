@@ -3,6 +3,7 @@
 import { useAuth } from "@/lib/auth-context";
 import { createClient } from "@/lib/supabase";
 import { Card } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
 import { useState, useEffect, useCallback } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { CheckCircle, AlertTriangle, Loader2, Trophy } from "lucide-react";
@@ -58,7 +59,7 @@ export default function LiveArenaPlayPage() {
     if (!session?.id) return;
     
     const channel = supabase.channel(`live_arena_${session.id}`)
-      .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'live_quiz_sessions', filter: `id=eq.${session.id}` }, (payload) => {
+      .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'live_quiz_sessions', filter: `id=eq.${session.id}` }, (payload: any) => {
          // If question changes, reset answer state
          if (payload.new.current_question_index !== session.current_question_index) {
             setHasAnswered(false);
@@ -66,7 +67,7 @@ export default function LiveArenaPlayPage() {
          }
          setSession(payload.new);
       })
-      .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'live_quiz_participants', filter: `id=eq.${participant?.id}` }, (payload) => {
+      .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'live_quiz_participants', filter: `id=eq.${participant?.id}` }, (payload: any) => {
          setParticipant(payload.new);
       })
       .subscribe();

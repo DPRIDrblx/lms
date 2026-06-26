@@ -75,9 +75,9 @@ export default function TeacherLiveArenaPage() {
       .on('postgres_changes', { event: '*', schema: 'public', table: 'live_quiz_participants', filter: `session_id=eq.${session.id}` }, () => {
         // Refresh participants
         supabase.from("live_quiz_participants").select("*, profiles(full_name)").eq("session_id", session.id).order("score", { ascending: false })
-          .then(({ data }) => data && setParticipants(data));
+          .then(({ data }: { data: any }) => data && setParticipants(data));
       })
-      .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'live_quiz_sessions', filter: `id=eq.${session.id}` }, (payload) => {
+      .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'live_quiz_sessions', filter: `id=eq.${session.id}` }, (payload: any) => {
          setSession(payload.new);
       })
       .subscribe();
