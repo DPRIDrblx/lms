@@ -16,27 +16,31 @@ export default function SocialPage() {
   const [searchResults, setSearchResults] = useState<any[]>([]);
   const [feed, setFeed] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
+  const [feedTab, setFeedTab] = useState<"saran" | "mengikuti">("saran");
 
   useEffect(() => {
     if (profile?.id) {
       loadFeed();
     }
-  }, [profile?.id]);
+  }, [profile?.id, feedTab]);
 
   const loadFeed = async () => {
     setLoading(true);
-    // Get posts from people I follow + my own posts
-    const { data: following } = await supabase.from("friendships").select("following_id").eq("follower_id", profile?.id);
-    const followingIds = following?.map((f: any) => f.following_id) || [];
-    followingIds.push(profile?.id);
-
-    const { data: posts } = await supabase
+    
+    let query = supabase
       .from("posts")
       .select("*, profiles!inner(id, full_name, avatar_url, role)")
-      .in("user_id", followingIds)
       .order("created_at", { ascending: false })
-      .limit(20);
+      .limit(30);
 
+    if (feedTab === "mengikuti") {
+      const { data: following } = await supabase.from("friendships").select("following_id").eq("follower_id", profile?.id);
+      const followingIds = following?.map((f: any) => f.following_id) || [];
+      followingIds.push(profile?.id);
+      query = query.in("user_id", followingIds);
+    }
+
+    const { data: posts } = await query;
     setFeed(posts || []);
     setLoading(false);
   };
@@ -93,6 +97,21 @@ export default function SocialPage() {
             ))}
           </div>
         )}
+      </div>
+      {/* Feed Tabs */}
+      <div className="flex bg-slate-100 p-1 rounded-2xl mb-6">
+        <button 
+          onClick={() => setFeedTab("saran")}
+          className={`flex-1 py-3 font-black text-sm rounded-xl transition-all ${feedTab === 'saran' ? 'bg-white text-indigo-600 shadow-sm' : 'text-slate-400 hover:text-slate-600'}`}
+        >
+          Saran (Untukmu)
+        </button>
+        <button 
+          onClick={() => setFeedTab("mengikuti")}
+          className={`flex-1 py-3 font-black text-sm rounded-xl transition-all ${feedTab === 'mengikuti' ? 'bg-white text-indigo-600 shadow-sm' : 'text-slate-400 hover:text-slate-600'}`}
+        >
+          Mengikuti
+        </button>
       </div>
 
       {/* Feed */}
