@@ -10,7 +10,8 @@ import { CheckCircle, AlertTriangle, Loader2, Trophy, Shuffle } from "lucide-rea
 import { toast } from "react-hot-toast";
 import { motion, AnimatePresence } from "framer-motion";
 import { createAvatar } from '@dicebear/core';
-import { funEmoji } from '@dicebear/collection';
+import { adventurer } from '@dicebear/collection';
+import confetti from "canvas-confetti";
 
 export default function LiveArenaPlayPage() {
   const params = useParams();
@@ -117,7 +118,7 @@ export default function LiveArenaPlayPage() {
   if (loading) return <div className="min-h-[80vh] flex items-center justify-center"><Loader2 className="w-12 h-12 text-indigo-500 animate-spin" /></div>;
 
   if (session?.status === "waiting") {
-     const avatarSvg = createAvatar(funEmoji, { seed: participant?.avatar_seed || profile?.full_name || "Hero" }).toString();
+     const avatarSvg = createAvatar(adventurer, { seed: participant?.avatar_seed || profile?.full_name || "Hero", backgroundColor: ['b6e3f4','c0aede','d1d4f9','ffdfbf','ffd5dc'] }).toString();
      
      const shuffleAvatar = async () => {
         const newSeed = Math.random().toString(36).substring(7);
@@ -125,18 +126,27 @@ export default function LiveArenaPlayPage() {
      };
 
      return (
-       <div className="min-h-[80vh] flex flex-col items-center justify-center p-4">
+       <div className="min-h-screen flex flex-col items-center justify-center p-4 relative overflow-hidden bg-gradient-to-br from-indigo-500 via-purple-500 to-pink-500 animate-gradient-xy">
+          <div className="absolute inset-0 bg-[url('https://www.transparenttextures.com/patterns/cubes.png')] opacity-20"></div>
+          
           <motion.div 
-             animate={{ y: [0, -20, 0] }} 
-             transition={{ repeat: Infinity, duration: 2, ease: "easeInOut" }}
-             className="w-40 h-40 bg-indigo-100 rounded-full flex items-center justify-center mb-6 overflow-hidden shadow-xl"
-             dangerouslySetInnerHTML={{ __html: avatarSvg }}
-          />
-          <h1 className="text-3xl font-black text-slate-900 mb-2 text-center">You're in, {profile?.full_name?.split(" ")[0]}!</h1>
-          <p className="text-lg text-slate-500 font-medium text-center mb-8">Look at the projector. Waiting for teacher to start...</p>
-          <Button onClick={shuffleAvatar} variant="secondary" size="lg" className="rounded-2xl" icon={<Shuffle className="w-5 h-5" />}>
-             Shuffle Avatar
-          </Button>
+             initial={{ scale: 0 }}
+             animate={{ scale: 1 }}
+             transition={{ type: "spring", bounce: 0.5 }}
+             className="relative z-10 flex flex-col items-center p-12 bg-white/10 backdrop-blur-xl border border-white/30 rounded-[3rem] shadow-[0_35px_60px_-15px_rgba(0,0,0,0.3)] w-full max-w-lg"
+          >
+             <motion.div 
+                animate={{ y: [0, -15, 0] }} 
+                transition={{ repeat: Infinity, duration: 2, ease: "easeInOut" }}
+                className="w-48 h-48 rounded-full border-8 border-white/50 shadow-2xl overflow-hidden bg-white mb-8"
+                dangerouslySetInnerHTML={{ __html: avatarSvg }}
+             />
+             <h1 className="text-4xl font-black text-white mb-2 text-center drop-shadow-md">You're in, {profile?.full_name?.split(" ")[0]}!</h1>
+             <p className="text-xl text-white/80 font-medium text-center mb-8 drop-shadow-sm">Look at the projector. We are waiting for the teacher to start...</p>
+             <Button onClick={shuffleAvatar} size="lg" className="rounded-2xl h-16 px-8 text-xl font-black bg-white text-indigo-600 hover:bg-slate-100 hover:scale-105 transition-all shadow-xl" icon={<Shuffle className="w-6 h-6" />}>
+                SHUFFLE AVATAR
+             </Button>
+          </motion.div>
           
           <audio autoPlay loop src="https://cdn.pixabay.com/download/audio/2022/02/10/audio_fc48af67b2.mp3?filename=lofi-study-112191.mp3" />
        </div>
@@ -144,21 +154,30 @@ export default function LiveArenaPlayPage() {
   }
 
   if (session?.status === "finished") {
+     if (participant?.score > 0) {
+        confetti({ particleCount: 150, spread: 100, origin: { y: 0.6 } });
+     }
+     
      return (
-       <motion.div 
-          initial={{ scale: 0.8, opacity: 0 }}
-          animate={{ scale: 1, opacity: 1 }}
-          className="min-h-[80vh] flex flex-col items-center justify-center p-4"
-       >
-          <motion.div animate={{ rotate: [0, 10, -10, 0] }} transition={{ repeat: Infinity, duration: 1 }}>
-             <Trophy className="w-32 h-32 text-amber-500 mb-8" />
+       <div className="min-h-screen flex flex-col items-center justify-center p-4 bg-slate-900 text-white relative overflow-hidden">
+          <div className="absolute inset-0 bg-[url('https://www.transparenttextures.com/patterns/stardust.png')] opacity-30"></div>
+          
+          <motion.div 
+             initial={{ scale: 0.5, opacity: 0, y: 100 }}
+             animate={{ scale: 1, opacity: 1, y: 0 }}
+             transition={{ type: "spring", damping: 12, stiffness: 100 }}
+             className="relative z-10 flex flex-col items-center bg-white/10 backdrop-blur-2xl p-16 rounded-[4rem] border border-white/20 shadow-[0_0_100px_rgba(79,70,229,0.5)]"
+          >
+             <motion.div animate={{ rotate: [0, 10, -10, 0] }} transition={{ repeat: Infinity, duration: 2 }}>
+                <Trophy className="w-40 h-40 text-yellow-400 mb-8 drop-shadow-[0_0_30px_rgba(250,204,21,0.6)]" />
+             </motion.div>
+             <h1 className="text-6xl font-black mb-4 text-center bg-clip-text text-transparent bg-gradient-to-r from-yellow-300 to-yellow-600">EPIC FINISH!</h1>
+             <p className="text-3xl font-bold mb-10 text-slate-300">Total Score: <span className="text-yellow-400 text-5xl font-black ml-2">{participant?.score}</span></p>
+             <Button onClick={() => router.push("/dashboard")} size="lg" className="rounded-3xl h-20 px-12 text-2xl font-black bg-gradient-to-r from-indigo-500 to-purple-600 hover:scale-110 transition-all shadow-2xl">Return to Dashboard</Button>
           </motion.div>
-          <h1 className="text-5xl font-black text-slate-900 mb-4 text-center">Arena Finished!</h1>
-          <p className="text-2xl text-slate-600 font-bold mb-8">Your Final Score: <span className="text-indigo-600">{participant?.score}</span></p>
-          <Button onClick={() => router.push("/dashboard")} size="lg" className="rounded-2xl bg-indigo-600 hover:bg-indigo-700">Return to Dashboard</Button>
           
           <audio autoPlay src="https://cdn.pixabay.com/download/audio/2021/08/04/audio_0625c1539c.mp3?filename=success-1-6297.mp3" />
-       </motion.div>
+       </div>
      );
   }
 
@@ -167,17 +186,19 @@ export default function LiveArenaPlayPage() {
   if (!currentQ) return null;
 
   return (
-    <AnimatePresence mode="wait">
-    <motion.div 
-      key={session.current_question_index}
-      initial={{ opacity: 0, y: 20 }}
-      animate={{ opacity: 1, y: 0 }}
-      exit={{ opacity: 0, x: -20 }}
-      className="max-w-3xl mx-auto space-y-8 min-h-[80vh] flex flex-col justify-center"
-    >
-      <audio autoPlay loop src="https://cdn.pixabay.com/download/audio/2022/10/18/audio_31c2730ebb.mp3?filename=sneaky-snitch-114995.mp3" />
-      
-      {!hasAnswered ? (
+    <div className="min-h-screen bg-slate-100 flex flex-col items-center justify-center p-4">
+      <AnimatePresence mode="wait">
+      <motion.div 
+        key={session.current_question_index}
+        initial={{ opacity: 0, scale: 0.9, y: 50 }}
+        animate={{ opacity: 1, scale: 1, y: 0 }}
+        exit={{ opacity: 0, scale: 1.1, filter: "blur(10px)" }}
+        transition={{ type: "spring", duration: 0.6 }}
+        className="max-w-4xl w-full mx-auto space-y-8"
+      >
+        <audio autoPlay loop src="https://cdn.pixabay.com/download/audio/2022/10/18/audio_31c2730ebb.mp3?filename=sneaky-snitch-114995.mp3" />
+        
+        {!hasAnswered ? (
         <>
           <div className="text-center mb-8">
              <div className="inline-block px-6 py-2 bg-indigo-100 text-indigo-800 rounded-full font-black text-lg mb-6">
@@ -286,7 +307,8 @@ export default function LiveArenaPlayPage() {
             <p className="mt-8 font-medium text-slate-400">Waiting for teacher...</p>
         </motion.div>
       )}
-    </motion.div>
-    </AnimatePresence>
+      </motion.div>
+      </AnimatePresence>
+    </div>
   );
 }
