@@ -81,7 +81,8 @@ export default function LiveArenaPlayPage() {
     const currentQ = quiz.questions[session.current_question_index];
     if (!currentQ) return;
     
-    const correct = currentQ.correct_answer === currentQ.options[selectedOptionIndex];
+    const selectedOpt = currentQ.options[selectedOptionIndex];
+    const correct = selectedOpt?.is_correct === true;
     setIsCorrect(correct);
     setHasAnswered(true);
     
@@ -133,7 +134,7 @@ export default function LiveArenaPlayPage() {
           </div>
           
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-             {currentQ.options?.map((opt: string, idx: number) => {
+             {currentQ.options?.map((opt: any, idx: number) => {
                const colors = ['bg-rose-500', 'bg-blue-500', 'bg-emerald-500', 'bg-amber-500'];
                const colorClass = colors[idx % colors.length];
                return (
@@ -142,7 +143,7 @@ export default function LiveArenaPlayPage() {
                    onClick={() => submitAnswer(idx)}
                    className={`w-full p-8 rounded-3xl ${colorClass} hover:opacity-90 transition-all text-white font-black text-2xl shadow-xl shadow-slate-200 min-h-[160px] active:scale-95`}
                  >
-                   {opt}
+                   {opt.text}
                  </button>
                );
              })}
