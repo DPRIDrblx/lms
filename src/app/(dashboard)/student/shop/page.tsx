@@ -11,7 +11,9 @@ const ICON_MAP: any = {
   Zap,
   MonitorPlay,
   Crown,
-  Droplets
+  Droplets,
+  GraduationCap,
+  Glasses
 };
 
 export default function ShopPage() {
@@ -53,6 +55,18 @@ export default function ShopPage() {
     }
 
     setLoading(false);
+  };
+
+  const handleEquip = async (item: any) => {
+    // 1. Set all items of the same type to unequipped
+    const itemsOfSameType = items.filter(i => i.type === item.type).map(i => i.id);
+    await supabase.from("user_inventory").update({ is_equipped: false }).eq("user_id", profile.id).in("item_id", itemsOfSameType);
+    
+    // 2. Equip the chosen one
+    await supabase.from("user_inventory").update({ is_equipped: true }).eq("user_id", profile.id).eq("item_id", item.id);
+    
+    toast.success(`${item.name} berhasil dipakai!`);
+    fetchShopData();
   };
 
   const handleBuy = async (item: any) => {
@@ -132,9 +146,15 @@ export default function ShopPage() {
               <p className="text-slate-500 text-sm font-medium mb-6 flex-1">{item.description}</p>
               
               {isOwned && !isConsumable ? (
-                <button disabled className="w-full py-4 rounded-2xl font-bold bg-slate-100 text-slate-400 border-2 border-slate-200 flex items-center justify-center gap-2">
-                  <CheckCircle2 className="w-5 h-5" /> Sudah Dimiliki
-                </button>
+                inventory.find(i => i.item_id === item.id)?.is_equipped ? (
+                  <button disabled className="w-full py-4 rounded-2xl font-black bg-indigo-100 text-indigo-500 border-2 border-indigo-200 flex items-center justify-center gap-2">
+                    <CheckCircle2 className="w-5 h-5" /> Sedang Dipakai
+                  </button>
+                ) : (
+                  <button onClick={() => handleEquip(item)} className="w-full py-4 rounded-2xl font-black text-white bg-indigo-500 hover:bg-indigo-600 border-b-4 border-indigo-700 active:border-b-0 active:translate-y-1 transition-all flex items-center justify-center gap-2">
+                    Pakai Item
+                  </button>
+                )
               ) : (
                 <div className="flex flex-col gap-2">
                   {isOwned && isConsumable && (

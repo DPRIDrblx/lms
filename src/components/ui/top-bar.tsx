@@ -2,16 +2,39 @@
 
 import { useAuth } from "@/lib/auth-context";
 import { useTheme } from "@/lib/theme-context";
-import { getInitials } from "@/lib/utils";
-import { Sun, Moon, LogOut, Bell } from "lucide-react";
+import { getInitials, cn } from "@/lib/utils";
+import { Sun, Moon, LogOut, Bell, GraduationCap, Glasses } from "lucide-react";
 import { useState, useRef, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
+import { createClient } from "@/lib/supabase";
 
 export function TopBar() {
   const { profile, signOut } = useAuth();
   const { theme, toggleTheme } = useTheme();
   const [dropdownOpen, setDropdownOpen] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
+
+  const [equippedBorder, setEquippedBorder] = useState("");
+  const [equippedHat, setEquippedHat] = useState("");
+  const [equippedGlasses, setEquippedGlasses] = useState("");
+
+  useEffect(() => {
+    if (!profile) return;
+    const fetchEquipped = async () => {
+      const supabase = createClient();
+      const { data } = await supabase.from('user_inventory').select('shop_items(*)').eq('user_id', profile.id).eq('is_equipped', true);
+      if (data) {
+        data.forEach((d: any) => {
+          const item = d.shop_items;
+          if (!item) return;
+          if (item.type === 'cosmetic_border' || item.type === 'cosmetic_effect') setEquippedBorder(item.css_value);
+          if (item.type === 'mascot_hat') setEquippedHat(item.icon);
+          if (item.type === 'mascot_glasses') setEquippedGlasses(item.icon);
+        });
+      }
+    };
+    fetchEquipped();
+  }, [profile]);
 
   useEffect(() => {
     const handleClick = (e: MouseEvent) => {
@@ -50,15 +73,23 @@ export function TopBar() {
           <div className="relative" ref={dropdownRef}>
             <button
               onClick={() => setDropdownOpen(!dropdownOpen)}
-              className="flex items-center gap-2.5 p-1.5 pr-3 rounded-xl hover:bg-[var(--bg-tertiary)] transition-all"
+              className="flex items-center gap-3 p-1.5 pr-3 rounded-xl hover:bg-[var(--bg-tertiary)] transition-all"
             >
-              {profile?.avatar_url ? (
-                <img src={profile.avatar_url} alt="" className="w-8 h-8 rounded-full object-cover" />
-              ) : (
-                <div className="w-8 h-8 rounded-full bg-[var(--accent-light)] flex items-center justify-center text-xs font-semibold text-[var(--accent)]">
-                  {getInitials(profile?.full_name || "U")}
-                </div>
-              )}
+              <div className="relative">
+                {profile?.avatar_url ? (
+                  <img src={profile.avatar_url} alt="" className={cn("w-9 h-9 rounded-full object-cover", equippedBorder)} />
+                ) : (
+                  <div className={cn("w-9 h-9 rounded-full bg-indigo-100 flex items-center justify-center text-sm font-black text-indigo-500", equippedBorder)}>
+                    {getInitials(profile?.full_name || "U")}
+                  </div>
+                )}
+                {equippedHat === 'GraduationCap' && (
+                  <GraduationCap className="absolute -top-3.5 -right-2.5 w-6 h-6 text-slate-800 fill-slate-800 rotate-12 drop-shadow-md z-10" />
+                )}
+                {equippedGlasses === 'Glasses' && (
+                  <Glasses className="absolute top-2 left-1/2 -translate-x-1/2 w-7 h-7 text-slate-900 fill-slate-900 drop-shadow-md z-10" />
+                )}
+              </div>
               <span className="text-sm font-medium text-[var(--text-primary)] hidden sm:block">
                 {profile?.full_name}
               </span>

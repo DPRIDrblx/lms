@@ -45,23 +45,23 @@ export function Modal({ isOpen, onClose, title, children, className, size = "md"
           />
           <motion.div
             className={cn(
-              "relative w-full bg-[var(--bg-primary)] border border-[var(--border)] rounded-2xl shadow-[var(--shadow-xl)] p-6",
+              "relative w-full bg-white border-2 border-slate-200 border-b-[6px] rounded-3xl shadow-xl p-6",
               sizes[size],
               className
             )}
             initial={{ opacity: 0, scale: 0.95, y: 20 }}
             animate={{ opacity: 1, scale: 1, y: 0 }}
             exit={{ opacity: 0, scale: 0.95, y: 20 }}
-            transition={{ duration: 0.2, ease: "easeOut" }}
+            transition={{ type: "spring", bounce: 0.4, duration: 0.5 }}
           >
             {title && (
-              <div className="flex items-center justify-between mb-4">
-                <h3 className="text-lg font-semibold text-[var(--text-primary)]">{title}</h3>
+              <div className="flex items-center justify-between mb-6">
+                <h3 className="text-xl font-black text-slate-800 tracking-tight">{title}</h3>
                 <button
                   onClick={onClose}
-                  className="p-1.5 rounded-lg text-[var(--text-tertiary)] hover:text-[var(--text-primary)] hover:bg-[var(--bg-tertiary)] transition-colors"
+                  className="p-2 rounded-xl text-slate-400 bg-slate-100 hover:bg-slate-200 active:bg-slate-300 transition-colors"
                 >
-                  <X className="h-4 w-4" />
+                  <X className="h-5 w-5 font-bold" />
                 </button>
               </div>
             )}
