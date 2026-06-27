@@ -24,6 +24,7 @@ import {
   MessageCircle
 } from "lucide-react";
 import { useEffect, useState, useCallback } from "react";
+import { formatCurrency, cn } from "@/lib/utils";
 import Link from "next/link";
 import { motion, AnimatePresence } from "framer-motion";
 
@@ -362,7 +363,6 @@ export default function ParentDashboard() {
             Mulai pantau kehadiran, nilai rapor, dan pencapaian akademik anak Anda secara real-time.
           </p>
           <button 
-            size="lg" 
             onClick={() => setShowAddChild(true)} 
             className="bg-indigo-500 text-white rounded-2xl px-10 py-5 font-black text-lg border-2 border-indigo-600 shadow-[0_4px_0_rgb(79,70,229)] active:translate-y-1 active:shadow-none transition-all flex items-center justify-center mx-auto"
           >
