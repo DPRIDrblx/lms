@@ -144,7 +144,7 @@ export default function ReportPdfView({ params }: { params: Promise<{ id: string
                <div className="mb-6">
                   <h3 className="font-bold mb-2 uppercase border-b border-black pb-1">Sambutan Kepala Sekolah</h3>
                   <div className="text-[11pt] leading-relaxed text-justify whitespace-pre-wrap">
-                     {data.principal_remarks || "Terus tingkatkan prestasi belajar Anda di Nusantara International Academy."}
+                     {data.principal_remarks || "Terus tingkatkan prestasi belajar Anda di IGNITE."}
                   </div>
                </div>
             </div>

@@ -256,7 +256,7 @@ export default function TUCardInventory() {
                   <h3 className="text-2xl font-black text-[var(--text-primary)] mb-2">Hardware Inbound</h3>
                   <p className="text-sm text-[var(--text-secondary)] mb-8">Register a new physical card serial into the academy inventory.</p>
                   <div className="space-y-6">
-                     <input autoFocus type="text" value={newSerial} onChange={e => setNewSerial(e.target.value)} placeholder="e.g. SN-2024-NIA-001" className="w-full h-14 px-5 rounded-2xl bg-[var(--bg-secondary)] border-none font-mono text-sm focus:ring-2 focus:ring-[var(--accent)]" />
+                     <input autoFocus type="text" value={newSerial} onChange={e => setNewSerial(e.target.value)} placeholder="e.g. SN-2024-IGNITE-001" className="w-full h-14 px-5 rounded-2xl bg-[var(--bg-secondary)] border-none font-mono text-sm focus:ring-2 focus:ring-[var(--accent)]" />
                      <div className="flex gap-3">
                         <Button variant="ghost" className="flex-1 h-12 rounded-xl" onClick={() => setIsAddOpen(false)}>Cancel</Button>
                         <Button className="flex-1 h-12 rounded-xl font-bold" onClick={handleAddCard}>Add Card</Button>

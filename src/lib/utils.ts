@@ -64,5 +64,5 @@ export function getNextRank(xp: number): { name: string; xpNeeded: number; progr
 }
 
 export function generateQRPayload(): string {
-  return `NIA-${Date.now()}-${Math.random().toString(36).substring(2, 8).toUpperCase()}`;
+  return `IGNITE-${Date.now()}-${Math.random().toString(36).substring(2, 8).toUpperCase()}`;
 }

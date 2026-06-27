@@ -84,7 +84,7 @@ export default function PackageCoursesPage() {
               {pkg?.level} {pkg?.major ? `- ${pkg?.major}` : ''}
             </span>
             <h1 className="text-3xl font-black mb-2">{pkg?.name}</h1>
-            <p className="text-orange-100 font-medium">Atur materi (Course) apa saja yang bisa diakses oleh Sobat NIA yang membeli paket ini.</p>
+            <p className="text-orange-100 font-medium">Atur materi (Course) apa saja yang bisa diakses oleh Sobat IGNITE yang membeli paket ini.</p>
           </div>
 
           <div className="flex justify-between items-center mt-8 mb-4">

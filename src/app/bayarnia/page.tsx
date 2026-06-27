@@ -135,7 +135,7 @@ export default function BayarNiaPage() {
             <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-amber-400 to-orange-600 flex items-center justify-center shadow-lg shadow-orange-500/30">
               <Sparkles className="text-white w-6 h-6" />
             </div>
-            <span className="text-2xl font-black text-slate-800 tracking-tight">NIA<span className="text-orange-500">Tutoring</span></span>
+            <span className="text-2xl font-black text-slate-800 tracking-tight">IGNITE<span className="text-orange-500">Tutoring</span></span>
           </div>
           <div className="flex gap-4">
             <a href="/login" className="px-6 py-2.5 text-sm font-bold text-slate-600 hover:text-slate-900 transition-colors">Masuk</a>
@@ -151,13 +151,13 @@ export default function BayarNiaPage() {
         <div className="max-w-7xl mx-auto grid lg:grid-cols-2 gap-16 items-center">
           <motion.div initial={{ opacity: 0, x: -30 }} animate={{ opacity: 1, x: 0 }} transition={{ duration: 0.6 }}>
             <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-orange-100 text-orange-700 font-bold text-sm mb-6">
-              <Sparkles className="w-4 h-4" /> Bimbingan Belajar No. 1 di Nusantara
+              <Sparkles className="w-4 h-4" /> Sistem Manajemen Belajar No. 1 dari IGNITE
             </div>
             <h1 className="text-5xl md:text-7xl font-black text-slate-900 leading-[1.1] tracking-tight mb-8">
               Belajar Lebih Pintar, <span className="text-transparent bg-clip-text bg-gradient-to-r from-amber-500 to-orange-600">Bukan Lebih Keras.</span>
             </h1>
             <p className="text-lg md:text-xl text-slate-600 mb-10 leading-relaxed max-w-xl">
-              Bergabunglah dengan ribuan Sobat NIA lainnya. Dapatkan akses ke video interaktif, rangkuman materi cerdas, dan tutor berpengalaman.
+              Bergabunglah dengan ribuan Sobat IGNITE lainnya. Dapatkan akses ke video interaktif, rangkuman materi cerdas, dan tutor berpengalaman.
             </p>
             <div className="flex flex-wrap gap-4">
               <button className="px-8 py-4 bg-gradient-to-r from-amber-500 to-orange-600 text-white font-bold rounded-full text-lg shadow-xl shadow-orange-500/30 hover:-translate-y-1 transition-all">
@@ -329,7 +329,7 @@ export default function BayarNiaPage() {
                 {checkoutStep === 1 && (
                   <div className="space-y-6">
                     <div>
-                      <h2 className="text-2xl font-black text-slate-900 mb-2">Buat Akun Sobat NIA</h2>
+                      <h2 className="text-2xl font-black text-slate-900 mb-2">Buat Akun Sobat IGNITE</h2>
                       <p className="text-slate-500">Isi data diri untuk membuat akun belajar kamu.</p>
                     </div>
 
@@ -381,7 +381,7 @@ export default function BayarNiaPage() {
                           onClose={() => setCheckoutStep(1)}
                           amount={finalPrice}
                           onSuccess={handlePaymentSuccess}
-                          title="NIA Tutoring"
+                          title="IGNITE Tutoring"
                         />
                       </>
                     )}
@@ -394,7 +394,7 @@ export default function BayarNiaPage() {
                       <CheckCircle2 className="w-12 h-12 text-green-500" />
                     </motion.div>
                     <h2 className="text-3xl font-black text-slate-900">Pembayaran Berhasil!</h2>
-                    <p className="text-slate-600 max-w-sm">Akun Sobat NIA kamu telah aktif. Selamat bergabung dan selamat belajar!</p>
+                    <p className="text-slate-600 max-w-sm">Akun Sobat IGNITE kamu telah aktif. Selamat bergabung dan selamat belajar!</p>
                     <a 
                       href="/login"
                       className="inline-block w-full max-w-xs py-4 mt-4 bg-slate-900 text-white font-bold rounded-xl shadow-lg hover:bg-slate-800 transition-colors"

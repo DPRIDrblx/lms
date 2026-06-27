@@ -117,7 +117,7 @@ const PAYMENT_METHODS: PaymentGroup[] = [
   }
 ];
 
-export function XenditPaymentModal({ isOpen, onClose, amount, onSuccess, title = "Nusantara International Academy" }: XenditPaymentModalProps) {
+export function XenditPaymentModal({ isOpen, onClose, amount, onSuccess, title = "IGNITE" }: XenditPaymentModalProps) {
   const [step, setStep] = useState<"select" | "detail" | "otp" | "processing" | "success">("select");
   const [selectedMethod, setSelectedMethod] = useState<PaymentMethodItem | null>(null);
   const [expandedGroup, setExpandedGroup] = useState<string | null>("va"); // Virtual Account default

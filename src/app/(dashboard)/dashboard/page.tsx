@@ -118,7 +118,7 @@ export default function DashboardPage() {
     const { data: fullProfile } = await supabase.from("profiles").select("*").eq("id", profile.id).single();
     
     if (fullProfile) {
-       const newStreak = await checkAndUpdateStreak(supabase, profile.id, fullProfile.current_streak, fullProfile.last_login_date);
+       const newStreak = await checkAndUpdateStreak(supabase, profile.id, fullProfile.current_streak, fullProfile.last_login_date, fullProfile.gems || 0);
        const newQuests = await generateDailyQuests(supabase, profile.id, fullProfile.daily_quests, fullProfile.last_quest_reset, fullProfile.xp || 0);
        setStreak(newStreak);
        setQuests(newQuests);

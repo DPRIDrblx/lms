@@ -38,7 +38,7 @@ export default function LeaderboardPage() {
     <div className="max-w-4xl mx-auto py-12 px-4 pb-24">
       <div className="text-center mb-12">
         <h1 className="text-4xl font-black text-slate-800 mb-2">Papan Peringkat</h1>
-        <p className="text-slate-500 font-bold">Terus belajar dan jadilah yang terbaik di Nusantara Academy!</p>
+        <p className="text-slate-500 font-bold">Terus belajar dan jadilah yang terbaik di IGNITE!</p>
       </div>
 
       <div className="bg-white rounded-[2.5rem] border-2 border-slate-200 shadow-[0_8px_0_rgb(226,232,240)] overflow-hidden">

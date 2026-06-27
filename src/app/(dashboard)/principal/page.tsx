@@ -67,7 +67,7 @@ export default function PrincipalDashboardPage() {
             <GraduationCap className="h-4 w-4" /> Executive Board
           </div>
           <h1 className="text-3xl md:text-5xl font-black text-white tracking-tight leading-tight">Sistem Informasi<br />Manajemen Sekolah</h1>
-          <p className="text-slate-400 mt-4 text-lg max-w-xl">Selamat datang kembali, Kepala Sekolah. Berikut adalah ringkasan operasional Nusantara International Academy hari ini.</p>
+          <p className="text-slate-400 mt-4 text-lg max-w-xl">Selamat datang kembali, Kepala Sekolah. Berikut adalah ringkasan operasional IGNITE hari ini.</p>
         </div>
       </div>
 

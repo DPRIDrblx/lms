@@ -60,7 +60,7 @@ export default function AccountGenerator() {
             full_name: name,
             role,
             email: generateEmail(name, role),
-            password: `NIA-${Math.floor(Math.random() * 90000) + 10000}`,
+            password: `IGNITE-${Math.floor(Math.random() * 90000) + 10000}`,
             status: "pending" as const
           };
         }).filter(Boolean) as ParsedAccount[];

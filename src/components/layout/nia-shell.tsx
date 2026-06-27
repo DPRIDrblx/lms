@@ -36,7 +36,7 @@ export function NiaShell({ children }: { children: React.ReactNode }) {
             <Sparkles className="w-6 h-6 text-white" />
           </div>
           <div>
-            <h1 className="font-black text-xl text-slate-900 tracking-tight">NIA<span className="text-orange-500">Tutoring</span></h1>
+            <h1 className="font-black text-xl text-slate-900 tracking-tight">IGNITE<span className="text-orange-500">Tutoring</span></h1>
             <p className="text-xs font-bold text-slate-400 uppercase tracking-widest">{profile?.role?.replace('_', ' ')}</p>
           </div>
         </div>
@@ -88,7 +88,7 @@ export function NiaShell({ children }: { children: React.ReactNode }) {
           <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-amber-400 to-orange-600 flex items-center justify-center">
             <Sparkles className="w-4 h-4 text-white" />
           </div>
-          <span className="font-black text-lg text-slate-900">NIA<span className="text-orange-500">Tutoring</span></span>
+          <span className="font-black text-lg text-slate-900">IGNITE<span className="text-orange-500">Tutoring</span></span>
         </div>
         <button onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)} className="p-2 -mr-2 text-slate-600">
           {isMobileMenuOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}

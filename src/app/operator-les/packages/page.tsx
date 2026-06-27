@@ -88,7 +88,7 @@ export default function PackagesPage() {
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
           <h1 className="text-3xl font-black text-slate-900">Manajemen Paket Belajar</h1>
-          <p className="text-slate-500 font-medium">Buat dan atur harga paket bimbingan belajar untuk Sobat NIA.</p>
+          <p className="text-slate-500 font-medium">Buat dan atur harga paket bimbingan belajar untuk Sobat IGNITE.</p>
         </div>
         <button 
           onClick={() => { resetForm(); setShowModal(true); }}

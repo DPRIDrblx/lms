@@ -51,7 +51,7 @@ export default function PengurusCoursesPage() {
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
           <h1 className="text-3xl font-black text-slate-900">Manajemen Materi (Course)</h1>
-          <p className="text-slate-500 font-medium">Buat dan atur urutan materi bimbingan belajar untuk Sobat NIA.</p>
+          <p className="text-slate-500 font-medium">Buat dan atur urutan materi bimbingan belajar untuk Sobat IGNITE.</p>
         </div>
         <Link 
           href="/pengurus-nia/courses/create"
@@ -108,7 +108,7 @@ export default function PengurusCoursesPage() {
         <div className="bg-white border border-dashed border-slate-300 rounded-3xl p-16 text-center">
           <BookOpen className="h-16 w-16 text-slate-300 mx-auto mb-4" />
           <h2 className="text-xl font-bold text-slate-900 mb-2">Belum ada materi</h2>
-          <p className="text-slate-500 max-w-md mx-auto mb-6">Mulai buat modul materi pertama Anda untuk Sobat NIA.</p>
+          <p className="text-slate-500 max-w-md mx-auto mb-6">Mulai buat modul materi pertama Anda untuk Sobat IGNITE.</p>
           <Link href="/pengurus-nia/courses/create" className="px-5 py-2.5 bg-orange-500 text-white font-bold rounded-xl hover:bg-orange-600 inline-flex items-center gap-2">
             <Plus className="w-5 h-5" /> Buat Materi
           </Link>

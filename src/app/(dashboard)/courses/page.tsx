@@ -6,7 +6,7 @@ import { Card } from "@/components/ui/card";
 import { ProgressBar } from "@/components/ui/progress-bar";
 import { Badge } from "@/components/ui/badge";
 import { motion } from "framer-motion";
-import { BookOpen, Search } from "lucide-react";
+import { BookOpen, Search, Sparkles, PlayCircle } from "lucide-react";
 import { useEffect, useState } from "react";
 import Link from "next/link";
 interface Course {
@@ -28,6 +28,7 @@ export default function CoursesPage() {
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
   const [filter, setFilter] = useState<"all" | "in-progress" | "completed">("all");
+  const [goldenHourActive, setGoldenHourActive] = useState(false);
 
   useEffect(() => {
     const fetchCourses = async () => {
@@ -69,6 +70,12 @@ export default function CoursesPage() {
           setProgress(map);
         }
       }
+      
+      const { data: ghSettings } = await supabase.from("global_settings").select("value").eq("key", "golden_hour_active").single();
+      if (ghSettings && (ghSettings.value === "true" || ghSettings.value === true)) {
+          setGoldenHourActive(true);
+      }
+      
       setLoading(false);
     };
 
@@ -96,6 +103,39 @@ export default function CoursesPage() {
           <p className="text-sm font-medium text-[var(--text-secondary)] mt-1">Explore your learning missions and track progress.</p>
         </div>
       </motion.div>
+
+      {/* THE GOLDEN HOUR PORTAL */}
+      {goldenHourActive && profile?.role === 'student' && (
+         <motion.div 
+            initial={{ opacity: 0, scale: 0.95 }}
+            animate={{ opacity: 1, scale: 1 }}
+            className="w-full rounded-[2rem] p-8 md:p-10 text-white relative overflow-hidden bg-gradient-to-br from-amber-500 via-orange-500 to-rose-500 shadow-[0_15px_40px_rgba(245,158,11,0.3)] mb-8 border border-white/20"
+         >
+            <div className="absolute inset-0 bg-[url('https://www.transparenttextures.com/patterns/cubes.png')] opacity-20"></div>
+            <motion.div animate={{ rotate: 360 }} transition={{ duration: 30, repeat: Infinity, ease: "linear" }} className="absolute -top-[50%] -right-[10%] w-[500px] h-[500px] bg-yellow-300/30 rounded-full blur-[80px] pointer-events-none"></motion.div>
+            
+            <div className="relative z-10 flex flex-col md:flex-row items-center justify-between gap-8">
+               <div>
+                  <div className="inline-flex items-center gap-2 px-3 py-1 bg-white/20 backdrop-blur-sm rounded-full text-xs font-black uppercase tracking-widest border border-white/30 shadow-sm mb-4">
+                     <Sparkles className="w-4 h-4 text-yellow-200" /> Event Spesial Terbuka!
+                  </div>
+                  <h2 className="text-4xl md:text-5xl font-black mb-2 text-transparent bg-clip-text bg-gradient-to-r from-white to-yellow-200 drop-shadow-sm">The Golden Hour</h2>
+                  <p className="text-lg font-medium text-white/90 max-w-lg mb-6 leading-relaxed">Masuk ke portal kuis gacha harian sekarang juga dan dapatkan kesempatan memenangkan <span className="font-black text-yellow-300">Gems</span> secara acak!</p>
+                  
+                  <Link href="/student/golden-hour">
+                     <button className="flex items-center gap-3 px-8 py-4 bg-white text-orange-600 rounded-2xl font-black text-lg hover:scale-105 active:scale-95 transition-all shadow-[0_6px_0_rgb(254,215,170)] hover:shadow-[0_8px_0_rgb(254,215,170)]">
+                        <PlayCircle className="w-6 h-6" /> Masuk Portal
+                     </button>
+                  </Link>
+               </div>
+               
+               <div className="hidden md:flex relative shrink-0">
+                  <div className="absolute inset-0 bg-yellow-400 blur-3xl opacity-40 rounded-full"></div>
+                  <img src="https://api.dicebear.com/7.x/bottts/svg?seed=Jackpot&backgroundColor=transparent" alt="Gacha Bot" className="w-48 h-48 relative z-10 drop-shadow-2xl animate-bounce" style={{ animationDuration: '3s' }} />
+               </div>
+            </div>
+         </motion.div>
+      )}
 
       {/* Filters */}
       <div className="flex flex-col sm:flex-row gap-4 mb-8">

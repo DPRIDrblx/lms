@@ -77,7 +77,7 @@ export default function TUReportGenerationPage() {
       <header className="flex flex-col md:flex-row md:items-center justify-between gap-6">
          <div>
             <h1 className="text-3xl font-black text-[var(--text-primary)]">Academic Report Archives</h1>
-            <p className="text-sm text-[var(--text-secondary)] mt-1">Official certificate and transcript generation hub for Nusantara Academy.</p>
+            <p className="text-sm text-[var(--text-secondary)] mt-1">Official certificate and transcript generation hub for IGNITE.</p>
          </div>
          <div className="flex gap-2">
             <Button variant="secondary" icon={<Filter className="h-4 w-4" />}>Academic Year</Button>

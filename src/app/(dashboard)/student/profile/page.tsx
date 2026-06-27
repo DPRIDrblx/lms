@@ -1,8 +1,9 @@
 "use client";
 
 import { useAuth } from "@/lib/auth-context";
-import { Flame, Diamond, Lock, Edit2, Loader2, Image as ImageIcon, Send, Trash2, X } from "lucide-react";
+import { Flame, Diamond, LogOut, CheckCircle2, Lock, Edit2, Fingerprint, Gem, Loader2, Image as ImageIcon, Send, Trash2, X, Copy } from "lucide-react";
 import { PostCard } from "@/components/social/post-card";
+import { AchievementShowcase } from "@/components/profile/achievement-showcase";
 import Link from "next/link";
 import { useState, useEffect, useRef } from "react";
 import { createClient } from "@/lib/supabase";
@@ -29,6 +30,16 @@ export default function ProfilePage() {
   const [isChangingPassword, setIsChangingPassword] = useState(false);
   const [newPassword, setNewPassword] = useState("");
   const [loading, setLoading] = useState(false);
+  const [copied, setCopied] = useState(false);
+  
+  const copyId = () => {
+    if (profile?.id) {
+      navigator.clipboard.writeText(profile.id);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+      toast.success("Academy ID disalin!");
+    }
+  };
   
   // Post states
   const [posts, setPosts] = useState<any[]>([]);
@@ -170,9 +181,11 @@ export default function ProfilePage() {
           <h1 className="text-3xl font-black mb-1 drop-shadow-md">{profile?.full_name}</h1>
           <p className="text-indigo-200 font-bold capitalize bg-indigo-600/50 px-4 py-1 rounded-full mb-2">{profile?.role}</p>
           <p className="text-indigo-100 font-semibold text-sm mb-6 text-center max-w-sm">
-            Siswa di <span className="font-bold text-white">Mainan Middle International School</span><br/>
-            <span className="text-xs opacity-75">Nusantara International Academy (NIA)</span>
+            Siswa di <span className="font-bold text-white">IGNITE</span>
           </p>
+
+          {/* ACHIEVEMENT SHOWCASE */}
+          {profile?.id && <AchievementShowcase userId={profile.id} isOwner={true} />}
           
           {/* Social Stats */}
           <div className="flex items-center gap-6 mb-6">
@@ -205,7 +218,7 @@ export default function ProfilePage() {
         {activeTab === "stats" && (
           <div className="p-8">
             <h2 className="text-2xl font-black text-slate-800 mb-6">Statistik Belajar</h2>
-            <div className="grid grid-cols-2 gap-6 mb-10">
+            <div className="grid grid-cols-3 gap-4 mb-10">
               <div className="border-2 border-slate-200 rounded-3xl p-6 flex flex-col items-center gap-2 shadow-[0_6px_0_rgb(226,232,240)]">
                 <div className="p-4 bg-orange-100 rounded-2xl">
                   <Flame className="w-10 h-10 text-orange-500 fill-orange-500" />
@@ -219,6 +232,13 @@ export default function ProfilePage() {
                 </div>
                 <p className="text-4xl font-black text-slate-700 mt-2">{(profile as any)?.xp || 0}</p>
                 <p className="text-base font-bold text-slate-400">Total XP</p>
+              </div>
+              <div className="border-2 border-slate-200 rounded-3xl p-6 flex flex-col items-center gap-2 shadow-[0_6px_0_rgb(226,232,240)]">
+                <div className="p-4 bg-pink-100 rounded-2xl">
+                  <Gem className="w-10 h-10 text-pink-500 fill-pink-500" />
+                </div>
+                <p className="text-4xl font-black text-slate-700 mt-2">{(profile as any)?.gems || 0}</p>
+                <p className="text-base font-bold text-slate-400">Total Gems</p>
               </div>
             </div>
 
@@ -237,6 +257,22 @@ export default function ProfilePage() {
                   </div>
                 </div>
                 <Edit2 className="w-5 h-5 text-slate-300 group-hover:text-indigo-500" />
+              </button>
+
+              <button 
+                onClick={copyId}
+                className="w-full flex items-center justify-between p-6 rounded-2xl border-2 border-slate-200 hover:bg-slate-50 hover:-translate-y-1 hover:shadow-[0_4px_0_rgb(226,232,240)] transition-all group"
+              >
+                <div className="flex items-center gap-4">
+                  <div className="w-12 h-12 rounded-xl bg-slate-100 text-slate-500 flex items-center justify-center group-hover:bg-indigo-100 group-hover:text-indigo-600 transition-colors">
+                    <Fingerprint className="w-6 h-6" />
+                  </div>
+                  <div className="text-left">
+                    <h3 className="font-black text-slate-800 text-lg">Academy Unique ID</h3>
+                    <p className="text-sm font-bold text-slate-400 truncate max-w-[150px] sm:max-w-xs">{profile?.id}</p>
+                  </div>
+                </div>
+                {copied ? <CheckCircle2 className="w-6 h-6 text-emerald-500" /> : <Copy className="w-5 h-5 text-slate-300 group-hover:text-indigo-500" />}
               </button>
             </div>
           </div>

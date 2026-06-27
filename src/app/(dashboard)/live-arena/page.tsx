@@ -22,19 +22,29 @@ export default function LiveArenaEntryPage() {
     }
   };
 
+  const handleJoinSpectator = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (pin.length === 6) {
+      setIsJoining(true);
+      setTimeout(() => {
+        router.push(`/live-arena/${pin}/spectator`);
+      }, 500);
+    }
+  };
+
   return (
-    <div className="min-h-screen flex items-center justify-center p-4 bg-slate-900 relative overflow-hidden font-sans">
+    <div className="min-h-screen flex items-center justify-center p-4 bg-slate-50 relative overflow-hidden font-sans">
       {/* Background Animated Gradient Mesh */}
-      <div className="absolute inset-0 bg-gradient-to-br from-indigo-900 via-purple-900 to-slate-900 opacity-80" />
+      <div className="absolute inset-0 bg-gradient-to-br from-indigo-50 via-purple-50 to-slate-50 opacity-80" />
       <motion.div 
         animate={{ scale: [1, 1.2, 1], rotate: [0, 90, 0] }} 
         transition={{ duration: 20, repeat: Infinity, ease: "linear" }}
-        className="absolute -top-[30%] -left-[10%] w-[70vw] h-[70vw] bg-indigo-500/20 rounded-full blur-[120px] mix-blend-screen"
+        className="absolute -top-[30%] -left-[10%] w-[70vw] h-[70vw] bg-indigo-300/30 rounded-full blur-[120px] mix-blend-multiply"
       />
       <motion.div 
         animate={{ scale: [1, 1.5, 1], rotate: [0, -90, 0] }} 
         transition={{ duration: 25, repeat: Infinity, ease: "linear" }}
-        className="absolute -bottom-[20%] -right-[10%] w-[60vw] h-[60vw] bg-pink-500/20 rounded-full blur-[100px] mix-blend-screen"
+        className="absolute -bottom-[20%] -right-[10%] w-[60vw] h-[60vw] bg-pink-300/30 rounded-full blur-[100px] mix-blend-multiply"
       />
 
       {/* Grid Pattern Overlay */}
@@ -46,18 +56,18 @@ export default function LiveArenaEntryPage() {
         transition={{ type: "spring", bounce: 0.5, duration: 0.8 }}
         className="w-full max-w-md relative z-10"
       >
-        <Card className="p-8 md:p-12 border border-white/10 shadow-[0_0_80px_rgba(99,102,241,0.3)] text-center bg-white/10 backdrop-blur-2xl rounded-[3rem]">
+        <Card className="p-8 md:p-12 border border-white shadow-[0_20px_60px_rgba(99,102,241,0.15)] text-center bg-white/70 backdrop-blur-xl rounded-[3rem]">
           
           <motion.div 
             whileHover={{ scale: 1.1, rotate: 10 }}
-            className="w-24 h-24 bg-gradient-to-br from-indigo-500 to-purple-600 rounded-3xl mx-auto flex items-center justify-center mb-8 shadow-2xl shadow-indigo-500/50 border border-white/20 relative"
+            className="w-24 h-24 bg-gradient-to-br from-indigo-500 to-purple-600 rounded-3xl mx-auto flex items-center justify-center mb-8 shadow-xl shadow-indigo-500/30 border border-white/50 relative"
           >
              <div className="absolute inset-0 bg-white/20 rounded-3xl blur animate-pulse" />
              <Gamepad2 className="w-12 h-12 text-white relative z-10" />
           </motion.div>
 
-          <h1 className="text-4xl font-black tracking-tight text-white mb-3 drop-shadow-md">LIVE ARENA</h1>
-          <p className="text-indigo-200 font-medium mb-10">Enter the 6-digit Game PIN from your teacher.</p>
+          <h1 className="text-4xl font-black tracking-tight text-slate-900 mb-3 drop-shadow-sm">LIVE ARENA</h1>
+          <p className="text-slate-500 font-medium mb-10">Enter the 6-digit Game PIN from your teacher.</p>
           
           <form onSubmit={handleJoin} className="space-y-6 relative">
             <div className="relative">
@@ -68,7 +78,7 @@ export default function LiveArenaEntryPage() {
                 value={pin}
                 disabled={isJoining}
                 onChange={(e) => setPin(e.target.value.replace(/\D/g, ''))}
-                className="w-full h-24 text-center text-5xl font-black tracking-[0.3em] bg-slate-900/50 border-2 border-indigo-500/30 rounded-3xl text-white placeholder:text-white/20 focus:border-indigo-400 focus:bg-slate-900/80 focus:ring-4 focus:ring-indigo-500/30 outline-none transition-all shadow-inner"
+                className="w-full h-24 text-center text-5xl font-black tracking-[0.3em] bg-white border-2 border-slate-200 rounded-3xl text-slate-900 placeholder:text-slate-300 focus:border-indigo-400 focus:ring-4 focus:ring-indigo-500/20 outline-none transition-all shadow-inner"
               />
               <AnimatePresence>
                 {pin.length === 6 && (
@@ -90,8 +100,8 @@ export default function LiveArenaEntryPage() {
               size="lg" 
               className={`w-full h-20 text-xl rounded-[2rem] font-black border-b-4 transition-all overflow-hidden relative group ${
                 pin.length === 6 
-                ? 'bg-gradient-to-r from-emerald-400 to-teal-500 hover:from-emerald-300 hover:to-teal-400 border-emerald-600 text-white shadow-[0_0_40px_rgba(16,185,129,0.4)] hover:-translate-y-1 active:border-b-0 active:translate-y-1' 
-                : 'bg-slate-800 border-slate-900 text-slate-500 cursor-not-allowed'
+                ? 'bg-gradient-to-r from-emerald-400 to-teal-500 hover:from-emerald-300 hover:to-teal-400 border-emerald-600 text-white shadow-[0_10px_30px_rgba(16,185,129,0.3)] hover:-translate-y-1 active:border-b-0 active:translate-y-1' 
+                : 'bg-slate-200 border-slate-300 text-slate-400 cursor-not-allowed'
               }`}
             >
               {isJoining ? (
@@ -108,6 +118,21 @@ export default function LiveArenaEntryPage() {
                   )}
                 </>
               )}
+            </Button>
+
+            <Button 
+              type="button"
+              onClick={handleJoinSpectator}
+              disabled={pin.length !== 6 || isJoining}
+              variant="secondary"
+              size="lg" 
+              className={`w-full h-16 text-lg rounded-[1.5rem] font-bold border-2 transition-all ${
+                pin.length === 6 
+                ? 'text-indigo-600 border-indigo-200 hover:bg-indigo-50 hover:border-indigo-300' 
+                : 'text-slate-400 border-slate-200 cursor-not-allowed'
+              }`}
+            >
+              Join as Spectator (Bet Gems)
             </Button>
           </form>
         </Card>

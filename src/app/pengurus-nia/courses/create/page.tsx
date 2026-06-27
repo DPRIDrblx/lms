@@ -34,7 +34,7 @@ export default function CreatePengurusCoursePage() {
         category: formData.category,
         cover_image: formData.cover_image || null,
         is_published: false,
-        class_id: null // Not used for NIA Tutoring
+        class_id: null // Not used for IGNITE Tutoring
       })
       .select()
       .single();

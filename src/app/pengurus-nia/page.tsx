@@ -12,7 +12,7 @@ export default function PengurusNiaDashboard() {
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
           <h1 className="text-3xl font-black text-slate-900 tracking-tight">Pengurus & Tutor Dashboard</h1>
-          <p className="text-slate-500 font-medium">Buat dan kelola materi untuk Sobat NIA.</p>
+          <p className="text-slate-500 font-medium">Buat dan kelola materi untuk Sobat IGNITE.</p>
         </div>
         <button className="flex items-center justify-center gap-2 px-6 py-3 bg-gradient-to-r from-amber-500 to-orange-600 text-white font-bold rounded-xl shadow-lg shadow-orange-500/20 hover:shadow-xl hover:shadow-orange-500/30 hover:-translate-y-0.5 transition-all">
           <Plus className="w-5 h-5" /> Buat Materi Baru

@@ -141,7 +141,7 @@ const SidebarContent = ({ navItems, pathname, profile, setMobileOpen }: any) => 
             <GraduationCap className="h-5 w-5 text-white" />
           </div>
           <div>
-            <h1 className={cn("text-sm font-bold leading-tight", titleColor)}>Nusantara</h1>
+            <h1 className={cn("text-sm font-bold leading-tight", titleColor)}>IGNITE</h1>
             <p className={cn("text-[10px] font-bold uppercase tracking-wider", subtitleColor)}>
               {getSubTitle()}
             </p>

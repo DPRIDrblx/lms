@@ -81,7 +81,7 @@ export default function SobatNiaCoursesPage() {
         <div className="bg-white border border-slate-200 rounded-3xl p-16 text-center shadow-sm">
           <BookOpen className="w-16 h-16 text-slate-300 mx-auto mb-4" />
           <h2 className="text-xl font-bold text-slate-900 mb-2">Belum Ada Materi</h2>
-          <p className="text-slate-500 max-w-md mx-auto mb-6">Anda belum memiliki paket belajar yang aktif. Yuk langganan paket NIA Tutoring sekarang!</p>
+          <p className="text-slate-500 max-w-md mx-auto mb-6">Anda belum memiliki paket belajar yang aktif. Yuk langganan paket IGNITE Tutoring sekarang!</p>
           <Link href="/bayarnia" className="px-6 py-3 bg-gradient-to-r from-orange-500 to-amber-500 text-white font-bold rounded-xl hover:from-orange-600 hover:to-amber-600 shadow-lg shadow-orange-500/20 inline-block">
             Lihat Paket Belajar
           </Link>

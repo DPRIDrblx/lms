@@ -40,7 +40,7 @@ export default function SobatNiaDashboard() {
       >
         <div className="absolute right-0 top-0 w-64 h-64 bg-white/10 rounded-full blur-3xl -translate-y-1/2 translate-x-1/2" />
         <div className="relative z-10">
-          <h1 className="text-3xl md:text-4xl font-black mb-2 tracking-tight">Halo Sobat NIA, {profile?.full_name?.split(' ')[0]}! 👋</h1>
+          <h1 className="text-3xl md:text-4xl font-black mb-2 tracking-tight">Halo Sobat IGNITE, {profile?.full_name?.split(' ')[0]}! 👋</h1>
           <p className="text-orange-100 text-lg">Siap untuk menaklukkan materi hari ini? Mari kita mulai belajar!</p>
         </div>
       </motion.div>

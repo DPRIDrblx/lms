@@ -2,6 +2,7 @@
 
 import { useAuth } from "@/lib/auth-context";
 import { Flame, Diamond, MessageCircle, UserPlus, UserCheck, Loader2, X } from "lucide-react";
+import { AchievementShowcase } from "@/components/profile/achievement-showcase";
 import { PostCard } from "@/components/social/post-card";
 import Link from "next/link";
 import { useState, useEffect } from "react";
@@ -131,9 +132,11 @@ export default function PublicProfilePage() {
           <h1 className="text-3xl font-black mb-1 drop-shadow-md">{profile?.full_name}</h1>
           <p className="text-indigo-200 font-bold capitalize bg-indigo-600/50 px-4 py-1 rounded-full mb-2">{profile?.role}</p>
           <p className="text-indigo-100 font-semibold text-sm mb-6 text-center max-w-sm">
-            Warga <span className="font-bold text-white">Mainan Middle International School</span><br/>
-            <span className="text-xs opacity-75">Nusantara International Academy (NIA)</span>
+            Warga <span className="font-bold text-white">IGNITE</span>
           </p>
+
+          {/* ACHIEVEMENT SHOWCASE */}
+          {profile?.id && <AchievementShowcase userId={profile.id} isOwner={false} />}
 
           {/* Social Stats */}
           <div className="flex items-center gap-6 mb-6">

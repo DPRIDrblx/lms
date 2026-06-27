@@ -39,7 +39,7 @@ export default function ReceiptPage({ params }: { params: Promise<{ id: string }
     return <div className="flex items-center justify-center py-20 text-[var(--text-tertiary)]">Loading...</div>;
   }
 
-  const txId = `NIA-${receipt.id.slice(0, 8).toUpperCase()}`;
+  const txId = `IGNITE-${receipt.id.slice(0, 8).toUpperCase()}`;
 
   return (
     <div className="max-w-lg mx-auto space-y-6">
@@ -65,7 +65,7 @@ export default function ReceiptPage({ params }: { params: Promise<{ id: string }
             <div className="w-8 h-8 rounded-lg bg-[var(--accent)] flex items-center justify-center">
               <GraduationCap className="h-4 w-4 text-white" />
             </div>
-            <span className="text-sm font-semibold text-[var(--text-primary)]">Nusantara International Academy</span>
+            <span className="text-sm font-semibold text-[var(--text-primary)]">IGNITE</span>
           </div>
 
           <div className="bg-[var(--bg-secondary)] rounded-xl p-4 space-y-3 text-left mb-6">

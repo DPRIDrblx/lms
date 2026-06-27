@@ -1,7 +1,7 @@
 import { SupabaseClient } from "@supabase/supabase-js";
 import confetti from "canvas-confetti";
 
-export const checkAndUpdateStreak = async (supabase: SupabaseClient, profileId: string, currentStreak: number, lastLoginDate: string | null) => {
+export const checkAndUpdateStreak = async (supabase: SupabaseClient, profileId: string, currentStreak: number, lastLoginDate: string | null, currentGems: number = 0) => {
   const today = new Date();
   // Get local date string YYYY-MM-DD
   const todayStr = new Date(today.getTime() - (today.getTimezoneOffset() * 60000)).toISOString().split("T")[0];
@@ -10,7 +10,8 @@ export const checkAndUpdateStreak = async (supabase: SupabaseClient, profileId: 
     // First time login
     await supabase.from("profiles").update({ 
       current_streak: 1, 
-      last_login_date: todayStr 
+      last_login_date: todayStr,
+      gems: currentGems + 5
     }).eq("id", profileId);
     return 1;
   }
@@ -29,22 +30,48 @@ export const checkAndUpdateStreak = async (supabase: SupabaseClient, profileId: 
   if (diffDays === 1) {
     // Consecutive day
     const newStreak = (currentStreak || 0) + 1;
-    await supabase.from("profiles").update({ 
-      current_streak: newStreak, 
-      last_login_date: todayStr 
-    }).eq("id", profileId);
-    
+    let bonusGems = 5;
+
     // Trigger confetti for streak milestone
     if (newStreak % 5 === 0) {
       triggerConfetti();
+      bonusGems += 20; // Extra 20 gems for hitting a 5-day milestone
     }
+    
+    await supabase.from("profiles").update({ 
+      current_streak: newStreak, 
+      last_login_date: todayStr,
+      gems: currentGems + bonusGems
+    }).eq("id", profileId);
     
     return newStreak;
   } else if (diffDays > 1) {
+    // Check for Streak Freeze
+    const { data: freezeData } = await supabase
+      .from("user_inventory")
+      .select("id, quantity, shop_items!inner(name)")
+      .eq("user_id", profileId)
+      .eq("shop_items.name", "Streak Freeze")
+      .single();
+
+    if (freezeData && freezeData.quantity > 0) {
+      // Consume 1 Streak Freeze
+      await supabase.from("user_inventory").update({ quantity: freezeData.quantity - 1 }).eq("id", freezeData.id);
+      
+      // Save the streak, just update login date
+      await supabase.from("profiles").update({ 
+        last_login_date: todayStr,
+        gems: currentGems + 5
+      }).eq("id", profileId);
+      
+      return currentStreak;
+    }
+
     // Streak broken
     await supabase.from("profiles").update({ 
       current_streak: 1, 
-      last_login_date: todayStr 
+      last_login_date: todayStr,
+      gems: currentGems + 5
     }).eq("id", profileId);
     return 1;
   }

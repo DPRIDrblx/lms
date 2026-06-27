@@ -45,7 +45,7 @@ export default function OperatorLesDashboard() {
         </div>
         <div className="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm">
           <div className="w-12 h-12 bg-green-100 text-green-600 rounded-xl flex items-center justify-center mb-4"><Users className="w-6 h-6" /></div>
-          <h3 className="text-slate-500 font-bold mb-1">Total Sobat NIA</h3>
+          <h3 className="text-slate-500 font-bold mb-1">Total Sobat IGNITE</h3>
           <p className="text-3xl font-black text-slate-900">213</p>
         </div>
         <div className="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm">

@@ -4,7 +4,7 @@ import { AuthProvider } from "@/lib/auth-context";
 import { ThemeProvider } from "@/lib/theme-context";
 
 export const metadata: Metadata = {
-  title: "Nusantara International Academy",
+  title: "IGNITE",
   description: "A modern school ecosystem with LMS, Finance, and Smart Attendance",
 };
 

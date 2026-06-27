@@ -1,7 +1,7 @@
 "use client";
 
 import { useAuth } from "@/lib/auth-context";
-import { Flame, Diamond, Heart, LogOut } from "lucide-react";
+import { Flame, Diamond, Heart, LogOut, Gem } from "lucide-react";
 import { useEffect, useState, useRef } from "react";
 import { createClient } from "@/lib/supabase";
 import { getInitials } from "@/lib/utils";
@@ -12,6 +12,7 @@ export function StudentTopBar() {
   const supabase = createClient();
   const [streak, setStreak] = useState(0);
   const [xp, setXp] = useState(0);
+  const [gems, setGems] = useState(0);
   
   const [dropdownOpen, setDropdownOpen] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
@@ -30,10 +31,11 @@ export function StudentTopBar() {
     if (profile?.id) {
       // Load current gamification stats
       const loadStats = async () => {
-        const { data } = await supabase.from("profiles").select("current_streak, xp").eq("id", profile.id).single();
+        const { data } = await supabase.from("profiles").select("current_streak, xp, gems").eq("id", profile.id).single();
         if (data) {
           setStreak(data.current_streak || 0);
           setXp(data.xp || 0);
+          setGems(data.gems || 0);
         }
       };
       loadStats();
@@ -43,6 +45,7 @@ export function StudentTopBar() {
         .on("postgres_changes", { event: "UPDATE", schema: "public", table: "profiles", filter: `id=eq.${profile.id}` }, (payload: any) => {
           if (payload.new.current_streak !== undefined) setStreak(payload.new.current_streak);
           if (payload.new.xp !== undefined) setXp(payload.new.xp);
+          if (payload.new.gems !== undefined) setGems(payload.new.gems);
         })
         .subscribe();
 
@@ -62,10 +65,16 @@ export function StudentTopBar() {
           <span className="font-black text-orange-600 text-lg">{streak}</span>
         </div>
 
-        {/* XP / Gems */}
+        {/* XP */}
         <div className="flex items-center gap-2 hover:bg-slate-100 p-2 rounded-xl cursor-pointer transition-colors">
           <Diamond className="w-6 h-6 text-blue-500 fill-blue-500" />
           <span className="font-black text-blue-600 text-lg">{xp}</span>
+        </div>
+
+        {/* Gems */}
+        <div className="flex items-center gap-2 hover:bg-slate-100 p-2 rounded-xl cursor-pointer transition-colors">
+          <Gem className="w-6 h-6 text-pink-500 fill-pink-500" />
+          <span className="font-black text-pink-600 text-lg">{gems}</span>
         </div>
 
         {/* Hearts (Cosmetic for now) */}

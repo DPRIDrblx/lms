@@ -81,7 +81,7 @@ export default function LoginPage() {
           <div className="w-16 h-16 rounded-2xl bg-white/20 backdrop-blur-sm flex items-center justify-center mb-8">
             <GraduationCap className="h-8 w-8" />
           </div>
-          <h1 className="text-4xl font-bold mb-4 leading-tight">Welcome to Nusantara International Academy</h1>
+          <h1 className="text-4xl font-bold mb-4 leading-tight">Welcome to IGNITE</h1>
           <p className="text-lg text-white/80 leading-relaxed">
             A modern learning ecosystem with gamified courses, smart attendance, and integrated finance management.
           </p>
@@ -101,7 +101,7 @@ export default function LoginPage() {
             <div className="w-10 h-10 rounded-xl bg-[var(--accent)] flex items-center justify-center">
               <GraduationCap className="h-5 w-5 text-white" />
             </div>
-            <span className="text-lg font-bold text-[var(--text-primary)]">NIA</span>
+            <span className="text-lg font-bold text-[var(--text-primary)]">IGNITE</span>
           </div>
 
           <h2 className="text-2xl font-bold text-[var(--text-primary)] mb-1">

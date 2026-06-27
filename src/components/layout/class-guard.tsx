@@ -70,7 +70,7 @@ export function ClassGuard({ children }: { children: React.ReactNode }) {
           </Card>
           
           <p className="text-center mt-8 text-[10px] text-[var(--text-tertiary)] font-medium uppercase tracking-[0.2em]">
-            Nusantara International Academy • Security Module
+            IGNITE • Security Module
           </p>
         </motion.div>
       </div>

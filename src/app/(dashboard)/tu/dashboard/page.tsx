@@ -21,6 +21,8 @@ import {
 } from "lucide-react";
 import { useEffect, useState } from "react";
 import Link from "next/link";
+import { Sparkles, Send, Gem as GemIcon } from "lucide-react";
+import { toast } from "react-hot-toast";
 
 export default function TUDashboard() {
   const { profile, user } = useAuth();
@@ -34,6 +36,10 @@ export default function TUDashboard() {
   const [alerts, setAlerts] = useState<any[]>([
     { id: 1, type: "warning", message: "Initial sync in progress..." }
   ]);
+  const [goldenHourActive, setGoldenHourActive] = useState(false);
+  const [gemTarget, setGemTarget] = useState("");
+  const [gemAmount, setGemAmount] = useState(100);
+  const [sendingGems, setSendingGems] = useState(false);
 
   const fetchStats = async () => {
     const [stds, bills, events] = await Promise.all([
@@ -63,6 +69,50 @@ export default function TUDashboard() {
     }
     newAlerts.push({ id: 2, type: "info", message: "Academy portal is synchronized with global database." });
     setAlerts(newAlerts);
+
+    // Fetch Golden Hour Settings
+    const { data: settings } = await supabase.from("global_settings").select("value").eq("key", "golden_hour_active").single();
+    if (settings) {
+       setGoldenHourActive(settings.value === "true" || settings.value === true);
+    }
+  };
+
+  const toggleGoldenHour = async () => {
+     const newVal = !goldenHourActive;
+     setGoldenHourActive(newVal);
+     await supabase.from("global_settings").upsert({ key: "golden_hour_active", value: newVal });
+  };
+
+  const handleSendGems = async () => {
+     if (!gemTarget || gemAmount <= 0) return;
+     setSendingGems(true);
+     
+     // Search for user by full_name or email
+     const { data: targetUser } = await supabase
+        .from("profiles")
+        .select("id, full_name, gems")
+        .or(`full_name.ilike.%${gemTarget}%,email.ilike.%${gemTarget}%`)
+        .eq("role", "student")
+        .limit(1)
+        .single();
+        
+     if (!targetUser) {
+        toast.error("Siswa tidak ditemukan!");
+        setSendingGems(false);
+        return;
+     }
+     
+     const newGems = (targetUser.gems || 0) + Number(gemAmount);
+     const { error } = await supabase.from("profiles").update({ gems: newGems }).eq("id", targetUser.id);
+     
+     if (error) {
+        toast.error("Gagal mengirim Gems.");
+     } else {
+        toast.success(`Berhasil mengirim ${gemAmount} Gems ke ${targetUser.full_name}!`);
+        setGemTarget("");
+        setGemAmount(100);
+     }
+     setSendingGems(false);
   };
 
   useEffect(() => {
@@ -175,6 +225,57 @@ export default function TUDashboard() {
                 <p className="text-[11px] text-slate-500 mt-1 leading-relaxed">Atur hari libur, jadwal ujian, dan acara sekolah tahunan</p>
               </div>
             </Link>
+          </div>
+          
+          {/* Golden Hour Toggle */}
+          <div className="mt-4 p-5 rounded-2xl bg-gradient-to-r from-yellow-50 to-amber-50 border border-amber-200 shadow-sm flex items-center justify-between">
+             <div className="flex items-center gap-4">
+                <div className="w-12 h-12 rounded-full bg-amber-100 flex items-center justify-center text-amber-600 shadow-inner">
+                   <Sparkles className="w-6 h-6" />
+                </div>
+                <div>
+                   <h3 className="font-black text-amber-900 text-lg">The Golden Hour</h3>
+                   <p className="text-xs text-amber-700 font-medium">Aktifkan portal kuis gacha harian untuk seluruh siswa.</p>
+                </div>
+             </div>
+             <button 
+                onClick={toggleGoldenHour}
+                className={`relative inline-flex h-8 w-14 items-center rounded-full transition-colors focus:outline-none ${goldenHourActive ? 'bg-amber-500' : 'bg-slate-300'}`}
+             >
+                <span className={`inline-block h-6 w-6 transform rounded-full bg-white transition-transform ${goldenHourActive ? 'translate-x-7' : 'translate-x-1'}`} />
+             </button>
+          </div>
+          
+          {/* Top-up Gems Manual */}
+          <div className="mt-4 p-5 rounded-2xl bg-white border border-slate-200 shadow-sm">
+             <div className="flex items-center gap-2 mb-4">
+                <GemIcon className="w-5 h-5 text-pink-500" />
+                <h3 className="font-bold text-slate-800">Top-Up Gems Manual</h3>
+             </div>
+             <div className="flex flex-col sm:flex-row gap-3">
+                <input 
+                   type="text" 
+                   placeholder="Nama / Email Siswa" 
+                   value={gemTarget}
+                   onChange={e => setGemTarget(e.target.value)}
+                   className="flex-1 px-4 py-2 rounded-xl border border-slate-200 text-sm focus:outline-none focus:border-pink-500"
+                />
+                <input 
+                   type="number" 
+                   placeholder="Jumlah" 
+                   value={gemAmount}
+                   onChange={e => setGemAmount(Number(e.target.value))}
+                   className="w-24 px-4 py-2 rounded-xl border border-slate-200 text-sm focus:outline-none focus:border-pink-500"
+                />
+                <button 
+                   onClick={handleSendGems}
+                   disabled={sendingGems}
+                   className="px-6 py-2 bg-pink-500 hover:bg-pink-600 text-white rounded-xl font-bold flex items-center justify-center gap-2 transition-all disabled:opacity-50"
+                >
+                   {sendingGems ? <Loader2 className="w-4 h-4 animate-spin" /> : <Send className="w-4 h-4" />}
+                   Kirim
+                </button>
+             </div>
           </div>
         </div>
 

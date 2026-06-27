@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Home, Shield, Swords, User, Compass, Users, MessageCircle } from "lucide-react";
+import { Home, Shield, Swords, User, Compass, Users, MessageCircle, ShoppingBag, Tent, ShoppingCart, Map } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 export function StudentSidebar() {
@@ -12,9 +12,13 @@ export function StudentSidebar() {
     { name: "Learn", href: "/dashboard", icon: Home },
     { name: "Quests", href: "/student/quests", icon: Swords },
     { name: "Leaderboard", href: "/student/leaderboard", icon: Shield },
+    { name: "Hideout", href: "/student/hideout", icon: Tent },
     { name: "Social", href: "/student/social", icon: Users },
     { name: "Messages", href: "/student/messages", icon: MessageCircle },
     { name: "Explore", href: "/courses", icon: Compass },
+    { name: "Cyber Map", href: "/student/map", icon: Map },
+    { name: "Market", href: "/student/market", icon: ShoppingCart },
+    { name: "Shop", href: "/student/shop", icon: ShoppingBag },
     { name: "Profile", href: "/student/profile", icon: User },
   ];
 
@@ -23,7 +27,7 @@ export function StudentSidebar() {
       {/* Desktop Left Sidebar */}
       <div className="hidden lg:flex flex-col fixed top-0 left-0 h-screen w-[260px] bg-white border-r-2 border-slate-200 p-6 z-40">
         <div className="mb-8 px-4">
-          <h1 className="text-3xl font-black text-emerald-500 tracking-tight">Academia</h1>
+          <h1 className="text-3xl font-black text-emerald-500 tracking-tight">IGNITE</h1>
         </div>
         
         <nav className="flex flex-col gap-2 flex-1">

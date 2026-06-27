@@ -17,6 +17,7 @@ export default function SocialPage() {
   const [feed, setFeed] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [feedTab, setFeedTab] = useState<"saran" | "mengikuti">("saran");
+  const [recentWars, setRecentWars] = useState<any[]>([]);
 
   useEffect(() => {
     if (profile?.id) {
@@ -42,6 +43,15 @@ export default function SocialPage() {
 
     const { data: posts } = await query;
     setFeed(posts || []);
+    
+    // Fetch recent finished wars for announcements
+    const { data: wars } = await supabase.from("faction_wars")
+       .select("*, challenger:classes!faction_wars_challenger_class_id_fkey(name), defender:classes!faction_wars_defender_class_id_fkey(name), zone:territory_zones!faction_wars_zone_id_fkey(name)")
+       .eq("status", "finished")
+       .order("created_at", { ascending: false })
+       .limit(3);
+    setRecentWars(wars || []);
+    
     setLoading(false);
   };
 
@@ -112,7 +122,40 @@ export default function SocialPage() {
         >
           Mengikuti
         </button>
+        <Link href="/student/social/bounty" className="flex-1">
+          <button className="w-full py-3 font-black text-sm rounded-xl transition-all text-pink-500 hover:bg-pink-50">
+            Misi Bounty 💎
+          </button>
+        </Link>
       </div>
+      
+      {/* War Announcements */}
+      {recentWars.length > 0 && (
+         <div className="mb-8 space-y-4">
+            {recentWars.map(war => {
+                const challengerWon = war.challenger_ap > war.defender_ap;
+                const winnerName = challengerWon ? war.challenger?.name : war.defender?.name || 'Netral';
+                const loserName = challengerWon ? war.defender?.name || 'Netral' : war.challenger?.name;
+                
+                return (
+                   <div key={war.id} className="bg-gradient-to-r from-slate-900 to-indigo-900 rounded-[2rem] p-6 shadow-[0_10px_30px_rgba(99,102,241,0.2)] border-2 border-indigo-500/30 relative overflow-hidden flex items-center gap-6">
+                      <div className="absolute inset-0 bg-[url('https://www.transparenttextures.com/patterns/cubes.png')] opacity-10"></div>
+                      <div className="w-16 h-16 bg-white/10 backdrop-blur-md rounded-full flex items-center justify-center shrink-0 border border-white/20 z-10">
+                         <span className="text-3xl">🔥</span>
+                      </div>
+                      <div className="z-10 text-white">
+                         <h3 className="font-black text-xl mb-1 text-transparent bg-clip-text bg-gradient-to-r from-amber-200 to-amber-500">
+                            GLOBAL ANNOUNCEMENT
+                         </h3>
+                         <p className="font-medium text-indigo-100">
+                            <span className="font-bold text-white">{winnerName}</span> berhasil merebut <span className="font-bold text-emerald-400">{war.zone?.name || 'Zona Tersembunyi'}</span> dari <span className="text-rose-300">{loserName}</span>!
+                         </p>
+                      </div>
+                   </div>
+                );
+            })}
+         </div>
+      )}
 
       {/* Feed */}
       <div className="space-y-6">
