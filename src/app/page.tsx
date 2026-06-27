@@ -84,10 +84,10 @@ export default function RootPage() {
               className="relative w-[120%] h-[120%] -mt-8"
             >
               <Image 
-                src="/images/mascot.png" 
+                src="/images/mascot_v2.png" 
                 alt="IGNITE Mascot" 
                 fill 
-                className="object-contain drop-shadow-2xl"
+                className="object-contain mix-blend-multiply"
               />
             </motion.div>
             

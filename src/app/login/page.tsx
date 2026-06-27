@@ -276,8 +276,8 @@ export default function LoginPage() {
                 animate={{ y: [0, -10, 0] }} transition={{ repeat: Infinity, duration: 6, ease: "easeInOut" }}
                 className="bg-white/90 backdrop-blur-xl p-6 rounded-[2rem] shadow-2xl mb-8 w-48 relative left-0"
               >
-                <div className="text-xs font-bold text-orange-400 mb-1">Balance</div>
-                <div className="text-2xl font-black text-slate-800">176,18</div>
+                <div className="text-xs font-bold text-orange-400 mb-1">Courses Completed</div>
+                <div className="text-2xl font-black text-slate-800">12</div>
                 
                 {/* Wavy chart mockup */}
                 <div className="mt-6 flex items-end gap-1 h-10">
@@ -288,7 +288,7 @@ export default function LoginPage() {
                 
                 {/* Center dot badge */}
                 <div className="absolute -bottom-4 left-1/2 -translate-x-1/2 w-8 h-8 bg-slate-900 rounded-full flex items-center justify-center text-white text-[10px] font-bold border-4 border-white shadow-lg">
-                  +15
+                  +3
                 </div>
               </motion.div>
 
@@ -323,11 +323,11 @@ export default function LoginPage() {
                   </div>
                   
                   <div className="w-32 flex flex-col items-center text-center pt-2">
-                    <div className="text-orange-400 mb-3 rotate-[30deg]">
-                      <Key className="w-8 h-8" />
+                    <div className="text-orange-400 mb-3">
+                      <GraduationCap className="w-8 h-8" />
                     </div>
-                    <h3 className="font-bold text-slate-800 text-sm leading-tight mb-2">Your data, your rules</h3>
-                    <p className="text-[10px] text-slate-400 leading-tight">Your data belongs to you and our ecosystem ensures that.</p>
+                    <h3 className="font-bold text-slate-800 text-sm leading-tight mb-2">Learn Anywhere</h3>
+                    <p className="text-[10px] text-slate-400 leading-tight">Access your courses at any time across devices.</p>
                   </div>
                 </div>
               </motion.div>
