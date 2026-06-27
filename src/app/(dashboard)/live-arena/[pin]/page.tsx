@@ -79,29 +79,31 @@ export default function LiveArenaPlayPage() {
     }
   }, [session?.id, session?.mode, supabase]);
 
+  // Initial fetch ON MOUNT
   useEffect(() => {
     fetchInitial();
-    
+  }, [fetchInitial]);
+
+  // Real-time Subscriptions
+  useEffect(() => {
     if (!session?.id) return;
     
     const channel = supabase.channel(`live_arena_${session.id}`)
       .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'live_quiz_sessions', filter: `id=eq.${session.id}` }, (payload: any) => {
-         // If question changes, reset answer state
-         if (payload.new.current_question_index !== session.current_question_index) {
-            setHasAnswered(false);
-            setIsCorrect(null);
-            setEssayAnswer("");
-            setComplexSelection([]);
-            setMatchingAnswers({});
-            setTimeLeft(20);
-         }
-         
-         // If status becomes active, make sure time is 20
-         if (payload.new.status === "active" && session.status !== "active") {
-            setTimeLeft(20);
-         }
-
-         setSession(payload.new);
+         setSession((prev: any) => {
+            if (prev && payload.new.current_question_index !== prev.current_question_index) {
+                setHasAnswered(false);
+                setIsCorrect(null);
+                setEssayAnswer("");
+                setComplexSelection([]);
+                setMatchingAnswers({});
+                setTimeLeft(20);
+            }
+            if (prev && payload.new.status === "active" && prev.status !== "active") {
+                setTimeLeft(20);
+            }
+            return payload.new;
+         });
       })
       .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'live_quiz_participants', filter: `id=eq.${participant?.id}` }, (payload: any) => {
          setParticipant(payload.new);
@@ -115,7 +117,7 @@ export default function LiveArenaPlayPage() {
       .subscribe();
       
     return () => { supabase.removeChannel(channel); };
-  }, [fetchInitial, supabase, session?.id, session?.current_question_index, participant?.id, session?.status]);
+  }, [supabase, session?.id, participant?.id, session?.mode]);
 
   // Timer Effect for Student
   useEffect(() => {
@@ -347,7 +349,7 @@ export default function LiveArenaPlayPage() {
         animate={{ opacity: 1, scale: 1, y: 0 }}
         exit={{ opacity: 0, scale: 1.1, filter: "blur(10px)" }}
         transition={{ type: "spring", duration: 0.6 }}
-        className="max-w-4xl w-full mx-auto space-y-6 relative z-10 flex flex-col h-[90vh]"
+        className="max-w-4xl w-full mx-auto space-y-4 md:space-y-6 relative z-10 flex flex-col h-full md:h-[90vh] py-4"
       >
         <audio autoPlay loop src="https://cdn.pixabay.com/download/audio/2022/10/18/audio_31c2730ebb.mp3?filename=sneaky-snitch-114995.mp3" />
         
@@ -429,7 +431,7 @@ export default function LiveArenaPlayPage() {
                        <button 
                          key={idx}
                          onClick={() => submitAnswer(idx)}
-                         className={`w-full p-8 rounded-[2rem] bg-gradient-to-b ${colorClass} ${hoverClass} transition-all text-white font-black text-3xl md:text-4xl active:translate-y-2 active:shadow-[0_0px_0_rgb(0,0,0)] border-t border-x border-white/20 flex flex-col items-center justify-center drop-shadow-xl group min-h-[160px]`}
+                         className={`w-full p-6 md:p-8 rounded-[2rem] bg-gradient-to-b ${colorClass} ${hoverClass} transition-all text-white font-black text-2xl md:text-4xl active:translate-y-2 active:shadow-[0_0px_0_rgb(0,0,0)] border-t border-x border-white/20 flex flex-col items-center justify-center drop-shadow-xl group min-h-[100px] md:min-h-[160px]`}
                        >
                          <span className="relative z-10">{opt.text}</span>
                        </button>
