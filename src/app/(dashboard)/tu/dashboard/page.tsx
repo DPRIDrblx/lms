@@ -94,7 +94,7 @@ export default function TUDashboard() {
     const { data } = await supabase
       .from("profiles")
       .select("id, full_name, email, role")
-      .or(`full_name.ilike.%${query}%,email.ilike.%${query}%`)
+      .ilike("full_name", `%${query}%`)
       .eq("role", "student")
       .limit(5);
     setSearchResults(data || []);
