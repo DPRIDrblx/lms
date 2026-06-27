@@ -109,8 +109,7 @@ export default class MainScene extends Phaser.Scene {
     let moved = false;
     const speed = 300;
     
-    // @ts-ignore
-    const keys = this.input.keyboard.addKeys('W,A,S,D');
+    const keys = this.input.keyboard.addKeys('W,A,S,D') as any;
 
     if (this.cursors.left.isDown || keys.A.isDown) {
       this.player.setVelocityX(-speed);
