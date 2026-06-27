@@ -1,7 +1,7 @@
 "use client";
 
 import { useAuth } from "@/lib/auth-context";
-import { Flame, Diamond, MessageCircle, UserPlus, UserCheck, Loader2, X } from "lucide-react";
+import { Flame, Diamond, MessageCircle, UserPlus, UserCheck, Loader2, X, Lock } from "lucide-react";
 import { AchievementShowcase } from "@/components/profile/achievement-showcase";
 import { PostCard } from "@/components/social/post-card";
 import Link from "next/link";
@@ -25,35 +25,71 @@ export default function PublicProfilePage() {
   const [isFollowing, setIsFollowing] = useState(false);
   const [isMutual, setIsMutual] = useState(false); // Can chat if mutual
   const [loadingAction, setLoadingAction] = useState(false);
+  const [isBlocked, setIsBlocked] = useState(false);
+  const [isPrivate, setIsPrivate] = useState(false);
 
   useEffect(() => {
-    if (id) {
-      if (id === currentUser?.id) {
+    if (id && currentUser?.id) {
+      if (id === currentUser.id) {
         router.push("/student/profile");
         return;
       }
-      loadProfileAndPosts();
-      checkFollowStatus();
+      loadAllData();
     }
   }, [id, currentUser?.id]);
 
-  const loadProfileAndPosts = async () => {
-    // Get profile
+  const loadAllData = async () => {
+    // 1. Check Blocks First
+    const { data: blocks } = await supabase.from("student_blocks").select("*")
+       .or(`and(student_id.eq.${currentUser?.id},blocked_user_id.eq.${id}),and(student_id.eq.${id},blocked_user_id.eq.${currentUser?.id})`);
+       
+    if (blocks && blocks.length > 0) {
+       setIsBlocked(true);
+       return;
+    }
+
+    // 2. Fetch Profile
     const { data: prof } = await supabase.from("profiles").select("*").eq("id", id).single();
-    if (prof) setProfile(prof);
+    if (!prof) return;
+    setProfile(prof);
 
-    // Get posts
-    const { data: pst } = await supabase.from("posts").select("*").eq("user_id", id).order("created_at", { ascending: false });
-    if (pst) setPosts(pst);
+    // 3. Check Friendship
+    let iFollow = false;
+    let theyFollow = false;
 
-    // Fetch stats
+    const { data: myFollow } = await supabase.from("friendships").select("*").eq("follower_id", currentUser?.id).eq("following_id", id).maybeSingle();
+    const { data: theirFollow } = await supabase.from("friendships").select("*").eq("follower_id", id).eq("following_id", currentUser?.id).maybeSingle();
+
+    if (myFollow) {
+       setIsFollowing(true);
+       iFollow = true;
+    }
+    if (myFollow && theirFollow) {
+       setIsMutual(true);
+       theyFollow = true;
+    }
+
+    // 4. Enforce Privacy Rules
+    const visibility = prof.social_visibility || 'public';
+    if (visibility === 'private') {
+       setIsPrivate(true);
+    } else if (visibility === 'friends_only' && !iFollow && !theyFollow) {
+       // Using isMutual or just following as friends? If 'friends_only', typically requires mutual, but let's just say if not mutual and not following it's restricted.
+       // Actually 'friends_only' means mutual or following. We will just say if not following or followed.
+       setIsPrivate(!isMutual);
+    }
+
+    // 5. Fetch posts and stats if not fully private
+    if (visibility === 'public' || (visibility === 'friends_only' && (iFollow || theyFollow))) {
+       const { data: pst } = await supabase.from("posts").select("*").eq("user_id", id).order("created_at", { ascending: false });
+       if (pst) setPosts(pst);
+    }
+
     const { count: f1 } = await supabase.from("friendships").select("*", { count: "exact", head: true }).eq("following_id", id);
     const { count: f2 } = await supabase.from("friendships").select("*", { count: "exact", head: true }).eq("follower_id", id);
-    
     setFollowers(f1 || 0);
     setFollowing(f2 || 0);
   };
-
   const openFollowModal = async (type: "followers" | "following") => {
     let users: any[] = [];
     if (type === "followers") {
@@ -64,29 +100,6 @@ export default function PublicProfilePage() {
       users = data?.map((d: any) => d.profiles) || [];
     }
     setFollowModal({ type, title: type === "followers" ? "Pengikut" : "Diikuti", users });
-  };
-
-  const checkFollowStatus = async () => {
-    if (!currentUser?.id) return;
-    
-    // Check if I follow them
-    const { data: iFollow } = await supabase
-      .from("friendships")
-      .select("*")
-      .eq("follower_id", currentUser.id)
-      .eq("following_id", id)
-      .single();
-      
-    // Check if they follow me
-    const { data: theyFollow } = await supabase
-      .from("friendships")
-      .select("*")
-      .eq("follower_id", id)
-      .eq("following_id", currentUser.id)
-      .single();
-
-    if (iFollow) setIsFollowing(true);
-    if (iFollow && theyFollow) setIsMutual(true);
   };
 
   const handleFollowToggle = async () => {
@@ -109,7 +122,17 @@ export default function PublicProfilePage() {
     router.push(`/student/messages?userId=${id}`);
   };
 
-  if (!profile) return <div className="text-center p-10">Loading...</div>;
+  if (isBlocked) return (
+    <div className="max-w-2xl mx-auto py-20 px-4 text-center">
+      <div className="w-24 h-24 bg-slate-100 text-slate-400 rounded-full flex items-center justify-center mx-auto mb-6">
+         <X className="w-12 h-12" />
+      </div>
+      <h2 className="text-2xl font-black text-slate-800 mb-2">Profil Tidak Ditemukan</h2>
+      <p className="text-slate-500 font-bold max-w-sm mx-auto">Pengguna ini mungkin telah menghapus akunnya atau Anda tidak memiliki akses.</p>
+    </div>
+  );
+
+  if (!profile) return <div className="h-screen flex items-center justify-center"><Loader2 className="animate-spin h-8 w-8 text-indigo-500" /></div>;
 
   return (
     <div className="max-w-3xl mx-auto py-12 px-4 pb-24">
@@ -135,16 +158,13 @@ export default function PublicProfilePage() {
             Warga <span className="font-bold text-white">IGNITE</span>
           </p>
 
-          {/* ACHIEVEMENT SHOWCASE */}
-          {profile?.id && <AchievementShowcase userId={profile.id} isOwner={false} />}
-
           {/* Social Stats */}
           <div className="flex items-center gap-6 mb-6">
-            <div onClick={() => openFollowModal("followers")} className="text-center cursor-pointer hover:scale-105 transition-transform bg-indigo-600/30 px-6 py-2 rounded-2xl">
+            <div className="text-center bg-indigo-600/30 px-6 py-2 rounded-2xl">
               <p className="text-2xl font-black">{followers}</p>
               <p className="text-xs font-bold text-indigo-200 uppercase tracking-wider">Pengikut</p>
             </div>
-            <div onClick={() => openFollowModal("following")} className="text-center cursor-pointer hover:scale-105 transition-transform bg-indigo-600/30 px-6 py-2 rounded-2xl">
+            <div className="text-center bg-indigo-600/30 px-6 py-2 rounded-2xl">
               <p className="text-2xl font-black">{following}</p>
               <p className="text-xs font-bold text-indigo-200 uppercase tracking-wider">Diikuti</p>
             </div>
@@ -172,10 +192,6 @@ export default function PublicProfilePage() {
               </button>
             )}
           </div>
-          
-          {!isMutual && isFollowing && (
-            <p className="text-indigo-200 text-sm font-bold mt-4">Menunggu {profile.full_name.split(' ')[0]} mengikuti balik untuk bisa Chat.</p>
-          )}
         </div>
         
         <div className="p-8">
@@ -198,22 +214,38 @@ export default function PublicProfilePage() {
           </div>
         </div>
       </div>
+      
+      {isPrivate ? (
+         <div className="bg-white p-8 rounded-3xl border-2 border-slate-200 shadow-sm text-center mt-6">
+            <div className="w-16 h-16 bg-slate-100 text-slate-400 rounded-full flex items-center justify-center mx-auto mb-4">
+               <Lock className="w-8 h-8" />
+            </div>
+            <h3 className="text-xl font-black text-slate-800 mb-2">Akun Privat</h3>
+            <p className="text-slate-500 font-bold max-w-sm mx-auto">Hanya teman yang disetujui atau mutual yang dapat melihat postingan dan pencapaian pengguna ini.</p>
+         </div>
+      ) : (
+      <>
+        {/* Achievements */}
+        <div className="mt-8">
+          <AchievementShowcase userId={id} isOwner={false} />
+        </div>
 
-      {/* Posts Section */}
-      <h2 className="text-2xl font-black text-slate-800 mb-6">Postingan {profile.full_name.split(' ')[0]}</h2>
-      <div className="space-y-6">
-        {posts.length === 0 ? (
-          <div className="text-center py-10 bg-white rounded-3xl border-2 border-slate-200 border-dashed">
-            <p className="font-bold text-slate-400">Belum ada postingan.</p>
-          </div>
-        ) : (
-          posts.map(post => {
-            // Need to mock the post.profiles data because the profile page query didn't fetch it
-            const postWithProfile = { ...post, profiles: { full_name: profile.full_name, avatar_url: profile.avatar_url, id: profile.id } };
-            return <PostCard key={post.id} post={postWithProfile} currentUserProfile={currentUser} />;
-          })
-        )}
-      </div>
+        {/* Posts Section */}
+        <h2 className="text-2xl font-black text-slate-800 mb-6 mt-12">Postingan {profile.full_name.split(' ')[0]}</h2>
+        <div className="space-y-6">
+          {posts.length === 0 ? (
+            <div className="text-center py-10 bg-white rounded-3xl border-2 border-slate-200 border-dashed">
+              <p className="font-bold text-slate-400">Belum ada postingan.</p>
+            </div>
+          ) : (
+            posts.map(post => {
+              const postWithProfile = { ...post, profiles: { full_name: profile.full_name, avatar_url: profile.avatar_url, id: profile.id } };
+              return <PostCard key={post.id} post={postWithProfile} currentUserProfile={currentUser} />;
+            })
+          )}
+        </div>
+      </>
+      )}
 
       {/* Follow Modal */}
       {followModal && (

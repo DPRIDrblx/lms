@@ -3,7 +3,7 @@
 import { useAuth } from "@/lib/auth-context";
 import { createClient } from "@/lib/supabase";
 import { useState, useEffect } from "react";
-import { Search, Heart, MessageCircle, UserPlus, Image as ImageIcon, Users } from "lucide-react";
+import { Search, Heart, MessageCircle, UserPlus, Image as ImageIcon, Users, ShieldAlert } from "lucide-react";
 import { PostCard } from "@/components/social/post-card";
 import Link from "next/link";
 import toast from "react-hot-toast";
@@ -18,6 +18,8 @@ export default function SocialPage() {
   const [loading, setLoading] = useState(true);
   const [feedTab, setFeedTab] = useState<"saran" | "mengikuti">("saran");
   const [recentWars, setRecentWars] = useState<any[]>([]);
+  const [socialAccessBlocked, setSocialAccessBlocked] = useState(false);
+  const [blockedUserIds, setBlockedUserIds] = useState<string[]>([]);
 
   useEffect(() => {
     if (profile?.id) {
@@ -28,6 +30,21 @@ export default function SocialPage() {
   const loadFeed = async () => {
     setLoading(true);
     
+    // Check parental controls
+    const { data: myProfile } = await supabase.from("profiles").select("social_access_blocked").eq("id", profile?.id).single();
+    if (myProfile?.social_access_blocked) {
+      setSocialAccessBlocked(true);
+      setLoading(false);
+      return;
+    } else {
+      setSocialAccessBlocked(false);
+    }
+
+    // Get blocked users
+    const { data: blocks } = await supabase.from("student_blocks").select("blocked_user_id").eq("student_id", profile?.id);
+    const blockedIds = blocks?.map((b: any) => b.blocked_user_id) || [];
+    setBlockedUserIds(blockedIds);
+
     let query = supabase
       .from("posts")
       .select("*, profiles!inner(id, full_name, avatar_url, role)")
@@ -42,7 +59,11 @@ export default function SocialPage() {
     }
 
     const { data: posts } = await query;
-    setFeed(posts || []);
+    let filteredPosts = posts || [];
+    if (blockedIds.length > 0) {
+       filteredPosts = filteredPosts.filter((p: any) => !blockedIds.includes(p.user_id));
+    }
+    setFeed(filteredPosts);
     
     // Fetch recent finished wars for announcements
     const { data: wars } = await supabase.from("faction_wars")
@@ -59,19 +80,34 @@ export default function SocialPage() {
     e.preventDefault();
     if (!searchQuery.trim()) return;
 
-    const { data } = await supabase
+    let { data } = await supabase
       .from("profiles")
       .select("id, full_name, avatar_url, role")
       .ilike("full_name", `%${searchQuery}%`)
       .neq("id", profile?.id)
       .limit(5);
 
+    if (data && blockedUserIds.length > 0) {
+      data = data.filter((u: any) => !blockedUserIds.includes(u.id));
+    }
     setSearchResults(data || []);
   };
 
   return (
     <div className="max-w-2xl mx-auto py-8 px-4 pb-24">
-      <h1 className="text-3xl font-black text-slate-800 mb-6">Connect & Share</h1>
+      {socialAccessBlocked ? (
+        <div className="flex flex-col items-center justify-center text-center p-12 bg-white rounded-3xl border-2 border-slate-200 shadow-sm mt-8">
+           <div className="w-24 h-24 bg-rose-100 text-rose-500 rounded-full flex items-center justify-center mb-6">
+              <ShieldAlert className="w-12 h-12" />
+           </div>
+           <h2 className="text-2xl font-black text-slate-800 mb-2">Akses Sosial Dikunci</h2>
+           <p className="text-slate-500 font-bold max-w-sm">
+              Orang tua Anda telah membatasi akses ke fitur sosial. Anda tidak dapat melihat Feed, memposting, atau mencari pengguna.
+           </p>
+        </div>
+      ) : (
+      <>
+        <h1 className="text-3xl font-black text-slate-800 mb-6">Connect & Share</h1>
 
       {/* Search Bar */}
       <div className="bg-white p-4 rounded-3xl border-2 border-slate-200 shadow-[0_4px_0_rgb(226,232,240)] mb-8 relative">
@@ -175,6 +211,8 @@ export default function SocialPage() {
           ))
         )}
       </div>
+      </>
+      )}
     </div>
   );
 }

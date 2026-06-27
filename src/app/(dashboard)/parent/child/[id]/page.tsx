@@ -2,7 +2,7 @@
 
 import { useAuth } from "@/lib/auth-context";
 import { createClient } from "@/lib/supabase";
-import { ChevronLeft, BookOpen, Loader2, TrendingUp, BookCheck, GraduationCap, Medal, Star, Share2, Target, Plus, CheckCircle2 } from "lucide-react";
+import { ChevronLeft, BookOpen, Loader2, TrendingUp, BookCheck, GraduationCap, Medal, Star, Share2, Target, Plus, CheckCircle2, ShieldAlert, Lock, Unlock, Users, Image as ImageIcon, Trash2, Ban } from "lucide-react";
 import { useEffect, useState, use } from "react";
 import Link from "next/link";
 import { ProgressBar } from "@/components/ui/progress-bar";
@@ -26,6 +26,18 @@ export default function ChildReportPage({ params }: { params: Promise<{ id: stri
   const [newQuestDesc, setNewQuestDesc] = useState("");
   const [newQuestReward, setNewQuestReward] = useState(50);
   const [isSubmittingQuest, setIsSubmittingQuest] = useState(false);
+
+  // Social Controls State
+  const [socialAccessBlocked, setSocialAccessBlocked] = useState(false);
+  const [socialVisibility, setSocialVisibility] = useState("public");
+  const [childPosts, setChildPosts] = useState<any[]>([]);
+  const [childFollowers, setChildFollowers] = useState<any[]>([]);
+  const [childFollowing, setChildFollowing] = useState<any[]>([]);
+  const [blockedUsers, setBlockedUsers] = useState<any[]>([]);
+  const [searchBlockQuery, setSearchBlockQuery] = useState("");
+  const [searchBlockResults, setSearchBlockResults] = useState<any[]>([]);
+  
+  const [showBlockModal, setShowBlockModal] = useState(false);
 
   useEffect(() => {
     const fetchChildData = async () => {
@@ -68,12 +80,42 @@ export default function ChildReportPage({ params }: { params: Promise<{ id: stri
         .eq("student_id", childId)
         .order("created_at", { ascending: false });
 
-      if (c) setChild(c);
+      if (c) {
+        setChild(c);
+        setSocialAccessBlocked(c.social_access_blocked || false);
+        setSocialVisibility(c.social_visibility || "public");
+      }
       if (s) setScores(s.filter((x: any) => x.courses)); // Ensure course relation exists
       if (gsc) setGradebookScores(gsc);
       if (gcols) setGradebookColumns(gcols);
       if (q) setQuests(q);
       
+      // Fetch Social Data
+      const { data: cp } = await supabase.from("posts").select("*").eq("user_id", childId).order("created_at", { ascending: false });
+      if (cp) setChildPosts(cp);
+
+      const { data: f_ing } = await supabase.from("friendships").select("following_id").eq("follower_id", childId);
+      const { data: f_ers } = await supabase.from("friendships").select("follower_id").eq("following_id", childId);
+      
+      const followingIds = f_ing?.map((f: any) => f.following_id) || [];
+      const followerIds = f_ers?.map((f: any) => f.follower_id) || [];
+      
+      if (followingIds.length > 0) {
+        const { data: p_ing } = await supabase.from("profiles").select("id, full_name, avatar_url").in("id", followingIds);
+        if (p_ing) setChildFollowing(p_ing);
+      }
+      if (followerIds.length > 0) {
+        const { data: p_ers } = await supabase.from("profiles").select("id, full_name, avatar_url").in("id", followerIds);
+        if (p_ers) setChildFollowers(p_ers);
+      }
+
+      const { data: bu } = await supabase.from("student_blocks").select("blocked_user_id").eq("student_id", childId);
+      const blockedIds = bu?.map((b: any) => b.blocked_user_id) || [];
+      if (blockedIds.length > 0) {
+        const { data: p_bu } = await supabase.from("profiles").select("id, full_name, avatar_url").in("id", blockedIds);
+        if (p_bu) setBlockedUsers(p_bu);
+      }
+
       setLoading(false);
     };
 
@@ -81,6 +123,53 @@ export default function ChildReportPage({ params }: { params: Promise<{ id: stri
       fetchChildData();
     }
   }, [profile, childId, supabase]);
+
+  const searchUsersToBlock = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!searchBlockQuery.trim()) return;
+    const { data } = await supabase.from("profiles").select("id, full_name, avatar_url").ilike("full_name", `%${searchBlockQuery}%`).neq("id", childId).limit(5);
+    setSearchBlockResults(data || []);
+  };
+
+  const blockUser = async (userId: string) => {
+    const { error } = await supabase.from("student_blocks").insert({ student_id: childId, blocked_user_id: userId });
+    if (!error) {
+       const user = searchBlockResults.find(u => u.id === userId);
+       if (user) setBlockedUsers(prev => [user, ...prev]);
+    }
+    setSearchBlockResults([]);
+    setSearchBlockQuery("");
+  };
+  
+  const unblockUser = async (userId: string) => {
+    await supabase.from("student_blocks").delete().eq("student_id", childId).eq("blocked_user_id", userId);
+    setBlockedUsers(prev => prev.filter(u => u.id !== userId));
+  };
+
+  const toggleSocialAccess = async () => {
+    const newValue = !socialAccessBlocked;
+    setSocialAccessBlocked(newValue);
+    await supabase.from("profiles").update({ social_access_blocked: newValue }).eq("id", childId);
+  };
+
+  const updateVisibility = async (val: string) => {
+    setSocialVisibility(val);
+    await supabase.from("profiles").update({ social_visibility: val }).eq("id", childId);
+  };
+
+  const deletePost = async (postId: string) => {
+    await supabase.from("posts").delete().eq("id", postId);
+    setChildPosts(prev => prev.filter(p => p.id !== postId));
+  };
+
+  const removeFriendship = async (followerId: string, followingId: string) => {
+    await supabase.from("friendships").delete().eq("follower_id", followerId).eq("following_id", followingId);
+    if (followerId === childId) {
+      setChildFollowing(prev => prev.filter(p => p.id !== followingId));
+    } else {
+      setChildFollowers(prev => prev.filter(p => p.id !== followerId));
+    }
+  };
 
   if (loading) return <div className="h-screen flex items-center justify-center"><Loader2 className="animate-spin h-8 w-8 text-[var(--accent)]" /></div>;
   if (!child) return <div className="text-center py-20 text-[var(--text-tertiary)]">Student not found or access denied.</div>;
@@ -206,6 +295,137 @@ export default function ChildReportPage({ params }: { params: Promise<{ id: stri
                </div>
             </div>
          </div>
+      </div>
+
+      {/* Parental Controls Section */}
+      <div className="flex items-center gap-4 mt-10 mb-6">
+        <div className="w-14 h-14 bg-rose-500 text-white rounded-2xl flex items-center justify-center shadow-[0_4px_0_rgb(225,29,72)] border-2 border-rose-600 rotate-3">
+          <ShieldAlert className="h-7 w-7" strokeWidth={3} />
+        </div>
+        <div>
+          <h2 className="text-2xl font-black text-slate-800">Parental Controls (Social)</h2>
+          <p className="text-slate-500 font-bold">Kelola aktivitas & privasi sosial anak.</p>
+        </div>
+      </div>
+      
+      <div className="bg-white rounded-3xl overflow-hidden border-2 border-slate-200 shadow-[0_8px_0_rgb(226,232,240)] p-6 md:p-8 space-y-8">
+        
+        {/* Global Access & Visibility */}
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+           <div className="p-6 bg-slate-50 border-2 border-slate-200 rounded-2xl">
+              <div className="flex justify-between items-start mb-4">
+                 <div>
+                    <h4 className="font-black text-slate-800">Akses Fitur Sosial</h4>
+                    <p className="text-sm text-slate-500 font-bold">Kunci akses Feed & Explore</p>
+                 </div>
+                 <button 
+                    onClick={toggleSocialAccess}
+                    className={cn("p-3 rounded-xl border-2 shadow-sm font-black transition-all flex items-center gap-2", socialAccessBlocked ? "bg-rose-500 text-white border-rose-600" : "bg-emerald-500 text-white border-emerald-600")}
+                 >
+                    {socialAccessBlocked ? <Lock className="w-5 h-5" /> : <Unlock className="w-5 h-5" />}
+                    {socialAccessBlocked ? "Terkunci" : "Terbuka"}
+                 </button>
+              </div>
+           </div>
+
+           <div className="p-6 bg-slate-50 border-2 border-slate-200 rounded-2xl">
+              <div className="mb-4">
+                 <h4 className="font-black text-slate-800">Visibilitas Profil</h4>
+                 <p className="text-sm text-slate-500 font-bold">Siapa yang bisa melihat profil anak</p>
+              </div>
+              <select 
+                 value={socialVisibility} 
+                 onChange={(e) => updateVisibility(e.target.value)}
+                 className="w-full bg-white border-2 border-slate-200 rounded-xl px-4 py-3 font-bold text-slate-700 outline-none focus:border-indigo-500 cursor-pointer"
+              >
+                 <option value="public">🌐 Publik (Semua Siswa)</option>
+                 <option value="friends_only">👥 Hanya Teman (Following/Followers)</option>
+                 <option value="private">🔒 Privat (Sembunyikan)</option>
+              </select>
+           </div>
+        </div>
+
+        {/* Posts & Connections */}
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 pt-6 border-t-2 border-slate-200">
+           {/* Manage Posts */}
+           <div>
+              <h4 className="font-black text-slate-800 mb-4 flex items-center gap-2">
+                 <ImageIcon className="w-5 h-5 text-indigo-500" /> Riwayat Postingan
+              </h4>
+              <div className="bg-slate-50 rounded-2xl border-2 border-slate-200 p-4 h-64 overflow-y-auto space-y-3">
+                 {childPosts.length === 0 ? (
+                    <p className="text-sm text-slate-400 font-bold text-center py-4">Belum ada postingan.</p>
+                 ) : (
+                    childPosts.map(post => (
+                       <div key={post.id} className="bg-white p-3 rounded-xl border-2 border-slate-200 shadow-sm flex items-start justify-between gap-4">
+                          <p className="text-sm text-slate-700 font-bold line-clamp-2 flex-1">{post.content || "(Gambar/Video)"}</p>
+                          <button onClick={() => deletePost(post.id)} className="text-rose-500 hover:text-rose-600 p-1">
+                             <Trash2 className="w-5 h-5" />
+                          </button>
+                       </div>
+                    ))
+                 )}
+              </div>
+           </div>
+
+           {/* Manage Connections (Followers/Following) */}
+           <div>
+              <h4 className="font-black text-slate-800 mb-4 flex items-center gap-2">
+                 <Users className="w-5 h-5 text-indigo-500" /> Daftar Teman
+              </h4>
+              <div className="bg-slate-50 rounded-2xl border-2 border-slate-200 p-4 h-64 overflow-y-auto space-y-3">
+                 {childFollowing.length === 0 && childFollowers.length === 0 ? (
+                    <p className="text-sm text-slate-400 font-bold text-center py-4">Belum ada koneksi pertemanan.</p>
+                 ) : (
+                    <>
+                       {childFollowing.map(u => (
+                          <div key={`ing_${u.id}`} className="bg-white p-2 px-3 rounded-xl border-2 border-slate-200 flex items-center justify-between">
+                             <div className="flex items-center gap-2">
+                                <span className="text-[10px] bg-indigo-100 text-indigo-600 px-1 rounded font-black">MENGIKUTI</span>
+                                <p className="text-sm font-bold text-slate-700">{u.full_name}</p>
+                             </div>
+                             <button onClick={() => removeFriendship(childId, u.id)} className="text-rose-500 p-1"><Trash2 className="w-4 h-4" /></button>
+                          </div>
+                       ))}
+                       {childFollowers.map(u => (
+                          <div key={`ers_${u.id}`} className="bg-white p-2 px-3 rounded-xl border-2 border-slate-200 flex items-center justify-between">
+                             <div className="flex items-center gap-2">
+                                <span className="text-[10px] bg-fuchsia-100 text-fuchsia-600 px-1 rounded font-black">PENGIKUT</span>
+                                <p className="text-sm font-bold text-slate-700">{u.full_name}</p>
+                             </div>
+                             <button onClick={() => removeFriendship(u.id, childId)} className="text-rose-500 p-1"><Trash2 className="w-4 h-4" /></button>
+                          </div>
+                       ))}
+                    </>
+                 )}
+              </div>
+           </div>
+        </div>
+
+        {/* Blocked Users */}
+        <div className="pt-6 border-t-2 border-slate-200">
+           <div className="flex justify-between items-center mb-4">
+              <h4 className="font-black text-slate-800 flex items-center gap-2">
+                 <Ban className="w-5 h-5 text-rose-500" /> Pengguna Diblokir
+              </h4>
+              <button onClick={() => setShowBlockModal(true)} className="bg-rose-100 text-rose-600 px-3 py-1.5 rounded-lg text-sm font-black hover:bg-rose-200 transition-colors">
+                 + Blokir Akun
+              </button>
+           </div>
+           
+           {blockedUsers.length === 0 ? (
+              <p className="text-sm text-slate-400 font-bold">Tidak ada akun yang diblokir.</p>
+           ) : (
+              <div className="flex flex-wrap gap-2">
+                 {blockedUsers.map(u => (
+                    <div key={u.id} className="bg-rose-50 border-2 border-rose-200 text-rose-700 rounded-xl px-3 py-1.5 flex items-center gap-2 text-sm font-bold">
+                       {u.full_name}
+                       <button onClick={() => unblockUser(u.id)} className="text-rose-400 hover:text-rose-600 font-black ml-1">X</button>
+                    </div>
+                 ))}
+              </div>
+           )}
+        </div>
       </div>
 
       <div className="flex items-center gap-4 mt-10 mb-6">
@@ -404,6 +624,39 @@ export default function ChildReportPage({ params }: { params: Promise<{ id: stri
                  {isSubmittingQuest ? <Loader2 className="w-5 h-5 animate-spin" /> : <CheckCircle2 className="w-5 h-5" />} Simpan
                </button>
             </div>
+          </div>
+        </div>
+      )}
+      {/* Block User Modal */}
+      {showBlockModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm">
+          <div className="w-full max-w-md bg-white p-6 rounded-3xl border-2 border-slate-200 shadow-2xl">
+            <h3 className="text-xl font-black mb-2 text-slate-800">Blokir Siswa</h3>
+            <p className="text-sm text-slate-500 font-bold mb-6">Cari nama siswa yang ingin diblokir agar anak tidak bisa berinteraksi.</p>
+            
+            <form onSubmit={searchUsersToBlock} className="flex gap-2 mb-4">
+               <input 
+                  type="text" 
+                  value={searchBlockQuery} 
+                  onChange={e => setSearchBlockQuery(e.target.value)} 
+                  placeholder="Ketik nama siswa..." 
+                  className="flex-1 bg-slate-50 border-2 border-slate-200 rounded-xl px-4 py-2 font-bold text-slate-800 outline-none focus:border-rose-500" 
+               />
+               <button type="submit" className="bg-rose-500 text-white px-4 py-2 rounded-xl font-black shadow-sm">Cari</button>
+            </form>
+
+            <div className="space-y-2 mb-6 max-h-48 overflow-y-auto">
+               {searchBlockResults.map(user => (
+                  <div key={user.id} className="flex items-center justify-between bg-slate-50 p-2 px-3 border-2 border-slate-200 rounded-xl">
+                     <p className="font-bold text-slate-700 text-sm">{user.full_name}</p>
+                     <button onClick={() => blockUser(user.id)} className="text-xs bg-rose-100 text-rose-600 font-black px-2 py-1 rounded-lg">Blokir</button>
+                  </div>
+               ))}
+            </div>
+
+            <button onClick={() => setShowBlockModal(false)} className="w-full py-3 bg-slate-100 text-slate-500 rounded-xl font-black border-2 border-slate-200 active:translate-y-1 transition-all">
+               Tutup
+            </button>
           </div>
         </div>
       )}

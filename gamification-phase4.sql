@@ -23,14 +23,17 @@ CREATE TABLE IF NOT EXISTS public.parent_quests (
 -- Enable RLS for parent_quests
 ALTER TABLE public.parent_quests ENABLE ROW LEVEL SECURITY;
 
+DROP POLICY IF EXISTS "Parents can manage their own created quests" ON public.parent_quests;
 CREATE POLICY "Parents can manage their own created quests" 
 ON public.parent_quests FOR ALL 
 USING (auth.uid() = parent_id);
 
+DROP POLICY IF EXISTS "Students can view and update their own quests" ON public.parent_quests;
 CREATE POLICY "Students can view and update their own quests" 
 ON public.parent_quests FOR SELECT 
 USING (auth.uid() = student_id);
 
+DROP POLICY IF EXISTS "Students can update their quests to completed" ON public.parent_quests;
 CREATE POLICY "Students can update their quests to completed" 
 ON public.parent_quests FOR UPDATE 
 USING (auth.uid() = student_id);
