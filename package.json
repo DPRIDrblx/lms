@@ -11,6 +11,7 @@
   "dependencies": {
     "@dicebear/collection": "^9.4.2",
     "@dicebear/core": "^9.4.2",
+    "@ducanh2912/next-pwa": "^10.2.9",
     "@supabase/ssr": "^0.10.2",
     "@supabase/supabase-js": "^2.105.3",
     "@tiptap/extension-image": "^3.24.0",
