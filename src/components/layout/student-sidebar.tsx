@@ -1,12 +1,15 @@
 "use client";
 
+import { useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Home, Shield, Swords, User, Compass, Users, MessageCircle, ShoppingBag, Tent, ShoppingCart, Map } from "lucide-react";
+import { Home, Shield, Swords, User, Compass, Users, MessageCircle, ShoppingBag, Tent, ShoppingCart, Map, Menu, X } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { motion, AnimatePresence } from "framer-motion";
 
 export function StudentSidebar() {
   const pathname = usePathname();
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
   const navItems = [
     { name: "Learn", href: "/dashboard", icon: Home },
@@ -54,7 +57,7 @@ export function StudentSidebar() {
 
       {/* Mobile Bottom Navigation */}
       <div className="lg:hidden fixed bottom-0 left-0 w-full h-[80px] bg-white border-t-2 border-slate-200 z-50 flex items-center justify-around px-2 pb-safe">
-        {navItems.map((item) => {
+        {navItems.filter(item => ["Learn", "Cyber Map", "Social", "Shop"].includes(item.name)).map((item) => {
           const isActive = pathname === item.href;
           return (
             <Link key={item.name} href={item.href} className="flex-1 flex justify-center">
@@ -72,7 +75,56 @@ export function StudentSidebar() {
             </Link>
           );
         })}
+        
+        {/* Menu Button */}
+        <button onClick={() => setIsMobileMenuOpen(true)} className="flex-1 flex justify-center">
+          <div className="flex flex-col items-center justify-center p-2 rounded-2xl transition-all text-slate-400 hover:text-emerald-500">
+             <Menu className="w-7 h-7 mb-1" strokeWidth={2} />
+             <span className="text-[10px] font-bold">More</span>
+          </div>
+        </button>
       </div>
+
+      {/* Mobile Full Screen Drawer */}
+      <AnimatePresence>
+        {isMobileMenuOpen && (
+          <motion.div 
+            initial={{ y: "100%" }}
+            animate={{ y: 0 }}
+            exit={{ y: "100%" }}
+            transition={{ type: "spring", bounce: 0, duration: 0.4 }}
+            className="fixed inset-0 z-[60] bg-white flex flex-col lg:hidden"
+          >
+            <div className="p-6 border-b-2 border-slate-100 flex items-center justify-between">
+              <h2 className="text-2xl font-black text-emerald-500 tracking-tight">IGNITE Menu</h2>
+              <button onClick={() => setIsMobileMenuOpen(false)} className="w-10 h-10 rounded-full bg-slate-100 flex items-center justify-center text-slate-500">
+                 <X className="w-6 h-6" />
+              </button>
+            </div>
+            
+            <div className="flex-1 overflow-y-auto p-4 flex flex-col gap-2 pb-24">
+               {navItems.map((item) => {
+                  const isActive = pathname === item.href;
+                  return (
+                    <Link key={item.name} href={item.href} onClick={() => setIsMobileMenuOpen(false)}>
+                      <div 
+                        className={cn(
+                          "flex items-center gap-4 px-4 py-4 rounded-2xl font-bold text-lg transition-all border-2",
+                          isActive 
+                            ? "bg-emerald-100/50 border-emerald-200 text-emerald-600" 
+                            : "border-slate-100 text-slate-600 hover:bg-slate-50"
+                        )}
+                      >
+                        <item.icon className={cn("w-7 h-7", isActive ? "text-emerald-500" : "text-slate-400")} strokeWidth={isActive ? 2.5 : 2} />
+                        {item.name}
+                      </div>
+                    </Link>
+                  );
+               })}
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </>
   );
 }

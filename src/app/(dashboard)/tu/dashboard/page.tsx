@@ -21,7 +21,7 @@ import {
 } from "lucide-react";
 import { useEffect, useState } from "react";
 import Link from "next/link";
-import { Sparkles, Send, Gem as GemIcon } from "lucide-react";
+import { Sparkles, Send, Gem as GemIcon, Search, X } from "lucide-react";
 import { toast } from "react-hot-toast";
 
 export default function TUDashboard() {
@@ -37,7 +37,9 @@ export default function TUDashboard() {
     { id: 1, type: "warning", message: "Initial sync in progress..." }
   ]);
   const [goldenHourActive, setGoldenHourActive] = useState(false);
-  const [gemTarget, setGemTarget] = useState("");
+  const [searchQuery, setSearchQuery] = useState("");
+  const [searchResults, setSearchResults] = useState<any[]>([]);
+  const [selectedUser, setSelectedUser] = useState<any>(null);
   const [gemAmount, setGemAmount] = useState(100);
   const [sendingGems, setSendingGems] = useState(false);
 
@@ -83,18 +85,26 @@ export default function TUDashboard() {
      await supabase.from("global_settings").upsert({ key: "golden_hour_active", value: newVal });
   };
 
+  const handleSearch = async (query: string) => {
+    setSearchQuery(query);
+    if (!query.trim()) {
+      setSearchResults([]);
+      return;
+    }
+    const { data } = await supabase
+      .from("profiles")
+      .select("id, full_name, email, role")
+      .or(`full_name.ilike.%${query}%,email.ilike.%${query}%`)
+      .eq("role", "student")
+      .limit(5);
+    setSearchResults(data || []);
+  };
+
   const handleSendGems = async () => {
-     if (!gemTarget || gemAmount <= 0) return;
+     if (!selectedUser || gemAmount <= 0) return;
      setSendingGems(true);
      
-     // Search for user by full_name or email
-     const { data: targetUser } = await supabase
-        .from("profiles")
-        .select("id, full_name, gems")
-        .or(`full_name.ilike.%${gemTarget}%,email.ilike.%${gemTarget}%`)
-        .eq("role", "student")
-        .limit(1)
-        .single();
+     const { data: targetUser } = await supabase.from("profiles").select("id, full_name, gems").eq("id", selectedUser.id).single();
         
      if (!targetUser) {
         toast.error("Siswa tidak ditemukan!");
@@ -109,7 +119,8 @@ export default function TUDashboard() {
         toast.error("Gagal mengirim Gems.");
      } else {
         toast.success(`Berhasil mengirim ${gemAmount} Gems ke ${targetUser.full_name}!`);
-        setGemTarget("");
+        setSelectedUser(null);
+        setSearchQuery("");
         setGemAmount(100);
      }
      setSendingGems(false);
@@ -247,35 +258,69 @@ export default function TUDashboard() {
           </div>
           
           {/* Top-up Gems Manual */}
-          <div className="mt-4 p-5 rounded-2xl bg-white border border-slate-200 shadow-sm">
+          <div className="mt-4 p-5 rounded-2xl bg-white border border-slate-200 shadow-sm relative z-20">
              <div className="flex items-center gap-2 mb-4">
                 <GemIcon className="w-5 h-5 text-pink-500" />
                 <h3 className="font-bold text-slate-800">Top-Up Gems Manual</h3>
              </div>
-             <div className="flex flex-col sm:flex-row gap-3">
-                <input 
-                   type="text" 
-                   placeholder="Nama / Email Siswa" 
-                   value={gemTarget}
-                   onChange={e => setGemTarget(e.target.value)}
-                   className="flex-1 px-4 py-2 rounded-xl border border-slate-200 text-sm focus:outline-none focus:border-pink-500"
-                />
-                <input 
-                   type="number" 
-                   placeholder="Jumlah" 
-                   value={gemAmount}
-                   onChange={e => setGemAmount(Number(e.target.value))}
-                   className="w-24 px-4 py-2 rounded-xl border border-slate-200 text-sm focus:outline-none focus:border-pink-500"
-                />
-                <button 
-                   onClick={handleSendGems}
-                   disabled={sendingGems}
-                   className="px-6 py-2 bg-pink-500 hover:bg-pink-600 text-white rounded-xl font-bold flex items-center justify-center gap-2 transition-all disabled:opacity-50"
-                >
-                   {sendingGems ? <Loader2 className="w-4 h-4 animate-spin" /> : <Send className="w-4 h-4" />}
-                   Kirim
-                </button>
-             </div>
+             
+             {!selectedUser ? (
+                 <div className="relative">
+                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 w-4 h-4" />
+                    <input 
+                       type="text" 
+                       placeholder="Cari Nama / Email Siswa..." 
+                       value={searchQuery}
+                       onChange={e => handleSearch(e.target.value)}
+                       className="w-full px-4 py-2 pl-9 rounded-xl border border-slate-200 text-sm focus:outline-none focus:border-pink-500"
+                    />
+                    
+                    {searchResults.length > 0 && (
+                       <div className="absolute top-full mt-2 left-0 right-0 bg-white border border-slate-200 rounded-xl shadow-lg overflow-hidden">
+                          {searchResults.map(user => (
+                             <div 
+                                key={user.id} 
+                                onClick={() => { setSelectedUser(user); setSearchResults([]); }}
+                                className="p-3 hover:bg-slate-50 cursor-pointer border-b border-slate-100 last:border-0 flex items-center justify-between"
+                             >
+                                <div>
+                                   <p className="font-bold text-slate-800 text-sm">{user.full_name}</p>
+                                   <p className="text-xs text-slate-500">{user.email}</p>
+                                </div>
+                                <span className="text-xs font-bold text-pink-500 bg-pink-50 px-2 py-1 rounded-md">Pilih</span>
+                             </div>
+                          ))}
+                       </div>
+                    )}
+                 </div>
+             ) : (
+                 <div className="flex flex-col sm:flex-row gap-3">
+                    <div className="flex-1 flex items-center justify-between px-4 py-2 bg-slate-50 border border-slate-200 rounded-xl">
+                       <div>
+                          <p className="text-sm font-bold text-slate-800">{selectedUser.full_name}</p>
+                          <p className="text-xs text-slate-500">{selectedUser.email}</p>
+                       </div>
+                       <button onClick={() => setSelectedUser(null)} className="text-slate-400 hover:text-red-500">
+                          <X className="w-4 h-4" />
+                       </button>
+                    </div>
+                    <input 
+                       type="number" 
+                       placeholder="Jumlah" 
+                       value={gemAmount}
+                       onChange={e => setGemAmount(Number(e.target.value))}
+                       className="w-full sm:w-24 px-4 py-2 rounded-xl border border-slate-200 text-sm focus:outline-none focus:border-pink-500"
+                    />
+                    <button 
+                       onClick={handleSendGems}
+                       disabled={sendingGems}
+                       className="px-6 py-2 bg-pink-500 hover:bg-pink-600 text-white rounded-xl font-bold flex items-center justify-center gap-2 transition-all disabled:opacity-50"
+                    >
+                       {sendingGems ? <Loader2 className="w-4 h-4 animate-spin" /> : <Send className="w-4 h-4" />}
+                       Kirim
+                    </button>
+                 </div>
+             )}
           </div>
         </div>
 
