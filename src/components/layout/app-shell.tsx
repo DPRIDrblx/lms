@@ -7,6 +7,7 @@ import { StudentTopBar } from "./student-top-bar";
 import { ParentSidebar } from "./parent-sidebar";
 import { ParentTopBar } from "./parent-top-bar";
 import { ClassGuard } from "./class-guard";
+import { StudentConfidentialityPopup } from "./student-confidentiality-popup";
 import { usePathname, useRouter } from "next/navigation";
 import { useAuth } from "@/lib/auth-context";
 import { useEffect } from "react";
@@ -71,6 +72,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
               {children}
             </ClassGuard>
           </main>
+          <StudentConfidentialityPopup />
         </div>
       </div>
     );
