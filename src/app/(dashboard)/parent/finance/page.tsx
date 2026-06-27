@@ -19,7 +19,7 @@ import { useEffect, useState, useCallback } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { formatCurrency, cn } from "@/lib/utils";
 import Link from "next/link";
-import { MockPaymentModal } from "@/components/finance/MockPaymentModal";
+import { XenditPaymentModal } from "@/components/finance/XenditPaymentModal";
 import { Gem } from "lucide-react";
 
 interface Bill {
@@ -319,7 +319,7 @@ export default function ParentFinancePage() {
         )}
       </AnimatePresence>
 
-      <MockPaymentModal 
+      <XenditPaymentModal 
         isOpen={isPaymentModalOpen}
         title="Top Up Canteen Wallet"
         onClose={() => setIsPaymentModalOpen(false)}
@@ -337,7 +337,7 @@ export default function ParentFinancePage() {
           setIsPaymentModalOpen(false);
         }}
       />
-      <MockPaymentModal 
+      <XenditPaymentModal 
         isOpen={isGemsPaymentModalOpen}
         title="Top Up Parent Gems"
         onClose={() => setIsGemsPaymentModalOpen(false)}
