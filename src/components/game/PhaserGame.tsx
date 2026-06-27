@@ -1,8 +1,8 @@
 "use client";
 
 import React, { useEffect, useRef } from "react";
-import MainScene from "./scenes/MainScene";
-import UIOverlay from "./UIOverlay";
+import MainScene from "@/components/game/scenes/MainScene";
+import UIOverlay from "@/components/game/UIOverlay";
 
 interface PhaserGameProps {
   matchId: string;

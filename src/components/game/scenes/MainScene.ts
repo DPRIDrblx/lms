@@ -63,9 +63,8 @@ export default class MainScene extends Phaser.Scene {
     const zoneText = this.add.text(1000, 1000, bgName.toUpperCase(), {
        fontSize: '120px',
        fontStyle: 'bold',
-       color: '#ffffff',
-       alpha: 0.05
-    }).setOrigin(0.5);
+       color: '#ffffff'
+    }).setOrigin(0.5).setAlpha(0.05);
 
     // Setup Physics bounds
     this.physics.world.setBounds(0, 0, 2000, 2000);
@@ -73,13 +72,8 @@ export default class MainScene extends Phaser.Scene {
     // Create Local Player
     const playerKey = this.avatarUrl ? `avatar_${this.profileId}` : "player";
     this.player = this.physics.add.sprite(400, 300, playerKey);
-    // Mask to make it circular
     if (this.avatarUrl) {
        this.player.setDisplaySize(40, 40);
-       const mask = this.add.sprite(400, 300, "avatarMask").setVisible(false);
-       this.player.setMask(new Phaser.Display.Masks.BitmapMask(this, mask));
-       // We need to update mask position manually in update loop, so simpler to just leave it as square for now or use rounded rectangle
-       this.player.clearMask(true); // Revert mask for simplicity since physics sprite masks need updating
        this.player.setCrop(0,0,40,40); // Simple crop
     }
     
