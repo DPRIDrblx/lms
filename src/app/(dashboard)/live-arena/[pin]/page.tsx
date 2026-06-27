@@ -219,6 +219,7 @@ export default function LiveArenaPlayPage() {
           
           <audio autoPlay loop src="https://cdn.pixabay.com/download/audio/2022/02/10/audio_fc48af67b2.mp3?filename=lofi-study-112191.mp3" />
        </div>
+     );
   }
 
   if (session?.status === "finished") {
