@@ -4,6 +4,8 @@ import { Sidebar } from "@/components/ui/sidebar";
 import { TopBar } from "@/components/ui/top-bar";
 import { StudentSidebar } from "./student-sidebar";
 import { StudentTopBar } from "./student-top-bar";
+import { ParentSidebar } from "./parent-sidebar";
+import { ParentTopBar } from "./parent-top-bar";
 import { ClassGuard } from "./class-guard";
 import { usePathname, useRouter } from "next/navigation";
 import { useAuth } from "@/lib/auth-context";
@@ -68,6 +70,20 @@ export function AppShell({ children }: { children: React.ReactNode }) {
             <ClassGuard>
               {children}
             </ClassGuard>
+          </main>
+        </div>
+      </div>
+    );
+  }
+
+  if (profile?.role === "parent") {
+    return (
+      <div className="min-h-screen bg-slate-50 text-[var(--text-primary)] pb-24 lg:pb-0">
+        <ParentSidebar />
+        <div className="lg:pl-[260px] flex flex-col min-h-screen">
+          <ParentTopBar />
+          <main className="flex-1 p-4 sm:p-6 lg:p-8 max-w-5xl mx-auto w-full">
+            {children}
           </main>
         </div>
       </div>

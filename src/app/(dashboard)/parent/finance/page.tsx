@@ -2,9 +2,6 @@
 
 import { useAuth } from "@/lib/auth-context";
 import { createClient } from "@/lib/supabase";
-import { Card } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
 import { 
   CreditCard, 
   Wallet, 
@@ -20,7 +17,7 @@ import {
 } from "lucide-react";
 import { useEffect, useState, useCallback } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { formatCurrency } from "@/lib/utils";
+import { formatCurrency, cn } from "@/lib/utils";
 import Link from "next/link";
 import { MockPaymentModal } from "@/components/finance/MockPaymentModal";
 
@@ -103,119 +100,143 @@ export default function ParentFinancePage() {
         <div className="lg:col-span-2 space-y-6">
            {/* Summary Cards */}
            <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
-              <div className="rounded-2xl p-8 bg-indigo-600 text-white border-none shadow-xl shadow-indigo-500/20 relative overflow-hidden transition-all duration-200">
-                 <div className="absolute -right-4 -bottom-4 opacity-10"><CreditCard className="h-32 w-32" /></div>
-                 <p className="text-[10px] font-black uppercase tracking-widest opacity-80 mb-2">Total Outstanding Fees</p>
-                 <h2 className="text-3xl font-black">{formatCurrency(outstanding)}</h2>
-                 <p className="text-[10px] mt-4 font-bold bg-white/20 w-fit px-2 py-1 rounded">Next due: 15th Next Month</p>
+              <div className="rounded-3xl p-8 bg-indigo-500 text-white border-2 border-indigo-600 shadow-[0_8px_0_rgb(79,70,229)] relative overflow-hidden transition-all duration-200">
+                 <div className="absolute -right-4 -bottom-4 opacity-20"><CreditCard className="h-32 w-32" /></div>
+                 <p className="text-xs font-black uppercase tracking-widest opacity-90 mb-2">Total Outstanding Fees</p>
+                 <h2 className="text-4xl font-black mb-4">{formatCurrency(outstanding)}</h2>
+                 <div className="inline-block text-xs font-black bg-white/20 px-3 py-1.5 rounded-xl">Next due: 15th Next Month</div>
               </div>
-              <div className="rounded-2xl p-8 bg-emerald-600 text-white border-none shadow-xl shadow-emerald-500/20 relative overflow-hidden transition-all duration-200">
-                 <div className="absolute -right-4 -bottom-4 opacity-10"><Wallet className="h-32 w-32" /></div>
-                 <p className="text-[10px] font-black uppercase tracking-widest opacity-80 mb-2">Canteen Wallet Balance</p>
-                 <h2 className="text-3xl font-black">{formatCurrency(wallet?.balance || 0)}</h2>
-                 <Button onClick={() => setIsTopUpOpen(true)} variant="secondary" className="mt-4 bg-white/20 text-white border-none hover:bg-white/30 text-[10px] h-8">Top Up Now</Button>
+              <div className="rounded-3xl p-8 bg-emerald-500 text-white border-2 border-emerald-600 shadow-[0_8px_0_rgb(5,150,105)] relative overflow-hidden transition-all duration-200 flex flex-col justify-between">
+                 <div className="absolute -right-4 -bottom-4 opacity-20"><Wallet className="h-32 w-32" /></div>
+                 <div>
+                   <p className="text-xs font-black uppercase tracking-widest opacity-90 mb-2">Canteen Wallet Balance</p>
+                   <h2 className="text-4xl font-black">{formatCurrency(wallet?.balance || 0)}</h2>
+                 </div>
+                 <button onClick={() => setIsTopUpOpen(true)} className="mt-6 bg-white text-emerald-600 border-2 border-emerald-200 font-black rounded-xl px-4 py-3 shadow-[0_4px_0_rgb(209,250,229)] active:translate-y-1 active:shadow-none transition-all w-fit z-10 relative text-sm">
+                   Top Up Now
+                 </button>
               </div>
            </div>
 
            {/* Billing History */}
-           <Card className="p-0 overflow-hidden border-[var(--border)]">
-              <div className="p-6 border-b border-[var(--border)] bg-[var(--bg-secondary)]/50">
-                 <h3 className="text-sm font-black uppercase tracking-widest text-[var(--text-primary)]">Billing History</h3>
+           <div className="bg-white rounded-3xl border-2 border-slate-200 shadow-[0_8px_0_rgb(226,232,240)] overflow-hidden">
+              <div className="p-6 border-b-2 border-slate-200 bg-slate-50">
+                 <h3 className="text-sm font-black uppercase tracking-widest text-slate-800 flex items-center gap-2">
+                   <Clock className="w-5 h-5 text-indigo-500" strokeWidth={3} /> Billing History
+                 </h3>
               </div>
-              <div className="overflow-x-auto">
-                 <table className="w-full text-left">
-                    <thead>
-                       <tr className="text-[10px] font-black text-[var(--text-tertiary)] uppercase tracking-widest border-b border-[var(--border)]">
-                          <th className="px-6 py-4">Billing Period</th>
-                          <th className="px-6 py-4">Amount</th>
-                          <th className="px-6 py-4">Status</th>
-                          <th className="px-6 py-4 text-right">Action</th>
-                       </tr>
-                    </thead>
-                    <tbody className="divide-y divide-[var(--border)]">
-                       {bills.map(bill => (
-                          <tr key={bill.id} className="hover:bg-[var(--bg-secondary)] transition-colors">
-                             <td className="px-6 py-4 text-sm font-bold text-[var(--text-primary)]">{bill.month}</td>
-                             <td className="px-6 py-4 text-sm text-[var(--text-secondary)]">{formatCurrency(bill.amount)}</td>
-                             <td className="px-6 py-4">
-                                <Badge variant={bill.status === "paid" ? "success" : "warning"} className="font-bold">
-                                   {bill.status}
-                                </Badge>
-                             </td>
-                             <td className="px-6 py-4 text-right">
-                                {bill.status !== "paid" ? (
-                                   <Link href={`/finance/checkout/${bill.id}`}>
-                                      <Button size="sm" icon={<ArrowRight className="h-4 w-4" />}>Pay Now</Button>
-                                   </Link>
-                                ) : (
-                                   <Button variant="ghost" size="sm" icon={<CheckCircle2 className="h-4 w-4" />}>Receipt</Button>
-                                )}
-                             </td>
-                          </tr>
-                       ))}
-                    </tbody>
-                 </table>
+              <div className="p-6 space-y-4">
+                 {bills.map(bill => (
+                    <div key={bill.id} className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 p-4 rounded-2xl border-2 border-slate-200 hover:border-indigo-300 transition-colors bg-white">
+                       <div className="flex-1">
+                          <div className="flex items-center gap-3 mb-1">
+                             <h4 className="font-black text-slate-800 text-lg">{bill.month}</h4>
+                             <div className={`px-2 py-1 rounded-lg text-[10px] font-black uppercase tracking-widest border-2 ${bill.status === "paid" ? "bg-emerald-100 text-emerald-600 border-emerald-200" : "bg-amber-100 text-amber-600 border-amber-200"}`}>
+                                {bill.status}
+                             </div>
+                          </div>
+                          <p className="text-sm font-bold text-slate-500">School Fees & Miscellaneous</p>
+                       </div>
+                       <div className="flex items-center gap-4">
+                          <span className="text-xl font-black text-slate-800">{formatCurrency(bill.amount)}</span>
+                          {bill.status !== "paid" ? (
+                             <Link href={`/finance/checkout/${bill.id}`}>
+                                <button className="bg-indigo-500 text-white rounded-xl px-4 py-2 font-black text-sm border-2 border-indigo-600 shadow-[0_4px_0_rgb(79,70,229)] active:translate-y-1 active:shadow-none transition-all flex items-center gap-2">
+                                   Pay Now <ArrowRight className="w-4 h-4" strokeWidth={3} />
+                                </button>
+                             </Link>
+                          ) : (
+                             <button className="bg-slate-100 text-slate-500 rounded-xl px-4 py-2 font-black text-sm border-2 border-slate-200 active:translate-y-1 transition-all flex items-center gap-2">
+                                <CheckCircle2 className="w-4 h-4 text-emerald-500" strokeWidth={3} /> Receipt
+                             </button>
+                          )}
+                       </div>
+                    </div>
+                 ))}
+                 
+                 {bills.length === 0 && (
+                   <div className="text-center py-8 text-slate-400 font-bold">
+                     No bills found.
+                   </div>
+                 )}
               </div>
-           </Card>
+           </div>
         </div>
 
         <div className="space-y-6">
-           <Card className="p-6 bg-[var(--bg-secondary)] border-none">
-              <h4 className="text-xs font-black uppercase tracking-widest text-[var(--text-primary)] mb-4 flex items-center gap-2">
-                 <ShieldCheck className="h-4 w-4 text-indigo-500" /> Secure Payments
+           <div className="p-6 bg-slate-50 rounded-3xl border-2 border-slate-200 border-dashed">
+              <h4 className="text-sm font-black uppercase tracking-widest text-slate-800 mb-4 flex items-center gap-2">
+                 <ShieldCheck className="h-5 w-5 text-indigo-500" strokeWidth={3} /> Secure Payments
               </h4>
-              <p className="text-[10px] text-[var(--text-secondary)] leading-relaxed mb-6">
+              <p className="text-sm font-bold text-slate-500 leading-relaxed mb-6">
                  All school fee payments are processed via our encrypted Academy Gateway. We support Virtual Accounts, E-Wallets, and Credit Cards.
               </p>
               <div className="space-y-3">
-                 <div className="flex items-center gap-3 p-3 rounded-xl bg-[var(--bg-primary)] border border-[var(--border)]">
-                    <Building2 className="h-4 w-4 text-[var(--text-tertiary)]" />
-                    <span className="text-[10px] font-bold text-[var(--text-secondary)]">Bank Virtual Accounts</span>
+                 <div className="flex items-center gap-3 p-3 rounded-2xl bg-white border-2 border-slate-200 shadow-[0_4px_0_rgb(226,232,240)]">
+                    <div className="p-2 bg-blue-100 rounded-xl text-blue-600"><Building2 className="h-5 w-5" strokeWidth={3} /></div>
+                    <span className="text-sm font-black text-slate-700">Bank Virtual Accounts</span>
                  </div>
-                 <div className="flex items-center gap-3 p-3 rounded-xl bg-[var(--bg-primary)] border border-[var(--border)]">
-                    <Smartphone className="h-4 w-4 text-[var(--text-tertiary)]" />
-                    <span className="text-[10px] font-bold text-[var(--text-secondary)]">OVO, GoPay & QRIS</span>
+                 <div className="flex items-center gap-3 p-3 rounded-2xl bg-white border-2 border-slate-200 shadow-[0_4px_0_rgb(226,232,240)]">
+                    <div className="p-2 bg-emerald-100 rounded-xl text-emerald-600"><Smartphone className="h-5 w-5" strokeWidth={3} /></div>
+                    <span className="text-sm font-black text-slate-700">OVO, GoPay & QRIS</span>
                  </div>
-                 <div className="flex items-center gap-3 p-3 rounded-xl bg-[var(--bg-primary)] border border-[var(--border)]">
-                    <Banknote className="h-4 w-4 text-[var(--text-tertiary)]" />
-                    <span className="text-[10px] font-bold text-[var(--text-secondary)]">Instant Over-the-Counter</span>
+                 <div className="flex items-center gap-3 p-3 rounded-2xl bg-white border-2 border-slate-200 shadow-[0_4px_0_rgb(226,232,240)]">
+                    <div className="p-2 bg-amber-100 rounded-xl text-amber-600"><Banknote className="h-5 w-5" strokeWidth={3} /></div>
+                    <span className="text-sm font-black text-slate-700">Over-the-Counter</span>
                  </div>
               </div>
-           </Card>
+           </div>
 
-           <div className="rounded-2xl p-6 bg-slate-900 text-white border-none shadow-xl transition-all duration-200">
-              <h4 className="text-sm font-bold mb-2">Automated Billing</h4>
-              <p className="text-xs opacity-60 leading-relaxed mb-4">
+           <div className="rounded-3xl p-6 bg-slate-800 text-white border-2 border-slate-900 shadow-[0_8px_0_rgb(15,23,42)] relative overflow-hidden">
+              <div className="absolute top-0 right-0 w-32 h-32 bg-indigo-500/20 rounded-full blur-2xl"></div>
+              <h4 className="text-lg font-black mb-2 relative z-10">Automated Billing</h4>
+              <p className="text-sm font-bold text-slate-300 leading-relaxed mb-6 relative z-10">
                  Enable auto-debit from your child's canteen wallet for seamless monthly fee settlements.
               </p>
-              <Button className="w-full bg-[var(--accent)] hover:bg-[var(--accent)]/90 border-none">Enable Auto-Pay</Button>
+              <button className="w-full bg-indigo-500 text-white border-2 border-indigo-600 font-black rounded-xl px-4 py-3 shadow-[0_4px_0_rgb(79,70,229)] active:translate-y-1 active:shadow-none transition-all relative z-10">
+                Enable Auto-Pay
+              </button>
            </div>
         </div>
       </div>
 
       <AnimatePresence>
         {isTopUpOpen && (
-          <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
-             <motion.div initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0, scale: 0.95 }} className="w-full max-w-sm bg-[var(--bg-primary)] p-6 rounded-3xl">
-                <h3 className="text-lg font-black mb-4 text-[var(--text-primary)]">Select Top Up Amount</h3>
-                <div className="grid grid-cols-2 gap-3 mb-6">
+          <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/40 backdrop-blur-sm">
+             <motion.div initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0, scale: 0.95 }} className="w-full max-w-sm bg-white p-6 rounded-3xl border-2 border-slate-200 shadow-2xl">
+                <h3 className="text-xl font-black mb-6 text-slate-800 text-center">Select Top Up Amount</h3>
+                <div className="grid grid-cols-2 gap-4 mb-8">
                    {[20000, 50000, 100000, 200000].map(amt => (
-                      <Button 
+                      <button 
                          key={amt} 
-                         variant={topUpAmount === amt ? "primary" : "secondary"}
-                         className={`h-12 ${topUpAmount === amt ? "bg-[var(--accent)]" : ""}`}
+                         className={cn(
+                           "h-14 rounded-2xl font-black text-sm transition-all border-2",
+                           topUpAmount === amt 
+                             ? "bg-indigo-50 border-indigo-200 text-indigo-600 shadow-inner" 
+                             : "bg-white border-slate-200 text-slate-600 shadow-[0_4px_0_rgb(226,232,240)] active:translate-y-1 active:shadow-none"
+                         )}
                          onClick={() => setTopUpAmount(amt)}
                       >
                          {formatCurrency(amt)}
-                      </Button>
+                      </button>
                    ))}
                 </div>
-                <div className="flex gap-3">
-                   <Button variant="ghost" className="flex-1" onClick={() => setIsTopUpOpen(false)}>Cancel</Button>
-                   <Button className="flex-1 font-bold" onClick={() => {
-                      setIsTopUpOpen(false);
-                      setIsPaymentModalOpen(true);
-                   }}>Proceed</Button>
+                <div className="flex gap-4">
+                   <button 
+                     className="flex-1 py-3 bg-slate-100 text-slate-500 rounded-xl font-black border-2 border-slate-200 active:translate-y-1 transition-all"
+                     onClick={() => setIsTopUpOpen(false)}
+                   >
+                     Cancel
+                   </button>
+                   <button 
+                     className="flex-1 py-3 bg-emerald-500 text-white rounded-xl font-black border-2 border-emerald-600 shadow-[0_4px_0_rgb(5,150,105)] active:translate-y-1 active:shadow-none transition-all"
+                     onClick={() => {
+                        setIsTopUpOpen(false);
+                        setIsPaymentModalOpen(true);
+                     }}
+                   >
+                     Proceed
+                   </button>
                 </div>
              </motion.div>
           </div>
