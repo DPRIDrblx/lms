@@ -3,7 +3,7 @@
 import { useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Home, Wallet, BookOpen, CreditCard, Users } from "lucide-react";
+import { Home, Wallet, BookOpen, CreditCard, Users, MessageCircle } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 export function ParentSidebar() {
@@ -14,6 +14,7 @@ export function ParentSidebar() {
     { name: "Keuangan", href: "/parent/finance", icon: Wallet },
     { name: "Rapor", href: "/parent/reports", icon: BookOpen },
     { name: "Kartu ID", href: "/parent/cards", icon: CreditCard },
+    { name: "Chat", href: "/chat", icon: MessageCircle },
   ];
 
   return (
