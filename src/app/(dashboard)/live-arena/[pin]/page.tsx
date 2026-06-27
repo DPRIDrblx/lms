@@ -80,7 +80,7 @@ export default function LiveArenaPlayPage() {
        supabase.from("live_quiz_participants").select("*, profiles(class_id)").eq("session_id", session.id)
          .then(({ data }: any) => { if (data) setAllParticipants(data) });
     }
-  }, [session?.id, session?.mode, supabase]);
+  }, [session?.id, session?.mode]);
 
   // Initial fetch ON MOUNT
   useEffect(() => {
@@ -121,7 +121,7 @@ export default function LiveArenaPlayPage() {
       
     return () => { supabase.removeChannel(channel); };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [session?.id, participant?.id, session?.mode]);
+  }, [session?.id]);
 
   // Timer Effect for Student
   useEffect(() => {

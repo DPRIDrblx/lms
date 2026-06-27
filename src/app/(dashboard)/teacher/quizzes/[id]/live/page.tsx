@@ -89,12 +89,16 @@ export default function TeacherLiveArenaPage() {
     
     setLoading(false);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [profile, quizId, mode]);
+  }, [profile, quizId]);
 
+  // Initial fetch ON MOUNT
   useEffect(() => {
     fetchSession();
-    
-    if (!session) return;
+  }, [fetchSession]);
+
+  // Real-time Subscriptions
+  useEffect(() => {
+    if (!session?.id) return;
     
     const channel = supabase.channel(`live_arena_${session.id}`)
       .on('postgres_changes', { event: '*', schema: 'public', table: 'live_quiz_participants', filter: `session_id=eq.${session.id}` }, () => {
@@ -123,7 +127,7 @@ export default function TeacherLiveArenaPage() {
       
     return () => { supabase.removeChannel(channel); };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [fetchSession, session?.id]);
+  }, [session?.id]);
 
   // Timer Effect
   useEffect(() => {
