@@ -3,7 +3,7 @@
 import { useAuth } from "@/lib/auth-context";
 import { createClient } from "@/lib/supabase";
 import { useRouter } from "next/navigation";
-import { useEffect, useState, use, useCallback } from "react";
+import { useEffect, useState, use, useCallback, useRef } from "react";
 import { Clock, Flag, ChevronLeft, ChevronRight, CheckCircle2, AlertTriangle, AlertCircle, PlayCircle, Star, Target } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 
@@ -26,6 +26,8 @@ export default function ExamPage({ params }: { params: Promise<{ id: string }> }
   const [needsManualGrading, setNeedsManualGrading] = useState(false);
   const [cheatWarnings, setCheatWarnings] = useState(0);
   const [presenceChannel, setPresenceChannel] = useState<any>(null);
+  const [cheatAlert, setCheatAlert] = useState<{show: boolean, type: 'warning' | 'fatal'}>({show: false, type: 'warning'});
+  const isAlertOpen = useRef(false);
 
   // Drag and drop state for matching
   const [draggedItem, setDraggedItem] = useState<string | null>(null);
@@ -145,7 +147,8 @@ export default function ExamPage({ params }: { params: Promise<{ id: string }> }
 
   useEffect(() => {
     const handleBlur = () => {
-      if (!isFinished && !loading) {
+      if (!isFinished && !loading && !isAlertOpen.current) {
+        isAlertOpen.current = true;
         setCheatWarnings(prev => {
           const newWarnings = prev + 1;
           
@@ -160,10 +163,10 @@ export default function ExamPage({ params }: { params: Promise<{ id: string }> }
           }
 
           if (quiz?.allow_leave_exam === false) {
-             alert("PELANGGARAN KECURANGAN: Ujian ini tidak mengizinkan Anda meninggalkan halaman! Ujian Anda disubmit otomatis.");
+             setCheatAlert({ show: true, type: 'fatal' });
              submitExam();
           } else {
-             alert("PERINGATAN KECURANGAN: Anda telah meninggalkan halaman ujian! Aktivitas dicatat.");
+             setCheatAlert({ show: true, type: 'warning' });
           }
           
           return newWarnings;
@@ -378,6 +381,46 @@ export default function ExamPage({ params }: { params: Promise<{ id: string }> }
 
   return (
     <div className="min-h-screen bg-white font-sans text-slate-800 flex flex-col">
+      {/* CHEAT WARNING MODAL */}
+      <AnimatePresence>
+        {cheatAlert.show && (
+          <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-slate-900/40 backdrop-blur-sm">
+            <motion.div 
+              initial={{ scale: 0.9, opacity: 0 }} 
+              animate={{ scale: 1, opacity: 1 }} 
+              exit={{ scale: 0.9, opacity: 0 }}
+              className="bg-white max-w-md w-full rounded-3xl p-8 shadow-2xl border-4 border-red-500 text-center relative overflow-hidden"
+            >
+              <div className="absolute top-0 left-0 right-0 h-2 bg-red-500" />
+              <div className="w-20 h-20 bg-red-100 text-red-500 rounded-2xl flex items-center justify-center mx-auto mb-6 rotate-12">
+                <AlertTriangle className="w-10 h-10" />
+              </div>
+              <h2 className="text-2xl font-black text-slate-800 mb-2">
+                {cheatAlert.type === 'fatal' ? 'PELANGGARAN!' : 'PERINGATAN KECURANGAN!'}
+              </h2>
+              <p className="text-slate-600 mb-8 font-medium leading-relaxed">
+                {cheatAlert.type === 'fatal' 
+                  ? 'Ujian ini tidak mengizinkan Anda meninggalkan halaman! Ujian Anda telah dikumpulkan secara otomatis.' 
+                  : 'Anda terdeteksi telah meninggalkan halaman ujian. Aktivitas ini telah dicatat oleh sistem pengawas.'}
+              </p>
+              
+              {cheatAlert.type === 'warning' && (
+                <button 
+                  onClick={() => {
+                    setCheatAlert({ show: false, type: 'warning' });
+                    // Use a small timeout before allowing blur events again to prevent immediate re-trigger
+                    setTimeout(() => { isAlertOpen.current = false; }, 500);
+                  }}
+                  className="w-full py-4 bg-red-500 hover:bg-red-400 active:bg-red-600 active:translate-y-1 text-white font-bold rounded-2xl border-b-4 border-red-700 transition-all text-lg"
+                >
+                  SAYA MENGERTI
+                </button>
+              )}
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
+
       {/* HEADER PROGRESS (Duolingo Style) */}
       <header className="sticky top-0 z-50 bg-white border-b-2 border-slate-100 px-4 py-4 md:px-8 flex items-center gap-4 md:gap-8 shadow-sm">
         <button 
