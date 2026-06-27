@@ -52,13 +52,13 @@ export default function HideoutPage() {
     
     if (cfData) {
        // Filter items not in inventory
-       const unownedItems = cfData.filter(item => !invData?.some(inv => inv.item_id === item.id));
+       const unownedItems = cfData.filter((item: any) => !invData?.some((inv: any) => inv.item_id === item.id));
        
        // Fetch current fund progress
        const { data: funds } = await supabase.from("hideout_crowdfunds").select("*").eq("class_id", profile.class_id);
        
-       const mappedFunds = unownedItems.map(item => {
-           const fund = funds?.find(f => f.item_id === item.id);
+       const mappedFunds = unownedItems.map((item: any) => {
+           const fund = funds?.find((f: any) => f.item_id === item.id);
            return {
                ...item,
                fund_id: fund?.id,

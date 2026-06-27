@@ -28,10 +28,10 @@ export function AchievementShowcase({ userId, isOwner }: { userId: string, isOwn
     const { data: userBadges } = await supabase.from("user_badges").select("*, badges(*)").eq("user_id", userId);
     
     if (userBadges) {
-        const owned = userBadges.map(ub => ub.badges).filter(Boolean);
+        const owned = userBadges.map((ub: any) => ub.badges).filter(Boolean);
         setAllBadges(owned);
         
-        const equipped = owned.filter(b => equippedIds.includes(b.id)).slice(0, 3);
+        const equipped = owned.filter((b: any) => equippedIds.includes(b.id)).slice(0, 3);
         setShowcaseBadges(equipped);
         
         // Trigger Effects if looking at someone else's profile (or own)
