@@ -63,14 +63,20 @@ export default function CyberMapPage() {
     await supabase.from("profiles").update({ gems: pData.gems - DECLARATION_FEE }).eq("id", profile.id);
 
     // Insert faction war
-    await supabase.from("faction_wars").insert({
+    const { error } = await supabase.from("faction_wars").insert({
         zone_id: zone.id,
         challenger_class_id: profile.class_id,
         defender_class_id: zone.controlling_class_id,
-        status: 'pending',
-        declaration_fee: DECLARATION_FEE,
-        declared_by: profile.id
+        status: 'active'
     });
+
+    if (error) {
+       // Rollback gems
+       await supabase.from("profiles").update({ gems: pData.gems }).eq("id", profile.id);
+       toast.error("Gagal mendeklarasikan perang: " + error.message);
+       setProcessing(false);
+       return;
+    }
 
     toast.success("Deklarasi perang berhasil dikirim!");
     fetchData();
