@@ -4,8 +4,9 @@ import { useAuth } from "@/lib/auth-context";
 import { Flame, Diamond, Heart, LogOut, Gem } from "lucide-react";
 import { useEffect, useState, useRef } from "react";
 import { createClient } from "@/lib/supabase";
-import { getInitials } from "@/lib/utils";
+import { getInitials, cn } from "@/lib/utils";
 import { motion, AnimatePresence } from "framer-motion";
+import { GraduationCap, Glasses } from "lucide-react";
 
 export function StudentTopBar() {
   const { profile, signOut } = useAuth();
@@ -13,6 +14,10 @@ export function StudentTopBar() {
   const [streak, setStreak] = useState(0);
   const [xp, setXp] = useState(0);
   const [gems, setGems] = useState(0);
+
+  const [equippedBorder, setEquippedBorder] = useState("");
+  const [equippedHat, setEquippedHat] = useState("");
+  const [equippedGlasses, setEquippedGlasses] = useState("");
   
   const [dropdownOpen, setDropdownOpen] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
@@ -39,6 +44,21 @@ export function StudentTopBar() {
         }
       };
       loadStats();
+
+      // Load cosmetics
+      const fetchEquipped = async () => {
+        const { data } = await supabase.from('user_inventory').select('shop_items(*)').eq('user_id', profile.id).eq('is_equipped', true);
+        if (data) {
+          data.forEach((d: any) => {
+            const item = d.shop_items;
+            if (!item) return;
+            if (item.type === 'cosmetic_border' || item.type === 'cosmetic_effect') setEquippedBorder(item.css_value);
+            if (item.type === 'mascot_hat') setEquippedHat(item.icon);
+            if (item.type === 'mascot_glasses') setEquippedGlasses(item.icon);
+          });
+        }
+      };
+      fetchEquipped();
 
       // Listen for updates
       const channel = supabase.channel("profile_stats")
@@ -89,21 +109,29 @@ export function StudentTopBar() {
             onClick={() => setDropdownOpen(!dropdownOpen)}
             className="flex items-center gap-2.5 p-1.5 pr-3 rounded-2xl hover:bg-slate-100 transition-all border-2 border-transparent hover:border-slate-200"
           >
-            {profile?.avatar_url ? (
-              profile.avatar_url.includes("/avatars/") ? (
-                <img src={profile.avatar_url} alt="" className="w-9 h-9 rounded-full object-cover object-top" />
-              ) : profile.avatar_url.startsWith("http") ? (
-                <img src={profile.avatar_url} alt="" className="w-9 h-9 rounded-full object-cover" />
+            <div className="relative">
+              {profile?.avatar_url ? (
+                profile.avatar_url.includes("/avatars/") ? (
+                  <img src={profile.avatar_url} alt="" className={cn("w-9 h-9 rounded-full object-cover object-top", equippedBorder)} />
+                ) : profile.avatar_url.startsWith("http") ? (
+                  <img src={profile.avatar_url} alt="" className={cn("w-9 h-9 rounded-full object-cover", equippedBorder)} />
+                ) : (
+                  <div className={cn("w-9 h-9 rounded-full bg-emerald-100 flex items-center justify-center text-xl shadow-inner", equippedBorder)}>
+                    {profile.avatar_url}
+                  </div>
+                )
               ) : (
-                <div className="w-9 h-9 rounded-full bg-emerald-100 flex items-center justify-center text-xl shadow-inner">
-                  {profile.avatar_url}
+                <div className={cn("w-9 h-9 rounded-full bg-emerald-100 flex items-center justify-center text-sm font-black text-emerald-600", equippedBorder)}>
+                  {getInitials(profile?.full_name || "U")}
                 </div>
-              )
-            ) : (
-              <div className="w-9 h-9 rounded-full bg-emerald-100 flex items-center justify-center text-sm font-black text-emerald-600">
-                {getInitials(profile?.full_name || "U")}
-              </div>
-            )}
+              )}
+              {equippedHat === 'GraduationCap' && (
+                <GraduationCap className="absolute -top-3.5 -right-2.5 w-6 h-6 text-slate-800 fill-slate-800 rotate-12 drop-shadow-md z-10" />
+              )}
+              {equippedGlasses === 'Glasses' && (
+                <Glasses className="absolute top-2 left-1/2 -translate-x-1/2 w-7 h-7 text-slate-900 fill-slate-900 drop-shadow-md z-10" />
+              )}
+            </div>
           </button>
 
           <AnimatePresence>
