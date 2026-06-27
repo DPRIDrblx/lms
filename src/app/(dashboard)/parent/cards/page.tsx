@@ -9,11 +9,12 @@ import {
   ArrowRight,
   BellRing,
   Activity,
-  Info
+  Info,
+  Save
 } from "lucide-react";
 import { useEffect, useState, useCallback } from "react";
-import { motion } from "framer-motion";
-import { formatCurrency } from "@/lib/utils";
+import { motion, AnimatePresence } from "framer-motion";
+import { formatCurrency, cn } from "@/lib/utils";
 import Link from "next/link";
 
 export default function ParentCardsPage() {
@@ -21,6 +22,9 @@ export default function ParentCardsPage() {
   const supabase = createClient();
   const [cards, setCards] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
+  const [editingLimitId, setEditingLimitId] = useState<string | null>(null);
+  const [tempLimit, setTempLimit] = useState<number>(0);
+  const [isSaving, setIsSaving] = useState(false);
 
   const fetchCards = useCallback(async () => {
     if (!profile) return;
@@ -28,7 +32,7 @@ export default function ParentCardsPage() {
       .from("card_inventory")
       .select(`
         *,
-        student:profiles!card_inventory_student_id_fkey(full_name, id, wallets(balance))
+        student:profiles!card_inventory_student_id_fkey(full_name, id, wallets(id, balance, daily_limit))
       `)
       .eq("parent_id", profile.id);
     
@@ -43,6 +47,23 @@ export default function ParentCardsPage() {
       .subscribe();
     return () => { supabase.removeChannel(channel); };
   }, [fetchCards, supabase]);
+
+  const handleSaveLimit = async (walletId: string) => {
+    setIsSaving(true);
+    const { error } = await supabase.from('wallets').update({ daily_limit: tempLimit }).eq('id', walletId);
+    if (!error) {
+      setCards(cards.map(c => {
+        if (c.student?.wallets?.[0]?.id === walletId) {
+          c.student.wallets[0].daily_limit = tempLimit;
+        } else if (c.student?.wallets?.id === walletId) {
+           c.student.wallets.daily_limit = tempLimit;
+        }
+        return c;
+      }));
+      setEditingLimitId(null);
+    }
+    setIsSaving(false);
+  };
 
   return (
     <div className="max-w-6xl mx-auto space-y-8 p-4">
@@ -104,6 +125,51 @@ export default function ParentCardsPage() {
                              Top Up <ArrowRight className="h-4 w-4" strokeWidth={3} />
                            </button>
                         </Link>
+                      </div>
+
+                      {/* Pocket Money Limiter */}
+                      <div className="pt-6 border-t-2 border-slate-100">
+                         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                            <div>
+                               <p className="text-xs font-black text-slate-400 uppercase tracking-widest mb-1">Canteen Daily Limit</p>
+                               {editingLimitId === card.id ? (
+                                  <div className="flex items-center gap-2">
+                                     <span className="text-sm font-bold text-slate-500">Rp</span>
+                                     <input 
+                                        type="number"
+                                        value={tempLimit}
+                                        onChange={(e) => setTempLimit(parseInt(e.target.value) || 0)}
+                                        className="w-32 bg-slate-50 border-2 border-slate-200 rounded-lg px-3 py-1 font-black text-slate-800 outline-none focus:border-indigo-500"
+                                     />
+                                     <button 
+                                        onClick={() => handleSaveLimit(card.student?.wallets?.[0]?.id || card.student?.wallets?.id)}
+                                        disabled={isSaving}
+                                        className="bg-emerald-500 text-white rounded-lg p-1.5 shadow-[0_3px_0_rgb(5,150,105)] active:translate-y-1 active:shadow-none border-2 border-emerald-600"
+                                     >
+                                        {isSaving ? <Activity className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />}
+                                     </button>
+                                  </div>
+                               ) : (
+                                  <div className="flex items-center gap-4">
+                                     <h4 className="text-xl font-black text-slate-800">
+                                       {formatCurrency(card.student?.wallets?.[0]?.daily_limit || card.student?.wallets?.daily_limit || 0)}
+                                     </h4>
+                                     <button 
+                                        onClick={() => {
+                                           setTempLimit(card.student?.wallets?.[0]?.daily_limit || card.student?.wallets?.daily_limit || 0);
+                                           setEditingLimitId(card.id);
+                                        }}
+                                        className="text-xs font-bold text-indigo-500 hover:text-indigo-600 underline"
+                                     >
+                                        Ubah Batas
+                                     </button>
+                                  </div>
+                               )}
+                            </div>
+                            <p className="text-[10px] font-bold text-slate-400 max-w-[200px] leading-tight">
+                              Jika anak melebihi batas pengeluaran ini di kantin, transaksi otomatis ditolak.
+                            </p>
+                         </div>
                       </div>
 
                       <div className="grid grid-cols-2 gap-4 pt-6 border-t-2 border-slate-100">
