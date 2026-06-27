@@ -27,7 +27,7 @@ export default function QuestsPage() {
     const { error } = await supabase.from('parent_quests').update({ status: 'completed', completed_at: new Date().toISOString() }).eq('id', questId);
     if (!error) {
        // 2. Add gems to student (assuming parent already deducted or we just add)
-       await supabase.from('profiles').update({ gems: (profile.gems || 0) + rewardGems }).eq('id', profile.id);
+       await supabase.from('profiles').update({ gems: ((profile as any).gems || 0) + rewardGems }).eq('id', profile.id);
        
        setParentQuests(parentQuests.map(q => q.id === questId ? { ...q, status: 'completed' } : q));
     }
