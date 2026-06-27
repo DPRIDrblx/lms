@@ -2,7 +2,7 @@
 
 import { useAuth } from "@/lib/auth-context";
 import { createClient } from "@/lib/supabase";
-import { Gem, ShoppingBag, Snowflake, Zap, MonitorPlay, Crown, Droplets, CheckCircle2 } from "lucide-react";
+import { Gem, ShoppingBag, Snowflake, Zap, MonitorPlay, Crown, Droplets, CheckCircle2, GraduationCap, Glasses } from "lucide-react";
 import { useState, useEffect } from "react";
 import { toast } from "react-hot-toast";
 
@@ -58,6 +58,7 @@ export default function ShopPage() {
   };
 
   const handleEquip = async (item: any) => {
+    if (!profile) return;
     // 1. Set all items of the same type to unequipped
     const itemsOfSameType = items.filter(i => i.type === item.type).map(i => i.id);
     await supabase.from("user_inventory").update({ is_equipped: false }).eq("user_id", profile.id).in("item_id", itemsOfSameType);
