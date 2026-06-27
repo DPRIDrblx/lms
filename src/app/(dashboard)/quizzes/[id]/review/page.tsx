@@ -119,10 +119,6 @@ export default function QuizReviewPage({ params }: { params: Promise<{ id: strin
               </div>
            </Card>
         </div>
-      </div>
-      <div className="mt-12 text-center text-sm text-[var(--text-tertiary)] opacity-60 pointer-events-none select-none">
-        Provided by Ruang CBT
-      </div>
     </div>
   );
 }

@@ -74,11 +74,6 @@ export default function ProctoringPage({ params }: { params: Promise<{ id: strin
 
   return (
     <div className="max-w-6xl mx-auto space-y-8 pb-20 relative">
-      {/* Watermark */}
-      <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 opacity-[0.03] pointer-events-none select-none flex flex-col items-center justify-center">
-        <ShieldAlert className="w-96 h-96 mb-8" />
-        <h1 className="text-6xl font-black uppercase tracking-widest text-center whitespace-nowrap">Provided by Ruang CBT</h1>
-      </div>
 
       <header className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 relative z-10">
          <div>

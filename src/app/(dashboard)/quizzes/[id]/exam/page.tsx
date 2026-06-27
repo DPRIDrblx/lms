@@ -4,9 +4,8 @@ import { useAuth } from "@/lib/auth-context";
 import { createClient } from "@/lib/supabase";
 import { useRouter } from "next/navigation";
 import { useEffect, useState, use, useCallback } from "react";
-
-// Lucide icons removed to keep it "Old School/Classic" 
-// Using basic HTML symbols instead where needed.
+import { Clock, Flag, ChevronLeft, ChevronRight, CheckCircle2, AlertTriangle, AlertCircle, PlayCircle, Star, Target } from "lucide-react";
+import { motion, AnimatePresence } from "framer-motion";
 
 export default function ExamPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = use(params);
@@ -43,18 +42,15 @@ export default function ExamPage({ params }: { params: Promise<{ id: string }> }
     if (qsData.data) {
       let qList = qsData.data as any[];
       if (qData.data?.shuffle_questions) {
-        // Simple random shuffle for questions
         qList = [...qList].sort(() => Math.random() - 0.5);
       }
       setQuestions(qList);
     }
 
-    // Session Persistence
     const { data: existing } = await supabase.from("exam_sessions").select("*").eq("student_id", profile.id).eq("quiz_id", id).single();
     
     if (existing) {
       if (existing.status === 'submitted') { 
-        // SAFETY CHECK: Did the score actually save? (due to previous RLS bugs it might have failed)
         const { data: scoreCheck } = await supabase
           .from("student_scores")
           .select("score, is_graded")
@@ -64,7 +60,6 @@ export default function ExamPage({ params }: { params: Promise<{ id: string }> }
           .single();
           
         if (!scoreCheck) {
-          // If score is missing, reset session so student can re-submit
           await supabase.from("exam_sessions").delete().eq("id", existing.id);
           window.location.reload();
           return;
@@ -112,16 +107,11 @@ export default function ExamPage({ params }: { params: Promise<{ id: string }> }
 
   useEffect(() => { initExam(); }, [initExam]);
 
-  // Setup Realtime Presence
   useEffect(() => {
     if (!profile || !id) return;
     
     const channel = supabase.channel(`room:exam_${id}`, {
-      config: {
-        presence: {
-          key: profile.id,
-        },
-      },
+      config: { presence: { key: profile.id } },
     });
 
     channel.on('presence', { event: 'sync' }, () => {});
@@ -139,10 +129,7 @@ export default function ExamPage({ params }: { params: Promise<{ id: string }> }
     });
 
     setPresenceChannel(channel);
-
-    return () => {
-      supabase.removeChannel(channel);
-    };
+    return () => { supabase.removeChannel(channel); };
   }, [profile, id, supabase]);
 
   useEffect(() => {
@@ -156,7 +143,6 @@ export default function ExamPage({ params }: { params: Promise<{ id: string }> }
     return () => clearInterval(t);
   }, [timeLeft, loading, isFinished]);
 
-  // Handle Tab blur for anti-cheat
   useEffect(() => {
     const handleBlur = () => {
       if (!isFinished && !loading) {
@@ -191,7 +177,7 @@ export default function ExamPage({ params }: { params: Promise<{ id: string }> }
              student_id: profile.id,
              student_name: profile.full_name,
              status: 'Active',
-             warnings: cheatWarnings, // using state directly here might be slightly stale but acceptable for focus
+             warnings: cheatWarnings,
              last_ping: new Date().toISOString()
            });
        }
@@ -229,7 +215,6 @@ export default function ExamPage({ params }: { params: Promise<{ id: string }> }
   const submitExam = async () => {
     if (timeLeft > 0 && !confirm("Apakah Anda yakin ingin mengakhiri ujian ini?")) return;
     
-    // Calculate if they met minimum time (unless time ran out)
     if (timeLeft > 0 && quiz?.min_time_to_submit > 0) {
       const totalTimeSeconds = (quiz?.time_limit || quiz?.time_limit_minutes || 60) * 60;
       const elapsedSeconds = totalTimeSeconds - timeLeft;
@@ -239,7 +224,6 @@ export default function ExamPage({ params }: { params: Promise<{ id: string }> }
         return;
       }
     }
-    
     
     await supabase.from("exam_sessions").update({ status: 'submitted', time_left_seconds: 0 }).eq("id", session?.id);
     
@@ -253,7 +237,6 @@ export default function ExamPage({ params }: { params: Promise<{ id: string }> }
       });
     }
 
-    // We also need to process grading!
     let totalScore = 0;
     let maxScore = 0;
     let hasEssay = false;
@@ -284,7 +267,6 @@ export default function ExamPage({ params }: { params: Promise<{ id: string }> }
 
     const finalPercentage = Math.round((totalScore / maxScore) * 100);
 
-    // Save final grade
     await supabase.from("student_scores").insert({
       student_id: profile?.id,
       target_id: id,
@@ -295,7 +277,6 @@ export default function ExamPage({ params }: { params: Promise<{ id: string }> }
       graded_at: hasEssay ? null : new Date().toISOString()
     });
 
-    // Mark as completed in course progress
     if (quiz?.course_id) {
        await supabase.from("course_progress").upsert({
           student_id: profile?.id,
@@ -319,277 +300,332 @@ export default function ExamPage({ params }: { params: Promise<{ id: string }> }
     return `${m.toString().padStart(2,'0')}:${sec.toString().padStart(2,'0')}`;
   };
 
-  if (loading) return <div style={{height: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', backgroundColor: '#e2e8f0', fontFamily: 'Arial, sans-serif'}}>Memuat Data Ujian...</div>;
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-slate-50 flex items-center justify-center">
+        <motion.div 
+          animate={{ rotate: 360 }} 
+          transition={{ repeat: Infinity, duration: 1, ease: "linear" }}
+          className="w-12 h-12 border-4 border-blue-500 border-t-transparent rounded-full"
+        />
+      </div>
+    );
+  }
 
   if (isFinished) {
+    const isPassed = finalScore !== null && finalScore >= (quiz?.passing_score || 0);
     return (
-      <div style={{height: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', backgroundColor: '#e2e8f0', fontFamily: 'Arial, sans-serif'}}>
-         <div style={{backgroundColor: '#fff', padding: '40px', border: '1px solid #ccc', maxWidth: '500px', textAlign: 'center', borderRadius: '8px', boxShadow: '0 4px 6px rgba(0,0,0,0.1)'}}>
-            <h1 style={{fontSize: '28px', fontWeight: 'bold', color: '#1e3a8a', marginBottom: '10px'}}>UJIAN SELESAI</h1>
-            <p style={{fontSize: '15px', color: '#475569', marginBottom: '30px'}}>Jawaban Anda telah berhasil disimpan di server.</p>
+      <div className="min-h-screen bg-slate-50 flex items-center justify-center p-4 font-sans">
+         <motion.div 
+           initial={{ opacity: 0, scale: 0.9, y: 20 }}
+           animate={{ opacity: 1, scale: 1, y: 0 }}
+           className="bg-white p-8 md:p-12 max-w-lg w-full text-center rounded-3xl shadow-xl border-2 border-slate-200"
+         >
+            <div className="flex justify-center mb-6">
+              {needsManualGrading ? (
+                <div className="w-24 h-24 bg-yellow-100 text-yellow-500 rounded-full flex items-center justify-center border-4 border-yellow-200">
+                  <Clock className="w-12 h-12" />
+                </div>
+              ) : isPassed ? (
+                <div className="w-24 h-24 bg-green-100 text-green-500 rounded-full flex items-center justify-center border-4 border-green-200">
+                  <Target className="w-12 h-12" />
+                </div>
+              ) : (
+                <div className="w-24 h-24 bg-red-100 text-red-500 rounded-full flex items-center justify-center border-4 border-red-200">
+                  <AlertCircle className="w-12 h-12" />
+                </div>
+              )}
+            </div>
+
+            <h1 className="text-3xl font-black text-slate-800 mb-2">
+              {needsManualGrading ? "UJIAN SELESAI!" : isPassed ? "LUAR BIASA!" : "TETAP SEMANGAT!"}
+            </h1>
+            <p className="text-slate-500 mb-8 font-medium">Jawabanmu sudah berhasil tersimpan.</p>
             
-            <div style={{backgroundColor: '#f8fafc', padding: '20px', borderRadius: '8px', border: '1px solid #e2e8f0', marginBottom: '30px'}}>
-               <p style={{fontSize: '12px', fontWeight: 'bold', color: '#64748b', textTransform: 'uppercase', letterSpacing: '1px', marginBottom: '5px'}}>Nilai Anda</p>
+            <div className="bg-slate-50 p-6 rounded-2xl border-2 border-slate-100 mb-8">
+               <p className="text-sm font-bold text-slate-400 uppercase tracking-widest mb-2">Nilai Akhir</p>
                {needsManualGrading ? (
                   <div>
-                    <div style={{fontSize: '36px', fontWeight: 'bold', color: '#eab308'}}>{finalScore !== null ? finalScore : "?"} <span style={{fontSize: '18px', color: '#94a3b8'}}>/ 100</span></div>
-                    <p style={{fontSize: '13px', color: '#b45309', marginTop: '10px', fontWeight: 'bold'}}>Menunggu Penilaian Guru (Ada Soal Essay)</p>
+                    <div className="text-5xl font-black text-yellow-500">
+                      {finalScore !== null ? finalScore : "?"} <span className="text-2xl text-slate-300">/ 100</span>
+                    </div>
+                    <p className="text-sm text-yellow-600 mt-4 font-bold bg-yellow-100/50 p-2 rounded-xl inline-block">
+                      Menunggu Penilaian Guru (Ada Soal Essay)
+                    </p>
                   </div>
                ) : (
                   <div>
-                    <div style={{fontSize: '48px', fontWeight: 'black', color: finalScore !== null && finalScore >= (quiz?.passing_score || 0) ? '#16a34a' : '#ef4444'}}>{finalScore} <span style={{fontSize: '20px', color: '#94a3b8'}}>/ 100</span></div>
+                    <div className={`text-6xl font-black ${isPassed ? 'text-green-500' : 'text-red-500'}`}>
+                      {finalScore} <span className="text-2xl text-slate-300">/ 100</span>
+                    </div>
                   </div>
                )}
             </div>
 
             <button 
               onClick={() => router.push(quiz?.course_id ? `/courses/${quiz.course_id}` : '/dashboard')}
-              style={{padding: '12px 24px', backgroundColor: '#1e3a8a', color: 'white', border: 'none', cursor: 'pointer', fontWeight: 'bold', borderRadius: '6px', width: '100%'}}
+              className="w-full py-4 bg-blue-500 hover:bg-blue-400 active:bg-blue-600 active:translate-y-1 text-white font-bold rounded-2xl border-b-4 border-blue-700 transition-all text-lg"
             >
-              KEMBALI KE KURSUS
+              LANJUTKAN
             </button>
-         </div>
+         </motion.div>
       </div>
     );
   }
 
   const currentQ = questions[currentIndex];
+  const progressPercent = ((currentIndex + 1) / questions.length) * 100;
 
   return (
-    <div style={{minHeight: '100vh', backgroundColor: '#f1f5f9', fontFamily: 'Arial, Helvetica, sans-serif', color: '#1e293b'}}>
-      {/* HEADER CLASSIC */}
-      <header style={{backgroundColor: '#1e3a8a', color: 'white', borderBottom: '5px solid #ef4444', padding: '10px 20px', display: 'flex', justifyContent: 'space-between', alignItems: 'center'}}>
-        <div style={{display: 'flex', alignItems: 'center', gap: '30px'}}>
-          <div style={{borderRight: '1px solid #3b82f6', paddingRight: '30px'}}>
-            <div style={{fontSize: '10px', color: '#93c5fd', textTransform: 'uppercase', letterSpacing: '1px'}}>CBT Application System</div>
-            <div style={{fontSize: '18px', fontWeight: 'bold'}}>{quiz?.title}</div>
-          </div>
-          <div>
-            <div style={{fontSize: '10px', color: '#93c5fd', textTransform: 'uppercase'}}>Nama Peserta</div>
-            <div style={{fontSize: '14px', fontWeight: 'bold'}}>{profile?.full_name}</div>
-          </div>
-        </div>
+    <div className="min-h-screen bg-white font-sans text-slate-800 flex flex-col">
+      {/* HEADER PROGRESS (Duolingo Style) */}
+      <header className="sticky top-0 z-50 bg-white border-b-2 border-slate-100 px-4 py-4 md:px-8 flex items-center gap-4 md:gap-8 shadow-sm">
+        <button 
+          onClick={() => { if(confirm("Kembali ke dashboard? Ujian akan tetap berjalan.")) router.push('/dashboard') }}
+          className="text-slate-400 hover:text-slate-600 transition-colors"
+        >
+          <ChevronLeft className="w-8 h-8" strokeWidth={3} />
+        </button>
         
-        <div style={{display: 'flex', alignItems: 'center', gap: '15px'}}>
-          <div style={{backgroundColor: timeLeft < 300 ? '#ef4444' : '#334155', padding: '10px 20px', border: '2px solid #475569'}}>
-            <div style={{fontSize: '10px', color: '#cbd5e1', textTransform: 'uppercase', textAlign: 'center'}}>Sisa Waktu</div>
-            <div style={{fontSize: '28px', fontWeight: 'bold', fontFamily: 'monospace', letterSpacing: '2px'}}>{formatTime(timeLeft)}</div>
-          </div>
+        {/* Progress Bar */}
+        <div className="flex-1 h-4 bg-slate-200 rounded-full overflow-hidden relative">
+          <motion.div 
+            initial={{ width: 0 }}
+            animate={{ width: `${progressPercent}%` }}
+            className="absolute top-0 left-0 h-full bg-green-500 rounded-full"
+          >
+            <div className="absolute top-1 left-2 right-2 h-1 bg-white/30 rounded-full" />
+          </motion.div>
+        </div>
+
+        {/* Timer */}
+        <div className={`flex items-center gap-2 px-4 py-2 rounded-2xl font-bold border-2 ${
+          timeLeft < 300 
+            ? 'border-red-200 bg-red-50 text-red-600' 
+            : 'border-slate-200 bg-white text-slate-600'
+        }`}>
+          <Clock className={`w-5 h-5 ${timeLeft < 300 ? 'animate-pulse' : ''}`} />
+          <span className="text-lg font-mono tracking-wider">{formatTime(timeLeft)}</span>
         </div>
       </header>
 
-      <main style={{display: 'flex', gap: '20px', padding: '20px', maxWidth: '1400px', margin: '0 auto', height: 'calc(100vh - 85px)'}}>
+      <main className="flex-1 flex flex-col lg:flex-row max-w-7xl mx-auto w-full p-4 md:p-8 gap-8">
         
         {/* LEFT PANEL: QUESTION CONTENT */}
-        <div style={{flex: 1, display: 'flex', flexDirection: 'column', gap: '15px'}}>
-          <div style={{flex: 1, backgroundColor: 'white', border: '1px solid #cbd5e1', padding: '25px', display: 'flex', flexDirection: 'column'}}>
-            
-            <div style={{display: 'flex', justifyContent: 'space-between', borderBottom: '2px solid #e2e8f0', paddingBottom: '15px', marginBottom: '20px'}}>
-              <div style={{display: 'flex', alignItems: 'center', gap: '15px'}}>
-                <div style={{fontSize: '24px', fontWeight: 'bold', color: '#1e3a8a'}}>Soal No. {currentIndex + 1}</div>
-                <div style={{backgroundColor: '#e2e8f0', padding: '4px 10px', fontSize: '12px', fontWeight: 'bold', border: '1px solid #cbd5e1'}}>
-                  Tipe: {currentQ?.question_type?.toUpperCase().replace("_", " ")}
-                </div>
-              </div>
+        <div className="flex-1 flex flex-col max-w-3xl mx-auto w-full pb-32 lg:pb-0">
+          <div className="mb-6 flex items-center justify-between">
+            <h2 className="text-2xl md:text-3xl font-black text-slate-800">
+              Soal {currentIndex + 1}
+            </h2>
+            <div className="px-3 py-1 bg-blue-100 text-blue-600 rounded-xl text-sm font-bold border-2 border-blue-200">
+              {currentQ?.question_type?.toUpperCase().replace("_", " ")}
             </div>
+          </div>
 
-            <div style={{flex: 1, overflowY: 'auto', fontSize: '16px', lineHeight: '1.6'}}>
-              <div style={{marginBottom: '30px'}} dangerouslySetInnerHTML={{ __html: currentQ?.question_text }} />
+          <div className="text-lg md:text-xl font-medium text-slate-700 leading-relaxed mb-8">
+            <div dangerouslySetInnerHTML={{ __html: currentQ?.question_text }} />
+          </div>
 
-              {/* RENDER QUESTION BY TYPE */}
-              <div style={{marginTop: '20px'}}>
-                
-                {/* MCQ */}
-                {currentQ?.question_type === 'mcq' && currentQ.options?.map((opt: any, i: number) => {
+          {/* RENDER QUESTION BY TYPE */}
+          <div className="flex-1">
+            {/* MCQ */}
+            {currentQ?.question_type === 'mcq' && (
+              <div className="grid gap-3">
+                {currentQ.options?.map((opt: any, i: number) => {
                   const isSelected = responses[currentQ.id] === opt.text;
                   return (
-                    <div 
+                    <button
                       key={i}
                       onClick={() => saveAnswer(currentQ.id, opt.text)}
-                      style={{display: 'flex', alignItems: 'center', padding: '15px', border: '1px solid', borderColor: isSelected ? '#1e3a8a' : '#cbd5e1', backgroundColor: isSelected ? '#eff6ff' : 'white', marginBottom: '10px', cursor: 'pointer'}}
+                      className={`text-left w-full p-4 md:p-5 rounded-2xl border-2 transition-all flex items-center gap-4 ${
+                        isSelected 
+                          ? 'border-blue-500 bg-blue-50' 
+                          : 'border-slate-200 hover:border-slate-300 hover:bg-slate-50'
+                      }`}
+                      style={{
+                        borderBottomWidth: isSelected ? '2px' : '4px',
+                        transform: isSelected ? 'translateY(2px)' : 'none'
+                      }}
                     >
-                      <div style={{width: '30px', height: '30px', backgroundColor: isSelected ? '#1e3a8a' : '#e2e8f0', color: isSelected ? 'white' : 'black', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 'bold', marginRight: '15px', border: '1px solid #94a3b8'}}>
+                      <div className={`w-8 h-8 rounded-xl flex items-center justify-center font-bold text-sm shrink-0 border-2 ${
+                        isSelected ? 'border-blue-500 text-blue-600 bg-white' : 'border-slate-300 text-slate-500'
+                      }`}>
                         {String.fromCharCode(65 + i)}
                       </div>
-                      <span>{opt.text}</span>
-                    </div>
+                      <span className={`text-lg font-medium ${isSelected ? 'text-blue-900' : 'text-slate-700'}`}>
+                        {opt.text}
+                      </span>
+                    </button>
                   );
                 })}
+              </div>
+            )}
 
-                {/* COMPLEX MCQ */}
-                {currentQ?.question_type === 'complex_mcq' && currentQ.options?.map((opt: any, i: number) => {
+            {/* COMPLEX MCQ */}
+            {currentQ?.question_type === 'complex_mcq' && (
+              <div className="grid gap-3">
+                <p className="text-sm font-bold text-slate-500 uppercase tracking-widest mb-2 flex items-center gap-2">
+                  <CheckCircle2 className="w-4 h-4" /> Pilih semua yang benar
+                </p>
+                {currentQ.options?.map((opt: any, i: number) => {
                   const selectedArr = responses[currentQ.id] || [];
                   const isSelected = selectedArr.includes(opt.text);
                   
                   const toggleSelect = () => {
                     let newArr = [...selectedArr];
-                    if (isSelected) newArr = newArr.filter(item => item !== opt.text);
+                    if (isSelected) newArr = newArr.filter((item: string) => item !== opt.text);
                     else newArr.push(opt.text);
                     saveAnswer(currentQ.id, newArr);
                   };
 
                   return (
-                    <div 
+                    <button
                       key={i}
                       onClick={toggleSelect}
-                      style={{display: 'flex', alignItems: 'center', padding: '15px', border: '1px solid', borderColor: isSelected ? '#1e3a8a' : '#cbd5e1', backgroundColor: isSelected ? '#eff6ff' : 'white', marginBottom: '10px', cursor: 'pointer'}}
+                      className={`text-left w-full p-4 md:p-5 rounded-2xl border-2 transition-all flex items-center gap-4 ${
+                        isSelected 
+                          ? 'border-green-500 bg-green-50' 
+                          : 'border-slate-200 hover:border-slate-300 hover:bg-slate-50'
+                      }`}
+                      style={{
+                        borderBottomWidth: isSelected ? '2px' : '4px',
+                        transform: isSelected ? 'translateY(2px)' : 'none'
+                      }}
                     >
-                      <input 
-                        type="checkbox" 
-                        checked={isSelected}
-                        readOnly
-                        style={{width: '20px', height: '20px', marginRight: '15px', cursor: 'pointer'}}
-                      />
-                      <span>{opt.text}</span>
-                    </div>
+                      <div className={`w-6 h-6 rounded-md flex items-center justify-center shrink-0 border-2 ${
+                        isSelected ? 'border-green-500 bg-green-500 text-white' : 'border-slate-300 bg-white'
+                      }`}>
+                        {isSelected && <CheckCircle2 className="w-4 h-4" />}
+                      </div>
+                      <span className={`text-lg font-medium ${isSelected ? 'text-green-900' : 'text-slate-700'}`}>
+                        {opt.text}
+                      </span>
+                    </button>
                   );
                 })}
-
-                {/* MATCHING (Simple Drag and Drop) */}
-                {currentQ?.question_type === 'matching' && (() => {
-                  const answersMap = responses[currentQ.id] || {}; // { term: definition }
-                  const terms = currentQ.options?.map((o: any) => o.text) || [];
-                  
-                  // Sort definitions alphabetically to mix them up instead of keeping original order
-                  const defs = currentQ.options?.map((o: any) => o.match_pair) || [];
-                  const availableDefs = defs.filter((d: string) => !Object.values(answersMap).includes(d)).sort();
-
-                  return (
-                    <div>
-                      <p style={{fontSize: '12px', fontWeight: 'bold', color: '#64748b', marginBottom: '15px'}}>Tarik kotak definisi di sebelah kanan ke area kosong di sebelah kiri.</p>
-                      <div style={{display: 'flex', gap: '30px'}}>
-                        {/* Terms Column */}
-                        <div style={{flex: 1}}>
-                          {terms.map((term: string, i: number) => {
-                            const matchedDef = answersMap[term];
-                            return (
-                              <div key={i} style={{display: 'flex', alignItems: 'center', marginBottom: '15px'}}>
-                                <div style={{width: '40%', padding: '10px', backgroundColor: '#f8fafc', border: '1px solid #cbd5e1', fontWeight: 'bold'}}>
-                                  {term}
-                                </div>
-                                <div style={{padding: '10px', fontWeight: 'bold', color: '#94a3b8'}}>&#8594;</div>
-                                <div 
-                                  onDragOver={(e) => e.preventDefault()}
-                                  onDrop={(e) => {
-                                    if (draggedItem) {
-                                      const newAnswers = { ...answersMap, [term]: draggedItem };
-                                      saveAnswer(currentQ.id, newAnswers);
-                                      setDraggedItem(null);
-                                    }
-                                  }}
-                                  style={{
-                                    flex: 1, 
-                                    padding: '10px', 
-                                    border: '2px dashed #94a3b8', 
-                                    minHeight: '42px',
-                                    backgroundColor: matchedDef ? '#eff6ff' : 'transparent',
-                                    color: '#1e3a8a',
-                                    fontWeight: 'bold',
-                                    cursor: matchedDef ? 'pointer' : 'default'
-                                  }}
-                                  onClick={() => {
-                                    if (matchedDef) {
-                                      const newAnswers = { ...answersMap };
-                                      delete newAnswers[term];
-                                      saveAnswer(currentQ.id, newAnswers);
-                                    }
-                                  }}
-                                  title={matchedDef ? "Klik untuk membatalkan" : ""}
-                                >
-                                  {matchedDef || <span style={{opacity: 0.5}}>Area Jawaban</span>}
-                                </div>
-                              </div>
-                            );
-                          })}
-                        </div>
-                        {/* Definitions Column */}
-                        <div style={{width: '300px', backgroundColor: '#f1f5f9', padding: '15px', border: '1px solid #cbd5e1'}}>
-                          <div style={{fontSize: '12px', fontWeight: 'bold', marginBottom: '10px'}}>Pilihan Jawaban:</div>
-                          {availableDefs.map((def: string, i: number) => (
-                            <div 
-                              key={i}
-                              draggable
-                              onDragStart={() => setDraggedItem(def)}
-                              style={{padding: '10px', backgroundColor: '#fff', border: '1px solid #64748b', marginBottom: '10px', cursor: 'grab', fontSize: '14px', boxShadow: '2px 2px 0px #cbd5e1'}}
-                            >
-                              {def}
-                            </div>
-                          ))}
-                          {availableDefs.length === 0 && <div style={{fontSize: '12px', color: '#16a34a', fontWeight: 'bold', textAlign: 'center', marginTop: '20px'}}>Semua terpasang!</div>}
-                        </div>
-                      </div>
-                    </div>
-                  );
-                })()}
-
-                {/* ESSAY */}
-                {currentQ?.question_type === 'essay' && (
-                  <div>
-                    <textarea 
-                      value={responses[currentQ.id] || ""}
-                      onChange={(e) => saveAnswer(currentQ.id, e.target.value)}
-                      style={{width: '100%', minHeight: '300px', padding: '15px', backgroundColor: '#fff', border: '1px solid #94a3b8', fontSize: '16px', outline: 'none', resize: 'vertical'}}
-                      placeholder="Ketikkan jawaban essay Anda di sini..."
-                      maxLength={currentQ.criteria?.maxLength > 0 ? currentQ.criteria.maxLength : undefined}
-                    />
-                    <div style={{display: 'flex', justifyContent: 'space-between', fontSize: '12px', color: '#64748b', marginTop: '5px'}}>
-                      <span>
-                        Minimal: {currentQ.criteria?.minLength || 0} karakter
-                        {currentQ.criteria?.maxLength > 0 ? ` | Maksimal: ${currentQ.criteria.maxLength} karakter` : ''}
-                      </span>
-                      <span>Saat ini: {(responses[currentQ.id] || "").length} karakter</span>
-                    </div>
-                  </div>
-                )}
               </div>
-            </div>
+            )}
 
-            {/* BUTTON CONTROLS */}
-            <div style={{display: 'flex', justifyContent: 'space-between', borderTop: '2px solid #e2e8f0', paddingTop: '15px', marginTop: '15px'}}>
-              <button 
-                disabled={currentIndex === 0} 
-                onClick={() => setCurrentIndex(prev => prev - 1)}
-                style={{padding: '12px 20px', backgroundColor: currentIndex === 0 ? '#f1f5f9' : '#fff', color: currentIndex === 0 ? '#cbd5e1' : '#1e293b', border: '1px solid #cbd5e1', fontWeight: 'bold', cursor: currentIndex === 0 ? 'not-allowed' : 'pointer'}}
-              >
-                &#9664; SOAL SEBELUMNYA
-              </button>
+            {/* MATCHING (Simple Drag and Drop) */}
+            {currentQ?.question_type === 'matching' && (() => {
+              const answersMap = responses[currentQ.id] || {}; // { term: definition }
+              const terms = currentQ.options?.map((o: any) => o.text) || [];
+              const defs = currentQ.options?.map((o: any) => o.match_pair) || [];
+              const availableDefs = defs.filter((d: string) => !Object.values(answersMap).includes(d)).sort();
 
-              <button 
-                onClick={() => setFlag(currentQ.id)}
-                style={{padding: '12px 20px', backgroundColor: flags[currentQ.id] ? '#eab308' : '#fff', color: flags[currentQ.id] ? '#fff' : '#1e293b', border: '1px solid #cbd5e1', fontWeight: 'bold', cursor: 'pointer'}}
-              >
-                &#9873; RAGU-RAGU
-              </button>
+              return (
+                <div>
+                  <div className="bg-blue-50 border-2 border-blue-100 p-4 rounded-2xl flex gap-3 mb-6">
+                    <PlayCircle className="w-6 h-6 text-blue-500 shrink-0" />
+                    <p className="text-sm font-bold text-blue-700">Tarik kotak definisi di bawah ke area kosong di sebelah masing-masing pertanyaan.</p>
+                  </div>
+                  
+                  {/* Definitions Bank */}
+                  <div className="flex flex-wrap gap-2 mb-8 p-4 bg-slate-50 border-2 border-slate-200 rounded-3xl min-h-[100px]">
+                    <div className="w-full text-xs font-black text-slate-400 uppercase tracking-widest mb-2">
+                      Pilihan Jawaban:
+                    </div>
+                    {availableDefs.map((def: string, i: number) => (
+                      <div 
+                        key={i}
+                        draggable
+                        onDragStart={() => setDraggedItem(def)}
+                        className="px-4 py-3 bg-white border-2 border-slate-300 border-b-4 rounded-2xl cursor-grab active:cursor-grabbing font-bold text-slate-700 hover:border-slate-400 hover:bg-slate-50 transition-all select-none"
+                      >
+                        {def}
+                      </div>
+                    ))}
+                    {availableDefs.length === 0 && (
+                      <div className="w-full flex flex-col items-center justify-center text-green-500 py-4 opacity-50">
+                        <Star className="w-8 h-8 mb-2" />
+                        <span className="font-bold">Semua terpasang!</span>
+                      </div>
+                    )}
+                  </div>
 
-              {currentIndex === questions.length - 1 ? (
-                <button 
-                  onClick={submitExam} 
-                  style={{padding: '12px 20px', backgroundColor: '#16a34a', color: '#fff', border: '1px solid #15803d', fontWeight: 'bold', cursor: 'pointer'}}
-                >
-                  SELESAI &#9632;
-                </button>
-              ) : (
-                <button 
-                  onClick={() => setCurrentIndex(i => i + 1)}
-                  style={{padding: '12px 20px', backgroundColor: '#1e3a8a', color: '#fff', border: '1px solid #1e40af', fontWeight: 'bold', cursor: 'pointer'}}
-                >
-                  SOAL BERIKUTNYA &#9654;
-                </button>
-              )}
-            </div>
+                  {/* Terms Column */}
+                  <div className="grid gap-4">
+                    {terms.map((term: string, i: number) => {
+                      const matchedDef = answersMap[term];
+                      return (
+                        <div key={i} className="flex flex-col md:flex-row md:items-center gap-2 md:gap-4 p-4 border-2 border-slate-200 rounded-2xl bg-white">
+                          <div className="md:w-5/12 font-bold text-slate-700 text-lg">
+                            {term}
+                          </div>
+                          <div className="hidden md:block text-slate-300">
+                            <ChevronRight className="w-6 h-6" />
+                          </div>
+                          <div 
+                            onDragOver={(e) => e.preventDefault()}
+                            onDrop={(e) => {
+                              if (draggedItem) {
+                                const newAnswers = { ...answersMap, [term]: draggedItem };
+                                saveAnswer(currentQ.id, newAnswers);
+                                setDraggedItem(null);
+                              }
+                            }}
+                            className={`flex-1 min-h-[60px] p-3 rounded-xl border-2 border-dashed transition-colors flex items-center justify-center ${
+                              matchedDef 
+                                ? 'border-blue-400 bg-blue-50 cursor-pointer' 
+                                : 'border-slate-300 bg-slate-50'
+                            }`}
+                            onClick={() => {
+                              if (matchedDef) {
+                                const newAnswers = { ...answersMap };
+                                delete newAnswers[term];
+                                saveAnswer(currentQ.id, newAnswers);
+                              }
+                            }}
+                          >
+                            {matchedDef ? (
+                              <div className="font-bold text-blue-700 text-center">{matchedDef}</div>
+                            ) : (
+                              <span className="text-slate-400 font-bold text-sm">Tarik jawaban ke sini</span>
+                            )}
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                </div>
+              );
+            })()}
+
+            {/* ESSAY */}
+            {currentQ?.question_type === 'essay' && (
+              <div>
+                <textarea 
+                  value={responses[currentQ.id] || ""}
+                  onChange={(e) => saveAnswer(currentQ.id, e.target.value)}
+                  className="w-full min-h-[300px] p-6 rounded-2xl border-2 border-slate-200 text-lg focus:border-blue-500 focus:ring-4 focus:ring-blue-500/20 outline-none transition-all resize-y shadow-sm"
+                  placeholder="Ketikkan jawabanmu di sini..."
+                  maxLength={currentQ.criteria?.maxLength > 0 ? currentQ.criteria.maxLength : undefined}
+                />
+                <div className="flex justify-between text-sm font-bold text-slate-400 mt-4 px-2">
+                  <span>
+                    Min: {currentQ.criteria?.minLength || 0} karakter
+                    {currentQ.criteria?.maxLength > 0 ? ` • Max: ${currentQ.criteria.maxLength}` : ''}
+                  </span>
+                  <span className={(responses[currentQ.id] || "").length < (currentQ.criteria?.minLength || 0) ? 'text-red-400' : 'text-green-500'}>
+                    {(responses[currentQ.id] || "").length} karakter
+                  </span>
+                </div>
+              </div>
+            )}
           </div>
         </div>
 
-        {/* RIGHT PANEL: NUMBER GRID */}
-        <div style={{width: '320px', backgroundColor: 'white', border: '1px solid #cbd5e1', display: 'flex', flexDirection: 'column'}}>
-          <div style={{backgroundColor: '#e2e8f0', padding: '15px', borderBottom: '1px solid #cbd5e1', fontWeight: 'bold', fontSize: '14px', textAlign: 'center'}}>
-            NAVIGASI SOAL
-          </div>
-          <div style={{padding: '15px', flex: 1, overflowY: 'auto'}}>
-            <div style={{display: 'grid', gridTemplateColumns: 'repeat(5, 1fr)', gap: '8px'}}>
+        {/* RIGHT PANEL: NUMBER GRID (Desktop) */}
+        <div className="hidden lg:flex flex-col w-80 shrink-0">
+          <div className="bg-white rounded-3xl border-2 border-slate-200 p-6 shadow-sm sticky top-28">
+            <h3 className="font-black text-slate-700 mb-6 uppercase tracking-widest text-sm flex items-center justify-between">
+              Navigasi Soal
+              <span className="px-2 py-1 bg-slate-100 rounded-lg text-xs">{questions.length} total</span>
+            </h3>
+            
+            <div className="grid grid-cols-5 gap-3">
               {questions.map((q, i) => {
                 const ans = responses[q.id];
-                // Check if answered based on question type
                 let isAnswered = false;
                 if (q.question_type === 'mcq' || q.question_type === 'essay') {
                   isAnswered = !!ans && ans.length > 0;
@@ -601,67 +637,105 @@ export default function ExamPage({ params }: { params: Promise<{ id: string }> }
 
                 const isFlagged = flags[q.id];
                 
-                let bgColor = '#fff';
-                let color = '#334155';
-                let border = '1px solid #94a3b8';
-                
+                let btnStyle = "border-slate-200 text-slate-500 hover:border-slate-300 bg-white";
                 if (isFlagged) {
-                  bgColor = '#eab308';
-                  color = '#fff';
-                  border = '1px solid #ca8a04';
+                  btnStyle = "border-yellow-500 bg-yellow-400 text-yellow-900 border-b-4";
                 } else if (isAnswered) {
-                  bgColor = '#3b82f6';
-                  color = '#fff';
-                  border = '1px solid #2563eb';
+                  btnStyle = "border-blue-500 bg-blue-400 text-white border-b-4";
                 }
 
                 if (currentIndex === i) {
-                  border = '3px solid #0f172a';
+                  btnStyle += " ring-4 ring-slate-200 scale-110 z-10";
                 }
 
                 return (
                   <button
                     key={q.id}
                     onClick={() => setCurrentIndex(i)}
-                    style={{
-                      aspectRatio: '1',
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                      fontSize: '12px',
-                      fontWeight: 'bold',
-                      backgroundColor: bgColor,
-                      color: color,
-                      border: border,
-                      cursor: 'pointer'
-                    }}
+                    className={`aspect-square rounded-xl font-black text-sm flex items-center justify-center border-2 transition-all ${btnStyle}`}
                   >
                     {i + 1}
                   </button>
                 );
               })}
             </div>
-          </div>
-          <div style={{padding: '15px', borderTop: '1px solid #cbd5e1', fontSize: '12px'}}>
-            <div style={{display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '8px'}}>
-              <div style={{width: '15px', height: '15px', backgroundColor: '#3b82f6', border: '1px solid #2563eb'}} />
-              <span>Sudah Dijawab</span>
-            </div>
-            <div style={{display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '8px'}}>
-              <div style={{width: '15px', height: '15px', backgroundColor: '#eab308', border: '1px solid #ca8a04'}} />
-              <span>Ragu-ragu</span>
-            </div>
-            <div style={{display: 'flex', alignItems: 'center', gap: '10px'}}>
-              <div style={{width: '15px', height: '15px', backgroundColor: '#fff', border: '1px solid #94a3b8'}} />
-              <span>Belum Dijawab</span>
+
+            <div className="mt-8 space-y-3 text-sm font-bold text-slate-500">
+              <div className="flex items-center gap-3">
+                <div className="w-5 h-5 rounded-md bg-blue-400 border-2 border-blue-500" />
+                Sudah Dijawab
+              </div>
+              <div className="flex items-center gap-3">
+                <div className="w-5 h-5 rounded-md bg-yellow-400 border-2 border-yellow-500" />
+                Ragu-ragu
+              </div>
+              <div className="flex items-center gap-3">
+                <div className="w-5 h-5 rounded-md bg-white border-2 border-slate-200" />
+                Belum Dijawab
+              </div>
             </div>
           </div>
         </div>
 
       </main>
-      <div style={{textAlign: 'center', fontSize: '12px', color: '#94a3b8', padding: '15px', opacity: 0.6}}>
-        Provided by Ruang CBT
+
+      {/* BOTTOM ACTION BAR */}
+      <div className="fixed bottom-0 left-0 right-0 z-50 bg-white border-t-2 border-slate-200 p-4 md:px-8 shadow-[0_-4px_6px_-1px_rgba(0,0,0,0.05)]">
+        <div className="max-w-7xl mx-auto flex items-center justify-between gap-4">
+          <div className="flex items-center gap-2 md:gap-4">
+            <button 
+              disabled={currentIndex === 0} 
+              onClick={() => setCurrentIndex(prev => prev - 1)}
+              className={`p-3 md:px-6 md:py-4 rounded-2xl font-bold border-b-4 transition-all flex items-center gap-2 ${
+                currentIndex === 0 
+                  ? 'bg-slate-100 text-slate-400 border-slate-200 cursor-not-allowed' 
+                  : 'bg-white text-slate-600 border-slate-300 hover:bg-slate-50 active:translate-y-1 active:border-b-0'
+              }`}
+            >
+              <ChevronLeft className="w-6 h-6" />
+              <span className="hidden md:inline">SEBELUMNYA</span>
+            </button>
+            
+            <button 
+              onClick={() => setFlag(currentQ.id)}
+              className={`p-3 md:px-6 md:py-4 rounded-2xl font-bold border-b-4 transition-all flex items-center gap-2 ${
+                flags[currentQ.id]
+                  ? 'bg-yellow-400 text-yellow-900 border-yellow-600 active:translate-y-1 active:border-b-0'
+                  : 'bg-white text-slate-600 border-slate-300 hover:bg-slate-50 active:translate-y-1 active:border-b-0'
+              }`}
+            >
+              <Flag className={`w-6 h-6 ${flags[currentQ.id] ? 'fill-current' : ''}`} />
+              <span className="hidden md:inline">RAGU-RAGU</span>
+            </button>
+          </div>
+
+          <div className="flex items-center gap-4">
+            {/* Mobile indicator */}
+            <div className="lg:hidden text-sm font-bold text-slate-400">
+              {currentIndex + 1} / {questions.length}
+            </div>
+
+            {currentIndex === questions.length - 1 ? (
+              <button 
+                onClick={submitExam} 
+                className="px-8 py-4 rounded-2xl font-bold text-white bg-green-500 border-b-4 border-green-700 hover:bg-green-400 active:translate-y-1 active:border-b-0 transition-all flex items-center gap-2 text-lg shadow-lg shadow-green-500/30"
+              >
+                <span>SELESAI</span>
+                <CheckCircle2 className="w-6 h-6" />
+              </button>
+            ) : (
+              <button 
+                onClick={() => setCurrentIndex(i => i + 1)}
+                className="px-8 py-4 rounded-2xl font-bold text-white bg-blue-500 border-b-4 border-blue-700 hover:bg-blue-400 active:translate-y-1 active:border-b-0 transition-all flex items-center gap-2 text-lg shadow-lg shadow-blue-500/30"
+              >
+                <span>LANJUT</span>
+                <ChevronRight className="w-6 h-6" />
+              </button>
+            )}
+          </div>
+        </div>
       </div>
+
     </div>
   );
 }
