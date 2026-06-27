@@ -100,31 +100,9 @@ export default function CoursesPage() {
       <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} className="flex flex-col md:flex-row md:items-end justify-between gap-4">
         <div>
           <h1 className="text-2xl sm:text-3xl font-bold text-[var(--text-primary)] tracking-tight">Explore</h1>
-          <p className="text-sm font-medium text-[var(--text-secondary)] mt-1">Discover courses and explore the Cyber Map.</p>
+          <p className="text-sm font-medium text-[var(--text-secondary)] mt-1">Discover courses and explore new lessons.</p>
         </div>
       </motion.div>
-
-      {/* Cyber Map Portal Banner */}
-      <Link href="/student/map" className="block mt-6 mb-8 group relative overflow-hidden rounded-[2rem] bg-gradient-to-r from-indigo-900 via-indigo-800 to-indigo-900 p-8 shadow-lg shadow-indigo-900/20 border-2 border-indigo-700/50 hover:border-indigo-400 transition-all">
-         <div className="absolute inset-0 bg-[url('https://www.transparenttextures.com/patterns/cubes.png')] opacity-10"></div>
-         <div className="absolute right-0 top-0 bottom-0 w-1/2 bg-gradient-to-l from-indigo-500/20 to-transparent pointer-events-none"></div>
-         
-         <div className="relative z-10 flex items-center justify-between">
-            <div className="flex items-center gap-6">
-               <div className="w-16 h-16 rounded-2xl bg-indigo-500/30 flex items-center justify-center border border-indigo-400/50 shadow-inner group-hover:scale-110 group-hover:rotate-6 transition-transform">
-                  <MapIcon className="w-8 h-8 text-indigo-300" />
-               </div>
-               <div>
-                  <h2 className="text-2xl md:text-3xl font-black text-white mb-1">Cyber Map (Peta Wilayah)</h2>
-                  <p className="text-indigo-200 font-medium text-sm md:text-base max-w-md">Jelajahi wilayah kekuasaan kelas, tantang faksi lain, dan rebut dominasi di Middle International School!</p>
-               </div>
-            </div>
-            
-            <div className="hidden md:flex items-center justify-center w-12 h-12 rounded-full bg-white/10 group-hover:bg-white/20 transition-colors">
-               <ChevronRight className="w-6 h-6 text-white" />
-            </div>
-         </div>
-      </Link>
 
       {/* THE GOLDEN HOUR PORTAL */}
       {goldenHourActive && profile?.role === 'student' && (

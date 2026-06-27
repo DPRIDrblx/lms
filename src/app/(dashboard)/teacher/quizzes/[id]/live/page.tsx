@@ -18,7 +18,8 @@ export default function TeacherLiveArenaPage() {
   const router = useRouter();
   const quizId = params?.id as string;
   const { profile } = useAuth();
-  const supabase = createClient();
+  // Use a stable supabase instance
+  const [supabase] = useState(() => createClient());
   
   const [session, setSession] = useState<any>(null);
   const [participants, setParticipants] = useState<any[]>([]);
@@ -87,7 +88,8 @@ export default function TeacherLiveArenaPage() {
     }
     
     setLoading(false);
-  }, [profile, quizId, supabase, mode]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [profile, quizId, mode]);
 
   useEffect(() => {
     fetchSession();
@@ -120,7 +122,8 @@ export default function TeacherLiveArenaPage() {
       .subscribe();
       
     return () => { supabase.removeChannel(channel); };
-  }, [fetchSession, supabase, session?.id]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [fetchSession, session?.id]);
 
   // Timer Effect
   useEffect(() => {
@@ -142,9 +145,10 @@ export default function TeacherLiveArenaPage() {
                  console.error("Failed to update status to leaderboard:", error);
                  alert("GAGAL PINDAH KE LEADERBOARD! Pastikan kamu sudah menjalankan perintah SQL ALTER TABLE di Supabase untuk mengizinkan status 'leaderboard'. Error: " + error.message);
               }
-           });
-     }
-  }, [timeLeft, session?.status, session?.id, supabase]);
+            });
+      }
+      // eslint-disable-next-line react-hooks/exhaustive-deps
+   }, [timeLeft, session?.status, session?.id]);
 
   const handleModeChange = async (newMode: "classic" | "boss_raid" | "battle_royale" | "war_of_factions") => {
     setMode(newMode);

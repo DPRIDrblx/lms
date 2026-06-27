@@ -19,7 +19,6 @@ export function StudentSidebar() {
     { name: "Social", href: "/student/social", icon: Users },
     { name: "Messages", href: "/student/messages", icon: MessageCircle },
     { name: "Explore", href: "/courses", icon: Compass },
-    { name: "Cyber Map", href: "/student/map", icon: Map },
     { name: "Market", href: "/student/market", icon: ShoppingCart },
     { name: "Shop", href: "/student/shop", icon: ShoppingBag },
     { name: "Golden Hour", href: "/student/golden-hour", icon: Sparkles },

@@ -18,7 +18,8 @@ export default function LiveArenaPlayPage() {
   const router = useRouter();
   const pin = params?.pin as string;
   const { profile } = useAuth();
-  const supabase = createClient();
+  // Use a stable supabase instance
+  const [supabase] = useState(() => createClient());
   
   const [session, setSession] = useState<any>(null);
   const [participant, setParticipant] = useState<any>(null);
@@ -66,8 +67,10 @@ export default function LiveArenaPlayPage() {
        pData = newParticipant;
     }
     setParticipant(pData);
+    setParticipant(pData);
     setLoading(false);
-  }, [profile, pin, router, supabase]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [profile, pin, router]);
   
   // Real-time AP calculation for Faction War
   const [allParticipants, setAllParticipants] = useState<any[]>([]);
@@ -117,7 +120,8 @@ export default function LiveArenaPlayPage() {
       .subscribe();
       
     return () => { supabase.removeChannel(channel); };
-  }, [supabase, session?.id, participant?.id, session?.mode]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [session?.id, participant?.id, session?.mode]);
 
   // Timer Effect for Student
   useEffect(() => {
