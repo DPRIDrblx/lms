@@ -276,7 +276,7 @@ export default function TUDashboard() {
                     />
                     
                     {searchResults.length > 0 && (
-                       <div className="absolute top-full mt-2 left-0 right-0 bg-white border border-slate-200 rounded-xl shadow-lg overflow-hidden">
+                       <div className="absolute top-full mt-2 left-0 right-0 bg-white border border-slate-200 rounded-xl shadow-lg overflow-hidden z-50">
                           {searchResults.map(user => (
                              <div 
                                 key={user.id} 
