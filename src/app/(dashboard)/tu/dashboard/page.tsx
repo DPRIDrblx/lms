@@ -93,7 +93,7 @@ export default function TUDashboard() {
     }
     const { data } = await supabase
       .from("profiles")
-      .select("id, full_name, email, role")
+      .select("id, full_name, role")
       .ilike("full_name", `%${query}%`)
       .eq("role", "student")
       .limit(5);
@@ -269,7 +269,7 @@ export default function TUDashboard() {
                     <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 w-4 h-4" />
                     <input 
                        type="text" 
-                       placeholder="Cari Nama / Email Siswa..." 
+                       placeholder="Cari Nama Siswa..." 
                        value={searchQuery}
                        onChange={e => handleSearch(e.target.value)}
                        className="w-full px-4 py-2 pl-9 rounded-xl border border-slate-200 text-sm focus:outline-none focus:border-pink-500"
@@ -285,7 +285,6 @@ export default function TUDashboard() {
                              >
                                 <div>
                                    <p className="font-bold text-slate-800 text-sm">{user.full_name}</p>
-                                   <p className="text-xs text-slate-500">{user.email}</p>
                                 </div>
                                 <span className="text-xs font-bold text-pink-500 bg-pink-50 px-2 py-1 rounded-md">Pilih</span>
                              </div>

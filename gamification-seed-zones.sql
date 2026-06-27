@@ -44,7 +44,12 @@ BEGIN
 END;
 $func$ LANGUAGE plpgsql SECURITY DEFINER;
 
+DROP POLICY IF EXISTS "TU can update all profiles fixed" ON public.profiles;
 CREATE POLICY "TU can update all profiles fixed" 
 ON public.profiles FOR UPDATE 
 USING (public.check_is_tu_or_principal());
 
+DROP POLICY IF EXISTS "TU can read all profiles fixed" ON public.profiles;
+CREATE POLICY "TU can read all profiles fixed" 
+ON public.profiles FOR SELECT 
+USING (public.check_is_tu_or_principal());
