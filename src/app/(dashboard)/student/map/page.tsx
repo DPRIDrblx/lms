@@ -4,6 +4,7 @@ import { useAuth } from "@/lib/auth-context";
 import { createClient } from "@/lib/supabase";
 import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
+import { useRouter } from "next/navigation";
 import { Shield, ShieldAlert, Swords, Loader2, Zap, Laptop2, Library, Coffee, Map } from "lucide-react";
 import { toast } from "react-hot-toast";
 
@@ -14,6 +15,7 @@ const icons = {
 export default function CyberMapPage() {
   const { profile } = useAuth();
   const supabase = createClient();
+  const router = useRouter();
   const [zones, setZones] = useState<any[]>([]);
   const [activeWars, setActiveWars] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
@@ -63,24 +65,41 @@ export default function CyberMapPage() {
     await supabase.from("profiles").update({ gems: pData.gems - DECLARATION_FEE }).eq("id", profile.id);
 
     // Insert faction war
-    const { error } = await supabase.from("faction_wars").insert({
+    const { data: fwData, error: fwError } = await supabase.from("faction_wars").insert({
         zone_id: zone.id,
         challenger_class_id: profile.class_id,
         defender_class_id: zone.controlling_class_id,
         status: 'active'
-    });
+    }).select().single();
 
-    if (error) {
+    if (fwError) {
        // Rollback gems
        await supabase.from("profiles").update({ gems: pData.gems }).eq("id", profile.id);
-       toast.error("Gagal mendeklarasikan perang: " + error.message);
+       toast.error("Gagal mendeklarasikan perang: " + fwError.message);
        setProcessing(false);
        return;
     }
 
-    toast.success("Deklarasi perang berhasil dikirim!");
-    fetchData();
-    setProcessing(false);
+    // Insert Match Session
+    const { data: matchData, error: matchError } = await supabase.from("faction_war_matches").insert({
+        war_id: fwData.id,
+        zone_id: zone.id,
+        status: 'scavenge1', // Direct to phase 1
+        phase_end_time: new Date(Date.now() + 2 * 60000).toISOString() // 2 minutes from now
+    }).select().single();
+
+    if (matchError) {
+        toast.error("Match creation failed, but war was declared.");
+    }
+
+    toast.success("Mempersiapkan Arena Tempur!");
+    
+    if (matchData) {
+       router.push(`/student/map/arena/${matchData.id}`);
+    } else {
+       fetchData();
+       setProcessing(false);
+    }
   };
 
   if (loading) return <div className="min-h-[80vh] flex items-center justify-center"><Loader2 className="w-12 h-12 animate-spin text-cyan-500" /></div>;
@@ -145,7 +164,7 @@ export default function CyberMapPage() {
                             </p>
                         </div>
 
-                        {!isMine && !war && (
+                        {(!isMine && !war) ? (
                             <button 
                                 onClick={() => handleDeclareWar(zone)}
                                 disabled={processing}
@@ -153,7 +172,25 @@ export default function CyberMapPage() {
                             >
                                 <ShieldAlert className="w-5 h-5" /> Deklarasi Perang
                             </button>
-                        )}
+                        ) : war ? (
+                            <button 
+                                onClick={async () => {
+                                    // find match
+                                    setProcessing(true);
+                                    const { data } = await supabase.from('faction_war_matches').select('id').eq('war_id', war.id).order('created_at', { ascending: false }).limit(1);
+                                    if (data && data.length > 0) {
+                                       router.push(`/student/map/arena/${data[0].id}`);
+                                    } else {
+                                       toast.error("Arena belum siap!");
+                                    }
+                                    setProcessing(false);
+                                }}
+                                disabled={processing}
+                                className="px-6 py-3 bg-cyan-500 hover:bg-cyan-600 text-white rounded-xl font-bold flex items-center justify-center gap-2 transition-all shadow-[0_4px_0_rgb(6,182,212)] hover:shadow-[0_6px_0_rgb(6,182,212)] hover:-translate-y-0.5 active:translate-y-1 active:shadow-none"
+                            >
+                                <Swords className="w-5 h-5" /> Masuk ke Arena
+                            </button>
+                        ) : null}
 
                         {war && (
                             <div className="text-right">
