@@ -24,7 +24,7 @@ export default function UIOverlay({ matchId, profileId }: UIOverlayProps) {
 
      // Listen to match updates
      const sub = supabase.channel(`match_${matchId}`)
-       .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'faction_war_matches', filter: `id=eq.${matchId}` }, (payload) => {
+       .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'faction_war_matches', filter: `id=eq.${matchId}` }, (payload: any) => {
            setMatchData(payload.new);
        })
        .subscribe();

@@ -4,6 +4,7 @@ import { createClient } from "@/lib/supabase";
 export default class MainScene extends Phaser.Scene {
   private player!: Phaser.Physics.Arcade.Sprite;
   private cursors!: Phaser.Types.Input.Keyboard.CursorKeys;
+  private wasdKeys!: any;
   private otherPlayers: Map<string, Phaser.GameObjects.Sprite> = new Map();
   private matchId!: string;
   private profileId!: string;
@@ -64,7 +65,7 @@ export default class MainScene extends Phaser.Scene {
     if (this.input.keyboard) {
       this.cursors = this.input.keyboard.createCursorKeys();
       // Add WASD
-      this.input.keyboard.addKeys('W,A,S,D');
+      this.wasdKeys = this.input.keyboard.addKeys('W,A,S,D');
     }
 
     // Setup Supabase Realtime for Multiplayer
@@ -109,22 +110,22 @@ export default class MainScene extends Phaser.Scene {
     let moved = false;
     const speed = 300;
     
-    const keys = this.input.keyboard.addKeys('W,A,S,D') as any;
+    const keys = this.wasdKeys;
 
-    if (this.cursors.left.isDown || keys.A.isDown) {
+    if ((this.cursors && this.cursors.left.isDown) || (keys && keys.A.isDown)) {
       this.player.setVelocityX(-speed);
       moved = true;
-    } else if (this.cursors.right.isDown || keys.D.isDown) {
+    } else if ((this.cursors && this.cursors.right.isDown) || (keys && keys.D.isDown)) {
       this.player.setVelocityX(speed);
       moved = true;
     } else {
       this.player.setVelocityX(0);
     }
 
-    if (this.cursors.up.isDown || keys.W.isDown) {
+    if ((this.cursors && this.cursors.up.isDown) || (keys && keys.W.isDown)) {
       this.player.setVelocityY(-speed);
       moved = true;
-    } else if (this.cursors.down.isDown || keys.S.isDown) {
+    } else if ((this.cursors && this.cursors.down.isDown) || (keys && keys.S.isDown)) {
       this.player.setVelocityY(speed);
       moved = true;
     } else {
