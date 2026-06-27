@@ -3,7 +3,7 @@
 import { useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Home, Shield, Swords, User, Compass, Users, MessageCircle, ShoppingBag, Tent, ShoppingCart, Map, Menu, X } from "lucide-react";
+import { Home, Shield, Swords, User, Compass, Users, MessageCircle, ShoppingBag, Tent, ShoppingCart, Map, Menu, X, Sparkles } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { motion, AnimatePresence } from "framer-motion";
 
@@ -22,6 +22,7 @@ export function StudentSidebar() {
     { name: "Cyber Map", href: "/student/map", icon: Map },
     { name: "Market", href: "/student/market", icon: ShoppingCart },
     { name: "Shop", href: "/student/shop", icon: ShoppingBag },
+    { name: "Golden Hour", href: "/student/golden-hour", icon: Sparkles },
     { name: "Profile", href: "/student/profile", icon: User },
   ];
 
@@ -33,7 +34,7 @@ export function StudentSidebar() {
           <h1 className="text-3xl font-black text-emerald-500 tracking-tight">IGNITE</h1>
         </div>
         
-        <nav className="flex flex-col gap-2 flex-1">
+        <nav className="flex flex-col gap-2 flex-1 overflow-y-auto pb-8 scrollbar-hide">
           {navItems.map((item) => {
             const isActive = pathname === item.href;
             return (
