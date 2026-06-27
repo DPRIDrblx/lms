@@ -82,28 +82,7 @@ const principalNav = [
   { href: "/settings", label: "Settings", icon: Settings },
 ];
 
-export function Sidebar() {
-  const { profile } = useAuth();
-  const pathname = usePathname();
-  const supabase = createClient();
-  const [mobileOpen, setMobileOpen] = useState(false);
-  const [isHomeroom, setIsHomeroom] = useState(false);
-
-  useEffect(() => {
-    if (profile?.role === 'teacher') {
-      supabase.from("classes").select("id").or(`wali_kelas_id.eq.${profile.id},co_homeroom_id.eq.${profile.id},supervisor_id.eq.${profile.id}`).limit(1)
-        .then(({ data }: any) => { if (data && data.length > 0) setIsHomeroom(true); });
-    }
-  }, [profile, supabase]);
-
-  const navItems = 
-    profile?.role === "teacher" ? teacherNav.filter(item => item.href !== "/teacher/homeroom" || isHomeroom) : 
-    profile?.role === "parent" ? parentNav : 
-    profile?.role === "tu" ? tuNav :
-    profile?.role === "principal" ? principalNav :
-    studentNav;
-
-const SidebarContent = ({ navItems, pathname, profile, setMobileOpen }: any) => {
+const SidebarContent = ({ navItems, pathname, profile, setMobileOpen, onSignOut }: any) => {
   const isExecutive = profile?.role === "principal";
   const isEducator = profile?.role === "teacher";
   const isParent = profile?.role === "parent";
@@ -215,7 +194,7 @@ const SidebarContent = ({ navItems, pathname, profile, setMobileOpen }: any) => 
             </p>
           </div>
           <button 
-            onClick={() => supabase.auth.signOut()} 
+            onClick={onSignOut} 
             className={cn(
               "p-2 rounded-lg transition-colors", 
               isExecutive ? "text-slate-500 hover:text-red-400 hover:bg-slate-800" : 
@@ -230,6 +209,28 @@ const SidebarContent = ({ navItems, pathname, profile, setMobileOpen }: any) => 
     </div>
   );
 };
+
+export function Sidebar() {
+  const { profile } = useAuth();
+  const pathname = usePathname();
+  const supabase = createClient();
+  const [mobileOpen, setMobileOpen] = useState(false);
+  const [isHomeroom, setIsHomeroom] = useState(false);
+
+  useEffect(() => {
+    if (profile?.role === 'teacher') {
+      supabase.from("classes").select("id").or(`wali_kelas_id.eq.${profile.id},co_homeroom_id.eq.${profile.id},supervisor_id.eq.${profile.id}`).limit(1)
+        .then(({ data }: any) => { if (data && data.length > 0) setIsHomeroom(true); });
+    }
+  }, [profile, supabase]);
+
+  const navItems = 
+    profile?.role === "teacher" ? teacherNav.filter(item => item.href !== "/teacher/homeroom" || isHomeroom) : 
+    profile?.role === "parent" ? parentNav : 
+    profile?.role === "tu" ? tuNav :
+    profile?.role === "principal" ? principalNav :
+    studentNav;
+
 
   return (
     <>
@@ -265,7 +266,7 @@ const SidebarContent = ({ navItems, pathname, profile, setMobileOpen }: any) => 
               >
                 <X className="h-4 w-4 text-[var(--text-secondary)]" />
               </button>
-              <SidebarContent navItems={navItems} pathname={pathname} profile={profile} setMobileOpen={setMobileOpen} />
+              <SidebarContent navItems={navItems} pathname={pathname} profile={profile} setMobileOpen={setMobileOpen} onSignOut={() => supabase.auth.signOut()} />
             </motion.aside>
           </>
         )}
