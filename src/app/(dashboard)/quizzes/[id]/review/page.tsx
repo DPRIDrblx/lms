@@ -119,6 +119,7 @@ export default function QuizReviewPage({ params }: { params: Promise<{ id: strin
               </div>
            </Card>
         </div>
+      </div>
     </div>
   );
 }

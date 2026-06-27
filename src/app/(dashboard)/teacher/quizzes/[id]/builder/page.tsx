@@ -471,6 +471,7 @@ export default function CBTBuilderPage() {
             )}
           </AnimatePresence>
         </div>
+      </div>
     </div>
   );
 }

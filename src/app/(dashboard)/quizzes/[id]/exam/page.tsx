@@ -613,6 +613,11 @@ export default function ExamPage({ params }: { params: Promise<{ id: string }> }
               </div>
             )}
           </div>
+          
+          <div className="mt-20 mb-8 text-center text-sm font-bold text-slate-300/50 uppercase tracking-widest pointer-events-none select-none flex flex-col items-center justify-center gap-2">
+            <span className="block w-12 h-1 bg-slate-200 rounded-full"></span>
+            Provided by Ruang CBT
+          </div>
         </div>
 
         {/* RIGHT PANEL: NUMBER GRID (Desktop) */}
