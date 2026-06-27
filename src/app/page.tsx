@@ -4,9 +4,8 @@ import { useAuth } from "@/lib/auth-context";
 import { useRouter } from "next/navigation";
 import { useEffect } from "react";
 import { motion } from "framer-motion";
-import { GraduationCap, Zap, BookOpen } from "lucide-react";
+import { GraduationCap, Zap, BookOpen, Bot, Sparkles } from "lucide-react";
 import Link from "next/link";
-import Image from "next/image";
 
 export default function RootPage() {
   const { user, loading } = useAuth();
@@ -81,14 +80,10 @@ export default function RootPage() {
             <motion.div
               animate={{ y: [0, -10, 0] }}
               transition={{ repeat: Infinity, duration: 4, ease: "easeInOut" }}
-              className="relative w-[120%] h-[120%] -mt-8"
+              className="relative w-full h-full flex items-center justify-center text-indigo-600 drop-shadow-2xl"
             >
-              <Image 
-                src="/images/mascot_v2.png" 
-                alt="IGNITE Mascot" 
-                fill 
-                className="object-contain mix-blend-multiply"
-              />
+              <Bot className="w-32 h-32 md:w-40 md:h-40 stroke-[1.5]" />
+              <Sparkles className="absolute top-4 right-8 w-10 h-10 text-yellow-400 fill-yellow-400 animate-pulse" />
             </motion.div>
             
             {/* Badges */}
