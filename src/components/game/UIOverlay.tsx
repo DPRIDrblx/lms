@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { createClient } from "@/lib/supabase";
 import { Loader2 } from "lucide-react";
+import VirtualJoystick from "./VirtualJoystick";
 
 interface UIOverlayProps {
   matchId: string;
@@ -57,6 +58,14 @@ export default function UIOverlay({ matchId, profileId }: UIOverlayProps) {
        </div>
 
        {/* Question Modal Area - Will be triggered by custom events from Phaser */}
+       
+       {/* Mobile Joystick (Only visible on small screens but functional everywhere) */}
+       <div className="md:hidden">
+          <VirtualJoystick 
+             onMove={(x, y) => window.dispatchEvent(new CustomEvent('joystickMove', { detail: { x, y } }))} 
+             onEnd={() => window.dispatchEvent(new CustomEvent('joystickEnd'))} 
+          />
+       </div>
     </div>
   );
 }

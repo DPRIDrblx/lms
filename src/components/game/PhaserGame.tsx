@@ -7,9 +7,11 @@ import UIOverlay from "./UIOverlay";
 interface PhaserGameProps {
   matchId: string;
   profileId: string;
+  avatarUrl?: string;
+  zoneName?: string;
 }
 
-export default function PhaserGame({ matchId, profileId }: PhaserGameProps) {
+export default function PhaserGame({ matchId, profileId, avatarUrl, zoneName }: PhaserGameProps) {
   const gameRef = useRef<HTMLDivElement>(null);
   const gameInstance = useRef<any>(null);
 
@@ -39,7 +41,7 @@ export default function PhaserGame({ matchId, profileId }: PhaserGameProps) {
         gameInstance.current = new Phaser.Game(config);
         
         // Pass the matchId and profileId to the scene
-        gameInstance.current.scene.start("MainScene", { matchId, profileId });
+        gameInstance.current.scene.start("MainScene", { matchId, profileId, avatarUrl, zoneName });
       });
     }
 
