@@ -29,7 +29,9 @@ export async function middleware(request: NextRequest) {
     request.nextUrl.pathname.startsWith("/login") ||
     request.nextUrl.pathname.startsWith("/auth");
 
-  const isPublicRoute = request.nextUrl.pathname.startsWith("/bayarnia");
+  const isPublicRoute = 
+    request.nextUrl.pathname.startsWith("/bayarnia") || 
+    request.nextUrl.pathname === "/";
 
   // Bypass for static assets and public routes
   if (isAuthPage || isPublicRoute) return supabaseResponse;

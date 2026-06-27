@@ -6,6 +6,7 @@ import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { motion } from "framer-motion";
 import { GraduationCap, Mail, Lock, User, Eye, EyeOff } from "lucide-react";
+import Image from "next/image";
 
 export default function LoginPage() {
   const { user, profile, signInWithEmail, signUpWithEmail, signInWithGoogle } = useAuth();
@@ -73,16 +74,27 @@ export default function LoginPage() {
           <div className="absolute bottom-[-20%] left-[-10%] w-[600px] h-[600px] rounded-full bg-white/10" />
         </div>
         <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.2, duration: 0.6 }}
-          className="relative z-10 text-white max-w-md"
+          initial={{ opacity: 0, scale: 0.9, y: 20 }}
+          animate={{ opacity: 1, scale: 1, y: 0 }}
+          transition={{ type: "spring", bounce: 0.4, delay: 0.2, duration: 0.8 }}
+          className="relative z-10 text-white max-w-md flex flex-col items-center text-center"
         >
-          <div className="w-20 h-20 rounded-3xl bg-white/20 backdrop-blur-sm flex items-center justify-center mb-8 border-b-4 border-white/20 shadow-xl">
-            <GraduationCap className="h-10 w-10 text-white" />
+          <div className="w-48 h-48 bg-white/20 backdrop-blur-sm rounded-[2.5rem] border-4 border-white/40 shadow-2xl flex items-center justify-center mb-8 relative overflow-visible">
+            <motion.div
+              animate={{ y: [0, -10, 0] }}
+              transition={{ repeat: Infinity, duration: 4, ease: "easeInOut" }}
+              className="relative w-[120%] h-[120%] -mt-8"
+            >
+              <Image 
+                src="/images/mascot.png" 
+                alt="IGNITE Mascot" 
+                fill 
+                className="object-contain drop-shadow-2xl"
+              />
+            </motion.div>
           </div>
-          <h1 className="text-5xl font-black mb-4 leading-tight tracking-tight">Welcome to IGNITE</h1>
-          <p className="text-lg text-white/90 leading-relaxed font-medium">
+          <h1 className="text-5xl font-black mb-4 leading-tight tracking-tight text-white drop-shadow-lg">IGNITE</h1>
+          <p className="text-lg text-white/90 leading-relaxed font-bold max-w-sm">
             A modern learning ecosystem with gamified courses, smart attendance, and integrated finance management.
           </p>
         </motion.div>
@@ -95,9 +107,9 @@ export default function LoginPage() {
         <div className="absolute bottom-0 left-0 w-64 h-64 bg-pink-100/50 rounded-full blur-3xl -ml-32 -mb-32"></div>
         
         <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.5 }}
+          initial={{ opacity: 0, scale: 0.95, y: 20 }}
+          animate={{ opacity: 1, scale: 1, y: 0 }}
+          transition={{ type: "spring", bounce: 0.4, duration: 0.6 }}
           className="w-full max-w-md relative z-10"
         >
           {/* Mobile logo */}
