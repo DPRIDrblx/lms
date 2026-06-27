@@ -380,7 +380,15 @@ export default function ExamPage({ params }: { params: Promise<{ id: string }> }
   const progressPercent = ((currentIndex + 1) / questions.length) * 100;
 
   return (
-    <div className="min-h-screen bg-white font-sans text-slate-800 flex flex-col">
+    <div className="min-h-screen bg-white font-sans text-slate-800 flex flex-col relative overflow-hidden">
+      
+      {/* BACKGROUND WATERMARK */}
+      <div className="fixed inset-0 z-0 pointer-events-none select-none flex items-center justify-center opacity-[0.03]">
+        <h1 className="text-6xl md:text-8xl font-black uppercase tracking-widest text-slate-900 whitespace-nowrap -rotate-12">
+          Provided by Ruang CBT
+        </h1>
+      </div>
+
       {/* CHEAT WARNING MODAL */}
       <AnimatePresence>
         {cheatAlert.show && (
@@ -452,7 +460,7 @@ export default function ExamPage({ params }: { params: Promise<{ id: string }> }
         </div>
       </header>
 
-      <main className="flex-1 flex flex-col lg:flex-row max-w-7xl mx-auto w-full p-4 md:p-8 gap-8">
+      <main className="flex-1 flex flex-col lg:flex-row max-w-7xl mx-auto w-full p-4 md:p-8 gap-8 relative z-10">
         
         {/* LEFT PANEL: QUESTION CONTENT */}
         <div className="flex-1 flex flex-col max-w-3xl mx-auto w-full pb-32 lg:pb-0">
@@ -655,11 +663,6 @@ export default function ExamPage({ params }: { params: Promise<{ id: string }> }
                 </div>
               </div>
             )}
-          </div>
-          
-          <div className="mt-20 mb-8 text-center text-sm font-bold text-slate-300/50 uppercase tracking-widest pointer-events-none select-none flex flex-col items-center justify-center gap-2">
-            <span className="block w-12 h-1 bg-slate-200 rounded-full"></span>
-            Provided by Ruang CBT
           </div>
         </div>
 
