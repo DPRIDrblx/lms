@@ -6,6 +6,7 @@ import { useEffect } from "react";
 import { motion } from "framer-motion";
 import { GraduationCap, Zap, BookOpen, Bot, Sparkles } from "lucide-react";
 import Link from "next/link";
+import { PwaInstallButton } from "@/components/ui/pwa-install-button";
 
 export default function RootPage() {
   const { user, loading } = useAuth();
@@ -131,6 +132,13 @@ export default function RootPage() {
               SAYA SUDAH PUNYA AKUN
             </button>
           </Link>
+        </motion.div>
+
+        <motion.div 
+          initial={{ y: 20, opacity: 0 }} animate={{ y: 0, opacity: 1 }} transition={{ delay: 0.5 }}
+          className="w-full max-w-md mx-auto mt-2"
+        >
+          <PwaInstallButton />
         </motion.div>
 
       </main>

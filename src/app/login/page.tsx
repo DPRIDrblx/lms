@@ -6,6 +6,7 @@ import { useRouter } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
 import { User, Mail, Lock, Eye, EyeOff, ArrowRight, ArrowLeft, Check, BookOpen, GraduationCap, Key, Globe } from "lucide-react";
 import Link from "next/link";
+import { PwaInstallButton } from "@/components/ui/pwa-install-button";
 
 export default function LoginPage() {
   const { user, profile, signInWithEmail, signUpWithEmail, signInWithGoogle } = useAuth();
@@ -242,6 +243,10 @@ export default function LoginPage() {
                   </svg>
                 </button>
               </div>
+            </div>
+            
+            <div className="mt-4">
+              <PwaInstallButton />
             </div>
           </form>
 
