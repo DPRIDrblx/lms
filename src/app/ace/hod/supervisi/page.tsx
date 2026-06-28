@@ -127,12 +127,6 @@ export default function HoDSupervisi() {
               </div>
             </Card>
           ))}
-
-          <div className="mt-8 p-4 bg-indigo-50 border border-indigo-100 rounded-lg">
-            <h3 className="text-xs font-bold text-indigo-800 uppercase mb-2">Peer-Observation Scheduler</h3>
-            <p className="text-xs text-indigo-600 mb-3">Jadwalkan guru untuk saling mengobservasi kelas (*Cross-visit*).</p>
-            <button className="w-full px-3 py-2 bg-indigo-600 text-white rounded text-xs font-bold shadow-sm hover:bg-indigo-700">Buat Pasangan Peer-Review</button>
-          </div>
         </div>
 
         <div className="lg:col-span-2">

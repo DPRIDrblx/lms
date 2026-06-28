@@ -11,11 +11,9 @@ export default function HoDInventaris() {
   const supabase = createClient();
 
   const [requests, setRequests] = useState<any[]>([]);
+  const [budgetLimit, setBudgetLimit] = useState<number>(0);
   const [loading, setLoading] = useState(true);
   const [processing, setProcessing] = useState(false);
-  
-  // Mock department budget
-  const BUDGET_LIMIT = 15000000;
 
   const fetchData = async () => {
     setLoading(true);
@@ -25,6 +23,17 @@ export default function HoDInventaris() {
       .in('status', ['pending_hod', 'processed_tu']); // We show pending ones to approve, and processed ones to track SLA
       
     if (data) setRequests(data);
+
+    // Fetch budget (assuming 1 department for simplicity, or we match HoD's department if we had it in profiles)
+    // For now, fetch any budget for this year or default
+    const year = new Date().getFullYear();
+    const { data: budgets } = await supabase.from('ace_budgets').select('total_budget').eq('year', year).limit(1);
+    if (budgets && budgets.length > 0) {
+      setBudgetLimit(budgets[0].total_budget);
+    } else {
+      setBudgetLimit(15000000); // fallback if no budget is set in db
+    }
+
     setLoading(false);
   };
 
@@ -53,7 +62,7 @@ export default function HoDInventaris() {
   const trackingRequests = requests.filter(r => r.status === 'approved_hod' || r.status === 'processed_tu');
 
   const totalCost = pendingRequests.reduce((acc, curr) => acc + (curr.estimated_cost * curr.quantity), 0);
-  const isOverBudget = totalCost > BUDGET_LIMIT;
+  const isOverBudget = totalCost > budgetLimit;
 
   return (
     <div className="space-y-6 pb-20">
@@ -80,14 +89,14 @@ export default function HoDInventaris() {
               </div>
               <div className="text-right">
                 <p className="text-xs text-slate-500 font-medium mb-1">Pagu Tersedia</p>
-                <p className="text-xl font-bold text-emerald-600">Rp {BUDGET_LIMIT.toLocaleString('id-ID')}</p>
+                <p className="text-xl font-bold text-emerald-600">Rp {budgetLimit.toLocaleString('id-ID')}</p>
               </div>
             </div>
 
             <div className="w-full bg-slate-100 rounded-full h-3 mb-2">
               <div 
                 className={`h-3 rounded-full transition-all ${isOverBudget ? 'bg-rose-500' : 'bg-indigo-500'}`}
-                style={{ width: `${Math.min((totalCost / BUDGET_LIMIT) * 100, 100)}%` }}
+                style={{ width: `${budgetLimit > 0 ? Math.min((totalCost / budgetLimit) * 100, 100) : 100}%` }}
               ></div>
             </div>
             

@@ -11,6 +11,9 @@ export default function HoDKurikulum() {
   const supabase = createClient();
 
   const [lessonPlans, setLessonPlans] = useState<any[]>([]);
+  const [syllabusAlignment, setSyllabusAlignment] = useState(0);
+  const [examStats, setExamStats] = useState({ total: 0, hotsPercent: 0, lotsPercent: 0 });
+  const [delayedClasses, setDelayedClasses] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [processing, setProcessing] = useState(false);
   const [feedbackText, setFeedbackText] = useState<{ [key: string]: string }>({});
@@ -23,6 +26,40 @@ export default function HoDKurikulum() {
       .eq('status', 'pending');
       
     if (data) setLessonPlans(data);
+
+    // Fetch logbooks for syllabus mapping
+    const { data: logbooks } = await supabase.from('ace_logbooks').select('*, ace_schedules(class_name)');
+    const { data: schedules } = await supabase.from('ace_schedules').select('*');
+    
+    if (logbooks && schedules && schedules.length > 0) {
+      // Very simple mock logic replacing: Calculate actual alignment based on logbook entries vs expected schedules
+      // For now, we just base it on how many schedules have at least one logbook
+      const coveredSchedules = new Set(logbooks.map((l: any) => l.schedule_id));
+      const alignment = Math.round((coveredSchedules.size / schedules.length) * 100);
+      setSyllabusAlignment(alignment);
+
+      // Find classes with no logbooks as "delayed"
+      const delayed = schedules.filter((s: any) => !coveredSchedules.has(s.id));
+      setDelayedClasses(delayed);
+    } else {
+      setSyllabusAlignment(0);
+      setDelayedClasses([]);
+    }
+
+    // Fetch exam questions
+    const { data: exams } = await supabase.from('ace_exam_questions').select('question_type');
+    if (exams && exams.length > 0) {
+      const hots = exams.filter((e: any) => e.question_type === 'HOTS').length;
+      const hotsPercent = Math.round((hots / exams.length) * 100);
+      setExamStats({
+        total: exams.length,
+        hotsPercent,
+        lotsPercent: 100 - hotsPercent
+      });
+    } else {
+      setExamStats({ total: 0, hotsPercent: 0, lotsPercent: 0 });
+    }
+
     setLoading(false);
   };
 
@@ -68,26 +105,29 @@ export default function HoDKurikulum() {
           </div>
           <div className="relative z-10">
             <h2 className="text-sm font-bold text-indigo-600 uppercase tracking-wider mb-2">Master Syllabus Mapping</h2>
-            <p className="text-3xl font-black text-slate-800 mb-1">92%</p>
+            <p className="text-3xl font-black text-slate-800 mb-1">{syllabusAlignment}%</p>
             <p className="text-xs text-slate-500">Tingkat Keselarasan Target Kurikulum Harian</p>
             
-            <div className="mt-6 flex items-start gap-3 p-3 bg-amber-50 rounded border border-amber-200">
-              <AlertTriangle className="w-5 h-5 text-amber-600 shrink-0" />
-              <div>
-                <p className="text-xs font-bold text-amber-800">Peringatan Keterlambatan Materi</p>
-                <p className="text-[10px] text-amber-700 mt-1">Kelas 10A (Biologi) tertinggal 2 silabus dibandingkan jadwal master. Segera jadwalkan evaluasi dengan guru pengampu.</p>
+            {delayedClasses.length > 0 && (
+              <div className="mt-6 flex items-start gap-3 p-3 bg-amber-50 rounded border border-amber-200">
+                <AlertTriangle className="w-5 h-5 text-amber-600 shrink-0" />
+                <div>
+                  <p className="text-xs font-bold text-amber-800">Peringatan Keterlambatan Materi</p>
+                  <p className="text-[10px] text-amber-700 mt-1">Kelas {delayedClasses.map(c => c.class_name).join(', ')} belum memiliki catatan logbook. Segera jadwalkan evaluasi dengan guru pengampu.</p>
+                </div>
               </div>
-            </div>
+            )}
           </div>
         </Card>
 
         <Card className="p-6 rounded-lg border border-slate-200 shadow-sm bg-slate-900 text-white flex flex-col justify-between">
           <div>
             <h2 className="text-sm font-bold text-slate-400 uppercase tracking-wider mb-2">Resource & Exam Bank Custodian</h2>
-            <p className="text-2xl font-black mb-4">42 Soal Ujian Tervalidasi</p>
+            <p className="text-2xl font-black mb-4">{examStats.total} Soal Ujian Tervalidasi</p>
             <p className="text-xs text-slate-400 leading-relaxed">
               Sistem telah menjalankan <strong>Checklist Layout</strong> otomatis. 
-              Komposisi soal Mid-Term saat ini: 40% HOTS, 60% LOTS. <span className="text-emerald-400 font-bold">Sesuai dengan standar baku departemen.</span>
+              Komposisi soal Mid-Term saat ini: {examStats.hotsPercent}% HOTS, {examStats.lotsPercent}% LOTS. 
+              {examStats.hotsPercent >= 40 ? <span className="text-emerald-400 font-bold ml-1">Sesuai standar.</span> : <span className="text-amber-400 font-bold ml-1">Perbanyak HOTS.</span>}
             </p>
           </div>
           <button className="w-full mt-4 py-2.5 bg-indigo-600 hover:bg-indigo-500 text-white text-sm font-bold rounded shadow-sm transition-colors">

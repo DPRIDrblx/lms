@@ -11,18 +11,47 @@ export default function HoDIzin() {
   const supabase = createClient();
 
   const [leaves, setLeaves] = useState<any[]>([]);
+  const [todaySchedules, setTodaySchedules] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [processing, setProcessing] = useState(false);
 
   const fetchData = async () => {
     setLoading(true);
     // Fetch pending tier-1 leaves
-    const { data } = await supabase
+    const { data: pendingLeaves } = await supabase
       .from('ace_leaves')
       .select('*, profiles(full_name)')
       .eq('hod_status', 'pending');
       
-    if (data) setLeaves(data);
+    if (pendingLeaves) setLeaves(pendingLeaves);
+
+    // Fetch schedules for today (0=Sun, 6=Sat)
+    const today = new Date().getDay();
+    const { data: schedules } = await supabase
+      .from('ace_schedules')
+      .select('*, profiles(full_name)')
+      .eq('day_of_week', today)
+      .order('start_time');
+
+    // Fetch approved/pending leaves for today to see who is absent
+    const todayStr = new Date().toISOString().split('T')[0];
+    const { data: activeLeaves } = await supabase
+      .from('ace_leaves')
+      .select('teacher_id, type')
+      .lte('start_date', todayStr)
+      .gte('end_date', todayStr)
+      .neq('hod_status', 'rejected'); // Only consider not rejected
+
+    if (schedules) {
+      const absentTeacherIds = new Set(activeLeaves?.map((l: any) => l.teacher_id) || []);
+      const enrichedSchedules = schedules.map((s: any) => ({
+        ...s,
+        is_absent: absentTeacherIds.has(s.teacher_id),
+        leave_type: activeLeaves?.find((l: any) => l.teacher_id === s.teacher_id)?.type
+      }));
+      setTodaySchedules(enrichedSchedules);
+    }
+
     setLoading(false);
   };
 
@@ -63,25 +92,23 @@ export default function HoDIzin() {
           </div>
           
           <div className="space-y-3">
-            <div className="flex gap-4 items-center">
-              <div className="w-20 text-xs font-bold text-slate-500">07:00 - 08:30</div>
-              <div className="flex-1 bg-emerald-100 border border-emerald-200 rounded p-2 text-xs font-bold text-emerald-700">
-                Kelas 10A (Biologi) - Tersedia Pengajar
+            {todaySchedules.length === 0 ? (
+              <p className="text-xs text-slate-500 italic">Tidak ada jadwal terdaftar untuk hari ini.</p>
+            ) : todaySchedules.map(schedule => (
+              <div key={schedule.id} className="flex gap-4 items-center">
+                <div className="w-24 text-xs font-bold text-slate-500 shrink-0">{schedule.start_time.substring(0,5)} - {schedule.end_time.substring(0,5)}</div>
+                {schedule.is_absent ? (
+                  <div className="flex-1 bg-rose-100 border border-rose-200 rounded p-2 text-xs font-bold text-rose-700 flex justify-between items-center">
+                    <span>{schedule.class_name} ({schedule.subject}) - KOSONG (Guru {schedule.leave_type === 'cuti' ? 'Cuti' : 'Dinas Luar'})</span>
+                    <button className="px-2 py-0.5 bg-rose-600 text-white rounded shadow-sm text-[10px]">Tukar Jam</button>
+                  </div>
+                ) : (
+                  <div className="flex-1 bg-emerald-100 border border-emerald-200 rounded p-2 text-xs font-bold text-emerald-700">
+                    {schedule.class_name} ({schedule.subject}) - Pengajar: {schedule.profiles?.full_name}
+                  </div>
+                )}
               </div>
-            </div>
-            <div className="flex gap-4 items-center">
-              <div className="w-20 text-xs font-bold text-slate-500">08:30 - 10:00</div>
-              <div className="flex-1 bg-rose-100 border border-rose-200 rounded p-2 text-xs font-bold text-rose-700 flex justify-between items-center">
-                <span>Kelas 11B (Fisika) - KOSONG (Guru Dinas Luar)</span>
-                <button className="px-2 py-0.5 bg-rose-600 text-white rounded shadow-sm text-[10px]">Tukar Jam</button>
-              </div>
-            </div>
-            <div className="flex gap-4 items-center">
-              <div className="w-20 text-xs font-bold text-slate-500">10:30 - 12:00</div>
-              <div className="flex-1 bg-slate-100 border border-slate-200 rounded p-2 text-xs font-bold text-slate-500">
-                Istirahat / Jam Kosong Departemen
-              </div>
-            </div>
+            ))}
           </div>
           
           <div className="mt-6 pt-4 border-t border-slate-100 flex items-center justify-between">

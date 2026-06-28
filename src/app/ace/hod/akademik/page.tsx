@@ -3,14 +3,55 @@
 import { useAuth } from "@/lib/auth-context";
 import { Card } from "@/components/ui/card";
 import { Activity, AlertCircle, BarChart3, TrendingDown, Target, BrainCircuit } from "lucide-react";
-import { useState } from "react";
+import { useEffect, useState } from "react";
+import { createClient } from "@/lib/supabase";
 
 export default function HoDAkademik() {
   const { profile } = useAuth();
+  const supabase = createClient();
   
   const [showIntervention, setShowIntervention] = useState(false);
+  const [grades, setGrades] = useState<any[]>([]);
+  const [classAverages, setClassAverages] = useState<{className: string, avg: number, teacher: string}[]>([]);
+  const [deptAvg, setDeptAvg] = useState(0);
+  const [loading, setLoading] = useState(true);
 
-  if (!profile || !profile.is_hod) return null;
+  useEffect(() => {
+    const fetchData = async () => {
+      setLoading(true);
+      const { data } = await supabase.from('ace_student_grades').select('*, profiles(full_name)');
+      
+      if (data && data.length > 0) {
+        setGrades(data);
+        
+        // Calculate dept average
+        const totalScore = data.reduce((sum: number, curr: any) => sum + curr.score, 0);
+        setDeptAvg(Math.round((totalScore / data.length) * 10) / 10);
+
+        // Group by class
+        const classMap = new Map();
+        data.forEach((g: any) => {
+          if (!classMap.has(g.class_name)) {
+            classMap.set(g.class_name, { sum: 0, count: 0, teacher: g.profiles?.full_name || 'Unknown' });
+          }
+          const c = classMap.get(g.class_name);
+          c.sum += g.score;
+          c.count += 1;
+        });
+
+        const averages = Array.from(classMap.entries()).map(([className, stats]) => ({
+          className,
+          avg: Math.round((stats.sum / stats.count) * 10) / 10,
+          teacher: stats.teacher
+        }));
+        
+        setClassAverages(averages);
+      }
+      setLoading(false);
+    };
+
+    if (profile) fetchData();
+  }, [profile]);
 
   return (
     <div className="space-y-6 pb-20">
@@ -28,7 +69,7 @@ export default function HoDAkademik() {
             <div className="flex justify-between items-start">
               <div>
                 <h2 className="text-sm font-bold text-indigo-300 uppercase tracking-wider mb-1">Rata-Rata Departemen</h2>
-                <p className="text-4xl font-black mb-1">82.4 <span className="text-lg font-medium text-indigo-300">/ 100</span></p>
+                <p className="text-4xl font-black mb-1">{deptAvg} <span className="text-lg font-medium text-indigo-300">/ 100</span></p>
                 <p className="text-xs text-indigo-200">Berdasarkan Ujian Tengah Semester (Mid-Term)</p>
               </div>
               <div className="p-3 bg-indigo-800 rounded-lg">
@@ -38,24 +79,26 @@ export default function HoDAkademik() {
             
             <div className="mt-8">
               <h3 className="text-xs font-bold text-indigo-300 uppercase mb-3">Grade Distribution Tracker</h3>
-              <div className="flex gap-2 items-end h-24">
-                <div className="flex-1 bg-indigo-500 rounded-t opacity-50 hover:opacity-100 transition-opacity" style={{ height: '40%' }}></div>
-                <div className="flex-1 bg-indigo-500 rounded-t opacity-50 hover:opacity-100 transition-opacity" style={{ height: '60%' }}></div>
-                <div className="flex-1 bg-emerald-500 rounded-t" style={{ height: '100%' }}></div>
-                <div className="flex-1 bg-indigo-500 rounded-t opacity-50 hover:opacity-100 transition-opacity" style={{ height: '80%' }}></div>
-                <div className="flex-1 bg-rose-500 rounded-t relative group" style={{ height: '30%' }}>
-                  <div className="absolute -top-8 left-1/2 -translate-x-1/2 bg-white text-rose-600 text-[10px] font-bold px-2 py-1 rounded shadow hidden group-hover:block whitespace-nowrap">
-                    10B: 65.2 (Di Bawah KKM)
+              {classAverages.length > 0 ? (
+                <>
+                  <div className="flex gap-2 items-end h-24">
+                    {classAverages.map((c, i) => (
+                      <div key={i} className={`flex-1 rounded-t relative group transition-opacity ${c.avg < 75 ? 'bg-rose-500' : (c.avg > 85 ? 'bg-emerald-500' : 'bg-indigo-500 opacity-70 hover:opacity-100')}`} style={{ height: `${c.avg}%` }}>
+                        <div className="absolute -top-8 left-1/2 -translate-x-1/2 bg-white text-slate-800 text-[10px] font-bold px-2 py-1 rounded shadow hidden group-hover:block whitespace-nowrap z-50">
+                          {c.className}: {c.avg} {c.avg < 75 && '(Di Bawah KKM)'}
+                        </div>
+                      </div>
+                    ))}
                   </div>
-                </div>
-              </div>
-              <div className="flex gap-2 mt-2 text-[10px] font-bold text-indigo-400 text-center">
-                <div className="flex-1">10A</div>
-                <div className="flex-1">11A</div>
-                <div className="flex-1 text-emerald-300">12A</div>
-                <div className="flex-1">11B</div>
-                <div className="flex-1 text-rose-300">10B</div>
-              </div>
+                  <div className="flex gap-2 mt-2 text-[10px] font-bold text-center">
+                    {classAverages.map((c, i) => (
+                      <div key={i} className={`flex-1 ${c.avg < 75 ? 'text-rose-300' : (c.avg > 85 ? 'text-emerald-300' : 'text-indigo-400')}`}>{c.className}</div>
+                    ))}
+                  </div>
+                </>
+              ) : (
+                <p className="text-xs text-indigo-300">Belum ada data nilai.</p>
+              )}
             </div>
           </div>
         </Card>
@@ -71,22 +114,26 @@ export default function HoDAkademik() {
           </div>
           
           <div className="space-y-3">
-            <div className="p-3 bg-white border border-rose-200 rounded-lg">
-              <div className="flex justify-between items-center mb-1">
-                <p className="font-bold text-slate-800 text-sm">Kelas 10B</p>
-                <span className="text-[10px] bg-rose-600 text-white px-2 py-0.5 rounded font-bold uppercase">Anjlok</span>
+            {classAverages.filter(c => c.avg < 75).length === 0 ? (
+              <p className="text-xs text-slate-500 italic p-3">Tidak ada kelas di bawah KKM.</p>
+            ) : classAverages.filter(c => c.avg < 75).map((c, i) => (
+              <div key={i} className="p-3 bg-white border border-rose-200 rounded-lg">
+                <div className="flex justify-between items-center mb-1">
+                  <p className="font-bold text-slate-800 text-sm">Kelas {c.className}</p>
+                  <span className="text-[10px] bg-rose-600 text-white px-2 py-0.5 rounded font-bold uppercase">Anjlok</span>
+                </div>
+                <p className="text-xs text-slate-500 mb-2">Guru: {c.teacher}</p>
+                <p className="text-xs text-rose-600 font-medium flex items-center gap-1">
+                  <TrendingDown className="w-3 h-3" /> Rata-rata {c.avg} (KKM: 75)
+                </p>
+                <button 
+                  onClick={() => setShowIntervention(true)}
+                  className="w-full mt-3 py-2 bg-rose-100 hover:bg-rose-200 text-rose-700 text-xs font-bold rounded transition-colors"
+                >
+                  Susun Rencana Intervensi
+                </button>
               </div>
-              <p className="text-xs text-slate-500 mb-2">Guru: Bpk. Hermawan</p>
-              <p className="text-xs text-rose-600 font-medium flex items-center gap-1">
-                <TrendingDown className="w-3 h-3" /> Rata-rata 65.2 (KKM: 75)
-              </p>
-              <button 
-                onClick={() => setShowIntervention(true)}
-                className="w-full mt-3 py-2 bg-rose-100 hover:bg-rose-200 text-rose-700 text-xs font-bold rounded transition-colors"
-              >
-                Susun Rencana Intervensi
-              </button>
-            </div>
+            ))}
           </div>
         </Card>
       </div>

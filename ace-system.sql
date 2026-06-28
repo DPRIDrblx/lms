@@ -328,3 +328,59 @@ ALTER TABLE ace_asset_requests ENABLE ROW LEVEL SECURITY;
 CREATE POLICY "View own or hod asset requests" ON ace_asset_requests FOR SELECT USING (auth.uid() = teacher_id OR EXISTS (SELECT 1 FROM profiles p WHERE p.id = auth.uid() AND p.is_hod = true));
 CREATE POLICY "Teacher insert asset requests" ON ace_asset_requests FOR INSERT WITH CHECK (auth.uid() = teacher_id);
 CREATE POLICY "HoD update asset requests" ON ace_asset_requests FOR UPDATE USING (EXISTS (SELECT 1 FROM profiles p WHERE p.id = auth.uid() AND p.is_hod = true));
+
+-- Table for Schedules
+CREATE TABLE IF NOT EXISTS ace_schedules (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  teacher_id UUID NOT NULL REFERENCES profiles(id) ON DELETE CASCADE,
+  class_name TEXT NOT NULL,
+  subject TEXT NOT NULL,
+  day_of_week INTEGER NOT NULL, -- 0 (Sun) to 6 (Sat)
+  start_time TIME NOT NULL,
+  end_time TIME NOT NULL,
+  created_at TIMESTAMPTZ NOT NULL DEFAULT now()
+);
+
+-- Table for Logbooks (Berita Acara Mengajar)
+CREATE TABLE IF NOT EXISTS ace_logbooks (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  teacher_id UUID NOT NULL REFERENCES profiles(id) ON DELETE CASCADE,
+  schedule_id UUID REFERENCES ace_schedules(id) ON DELETE SET NULL,
+  date DATE NOT NULL,
+  topic_delivered TEXT NOT NULL,
+  student_attendance_count INTEGER,
+  notes TEXT,
+  created_at TIMESTAMPTZ NOT NULL DEFAULT now()
+);
+
+-- Table for Exam Questions
+CREATE TABLE IF NOT EXISTS ace_exam_questions (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  teacher_id UUID NOT NULL REFERENCES profiles(id) ON DELETE CASCADE,
+  subject TEXT NOT NULL,
+  grade_level TEXT NOT NULL,
+  question_text TEXT NOT NULL,
+  question_type TEXT NOT NULL CHECK (question_type IN ('HOTS', 'LOTS')),
+  created_at TIMESTAMPTZ NOT NULL DEFAULT now()
+);
+
+-- Table for Student Grades
+CREATE TABLE IF NOT EXISTS ace_student_grades (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  teacher_id UUID NOT NULL REFERENCES profiles(id) ON DELETE CASCADE,
+  student_name TEXT NOT NULL,
+  class_name TEXT NOT NULL,
+  subject TEXT NOT NULL,
+  score INTEGER NOT NULL,
+  exam_type TEXT NOT NULL,
+  created_at TIMESTAMPTZ NOT NULL DEFAULT now()
+);
+
+-- Table for Department Budgets
+CREATE TABLE IF NOT EXISTS ace_budgets (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  department_name TEXT NOT NULL,
+  total_budget INTEGER NOT NULL,
+  year INTEGER NOT NULL,
+  created_at TIMESTAMPTZ NOT NULL DEFAULT now()
+);
