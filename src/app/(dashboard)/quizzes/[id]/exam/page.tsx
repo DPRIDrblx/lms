@@ -432,12 +432,15 @@ export default function ExamPage({ params }: { params: Promise<{ id: string }> }
   return (
     <div className="min-h-screen bg-white font-sans text-slate-800 flex flex-col relative overflow-hidden">
       
-      {/* BACKGROUND WATERMARK */}
-      <div className="fixed inset-0 z-0 pointer-events-none select-none flex items-center justify-center opacity-[0.03] overflow-hidden">
-        <h1 className="text-[25vw] md:text-[20vw] font-black uppercase tracking-widest text-slate-900 whitespace-nowrap -rotate-12">
-          IGNITE
-        </h1>
-      </div>
+      {/* BACKGROUND WATERMARK (REPEATING TILE ON TOP) */}
+      <div 
+        className="fixed inset-0 z-[60] pointer-events-none select-none opacity-[0.04]"
+        style={{
+          backgroundImage: `url("data:image/svg+xml,%3Csvg width='200' height='200' xmlns='http://www.w3.org/2000/svg'%3E%3Ctext x='50%25' y='50%25' font-size='24' font-family='sans-serif' font-weight='900' fill='%23000' text-anchor='middle' dominant-baseline='middle' transform='rotate(-45 100 100)'%3EIGNITE%3C/text%3E%3C/svg%3E")`,
+          backgroundRepeat: 'repeat',
+          backgroundSize: '200px 200px'
+        }}
+      />
 
       {/* CHEAT WARNING MODAL */}
       <AnimatePresence>

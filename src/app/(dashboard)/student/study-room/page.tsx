@@ -80,11 +80,17 @@ export default function StudyRoomPage() {
   const strokeDashoffset = circumference - (timeLeft / totalTime) * circumference;
 
   return (
-    <div className="min-h-[calc(100vh-100px)] bg-slate-900 rounded-3xl overflow-hidden text-slate-100 p-6 md:p-10 relative flex flex-col shadow-xl">
-      {/* Background Decor */}
-      <div className="absolute top-0 left-0 w-full h-full overflow-hidden pointer-events-none z-0">
-        <div className="absolute top-[-20%] left-[-10%] w-[50%] h-[50%] bg-emerald-500/20 blur-[120px] rounded-full mix-blend-screen" />
-        <div className="absolute bottom-[-20%] right-[-10%] w-[50%] h-[50%] bg-indigo-500/20 blur-[120px] rounded-full mix-blend-screen" />
+    <div 
+      className="min-h-[calc(100vh-100px)] rounded-3xl overflow-hidden text-slate-100 p-6 md:p-10 relative flex flex-col shadow-xl bg-slate-900 bg-cover bg-center bg-no-repeat"
+      style={{ backgroundImage: `url('https://images.unsplash.com/photo-1519681393784-d120267933ba?auto=format&fit=crop&q=80&w=2070')` }}
+    >
+      {/* Background Overlay */}
+      <div className="absolute inset-0 bg-slate-900/60 backdrop-blur-[2px] z-0" />
+      
+      {/* Aesthetic Gradients */}
+      <div className="absolute top-0 left-0 w-full h-full overflow-hidden pointer-events-none z-0 mix-blend-overlay opacity-50">
+        <div className="absolute top-[-20%] left-[-10%] w-[50%] h-[50%] bg-emerald-500/30 blur-[120px] rounded-full" />
+        <div className="absolute bottom-[-20%] right-[-10%] w-[50%] h-[50%] bg-indigo-500/30 blur-[120px] rounded-full" />
       </div>
 
       <div className="relative z-10 flex-1 flex flex-col">

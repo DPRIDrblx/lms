@@ -41,9 +41,9 @@ export function SmartEditor({ content, onChange, editable = true }: SmartEditorP
   if (!editor) return null;
 
   return (
-    <div className="border-2 border-slate-200 rounded-2xl overflow-hidden bg-white shadow-sm flex flex-col h-full">
+    <div className="flex flex-col h-full bg-white">
       {editable && (
-        <div className="bg-slate-50 border-b-2 border-slate-200 p-2 flex flex-wrap gap-1 sticky top-0 z-10">
+        <div className="bg-slate-50 border-2 border-slate-200 rounded-2xl p-2 mb-4 flex flex-wrap gap-1 sticky top-0 z-10">
           <button
             onClick={() => editor.chain().focus().toggleBold().run()}
             className={`p-2 rounded-lg transition-colors ${editor.isActive('bold') ? 'bg-slate-200 text-slate-900' : 'text-slate-600 hover:bg-slate-200'}`}
