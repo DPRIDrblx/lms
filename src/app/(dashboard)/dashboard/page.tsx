@@ -197,10 +197,14 @@ export default function DashboardPage() {
   const completedCount = progressData.filter(p => p.completed).length;
 
   return (
-    <div className="flex flex-col lg:flex-row gap-8 max-w-6xl mx-auto font-sans pb-20">
-      
-      {/* LEFT COLUMN: THE LEARNING PATH */}
-      <div className="flex-1 flex flex-col items-center py-12 relative min-h-screen">
+    <div className="max-w-6xl mx-auto space-y-8 font-sans pb-20">
+      <div className="w-full">
+        <AnnouncementBoard />
+      </div>
+
+      <div className="flex flex-col lg:flex-row gap-8">
+        {/* LEFT COLUMN: THE LEARNING PATH */}
+        <div className="flex-1 flex flex-col items-center py-6 relative min-h-[80vh]">
          <div className="text-center mb-16 relative z-10 w-full max-w-md">
            <div className="bg-emerald-500 rounded-3xl p-6 shadow-[0_8px_0_rgb(4,120,87)] border-2 border-emerald-600 text-white flex justify-between items-center transform transition-transform hover:-translate-y-1 active:translate-y-2 active:shadow-[0_0px_0_rgb(4,120,87)]">
              <div className="text-left">
