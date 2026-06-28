@@ -41,8 +41,8 @@ export default function PrincipalMutu() {
   if (!profile || profile.role !== 'principal') return null;
 
   // Aggregate stats
-  const underperforming = performances.filter(p => (p.principal_score || 0) < 70);
-  const excellent = performances.filter(p => (p.principal_score || 0) >= 90);
+  const underperforming = performances.filter(p => p.principal_score !== null && p.principal_score < 70);
+  const excellent = performances.filter(p => p.principal_score !== null && p.principal_score >= 90);
   
   return (
     <div className="space-y-6 pb-20">
