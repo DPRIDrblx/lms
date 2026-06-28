@@ -85,7 +85,7 @@ export default function PrincipalOtorisasi() {
     }
   };
 
-  const handleRoleAssignment = async (teacherId: string, roleType: 'is_hod' | 'is_hod_assistant', currentValue: boolean) => {
+  const handleRoleAssignment = async (teacherId: string, roleType: 'is_hod' | 'is_hod_assistant' | 'is_assessment_head', currentValue: boolean) => {
     setProcessing(true);
     try {
       await supabase.from('profiles').update({ [roleType]: !currentValue }).eq('id', teacherId);
@@ -223,10 +223,11 @@ export default function PrincipalOtorisasi() {
               <div key={staff.id} className="flex flex-col md:flex-row items-center justify-between p-3 bg-slate-50 border border-slate-200 rounded-lg">
                 <div className="mb-3 md:mb-0 w-full md:w-auto">
                   <h3 className="font-bold text-slate-800 text-sm">{staff.full_name}</h3>
-                  <div className="flex gap-2 mt-1">
+                  <div className="flex gap-2 mt-1 flex-wrap">
                     {staff.is_hod && <span className="px-2 py-0.5 bg-emerald-100 text-emerald-800 rounded text-[10px] font-bold uppercase">Kepala Departemen</span>}
                     {staff.is_hod_assistant && <span className="px-2 py-0.5 bg-indigo-100 text-indigo-800 rounded text-[10px] font-bold uppercase">Asisten HoD</span>}
-                    {!staff.is_hod && !staff.is_hod_assistant && <span className="text-xs text-slate-500">Guru Reguler</span>}
+                    {staff.is_assessment_head && <span className="px-2 py-0.5 bg-amber-100 text-amber-800 rounded text-[10px] font-bold uppercase">Kepala Asesmen</span>}
+                    {!staff.is_hod && !staff.is_hod_assistant && !staff.is_assessment_head && <span className="text-xs text-slate-500">Guru Reguler</span>}
                   </div>
                 </div>
                 
@@ -252,6 +253,17 @@ export default function PrincipalOtorisasi() {
                     }`}
                   >
                     {staff.is_hod_assistant ? 'Cabut Posisi Asisten' : 'Angkat Jadi Asisten'}
+                  </button>
+                  <button 
+                    disabled={processing}
+                    onClick={() => handleRoleAssignment(staff.id, 'is_assessment_head', !!staff.is_assessment_head)}
+                    className={`flex-1 md:flex-none px-3 py-1.5 font-bold text-[11px] rounded transition-colors text-center border ${
+                      staff.is_assessment_head 
+                        ? 'bg-rose-50 text-rose-600 border-rose-200 hover:bg-rose-100' 
+                        : 'bg-amber-50 text-amber-600 border-amber-200 hover:bg-amber-100'
+                    }`}
+                  >
+                    {staff.is_assessment_head ? 'Cabut Posisi HoA' : 'Angkat Jadi HoA'}
                   </button>
                 </div>
               </div>
