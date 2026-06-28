@@ -50,8 +50,8 @@ export default function SmartNotesPage() {
     if (!selectedNote) return;
     setSaving(true);
     // Optimistic UI
-    setSelectedNote(prev => ({ ...prev, content }));
-    setNotes(prev => prev.map(n => n.id === selectedNote.id ? { ...n, content } : n));
+    setSelectedNote((prev: any) => ({ ...prev, content }));
+    setNotes((prev: any[]) => prev.map(n => n.id === selectedNote.id ? { ...n, content } : n));
     
     if (saveTimeoutRef.current) clearTimeout(saveTimeoutRef.current);
     
