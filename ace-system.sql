@@ -8,6 +8,7 @@ CREATE TABLE IF NOT EXISTS ace_attendances (
   latitude DOUBLE PRECISION,
   longitude DOUBLE PRECISION,
   photo_url TEXT,
+  check_out_time TIMESTAMPTZ,
   created_at TIMESTAMPTZ NOT NULL DEFAULT now()
 );
 

@@ -20,6 +20,9 @@ export default function TUKeuangan() {
   const [editTeacherId, setEditTeacherId] = useState<string | null>(null);
   const [tempSalary, setTempSalary] = useState<string>("");
   const [savingSalary, setSavingSalary] = useState(false);
+  
+  const [globalSalaryEditing, setGlobalSalaryEditing] = useState(false);
+  const [globalSalary, setGlobalSalary] = useState("");
 
   const fetchData = async () => {
     setLoading(true);
@@ -33,7 +36,40 @@ export default function TUKeuangan() {
 
     // Fetch teachers for payroll
     const { data: teachersData } = await supabase.from('profiles').select('*').eq('role', 'teacher');
-    if (teachersData) setTeachers(teachersData);
+    const { data: attData } = await supabase.from('ace_attendances').select('*');
+    
+    if (teachersData) {
+      const enrichedTeachers = teachersData.map((t: any) => {
+        const teacherAtts = (attData || []).filter((a: any) => a.teacher_id === t.id);
+        let lateCount = 0;
+        let overtimeCount = 0;
+        teacherAtts.forEach((a: any) => {
+          const date = new Date(a.created_at);
+          const day = date.getDay();
+          
+          if (day === 0 || day === 6) {
+            overtimeCount++;
+          } else {
+            if (date.getHours() >= 7 && (date.getHours() > 7 || date.getMinutes() > 0)) {
+              lateCount++;
+            }
+            if (a.check_out_time) {
+              const outDate = new Date(a.check_out_time);
+              if (outDate.getHours() >= 17 && (outDate.getHours() > 17 || outDate.getMinutes() > 0)) {
+                overtimeCount++;
+              }
+            }
+          }
+        });
+        
+        return {
+          ...t,
+          late_deduction: lateCount * 50000,
+          overtime_addition: overtimeCount * 50000
+        };
+      });
+      setTeachers(enrichedTeachers);
+    }
 
     setLoading(false);
   };
@@ -45,6 +81,21 @@ export default function TUKeuangan() {
       await supabase.from('profiles').update({ base_salary: parsed }).eq('id', teacherId);
       setTeachers(prev => prev.map(t => t.id === teacherId ? { ...t, base_salary: parsed } : t));
       setEditTeacherId(null);
+    } catch (err: any) {
+      alert("Error: " + err.message);
+    } finally {
+      setSavingSalary(false);
+    }
+  };
+
+  const handleSaveGlobalSalary = async () => {
+    setSavingSalary(true);
+    const parsed = parseInt(globalSalary.replace(/\D/g, '')) || 0;
+    try {
+      await supabase.from('profiles').update({ base_salary: parsed }).eq('role', 'teacher');
+      setTeachers(prev => prev.map(t => ({ ...t, base_salary: parsed })));
+      setGlobalSalaryEditing(false);
+      alert("Gaji pokok seluruh guru berhasil diperbarui!");
     } catch (err: any) {
       alert("Error: " + err.message);
     } finally {
@@ -85,11 +136,32 @@ export default function TUKeuangan() {
 
       {activeTab === 'payroll' && (
         <Card className="p-6 rounded-lg border border-slate-200 shadow-sm bg-white overflow-hidden">
-          <div className="flex items-center justify-between mb-6">
+          <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-6">
             <h2 className="text-sm font-bold text-slate-800 uppercase tracking-wider">Draft Payroll: Juni 2026</h2>
-            <button className="px-4 py-2 bg-indigo-600 text-white font-bold text-xs rounded-md shadow-sm hover:bg-indigo-700 transition-colors flex items-center gap-2">
-              <Lock className="w-3.5 h-3.5" /> Lock & Release Payslip
-            </button>
+            <div className="flex items-center gap-3">
+              {globalSalaryEditing ? (
+                <div className="flex items-center gap-2">
+                  <span className="text-sm font-semibold text-slate-500">Ubah Semua: Rp</span>
+                  <input 
+                    type="text" 
+                    className="w-28 p-1.5 border border-indigo-300 rounded text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500" 
+                    value={globalSalary}
+                    onChange={(e) => setGlobalSalary(e.target.value)}
+                    disabled={savingSalary}
+                    placeholder="4500000"
+                  />
+                  <button disabled={savingSalary} onClick={handleSaveGlobalSalary} className="p-1.5 bg-emerald-100 text-emerald-600 rounded hover:bg-emerald-200 transition-colors"><Check className="w-4 h-4" /></button>
+                  <button disabled={savingSalary} onClick={() => setGlobalSalaryEditing(false)} className="p-1.5 bg-rose-100 text-rose-600 rounded hover:bg-rose-200 transition-colors"><X className="w-4 h-4" /></button>
+                </div>
+              ) : (
+                <button onClick={() => setGlobalSalaryEditing(true)} className="px-3 py-1.5 bg-slate-100 text-slate-600 font-bold text-xs rounded-md border border-slate-200 shadow-sm hover:bg-slate-200 transition-colors flex items-center gap-2">
+                  <Edit2 className="w-3.5 h-3.5" /> Ubah Gaji Pokok Massal
+                </button>
+              )}
+              <button className="px-4 py-1.5 bg-indigo-600 text-white font-bold text-xs rounded-md shadow-sm hover:bg-indigo-700 transition-colors flex items-center gap-2">
+                <Lock className="w-3.5 h-3.5" /> Lock & Release Payslip
+              </button>
+            </div>
           </div>
 
           <div className="overflow-x-auto">
@@ -135,9 +207,9 @@ export default function TUKeuangan() {
                         </div>
                       )}
                     </td>
-                    <td className="p-3 text-slate-400 font-medium">- Rp 0</td>
-                    <td className="p-3 text-emerald-600 font-semibold">+ Rp 0</td>
-                    <td className="p-3 font-bold text-slate-800">Rp {baseSalary.toLocaleString('id-ID')}</td>
+                    <td className="p-3 text-slate-400 font-medium">- Rp {teacher.late_deduction?.toLocaleString('id-ID') || 0}</td>
+                    <td className="p-3 text-emerald-600 font-semibold">+ Rp {teacher.overtime_addition?.toLocaleString('id-ID') || 0}</td>
+                    <td className="p-3 font-bold text-slate-800">Rp {(baseSalary - (teacher.late_deduction || 0) + (teacher.overtime_addition || 0)).toLocaleString('id-ID')}</td>
                   </tr>
                 )})}
               </tbody>
