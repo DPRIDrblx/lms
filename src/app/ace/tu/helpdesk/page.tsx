@@ -12,12 +12,26 @@ export default function TUHelpdesk() {
   const [activeTab, setActiveTab] = useState("matrix");
 
   const [tickets, setTickets] = useState<any[]>([]);
+  const [breachedTickets, setBreachedTickets] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
 
   const fetchData = async () => {
     setLoading(true);
     const { data } = await supabase.from('ace_tickets').select('*, profiles(full_name)').order('created_at', { ascending: false });
-    if (data) setTickets(data);
+    if (data) {
+      setTickets(data);
+      const now = new Date().getTime();
+      const breached = data.filter((t: any) => {
+        if (t.status === 'green' || t.status === 'red') return false;
+        const ticketTime = new Date(t.created_at).getTime();
+        const diffHours = (now - ticketTime) / (1000 * 60 * 60);
+        return diffHours > 48;
+      }).map((t: any) => {
+        const diffHours = Math.floor((now - new Date(t.created_at).getTime()) / (1000 * 60 * 60));
+        return { ...t, hoursOverdue: diffHours };
+      });
+      setBreachedTickets(breached);
+    }
     setLoading(false);
   };
 
@@ -134,15 +148,17 @@ export default function TUHelpdesk() {
           </div>
 
           <div className="space-y-3">
-            <div className="p-3 bg-white border border-rose-200 rounded-md flex items-center justify-between">
-              <div>
-                <p className="font-bold text-sm text-slate-800 mb-1">TKT-A8F2 - Perbaikan AC Kelas 7A</p>
-                <p className="text-xs font-semibold text-slate-500">PIC: <span className="text-slate-800">TU Perlengkapan (Pak Tono)</span></p>
+            {loading ? <p className="text-xs text-slate-500">Memuat data SLA...</p> : breachedTickets.length === 0 ? <p className="text-xs text-slate-500">Tidak ada tiket yang melewati batas waktu (Aman).</p> : breachedTickets.map(ticket => (
+              <div key={ticket.id} className="p-3 bg-white border border-rose-200 rounded-md flex items-center justify-between">
+                <div>
+                  <p className="font-bold text-sm text-slate-800 mb-1">TKT-{ticket.id.split('-')[0].toUpperCase()} - {ticket.title}</p>
+                  <p className="text-xs font-semibold text-slate-500">PIC: <span className="text-slate-800 capitalize">TU {ticket.category}</span></p>
+                </div>
+                <div className="text-right">
+                  <span className="px-2 py-1 bg-rose-600 text-white font-bold text-[10px] rounded uppercase tracking-wider animate-pulse">Breached: {ticket.hoursOverdue} Jam</span>
+                </div>
               </div>
-              <div className="text-right">
-                <span className="px-2 py-1 bg-rose-600 text-white font-bold text-[10px] rounded uppercase tracking-wider animate-pulse">Breached: 52 Jam</span>
-              </div>
-            </div>
+            ))}
           </div>
           
           <p className="text-[11px] font-medium text-slate-500 mt-4 leading-relaxed max-w-lg">

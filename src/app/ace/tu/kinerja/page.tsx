@@ -12,13 +12,38 @@ export default function TUKinerja() {
   const [activeTab, setActiveTab] = useState("monitor");
 
   const [alerts, setAlerts] = useState<any[]>([]);
+  const [totalTeachers, setTotalTeachers] = useState(0);
+  const [supervisedTeachers, setSupervisedTeachers] = useState(0);
+  const [vaultRecords, setVaultRecords] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
 
   const fetchData = async () => {
     setLoading(true);
     // Fetch workload alerts for blacklist checking
-    const { data } = await supabase.from('ace_workload_alerts').select('*, profiles(full_name)').order('days_overdue', { ascending: false });
-    if (data) setAlerts(data);
+    const { data: alertData } = await supabase.from('ace_workload_alerts').select('*, profiles(full_name)').order('days_overdue', { ascending: false });
+    if (alertData) setAlerts(alertData);
+
+    // Fetch teachers count
+    const { count: teachersCount } = await supabase.from('profiles').select('*', { count: 'exact', head: true }).eq('role', 'teacher');
+    if (teachersCount) setTotalTeachers(teachersCount);
+
+    // Fetch distinct supervised teachers (from feedbacks)
+    const { data: feedbacks } = await supabase.from('ace_student_feedbacks').select('teacher_id, created_at, profiles(full_name)');
+    if (feedbacks) {
+      const uniqueIds = new Set(feedbacks.map((f: any) => f.teacher_id));
+      setSupervisedTeachers(uniqueIds.size);
+
+      // We'll use feedbacks as a proxy for Digital Vault (BAP) for now
+      // Group by teacher
+      const vaultMap = new Map();
+      feedbacks.forEach((f: any) => {
+        if (!vaultMap.has(f.teacher_id)) {
+          vaultMap.set(f.teacher_id, { id: f.teacher_id, name: f.profiles?.full_name, date: f.created_at });
+        }
+      });
+      setVaultRecords(Array.from(vaultMap.values()));
+    }
+
     setLoading(false);
   };
 
@@ -58,20 +83,24 @@ export default function TUKinerja() {
           <BarChart3 className="w-12 h-12 text-indigo-200 mx-auto mb-4" />
           <h2 className="text-xl font-bold text-slate-800 mb-2">Keterlaksanaan Supervisi Semester Ganjil</h2>
           
-          <div className="max-w-md mx-auto my-6">
-            <div className="flex justify-between text-xs font-bold mb-2">
-              <span className="text-slate-600">Target: 45 Guru</span>
-              <span className="text-indigo-700">Teleselesaikan: 34 Guru (75%)</span>
-            </div>
-            <div className="h-3 w-full bg-slate-100 rounded-full overflow-hidden">
-              <div className="h-full bg-indigo-600 w-[75%]" />
-            </div>
-          </div>
+          {loading ? <p className="text-sm text-slate-500 mt-4">Memuat data progress...</p> : (
+            <>
+              <div className="max-w-md mx-auto my-6">
+                <div className="flex justify-between text-xs font-bold mb-2">
+                  <span className="text-slate-600">Target: {totalTeachers} Guru</span>
+                  <span className="text-indigo-700">Teleselesaikan: {supervisedTeachers} Guru ({totalTeachers > 0 ? Math.round((supervisedTeachers/totalTeachers)*100) : 0}%)</span>
+                </div>
+                <div className="h-3 w-full bg-slate-100 rounded-full overflow-hidden">
+                  <div className="h-full bg-indigo-600" style={{ width: `${totalTeachers > 0 ? (supervisedTeachers/totalTeachers)*100 : 0}%` }} />
+                </div>
+              </div>
 
-          <p className="text-sm text-slate-500 font-medium mb-6">Terdapat 11 guru yang belum dijadwalkan supervisi oleh Wakasek Kurikulum.</p>
-          <button className="px-5 py-2.5 bg-indigo-50 text-indigo-700 hover:bg-indigo-100 font-bold text-xs rounded-md border border-indigo-200 transition-colors">
-            Kirim Surat Penagihan Jadwal Otomatis
-          </button>
+              <p className="text-sm text-slate-500 font-medium mb-6">Terdapat {totalTeachers - supervisedTeachers} guru yang belum dijadwalkan/selesai disupervisi.</p>
+              <button className="px-5 py-2.5 bg-indigo-50 text-indigo-700 hover:bg-indigo-100 font-bold text-xs rounded-md border border-indigo-200 transition-colors">
+                Kirim Surat Penagihan Jadwal Otomatis
+              </button>
+            </>
+          )}
         </Card>
       )}
 
@@ -85,15 +114,17 @@ export default function TUKinerja() {
             </div>
           </div>
           
-          <div className="p-4 flex items-center justify-between border-b border-slate-100 hover:bg-slate-50 transition-colors">
-            <div>
-              <p className="font-bold text-sm text-slate-800">Pak Budi (Matematika)</p>
-              <p className="text-xs text-slate-500 mt-0.5">Selesai: 14 Agustus 2026 &bull; <span className="text-emerald-600 font-semibold flex items-center gap-1 inline-flex"><CheckCircle2 className="w-3 h-3" /> Digital Sign Valid</span></p>
+          {loading ? <p className="p-4 text-xs text-slate-500">Memuat arsip...</p> : vaultRecords.length === 0 ? <p className="p-4 text-xs text-slate-500">Belum ada arsip BAP Digital.</p> : vaultRecords.map(record => (
+            <div key={record.id} className="p-4 flex items-center justify-between border-b border-slate-100 hover:bg-slate-50 transition-colors">
+              <div>
+                <p className="font-bold text-sm text-slate-800">{record.name}</p>
+                <p className="text-xs text-slate-500 mt-0.5">Selesai: {new Date(record.date).toLocaleDateString('id-ID')} &bull; <span className="text-emerald-600 font-semibold flex items-center gap-1 inline-flex"><CheckCircle2 className="w-3 h-3" /> Digital Sign Valid</span></p>
+              </div>
+              <button className="p-2 bg-white border border-slate-200 text-slate-600 hover:text-indigo-600 hover:border-indigo-200 rounded-md shadow-sm transition-all" title="Unduh PDF">
+                <Download className="w-4 h-4" />
+              </button>
             </div>
-            <button className="p-2 bg-white border border-slate-200 text-slate-600 hover:text-indigo-600 hover:border-indigo-200 rounded-md shadow-sm transition-all" title="Unduh PDF">
-              <Download className="w-4 h-4" />
-            </button>
-          </div>
+          ))}
         </Card>
       )}
 

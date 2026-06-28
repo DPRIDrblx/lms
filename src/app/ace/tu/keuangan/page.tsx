@@ -14,11 +14,23 @@ export default function TUKeuangan() {
   const [benefits, setBenefits] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
 
+  const [teachers, setTeachers] = useState<any[]>([]);
+  const [claims, setClaims] = useState<any[]>([]);
+
   const fetchData = async () => {
     setLoading(true);
     // Fetch benefits for Plafond Control
-    const { data } = await supabase.from('ace_benefits').select('*, profiles(full_name)').eq('year', new Date().getFullYear());
-    if (data) setBenefits(data);
+    const { data: benefitsData } = await supabase.from('ace_benefits').select('*, profiles(full_name)').eq('year', new Date().getFullYear());
+    if (benefitsData) {
+      setBenefits(benefitsData);
+      const withClaims = benefitsData.filter((b: any) => b.claimed_amount > 0);
+      setClaims(withClaims);
+    }
+
+    // Fetch teachers for payroll
+    const { data: teachersData } = await supabase.from('profiles').select('*').eq('role', 'teacher');
+    if (teachersData) setTeachers(teachersData);
+
     setLoading(false);
   };
 
@@ -74,20 +86,19 @@ export default function TUKeuangan() {
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-100">
-                <tr className="hover:bg-slate-50 transition-colors">
-                  <td className="p-3 font-semibold text-slate-800">Pak Budi</td>
-                  <td className="p-3 text-slate-600">Rp 4.500.000</td>
-                  <td className="p-3 text-rose-600 font-semibold">- Rp 50.000 (Telat 2x)</td>
-                  <td className="p-3 text-emerald-600 font-semibold">+ Rp 300.000</td>
-                  <td className="p-3 font-bold text-slate-800">Rp 4.750.000</td>
-                </tr>
-                <tr className="hover:bg-slate-50 transition-colors">
-                  <td className="p-3 font-semibold text-slate-800">Bu Dina</td>
-                  <td className="p-3 text-slate-600">Rp 5.200.000</td>
-                  <td className="p-3 text-slate-400 font-medium">- Rp 0</td>
-                  <td className="p-3 text-emerald-600 font-semibold">+ Rp 150.000</td>
-                  <td className="p-3 font-bold text-slate-800">Rp 5.350.000</td>
-                </tr>
+                {loading ? (
+                  <tr><td colSpan={5} className="p-3 text-center text-xs text-slate-500">Memuat data payroll...</td></tr>
+                ) : teachers.length === 0 ? (
+                  <tr><td colSpan={5} className="p-3 text-center text-xs text-slate-500">Tidak ada data guru.</td></tr>
+                ) : teachers.map(teacher => (
+                  <tr key={teacher.id} className="hover:bg-slate-50 transition-colors">
+                    <td className="p-3 font-semibold text-slate-800">{teacher.full_name}</td>
+                    <td className="p-3 text-slate-600">Rp 4.500.000</td>
+                    <td className="p-3 text-slate-400 font-medium">- Rp 0</td>
+                    <td className="p-3 text-emerald-600 font-semibold">+ Rp 0</td>
+                    <td className="p-3 font-bold text-slate-800">Rp 4.500.000</td>
+                  </tr>
+                ))}
               </tbody>
             </table>
           </div>
@@ -98,37 +109,39 @@ export default function TUKeuangan() {
         <Card className="p-6 rounded-lg border border-slate-200 shadow-sm bg-white">
           <h2 className="text-sm font-bold text-slate-800 mb-6 uppercase tracking-wider">Antrean Verifikasi Kuitansi (Medis / Operasional)</h2>
           
-          <div className="p-4 bg-slate-50 border border-slate-200 rounded-lg flex flex-col md:flex-row gap-6 items-center">
-            <div className="w-full md:w-1/3 bg-slate-200 h-40 rounded flex items-center justify-center text-slate-400 font-bold text-xs border border-slate-300 border-dashed">
-              [Preview Foto Kuitansi]
-            </div>
-            <div className="w-full md:w-2/3 space-y-4">
-              <div className="flex items-center gap-2 mb-2">
-                <p className="font-bold text-sm text-slate-800">Klaim Pengobatan Pak Budi</p>
-                <span className="px-2 py-0.5 bg-indigo-100 text-indigo-700 font-bold text-[10px] rounded uppercase">Tunjangan Kesehatan</span>
+          {loading ? <p className="text-xs text-slate-500">Memuat antrean...</p> : claims.length === 0 ? <p className="text-xs text-slate-500 bg-slate-50 p-4 rounded-md border border-slate-200">Tidak ada antrean verifikasi klaim.</p> : claims.map(claim => (
+            <div key={claim.id} className="p-4 bg-slate-50 border border-slate-200 rounded-lg flex flex-col md:flex-row gap-6 items-center mb-4">
+              <div className="w-full md:w-1/3 bg-slate-200 h-40 rounded flex items-center justify-center text-slate-400 font-bold text-xs border border-slate-300 border-dashed">
+                [Tidak Ada Lampiran]
               </div>
-
-              <div className="grid grid-cols-2 gap-4 p-3 bg-white border border-slate-200 rounded-md">
-                <div>
-                  <p className="text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-1">Input Guru</p>
-                  <p className="font-bold text-sm text-slate-800">Rp 150.000</p>
+              <div className="w-full md:w-2/3 space-y-4">
+                <div className="flex items-center gap-2 mb-2">
+                  <p className="font-bold text-sm text-slate-800">Klaim Tunjangan: {claim.profiles?.full_name}</p>
+                  <span className="px-2 py-0.5 bg-indigo-100 text-indigo-700 font-bold text-[10px] rounded uppercase">{claim.package_name}</span>
                 </div>
-                <div>
-                  <p className="text-[10px] font-bold text-indigo-500 uppercase tracking-wider mb-1 flex items-center gap-1"><ScanLine className="w-3 h-3" /> Hasil Baca OCR (Sistem)</p>
-                  <p className="font-bold text-sm text-indigo-700">Rp 150.000</p>
+
+                <div className="grid grid-cols-2 gap-4 p-3 bg-white border border-slate-200 rounded-md">
+                  <div>
+                    <p className="text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-1">Total Diklaim</p>
+                    <p className="font-bold text-sm text-slate-800">Rp {claim.claimed_amount.toLocaleString('id-ID')}</p>
+                  </div>
+                  <div>
+                    <p className="text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-1">Maks Plafond</p>
+                    <p className="font-bold text-sm text-slate-800">Rp {claim.max_plafond.toLocaleString('id-ID')}</p>
+                  </div>
+                </div>
+
+                <div className="p-2.5 bg-slate-100 border border-slate-200 rounded flex gap-2 text-slate-600 text-xs font-semibold">
+                  Menunggu verifikasi bukti fisik.
+                </div>
+
+                <div className="flex gap-2 justify-end mt-4">
+                  <button className="px-4 py-2 bg-white text-rose-600 border border-rose-200 hover:bg-rose-50 font-bold text-xs rounded transition-colors">Tolak</button>
+                  <button className="px-4 py-2 bg-emerald-600 text-white hover:bg-emerald-700 font-bold text-xs rounded shadow-sm transition-colors">Tandai Selesai</button>
                 </div>
               </div>
-
-              <div className="p-2.5 bg-emerald-50 border border-emerald-200 rounded flex gap-2 text-emerald-800 text-xs font-semibold">
-                <CheckCircle2 className="w-4 h-4 text-emerald-600" /> Nominal Valid & Sesuai Kuitansi.
-              </div>
-
-              <div className="flex gap-2 justify-end mt-4">
-                <button className="px-4 py-2 bg-white text-rose-600 border border-rose-200 hover:bg-rose-50 font-bold text-xs rounded transition-colors">Tolak</button>
-                <button className="px-4 py-2 bg-emerald-600 text-white hover:bg-emerald-700 font-bold text-xs rounded shadow-sm transition-colors">Approve Transfer</button>
-              </div>
             </div>
-          </div>
+          ))}
         </Card>
       )}
 

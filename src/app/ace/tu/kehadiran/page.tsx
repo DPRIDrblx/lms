@@ -15,9 +15,9 @@ export default function TUKehadiran() {
   const [substitutions, setSubstitutions] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
 
-  // Emergency State
-  const [emergencyActive, setEmergencyActive] = useState(true); // Mocking an active emergency for demo
-  const standbyTeachers = ["Bu Rina (Piket)", "Pak Santoso (Piket)"];
+  // Emergency State (No mock data, wait for real emergency trigger in future)
+  const [emergencyActive, setEmergencyActive] = useState(false);
+  const standbyTeachers: string[] = [];
 
   const fetchData = async () => {
     setLoading(true);
