@@ -168,6 +168,26 @@ const SidebarContent = ({ navItems, pathname, profile, setMobileOpen, onSignOut 
             </Link>
           );
         })}
+
+        {(isExecutive || isEducator || isStaff) && (
+          <div className="pt-4 mt-4 border-t border-slate-700/30 px-1">
+            <Link 
+              href="/ace/auth"
+              onClick={() => setMobileOpen(false)}
+              className="group flex items-center justify-between p-3 bg-gradient-to-tr from-indigo-500 to-blue-600 rounded-xl hover:from-indigo-400 hover:to-blue-500 transition-all shadow-lg shadow-indigo-500/20"
+            >
+              <div className="flex items-center gap-3">
+                <div className="w-8 h-8 rounded-lg bg-white/20 flex items-center justify-center backdrop-blur-sm border border-white/20">
+                  <span className="font-black text-white text-sm">A</span>
+                </div>
+                <div className="text-left">
+                  <p className="text-xs font-black text-white leading-tight">Menuju ACE</p>
+                  <p className="text-[9px] font-bold text-indigo-100 uppercase tracking-wider">Pusat Pendidik</p>
+                </div>
+              </div>
+            </Link>
+          </div>
+        )}
       </nav>
 
       {/* User Footer */}
