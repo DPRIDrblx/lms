@@ -40,11 +40,23 @@ CREATE TABLE IF NOT EXISTS ace_performances (
 
 -- Profiles Extensions for ACE
 ALTER TABLE profiles ADD COLUMN IF NOT EXISTS base_salary INTEGER NOT NULL DEFAULT 4500000;
+ALTER TABLE profiles ADD COLUMN IF NOT EXISTS employment_status TEXT NOT NULL DEFAULT 'kontrak';
+
+-- Table for Principal Promotions/Mutations
+CREATE TABLE IF NOT EXISTS ace_promotions (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  teacher_id UUID NOT NULL REFERENCES profiles(id) ON DELETE CASCADE,
+  target_role TEXT NOT NULL,
+  status TEXT NOT NULL DEFAULT 'pending' CHECK (status IN ('pending', 'approved', 'rejected')),
+  created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+  updated_at TIMESTAMPTZ NOT NULL DEFAULT now()
+);
 
 -- Enable RLS
 ALTER TABLE ace_attendances ENABLE ROW LEVEL SECURITY;
 ALTER TABLE ace_leaves ENABLE ROW LEVEL SECURITY;
 ALTER TABLE ace_performances ENABLE ROW LEVEL SECURITY;
+ALTER TABLE ace_promotions ENABLE ROW LEVEL SECURITY;
 
 -- Policies for ace_attendances
 CREATE POLICY "Users can view their own attendances" ON ace_attendances FOR SELECT USING (auth.uid() = teacher_id);
@@ -71,6 +83,18 @@ CREATE POLICY "Principals can view all performances" ON ace_performances FOR SEL
 CREATE POLICY "Teachers can create performance plan" ON ace_performances FOR INSERT WITH CHECK (auth.uid() = teacher_id);
 CREATE POLICY "Teachers can update their own performance" ON ace_performances FOR UPDATE USING (auth.uid() = teacher_id);
 CREATE POLICY "Principals can update performances" ON ace_performances FOR UPDATE USING (
+  EXISTS (SELECT 1 FROM profiles WHERE id = auth.uid() AND role = 'principal')
+);
+
+-- Policies for ace_promotions
+CREATE POLICY "Users can view own promotions" ON ace_promotions FOR SELECT USING (auth.uid() = teacher_id);
+CREATE POLICY "Principals and TU can view all promotions" ON ace_promotions FOR SELECT USING (
+  EXISTS (SELECT 1 FROM profiles WHERE id = auth.uid() AND role IN ('principal', 'tu'))
+);
+CREATE POLICY "TU can insert promotions" ON ace_promotions FOR INSERT WITH CHECK (
+  EXISTS (SELECT 1 FROM profiles WHERE id = auth.uid() AND role = 'tu')
+);
+CREATE POLICY "Principals can update promotions" ON ace_promotions FOR UPDATE USING (
   EXISTS (SELECT 1 FROM profiles WHERE id = auth.uid() AND role = 'principal')
 );
 

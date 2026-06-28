@@ -4,7 +4,7 @@ import { useAuth } from "@/lib/auth-context";
 import { useRouter, usePathname } from "next/navigation";
 import { useEffect } from "react";
 import Link from "next/link";
-import { LogOut, UserCircle2, Briefcase, CalendarCheck, ShieldCheck, FileSignature, BookOpen, GraduationCap, CalendarClock, Receipt } from "lucide-react";
+import { LogOut, UserCircle2, Briefcase, CalendarCheck, ShieldCheck, FileSignature, BookOpen, GraduationCap, CalendarClock, Receipt, Scale, TrendingUp, Wallet, Activity } from "lucide-react";
 import { Loader2 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -66,11 +66,15 @@ export default function ACELayout({ children }: { children: React.ReactNode }) {
     { href: "/ace/tu/helpdesk", label: "Dashboard Utama TU", icon: ShieldCheck },
   ];
 
-  const navItems = isTU ? tuNavItems : teacherNavItems;
+  const principalNavItems = [
+    { href: "/ace/principal/otorisasi", label: "Otorisasi Hukum & Mutasi", icon: Scale },
+    { href: "/ace/principal/izin", label: "Otorisasi Cuti & Dinas", icon: CalendarCheck },
+    { href: "/ace/principal/mutu", label: "Rapor Mutu Guru", icon: TrendingUp },
+    { href: "/ace/principal/keuangan", label: "Pengawasan Anggaran", icon: Wallet },
+    { href: "/ace/principal/akuntabilitas", label: "Akuntabilitas TU", icon: Activity },
+  ];
 
-  if (isPrincipal) {
-    navItems.push({ href: "/ace/persetujuan", label: "Persetujuan", icon: ShieldCheck });
-  }
+  const navItems = isPrincipal ? principalNavItems : isTU ? tuNavItems : teacherNavItems;
 
   return (
     <div className="h-screen w-full bg-slate-50 flex flex-col md:flex-row font-sans overflow-hidden">
