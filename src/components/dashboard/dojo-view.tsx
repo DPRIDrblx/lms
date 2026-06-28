@@ -38,10 +38,10 @@ export function DojoView({ students, refresh }: { students: any[], refresh: () =
       if (error) throw error;
 
       if (xpDiff > 0) {
-        playSound('success');
+        playSound('correct');
         toast.success(`+${xpDiff} XP untuk ${selectedStudent.full_name} (${reason})`);
       } else {
-        playSound('error');
+        playSound('incorrect');
         toast.error(`${xpDiff} XP untuk ${selectedStudent.full_name} (${reason})`);
       }
 

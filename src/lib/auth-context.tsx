@@ -15,6 +15,7 @@ export interface Profile {
   face_descriptor: number[] | null;
   force_password_change?: boolean;
   status?: "pending" | "approved" | "rejected";
+  faction?: string;
 }
 
 interface AuthContextType {
