@@ -32,7 +32,7 @@ export default function BadgesPage() {
     try {
       const { data } = await supabase.from('student_badges').select('badge_id').eq('student_id', profile?.id);
       if (data) {
-        setUnlockedBadges(data.map(d => d.badge_id));
+        setUnlockedBadges(data.map((d: any) => d.badge_id));
       }
       
       const { data: pData } = await supabase.from('profiles').select('active_title').eq('id', profile?.id).single();
