@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect, useCallback } from "react";
 import { createClient } from "@/lib/supabase";
+import { useConfirmStore } from "@/components/ui/GlobalConfirmModal";
 import { Plus, Trash2, ArrowLeft, Search, BookOpen } from "lucide-react";
 import { useParams, useRouter } from "next/navigation";
 import { motion } from "framer-motion";
@@ -57,10 +58,14 @@ export default function PackageCoursesPage() {
   };
 
   const handleRemoveCourse = async (courseId: string) => {
-    if (confirm("Keluarkan course ini dari paket?")) {
-      await supabase.from("nia_package_courses").delete().match({ package_id: id, course_id: courseId });
-      fetchData();
-    }
+    useConfirmStore.getState().showConfirm({
+      title: "Keluarkan Materi?",
+      message: "Keluarkan course ini dari paket?",
+      onConfirm: async () => {
+        await supabase.from("nia_package_courses").delete().match({ package_id: id, course_id: courseId });
+        fetchData();
+      }
+    });
   };
 
   // Filter courses that are not already in the package

@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect } from "react";
 import { createClient } from "@/lib/supabase";
+import { useConfirmStore } from "@/components/ui/GlobalConfirmModal";
 import { Plus, Trash2, Tag, Percent, DollarSign, Receipt } from "lucide-react";
 import { motion } from "framer-motion";
 
@@ -46,7 +47,12 @@ export default function PromosPage() {
     const { error } = await supabase.from("nia_promo_codes").insert(payload);
     
     if (error) {
-      alert("Gagal membuat promo. Pastikan kode unik dan belum pernah digunakan.");
+      useConfirmStore.getState().showConfirm({
+        title: "Gagal",
+        message: "Gagal membuat promo. Pastikan kode unik dan belum pernah digunakan.",
+        isAlert: true,
+        onConfirm: () => {}
+      });
     }
 
     setShowModal(false);
@@ -55,10 +61,14 @@ export default function PromosPage() {
   };
 
   const handleDelete = async (id: string) => {
-    if (confirm("Yakin ingin menghapus voucher ini?")) {
-      await supabase.from("nia_promo_codes").delete().eq("id", id);
-      fetchPromos();
-    }
+    useConfirmStore.getState().showConfirm({
+      title: "Hapus Voucher?",
+      message: "Yakin ingin menghapus voucher ini?",
+      onConfirm: async () => {
+        await supabase.from("nia_promo_codes").delete().eq("id", id);
+        fetchPromos();
+      }
+    });
   };
 
   const resetForm = () => {

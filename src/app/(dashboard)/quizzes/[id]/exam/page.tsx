@@ -27,6 +27,7 @@ export default function ExamPage({ params }: { params: Promise<{ id: string }> }
   const [cheatWarnings, setCheatWarnings] = useState(0);
   const [presenceChannel, setPresenceChannel] = useState<any>(null);
   const [cheatAlert, setCheatAlert] = useState<{show: boolean, type: 'warning' | 'fatal'}>({show: false, type: 'warning'});
+  const [confirmModal, setConfirmModal] = useState<{show: boolean, title: string, message: string, onConfirm: () => void, isAlert?: boolean}>({show: false, title: '', message: '', onConfirm: () => {}});
   const isAlertOpen = useRef(false);
 
   // Drag and drop state for matching
@@ -41,13 +42,7 @@ export default function ExamPage({ params }: { params: Promise<{ id: string }> }
     ]);
 
     if (qData.data) setQuiz(qData.data);
-    if (qsData.data) {
-      let qList = qsData.data as any[];
-      if (qData.data?.shuffle_questions) {
-        qList = [...qList].sort(() => Math.random() - 0.5);
-      }
-      setQuestions(qList);
-    }
+    let qList = qsData.data ? (qsData.data as any[]) : [];
 
     const { data: existing } = await supabase.from("exam_sessions").select("*").eq("student_id", profile.id).eq("quiz_id", id).single();
     
@@ -74,7 +69,28 @@ export default function ExamPage({ params }: { params: Promise<{ id: string }> }
         return; 
       }
       setSession(existing);
-      setTimeLeft(existing.time_left_seconds);
+      
+      const totalSeconds = (qData.data?.time_limit || qData.data?.time_limit_minutes || 60) * 60;
+      const startedAt = existing.metadata?.started_at ? new Date(existing.metadata.started_at).getTime() : Date.now();
+      const elapsedSeconds = Math.floor((Date.now() - startedAt) / 1000);
+      setTimeLeft(Math.max(0, totalSeconds - elapsedSeconds));
+      
+      if (qData.data?.shuffle_questions) {
+        const savedOrder = existing.metadata?.question_order;
+        if (savedOrder && Array.isArray(savedOrder)) {
+          qList.sort((a, b) => {
+            const indexA = savedOrder.indexOf(a.id);
+            const indexB = savedOrder.indexOf(b.id);
+            if (indexA === -1 && indexB === -1) return 0;
+            if (indexA === -1) return 1;
+            if (indexB === -1) return -1;
+            return indexA - indexB;
+          });
+        } else {
+          qList = [...qList].sort(() => Math.random() - 0.5);
+        }
+      }
+      setQuestions(qList);
       
       const { data: resp } = await supabase.from("quiz_responses").select("*").eq("student_id", profile.id).eq("quiz_id", id);
       if (resp) {
@@ -90,12 +106,19 @@ export default function ExamPage({ params }: { params: Promise<{ id: string }> }
         setFlags(initialFlags);
       }
     } else {
+      if (qData.data?.shuffle_questions) {
+        qList = [...qList].sort(() => Math.random() - 0.5);
+      }
+      setQuestions(qList);
+      
+      const questionOrder = qList.map(q => q.id);
+
       const { data: newSession } = await supabase.from("exam_sessions").insert({
         student_id: profile.id,
         quiz_id: id,
         time_left_seconds: (qData.data?.time_limit || qData.data?.time_limit_minutes || 60) * 60,
         status: 'in_progress',
-        metadata: { started_at: new Date().toISOString() }
+        metadata: { started_at: new Date().toISOString(), question_order: questionOrder }
       }).select().single();
       
       if (newSession) {
@@ -138,7 +161,7 @@ export default function ExamPage({ params }: { params: Promise<{ id: string }> }
     if (timeLeft <= 0 || loading || isFinished) return;
     const t = setInterval(() => {
       setTimeLeft(prev => {
-        if (prev <= 1) { clearInterval(t); submitExam(); return 0; }
+        if (prev <= 1) { clearInterval(t); submitExam(true); return 0; }
         return prev - 1;
       });
     }, 1000);
@@ -164,7 +187,7 @@ export default function ExamPage({ params }: { params: Promise<{ id: string }> }
 
           if (quiz?.allow_leave_exam === false) {
              setCheatAlert({ show: true, type: 'fatal' });
-             submitExam();
+             submitExam(true);
           } else {
              setCheatAlert({ show: true, type: 'warning' });
           }
@@ -215,15 +238,32 @@ export default function ExamPage({ params }: { params: Promise<{ id: string }> }
     await supabase.from("quiz_responses").update({ is_flagged: val }).eq("student_id", profile?.id).eq("question_id", qId);
   };
 
-  const submitExam = async () => {
-    if (timeLeft > 0 && !confirm("Apakah Anda yakin ingin mengakhiri ujian ini?")) return;
+  const submitExam = async (skipConfirm = false) => {
+    if (!skipConfirm && timeLeft > 0) {
+      setConfirmModal({
+        show: true,
+        title: 'Kumpulkan Ujian?',
+        message: 'Apakah Anda yakin ingin mengakhiri ujian ini? Anda tidak bisa mengubah jawaban setelah dikumpulkan.',
+        onConfirm: () => {
+          setConfirmModal(prev => ({...prev, show: false}));
+          submitExam(true);
+        }
+      });
+      return;
+    }
     
     if (timeLeft > 0 && quiz?.min_time_to_submit > 0) {
       const totalTimeSeconds = (quiz?.time_limit || quiz?.time_limit_minutes || 60) * 60;
       const elapsedSeconds = totalTimeSeconds - timeLeft;
       const minTimeSeconds = quiz.min_time_to_submit * 60;
       if (elapsedSeconds < minTimeSeconds) {
-        alert(`Anda belum dapat mengumpulkan ujian. Waktu pengerjaan minimal adalah ${quiz.min_time_to_submit} menit.`);
+        setConfirmModal({
+          show: true,
+          title: 'Belum Bisa Kumpul',
+          message: `Anda belum dapat mengumpulkan ujian. Waktu pengerjaan minimal adalah ${quiz.min_time_to_submit} menit.`,
+          onConfirm: () => setConfirmModal(prev => ({...prev, show: false})),
+          isAlert: true
+        });
         return;
       }
     }
@@ -429,10 +469,59 @@ export default function ExamPage({ params }: { params: Promise<{ id: string }> }
         )}
       </AnimatePresence>
 
+      {/* CUSTOM CONFIRM MODAL (Duolingo Style) */}
+      <AnimatePresence>
+        {confirmModal.show && (
+          <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-slate-900/40 backdrop-blur-sm">
+            <motion.div 
+              initial={{ scale: 0.9, opacity: 0 }} 
+              animate={{ scale: 1, opacity: 1 }} 
+              exit={{ scale: 0.9, opacity: 0 }}
+              className="bg-white max-w-sm w-full rounded-3xl p-8 shadow-2xl border-2 border-slate-200 text-center relative overflow-hidden"
+            >
+              <div className="w-20 h-20 bg-blue-100 text-blue-500 rounded-2xl flex items-center justify-center mx-auto mb-6">
+                <AlertCircle className="w-10 h-10" />
+              </div>
+              <h2 className="text-2xl font-black text-slate-800 mb-2">
+                {confirmModal.title}
+              </h2>
+              <p className="text-slate-600 mb-8 font-medium leading-relaxed">
+                {confirmModal.message}
+              </p>
+              
+              <div className="flex flex-col gap-3">
+                <button 
+                  onClick={() => {
+                    confirmModal.onConfirm();
+                  }}
+                  className="w-full py-4 bg-blue-500 hover:bg-blue-400 active:bg-blue-600 active:translate-y-1 text-white font-bold rounded-2xl border-b-4 border-blue-700 transition-all text-lg"
+                >
+                  {confirmModal.isAlert ? 'SAYA MENGERTI' : 'YA, LANJUTKAN'}
+                </button>
+                
+                {!confirmModal.isAlert && (
+                  <button 
+                    onClick={() => setConfirmModal(prev => ({...prev, show: false}))}
+                    className="w-full py-4 bg-white hover:bg-slate-50 active:bg-slate-100 active:translate-y-1 text-slate-500 font-bold rounded-2xl border-2 border-slate-200 border-b-4 transition-all text-lg"
+                  >
+                    TIDAK, BATAL
+                  </button>
+                )}
+              </div>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
+
       {/* HEADER PROGRESS (Duolingo Style) */}
       <header className="sticky top-0 z-50 bg-white border-b-2 border-slate-100 px-4 py-4 md:px-8 flex items-center gap-4 md:gap-8 shadow-sm">
         <button 
-          onClick={() => { if(confirm("Kembali ke dashboard? Ujian akan tetap berjalan.")) router.push('/dashboard') }}
+          onClick={() => setConfirmModal({
+            show: true, 
+            title: 'Keluar Ujian?', 
+            message: 'Kembali ke dashboard? Ujian akan tetap berjalan dan waktu terus berjalan.', 
+            onConfirm: () => router.push('/dashboard')
+          })}
           className="text-slate-400 hover:text-slate-600 transition-colors"
         >
           <ChevronLeft className="w-8 h-8" strokeWidth={3} />

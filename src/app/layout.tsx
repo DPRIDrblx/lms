@@ -2,6 +2,7 @@ import type { Metadata, Viewport } from "next";
 import "./globals.css";
 import { AuthProvider } from "@/lib/auth-context";
 import { ThemeProvider } from "@/lib/theme-context";
+import { GlobalConfirmModal } from "@/components/ui/GlobalConfirmModal";
 
 export const viewport: Viewport = {
   themeColor: "#10b981",
@@ -26,6 +27,7 @@ export default function RootLayout({
           <AuthProvider>
             {children}
             <Toaster position="top-right" />
+            <GlobalConfirmModal />
           </AuthProvider>
         </ThemeProvider>
       </body>

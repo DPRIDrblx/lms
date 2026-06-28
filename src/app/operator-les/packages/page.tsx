@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect } from "react";
 import { createClient } from "@/lib/supabase";
+import { useConfirmStore } from "@/components/ui/GlobalConfirmModal";
 import { Plus, Edit, Settings2, Trash2, Package, Tag, BookOpen } from "lucide-react";
 import { motion } from "framer-motion";
 
@@ -72,10 +73,14 @@ export default function PackagesPage() {
   };
 
   const handleDelete = async (id: string) => {
-    if (confirm("Yakin ingin menghapus paket ini?")) {
-      await supabase.from("nia_packages").delete().eq("id", id);
-      fetchPackages();
-    }
+    useConfirmStore.getState().showConfirm({
+      title: "Hapus Paket?",
+      message: "Yakin ingin menghapus paket ini?",
+      onConfirm: async () => {
+        await supabase.from("nia_packages").delete().eq("id", id);
+        fetchPackages();
+      }
+    });
   };
 
   const resetForm = () => {
