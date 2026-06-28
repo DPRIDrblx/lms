@@ -857,7 +857,7 @@ export default function ExamPage({ params }: { params: Promise<{ id: string }> }
 
             {currentIndex === questions.length - 1 ? (
               <button 
-                onClick={submitExam} 
+                onClick={() => submitExam()} 
                 className="px-8 py-4 rounded-2xl font-bold text-white bg-green-500 border-b-4 border-green-700 hover:bg-green-400 active:translate-y-1 active:border-b-0 transition-all flex items-center gap-2 text-lg shadow-lg shadow-green-500/30"
               >
                 <span>SELESAI</span>
