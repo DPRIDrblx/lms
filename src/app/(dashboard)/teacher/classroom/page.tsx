@@ -19,6 +19,7 @@ import {
 } from "lucide-react";
 import { useEffect, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
+import { DojoView } from "@/components/dashboard/dojo-view";
 
 export default function TeacherClassroomPage() {
   const { profile } = useAuth();
@@ -28,7 +29,7 @@ export default function TeacherClassroomPage() {
   const [staff, setStaff] = useState<any[]>([]);
   const [managedClass, setManagedClass] = useState<any>(null);
   const [loading, setLoading] = useState(true);
-  const [activeTab, setActiveTab] = useState<"students" | "chat" | "leadership">("students");
+  const [activeTab, setActiveTab] = useState<"students" | "chat" | "leadership" | "dojo">("students");
   const [chatMessage, setChatMessage] = useState("");
 
   useEffect(() => {
@@ -112,6 +113,12 @@ export default function TeacherClassroomPage() {
             className={`px-6 py-2 rounded-lg text-sm font-bold transition-all whitespace-nowrap ${activeTab === 'chat' ? "bg-white shadow-sm text-[var(--accent)]" : "text-[var(--text-tertiary)]"}`}
           >
             Group Chat
+          </button>
+          <button 
+            onClick={() => setActiveTab("dojo")}
+            className={`px-6 py-2 rounded-lg text-sm font-bold transition-all whitespace-nowrap ${activeTab === 'dojo' ? "bg-white shadow-sm text-emerald-500" : "text-[var(--text-tertiary)]"}`}
+          >
+            Dojo Mode 🥋
           </button>
         </div>
       </header>
@@ -200,6 +207,17 @@ export default function TeacherClassroomPage() {
           </motion.div>
         )}
         
+        {activeTab === "dojo" && (
+          <motion.div 
+            key="dojo"
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -20 }}
+          >
+            <DojoView students={students} refresh={fetchClassData} />
+          </motion.div>
+        )}
+
         {activeTab === "leadership" && (
           <motion.div 
             key="leadership"
