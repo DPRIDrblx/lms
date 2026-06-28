@@ -1,42 +1,75 @@
 "use client";
 
 import { useAuth } from "@/lib/auth-context";
+import { createClient } from "@/lib/supabase";
 import { Card } from "@/components/ui/card";
-import { Headphones, Ticket, Plus, FileText, CheckCircle2, Clock, XCircle, AlertTriangle } from "lucide-react";
-import { useState } from "react";
+import { Headphones, Ticket, Plus, FileText, CheckCircle2, Clock, XCircle, AlertTriangle, Loader2 } from "lucide-react";
+import { useState, useEffect } from "react";
 
 export default function ACEHelpdesk() {
   const { profile } = useAuth();
+  const supabase = createClient();
   const [activeTab, setActiveTab] = useState("tiket-saya");
   
-  if (!profile) return null;
+  const [tickets, setTickets] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
 
-  const mockTickets = [
-    { id: "TKT-1042", category: "Surat", title: "Permohonan Surat Keterangan Aktif Mengajar", status: "green", date: "28 Juni 2026", sla: 0 },
-    { id: "TKT-1088", category: "Sarpras", title: "Laporan Kerusakan Printer Ruang Guru Lantai 2", status: "yellow", date: "Hari Ini", sla: 2 }, // 2 hours left
-    { id: "TKT-1089", category: "IT", title: "Reset Password Akun Belajar.id", status: "blue", date: "Baru Saja", sla: 24 },
-    { id: "TKT-1090", category: "Surat", title: "Permohonan Legalisir Ijazah", status: "red", reason: "Dokumen ijazah asli belum diserahkan ke loket.", date: "Kemarin", sla: -1 }, // SLA Breached
-  ];
+  // Form State
+  const [form, setForm] = useState({ category: 'surat', title: '', description: '' });
+  const [submitLoading, setSubmitLoading] = useState(false);
+
+  const fetchTickets = async () => {
+    if (!profile) return;
+    const { data } = await supabase.from('ace_tickets').select('*').eq('requestor_id', profile.id).order('created_at', { ascending: false });
+    if (data) setTickets(data);
+    setLoading(false);
+  };
+
+  useEffect(() => {
+    fetchTickets();
+  }, [profile]);
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!profile) return;
+    setSubmitLoading(true);
+    try {
+      await supabase.from('ace_tickets').insert({
+        requestor_id: profile.id,
+        ...form
+      });
+      alert("Tiket permohonan berhasil dikirim ke TU.");
+      setForm({ category: 'surat', title: '', description: '' });
+      setActiveTab("tiket-saya");
+      fetchTickets();
+    } catch (err: any) {
+      alert("Error: " + err.message);
+    } finally {
+      setSubmitLoading(false);
+    }
+  };
+
+  if (!profile) return null;
 
   const getStatusUI = (status: string) => {
     switch (status) {
-      case 'blue': return { color: 'text-blue-600', bg: 'bg-blue-100', label: 'Tiket Dibuat', icon: Ticket };
-      case 'yellow': return { color: 'text-amber-600', bg: 'bg-amber-100', label: 'Diproses TU', icon: Clock };
-      case 'green': return { color: 'text-emerald-600', bg: 'bg-emerald-100', label: 'Selesai / Ambil di Loket', icon: CheckCircle2 };
-      case 'red': return { color: 'text-rose-600', bg: 'bg-rose-100', label: 'Ditolak', icon: XCircle };
-      default: return { color: 'text-slate-600', bg: 'bg-slate-100', label: 'Unknown', icon: Ticket };
+      case 'blue': return { color: 'text-indigo-600', bg: 'bg-indigo-50 border-indigo-200', label: 'Tiket Dibuat', icon: Ticket };
+      case 'yellow': return { color: 'text-amber-600', bg: 'bg-amber-50 border-amber-200', label: 'Diproses TU', icon: Clock };
+      case 'green': return { color: 'text-emerald-700', bg: 'bg-emerald-50 border-emerald-200', label: 'Selesai / Ambil di Loket', icon: CheckCircle2 };
+      case 'red': return { color: 'text-rose-600', bg: 'bg-rose-50 border-rose-200', label: 'Ditolak', icon: XCircle };
+      default: return { color: 'text-slate-600', bg: 'bg-slate-50 border-slate-200', label: 'Unknown', icon: Ticket };
     }
   };
 
   return (
-    <div className="max-w-6xl mx-auto space-y-8 pb-20">
+    <div className="space-y-6 pb-20">
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
-          <h1 className="text-3xl font-black text-slate-800 tracking-tight">TU Concierge & Helpdesk</h1>
-          <p className="text-slate-500 font-medium mt-1">Pusat Pelayanan Birokrasi Tanpa Tatap Muka</p>
+          <h1 className="text-2xl font-bold text-slate-800 tracking-tight">TU Concierge & Helpdesk</h1>
+          <p className="text-slate-500 font-medium mt-1 text-sm">Pusat Pelayanan Birokrasi Tanpa Tatap Muka</p>
         </div>
-        <button onClick={() => setActiveTab("buat-tiket")} className="px-5 py-3 bg-indigo-600 hover:bg-indigo-700 text-white font-black rounded-2xl shadow-lg shadow-indigo-600/30 flex items-center gap-2 transition-colors">
-          <Plus className="w-5 h-5" /> Buat Permohonan Baru
+        <button onClick={() => setActiveTab("buat-tiket")} className="px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white font-semibold text-xs rounded-md shadow-sm flex items-center gap-2 transition-colors">
+          <Plus className="w-4 h-4" /> Buat Permohonan Baru
         </button>
       </div>
 
@@ -48,7 +81,7 @@ export default function ACEHelpdesk() {
           <button 
             key={t.id}
             onClick={() => setActiveTab(t.id)}
-            className={`px-6 py-3 rounded-2xl font-bold text-sm whitespace-nowrap transition-colors ${activeTab === t.id ? 'bg-indigo-600 text-white shadow-md' : 'bg-white text-slate-500 border border-slate-200 hover:bg-slate-50'}`}
+            className={`px-4 py-2 rounded-md font-semibold text-xs whitespace-nowrap transition-colors ${activeTab === t.id ? 'bg-indigo-600 text-white shadow-sm' : 'bg-white text-slate-600 border border-slate-200 hover:bg-slate-50'}`}
           >
             {t.label}
           </button>
@@ -56,55 +89,44 @@ export default function ACEHelpdesk() {
       </div>
 
       {activeTab === 'tiket-saya' && (
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-          <div className="md:col-span-2 space-y-4">
-            {mockTickets.map(ticket => {
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+          <div className="md:col-span-2 space-y-3">
+            {loading ? (
+              <p className="text-slate-500 text-sm">Memuat tiket...</p>
+            ) : tickets.length === 0 ? (
+              <p className="text-slate-500 text-sm p-8 bg-white border border-slate-200 rounded-lg text-center shadow-sm">Belum ada tiket yang dibuat.</p>
+            ) : tickets.map(ticket => {
               const UI = getStatusUI(ticket.status);
               const Icon = UI.icon;
               return (
-                <Card key={ticket.id} className={`p-5 border-2 rounded-2xl transition-colors ${ticket.status === 'red' ? 'border-rose-200 bg-rose-50/30' : 'border-slate-200 hover:border-slate-300'}`}>
-                  <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-                    <div className="flex items-start gap-4">
-                      <div className={`p-3 rounded-2xl ${UI.bg} ${UI.color}`}>
-                        <Icon className="w-6 h-6" />
+                <Card key={ticket.id} className={`p-4 border rounded-lg transition-colors shadow-sm ${UI.bg}`}>
+                  <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-4">
+                    <div className="flex items-start gap-3">
+                      <div className={`p-2 rounded-md bg-white border border-slate-200 shadow-sm ${UI.color}`}>
+                        <Icon className="w-5 h-5" />
                       </div>
                       <div>
                         <div className="flex items-center gap-2 mb-1">
-                          <span className="font-black text-xs text-slate-400">{ticket.id}</span>
-                          <span className="px-2 py-0.5 bg-slate-100 text-slate-600 rounded-md text-[10px] font-black uppercase tracking-widest">{ticket.category}</span>
+                          <span className="font-bold text-[10px] text-slate-400 font-mono">TKT-{ticket.id.split('-')[0].toUpperCase()}</span>
+                          <span className="px-1.5 py-0.5 bg-white border border-slate-200 text-slate-600 rounded text-[9px] font-bold uppercase tracking-wider">{ticket.category}</span>
                         </div>
-                        <h3 className="font-bold text-slate-800 text-lg leading-tight mb-1">{ticket.title}</h3>
-                        <p className={`text-xs font-bold ${UI.color}`}>{UI.label} &bull; {ticket.date}</p>
+                        <h3 className="font-bold text-slate-800 text-sm leading-tight mb-1">{ticket.title}</h3>
+                        <p className={`text-[11px] font-semibold ${UI.color}`}>{UI.label} &bull; {new Date(ticket.created_at).toLocaleDateString('id-ID')}</p>
                         
-                        {ticket.status === 'red' && (
-                          <div className="mt-3 p-3 bg-rose-100/50 border border-rose-200 rounded-xl text-sm text-rose-700 font-medium">
-                            <span className="font-bold block mb-1">Alasan Penolakan:</span>
-                            {ticket.reason}
+                        {ticket.status === 'red' && ticket.rejection_reason && (
+                          <div className="mt-2 p-2 bg-white/50 border border-rose-200 rounded-md text-xs text-rose-700 font-medium">
+                            <span className="font-bold block mb-0.5">Alasan Penolakan:</span>
+                            {ticket.rejection_reason}
                           </div>
                         )}
                         
-                        {ticket.status === 'green' && ticket.category === 'Surat' && (
-                          <button className="mt-3 px-4 py-2 bg-emerald-50 text-emerald-600 border border-emerald-200 font-bold text-xs rounded-xl hover:bg-emerald-100 flex items-center gap-2">
-                            <FileText className="w-4 h-4" /> Unduh Dokumen (Auto-Generated)
+                        {ticket.status === 'green' && ticket.category === 'surat' && (
+                          <button className="mt-3 px-3 py-1.5 bg-white text-emerald-700 border border-emerald-200 font-bold text-xs rounded-md hover:bg-emerald-50 flex items-center gap-1.5 shadow-sm transition-colors">
+                            <FileText className="w-3.5 h-3.5" /> Unduh Dokumen Digital
                           </button>
                         )}
                       </div>
                     </div>
-                    
-                    {/* SLA Timer */}
-                    {ticket.status === 'blue' || ticket.status === 'yellow' ? (
-                      <div className="text-right sm:shrink-0 bg-slate-50 p-3 rounded-xl border border-slate-100">
-                        <p className="text-[10px] font-black uppercase tracking-widest text-slate-400 mb-1">SLA Target</p>
-                        <p className={`font-black text-xl flex items-center justify-end gap-1 ${ticket.sla < 5 ? 'text-amber-500 animate-pulse' : 'text-slate-700'}`}>
-                          <Clock className="w-5 h-5" /> {ticket.sla} Jam
-                        </p>
-                      </div>
-                    ) : ticket.status === 'red' && ticket.sla < 0 ? (
-                      <div className="text-right sm:shrink-0 bg-rose-50 p-3 rounded-xl border border-rose-100 text-rose-600">
-                        <p className="text-[10px] font-black uppercase tracking-widest mb-1 flex items-center gap-1 justify-end"><AlertTriangle className="w-3 h-3" /> SLA BREACHED</p>
-                        <p className="font-bold text-xs">Email otomatis dikirim ke Kepsek</p>
-                      </div>
-                    ) : null}
                   </div>
                 </Card>
               );
@@ -112,21 +134,21 @@ export default function ACEHelpdesk() {
           </div>
 
           <div className="md:col-span-1">
-            <Card className="p-6 rounded-3xl border-2 border-indigo-200 bg-indigo-50/50 sticky top-8">
-              <div className="w-12 h-12 bg-indigo-100 text-indigo-600 rounded-2xl flex items-center justify-center mb-4">
-                <Headphones className="w-6 h-6" />
+            <Card className="p-5 rounded-lg border border-slate-200 bg-white shadow-sm sticky top-6">
+              <div className="w-10 h-10 bg-indigo-50 text-indigo-600 rounded-md flex items-center justify-center mb-3">
+                <Headphones className="w-5 h-5" />
               </div>
-              <h2 className="text-lg font-black text-slate-800 mb-2">Disposisi Otomatis</h2>
-              <p className="text-sm font-medium text-slate-600 mb-6">Sistem secara cerdas merutekan tiket Anda langsung ke layar komputer Staf TU yang berwenang berdasarkan kategori permohonan.</p>
+              <h2 className="text-sm font-bold text-slate-800 mb-2">Disposisi Otomatis</h2>
+              <p className="text-xs font-medium text-slate-500 mb-5 leading-relaxed">Sistem cerdas merutekan tiket Anda langsung ke meja Staf TU yang berwenang berdasarkan kategori permohonan.</p>
               
-              <div className="space-y-3">
-                <div className="flex justify-between items-center text-sm p-3 bg-white rounded-xl border border-indigo-100">
-                  <span className="font-bold text-slate-700">Surat-Menyurat</span>
-                  <span className="font-black text-indigo-600">TU Kepegawaian</span>
+              <div className="space-y-2">
+                <div className="flex justify-between items-center text-xs p-2.5 bg-slate-50 rounded-md border border-slate-200">
+                  <span className="font-semibold text-slate-700">Surat-Menyurat</span>
+                  <span className="font-bold text-indigo-600">TU Kepegawaian</span>
                 </div>
-                <div className="flex justify-between items-center text-sm p-3 bg-white rounded-xl border border-indigo-100">
-                  <span className="font-bold text-slate-700">Sarana Prasarana</span>
-                  <span className="font-black text-indigo-600">TU Perlengkapan</span>
+                <div className="flex justify-between items-center text-xs p-2.5 bg-slate-50 rounded-md border border-slate-200">
+                  <span className="font-semibold text-slate-700">Sarana Prasarana</span>
+                  <span className="font-bold text-indigo-600">TU Perlengkapan</span>
                 </div>
               </div>
             </Card>
@@ -135,39 +157,47 @@ export default function ACEHelpdesk() {
       )}
 
       {activeTab === 'buat-tiket' && (
-        <Card className="max-w-2xl mx-auto p-8 rounded-3xl border-2 border-slate-200">
-          <h2 className="text-2xl font-black text-slate-800 mb-6">Formulir Permohonan</h2>
-          <div className="space-y-5">
+        <Card className="max-w-xl p-6 rounded-lg border border-slate-200 bg-white shadow-sm">
+          <h2 className="text-lg font-bold text-slate-800 mb-5">Formulir Permohonan</h2>
+          <form onSubmit={handleSubmit} className="space-y-4">
             <div>
-              <label className="block text-sm font-bold text-slate-700 mb-2">Kategori Layanan</label>
-              <select className="w-full p-4 rounded-xl border-2 border-slate-200 bg-white focus:border-indigo-500 font-medium">
-                <option>Surat Keterangan Aktif Mengajar</option>
-                <option>Laporan Kerusakan Inventaris (Sarpras)</option>
-                <option>Permohonan Legalisir Dokumen</option>
-                <option>Kendala IT / Akun</option>
+              <label className="block text-xs font-semibold text-slate-700 mb-1">Kategori Layanan</label>
+              <select required value={form.category} onChange={e=>setForm({...form, category: e.target.value})} className="w-full p-2.5 rounded-md border border-slate-300 bg-white focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 text-sm font-medium">
+                <option value="surat">Surat Keterangan Aktif Mengajar</option>
+                <option value="sarpras">Laporan Kerusakan Inventaris (Sarpras)</option>
+                <option value="surat">Permohonan Legalisir Dokumen</option>
+                <option value="it">Kendala IT / Akun</option>
+                <option value="lainnya">Lainnya</option>
               </select>
             </div>
             <div>
-              <label className="block text-sm font-bold text-slate-700 mb-2">Detail Keperluan / Keluhan</label>
-              <textarea 
-                rows={5} 
-                className="w-full p-4 rounded-xl border-2 border-slate-200 focus:border-indigo-500 font-medium"
+              <label className="block text-xs font-semibold text-slate-700 mb-1">Judul Permohonan</label>
+              <input required value={form.title} onChange={e=>setForm({...form, title: e.target.value})} type="text" className="w-full p-2.5 rounded-md border border-slate-300 bg-white focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 text-sm" placeholder="Contoh: AC Kelas XII MIPA 2 Bocor" />
+            </div>
+            <div>
+              <label className="block text-xs font-semibold text-slate-700 mb-1">Detail Keperluan / Keluhan</label>
+              <textarea required value={form.description} onChange={e=>setForm({...form, description: e.target.value})}
+                rows={4} 
+                className="w-full p-2.5 rounded-md border border-slate-300 focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 text-sm"
                 placeholder="Jelaskan secara spesifik agar staf TU dapat segera memproses..."
               />
             </div>
             
-            <div className="p-4 bg-indigo-50 border border-indigo-100 rounded-xl flex gap-3 text-indigo-800">
-              <FileText className="w-6 h-6 shrink-0 text-indigo-500" />
-              <div>
-                <p className="font-bold text-sm mb-1">Auto-Generate Template Aktif</p>
-                <p className="text-xs">Jika Anda memilih kategori Surat, sistem akan otomatis merakit PDF Surat Keterangan Aktif dengan nama dan NIP Anda dari sistem setelah TU menekan tombol Setuju.</p>
+            {form.category === 'surat' && (
+              <div className="p-3 bg-indigo-50 border border-indigo-100 rounded-md flex gap-2 text-indigo-800">
+                <FileText className="w-5 h-5 shrink-0 text-indigo-500" />
+                <div>
+                  <p className="font-bold text-xs mb-0.5">Auto-Generate Template Aktif</p>
+                  <p className="text-[10px] leading-relaxed">Sistem akan otomatis merakit PDF Surat Keterangan Aktif dengan nama dan NIP Anda dari sistem setelah TU menekan tombol Setuju.</p>
+                </div>
               </div>
-            </div>
+            )}
 
-            <button className="w-full py-4 bg-indigo-600 text-white rounded-2xl font-black shadow-lg shadow-indigo-600/20 hover:bg-indigo-700">
-              Kirim Tiket Permohonan
+            <button disabled={submitLoading} className="w-full py-2.5 bg-indigo-600 text-white rounded-md font-semibold text-xs shadow-sm hover:bg-indigo-700 transition-colors flex items-center justify-center gap-2 disabled:opacity-50">
+              {submitLoading && <Loader2 className="w-3.5 h-3.5 animate-spin" />}
+              {submitLoading ? 'Mengirim...' : 'Kirim Tiket Permohonan'}
             </button>
-          </div>
+          </form>
         </Card>
       )}
     </div>

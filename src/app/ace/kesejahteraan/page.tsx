@@ -1,12 +1,14 @@
 "use client";
 
 import { useAuth } from "@/lib/auth-context";
+import { createClient } from "@/lib/supabase";
 import { Card } from "@/components/ui/card";
-import { Receipt, Lock, FileText, ScanLine, Wallet, CheckCircle2, ShieldAlert } from "lucide-react";
-import { useState } from "react";
+import { Receipt, Lock, FileText, ScanLine, Wallet, CheckCircle2, ShieldAlert, Loader2 } from "lucide-react";
+import { useState, useEffect } from "react";
 
 export default function ACEKesejahteraan() {
   const { profile } = useAuth();
+  const supabase = createClient();
   const [activeTab, setActiveTab] = useState("slip");
   
   // Slip State
@@ -17,6 +19,23 @@ export default function ACEKesejahteraan() {
   const [ocrLoading, setOcrLoading] = useState(false);
   const [claimAmount, setClaimAmount] = useState("");
   const [ocrResult, setOcrResult] = useState<null | 'match' | 'mismatch'>(null);
+
+  // Benefits State
+  const [loadingBenefit, setLoadingBenefit] = useState(false);
+  const [benefitSaved, setBenefitSaved] = useState(false);
+  const [selectedBenefit, setSelectedBenefit] = useState("");
+
+  useEffect(() => {
+    if (profile && activeTab === 'tunjangan') {
+      supabase.from('ace_benefits').select('*').eq('teacher_id', profile.id).eq('year', new Date().getFullYear()).single()
+        .then(({ data }: any) => {
+          if (data) {
+            setBenefitSaved(true);
+            setSelectedBenefit(data.package_name);
+          }
+        });
+    }
+  }, [profile, activeTab]);
 
   if (!profile) return null;
 
@@ -30,10 +49,8 @@ export default function ACEKesejahteraan() {
   };
 
   const handleUploadOCR = (e: any) => {
-    // Simulate OCR Scan
     setOcrLoading(true);
     setTimeout(() => {
-      // Mock: If user typed 150000, it matches the fake scanned receipt
       if (claimAmount === "150000") {
         setOcrResult('match');
       } else {
@@ -43,11 +60,30 @@ export default function ACEKesejahteraan() {
     }, 2000);
   };
 
+  const handleSaveBenefit = async () => {
+    if (!profile || !selectedBenefit) return;
+    setLoadingBenefit(true);
+    try {
+      await supabase.from('ace_benefits').insert({
+        teacher_id: profile.id,
+        year: new Date().getFullYear(),
+        package_name: selectedBenefit,
+        max_plafond: 10000000
+      });
+      setBenefitSaved(true);
+      alert("Paket tunjangan berhasil dikunci untuk tahun ini.");
+    } catch (err: any) {
+      alert("Error: " + err.message);
+    } finally {
+      setLoadingBenefit(false);
+    }
+  };
+
   return (
-    <div className="max-w-6xl mx-auto space-y-8 pb-20">
+    <div className="space-y-6 pb-20">
       <div>
-        <h1 className="text-3xl font-black text-slate-800 tracking-tight">Kesejahteraan & Finansial</h1>
-        <p className="text-slate-500 font-medium mt-1">Compensation, Benefits, & Payroll Room</p>
+        <h1 className="text-2xl font-bold text-slate-800 tracking-tight">Kesejahteraan & Finansial</h1>
+        <p className="text-slate-500 font-medium mt-1 text-sm">Compensation, Benefits, & Payroll Room</p>
       </div>
 
       <div className="flex gap-2 overflow-x-auto pb-2 hide-scrollbar">
@@ -59,7 +95,7 @@ export default function ACEKesejahteraan() {
           <button 
             key={t.id}
             onClick={() => setActiveTab(t.id)}
-            className={`px-6 py-3 rounded-2xl font-bold text-sm whitespace-nowrap transition-colors ${activeTab === t.id ? 'bg-indigo-600 text-white shadow-md' : 'bg-white text-slate-500 border border-slate-200 hover:bg-slate-50'}`}
+            className={`px-4 py-2 rounded-md font-semibold text-xs whitespace-nowrap transition-colors ${activeTab === t.id ? 'bg-indigo-600 text-white shadow-sm' : 'bg-white text-slate-600 border border-slate-200 hover:bg-slate-50'}`}
           >
             {t.label}
           </button>
@@ -67,15 +103,14 @@ export default function ACEKesejahteraan() {
       </div>
 
       {activeTab === 'slip' && (
-        <div className="max-w-3xl mx-auto">
+        <div className="max-w-2xl mx-auto">
           {!unlocked ? (
-            <Card className="p-10 rounded-3xl border-0 bg-slate-900 text-white shadow-2xl text-center relative overflow-hidden">
-              <div className="absolute -top-20 -right-20 w-64 h-64 bg-indigo-500/20 rounded-full blur-[80px]" />
-              <div className="w-20 h-20 bg-slate-800 rounded-full flex items-center justify-center mx-auto mb-6 border-4 border-slate-700 shadow-inner">
-                <Lock className="w-8 h-8 text-slate-300" />
+            <Card className="p-8 rounded-lg border border-slate-200 bg-white text-center shadow-sm relative overflow-hidden">
+              <div className="w-16 h-16 bg-slate-50 border border-slate-200 rounded-full flex items-center justify-center mx-auto mb-4">
+                <Lock className="w-6 h-6 text-slate-400" />
               </div>
-              <h2 className="text-2xl font-black mb-2">Dokumen Finansial Terkunci</h2>
-              <p className="text-slate-400 font-medium text-sm mb-8 px-6">Masukkan 6-digit PIN keamanan Anda untuk membuka brankas slip gaji digital bulan ini. (Hint: 123456)</p>
+              <h2 className="text-lg font-bold text-slate-800 mb-1">Dokumen Finansial Terkunci</h2>
+              <p className="text-slate-500 font-medium text-xs mb-6 px-6">Masukkan 6-digit PIN keamanan Anda untuk membuka brankas slip gaji digital bulan ini. (Hint: 123456)</p>
               
               <form onSubmit={handleUnlock} className="flex flex-col items-center">
                 <input 
@@ -83,29 +118,29 @@ export default function ACEKesejahteraan() {
                   maxLength={6}
                   value={pin}
                   onChange={e => setPin(e.target.value.replace(/\D/g,''))}
-                  className="w-48 p-4 text-center tracking-[0.5em] text-2xl font-black rounded-xl bg-slate-800 border-2 border-slate-700 focus:border-indigo-500 text-white mb-6" 
+                  className="w-40 p-3 text-center tracking-[0.5em] text-xl font-bold rounded-md border border-slate-300 focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 mb-4" 
                   placeholder="••••••"
                 />
-                <button className="px-8 py-4 bg-indigo-600 text-white font-black rounded-xl shadow-lg hover:bg-indigo-700">
+                <button className="px-6 py-2.5 bg-indigo-600 text-white font-semibold text-sm rounded-md shadow-sm hover:bg-indigo-700 transition-colors">
                   Buka Brankas
                 </button>
               </form>
             </Card>
           ) : (
-            <div className="space-y-6">
+            <div className="space-y-4">
               <div className="flex justify-between items-center">
-                <h2 className="text-2xl font-black text-slate-800">Brankas Terbuka</h2>
-                <button onClick={() => { setUnlocked(false); setPin(""); }} className="text-rose-500 font-bold text-sm bg-rose-50 px-4 py-2 rounded-lg">Kunci Kembali</button>
+                <h2 className="text-base font-bold text-slate-800">Brankas Terbuka</h2>
+                <button onClick={() => { setUnlocked(false); setPin(""); }} className="text-rose-600 font-semibold text-xs bg-rose-50 border border-rose-200 px-3 py-1.5 rounded-md hover:bg-rose-100 transition-colors">Kunci Kembali</button>
               </div>
-              <Card className="p-6 border-2 border-emerald-200 bg-emerald-50 rounded-2xl flex items-center justify-between">
-                <div className="flex items-center gap-4">
-                  <div className="p-3 bg-emerald-500 text-white rounded-xl"><Receipt className="w-6 h-6" /></div>
+              <Card className="p-4 border border-emerald-200 bg-emerald-50 rounded-lg flex items-center justify-between">
+                <div className="flex items-center gap-3">
+                  <div className="p-2.5 bg-emerald-500 text-white rounded-md"><Receipt className="w-5 h-5" /></div>
                   <div>
-                    <h3 className="font-bold text-slate-800">Slip Gaji Juni 2026</h3>
-                    <p className="text-sm font-medium text-emerald-600">Ditarik dari Data Kehadiran per 25 Juni</p>
+                    <h3 className="font-bold text-slate-800 text-sm">Slip Gaji Juni 2026</h3>
+                    <p className="text-xs font-medium text-emerald-700">Ditarik dari Data Kehadiran per 25 Juni</p>
                   </div>
                 </div>
-                <button className="px-6 py-3 bg-white text-emerald-600 font-bold rounded-xl shadow-sm hover:bg-emerald-100">Unduh PDF</button>
+                <button className="px-4 py-2 bg-white text-emerald-700 border border-emerald-200 font-bold text-xs rounded-md shadow-sm hover:bg-emerald-50 transition-colors">Unduh PDF</button>
               </Card>
             </div>
           )}
@@ -113,92 +148,106 @@ export default function ACEKesejahteraan() {
       )}
 
       {activeTab === 'tunjangan' && (
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-          <div className="space-y-6">
-            <Card className="p-8 rounded-3xl bg-indigo-600 text-white border-0 relative overflow-hidden">
-              <Wallet className="w-12 h-12 text-indigo-300 mb-4" />
-              <p className="text-indigo-200 font-bold uppercase tracking-widest text-xs mb-1">Plafon Tunjangan 2026</p>
-              <h2 className="text-4xl font-black mb-4">Rp 10.000.000</h2>
-              <div className="w-full bg-indigo-900/50 h-3 rounded-full overflow-hidden">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <div className="space-y-4">
+            <Card className="p-6 rounded-lg bg-indigo-600 text-white border-0 shadow-sm relative overflow-hidden">
+              <Wallet className="w-8 h-8 text-indigo-300 mb-4" />
+              <p className="text-indigo-200 font-bold uppercase tracking-wider text-[10px] mb-1">Plafon Tunjangan 2026</p>
+              <h2 className="text-3xl font-bold mb-4">Rp 10.000.000</h2>
+              <div className="w-full bg-indigo-900/50 h-2 rounded-full overflow-hidden">
                 <div className="w-1/3 h-full bg-emerald-400 rounded-full" />
               </div>
-              <p className="text-xs text-indigo-200 mt-2 font-medium">Sisa Plafon: Rp 6.500.000</p>
+              <p className="text-[11px] text-indigo-200 mt-2 font-medium">Sisa Plafon: Rp 6.500.000</p>
             </Card>
 
-            <Card className="p-6 rounded-2xl border-2 border-slate-200">
-              <h3 className="font-black text-slate-800 mb-4">Pilih Paket Benefit Anda</h3>
-              <div className="space-y-3">
-                <label className="flex items-start gap-4 p-4 border border-slate-200 rounded-xl cursor-pointer hover:bg-slate-50">
-                  <input type="checkbox" className="mt-1 w-5 h-5 rounded text-indigo-600" />
-                  <div>
-                    <p className="font-bold text-slate-800">Asuransi Kelas A + Subsidi Kacamata</p>
-                    <p className="text-xs text-slate-500 font-medium">Memotong plafon Rp 3.500.000</p>
-                  </div>
-                </label>
-                <label className="flex items-start gap-4 p-4 border border-slate-200 rounded-xl cursor-pointer hover:bg-slate-50">
-                  <input type="checkbox" className="mt-1 w-5 h-5 rounded text-indigo-600" />
-                  <div>
-                    <p className="font-bold text-slate-800">Subsidi Buku Mengajar & Pelatihan Luar</p>
-                    <p className="text-xs text-slate-500 font-medium">Memotong plafon Rp 2.000.000</p>
-                  </div>
-                </label>
-              </div>
-              <button className="w-full mt-4 py-3 bg-slate-800 text-white font-bold rounded-xl hover:bg-slate-700">Kunci Pilihan Tahun Ini</button>
+            <Card className="p-6 rounded-lg border border-slate-200 bg-white shadow-sm">
+              <h3 className="font-bold text-slate-800 text-sm mb-4">Pilih Paket Benefit Tahunan</h3>
+              {benefitSaved ? (
+                <div className="p-4 bg-emerald-50 border border-emerald-200 rounded-md">
+                  <p className="text-sm font-bold text-emerald-800 mb-1">Terkunci</p>
+                  <p className="text-xs text-emerald-700 font-medium">Anda telah memilih paket: <b>{selectedBenefit}</b> untuk tahun 2026. Perubahan tidak dapat dilakukan hingga tahun depan.</p>
+                </div>
+              ) : (
+                <div className="space-y-3">
+                  <label className="flex items-start gap-3 p-3 border border-slate-200 rounded-md cursor-pointer hover:bg-slate-50 transition-colors">
+                    <input type="radio" name="benefit" value="Asuransi Kelas A + Subsidi Kacamata" onChange={(e) => setSelectedBenefit(e.target.value)} className="mt-0.5 w-4 h-4 text-indigo-600 focus:ring-indigo-500" />
+                    <div>
+                      <p className="font-semibold text-sm text-slate-800">Asuransi Kelas A + Subsidi Kacamata</p>
+                      <p className="text-[11px] text-slate-500 font-medium">Memotong plafon Rp 3.500.000</p>
+                    </div>
+                  </label>
+                  <label className="flex items-start gap-3 p-3 border border-slate-200 rounded-md cursor-pointer hover:bg-slate-50 transition-colors">
+                    <input type="radio" name="benefit" value="Subsidi Buku Mengajar & Pelatihan Luar" onChange={(e) => setSelectedBenefit(e.target.value)} className="mt-0.5 w-4 h-4 text-indigo-600 focus:ring-indigo-500" />
+                    <div>
+                      <p className="font-semibold text-sm text-slate-800">Subsidi Buku Mengajar & Pelatihan Luar</p>
+                      <p className="text-[11px] text-slate-500 font-medium">Memotong plafon Rp 2.000.000</p>
+                    </div>
+                  </label>
+                  <button 
+                    disabled={!selectedBenefit || loadingBenefit}
+                    onClick={handleSaveBenefit}
+                    className="w-full py-2.5 bg-slate-800 text-white font-semibold text-xs rounded-md shadow-sm hover:bg-slate-700 disabled:opacity-50 transition-colors flex justify-center items-center gap-2"
+                  >
+                    {loadingBenefit && <Loader2 className="w-3 h-3 animate-spin" />}
+                    Kunci Pilihan Tahun Ini
+                  </button>
+                </div>
+              )}
             </Card>
           </div>
         </div>
       )}
 
       {activeTab === 'klaim' && (
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-          <Card className="p-8 rounded-3xl border-2 border-slate-200">
-            <h2 className="text-2xl font-black text-slate-800 mb-2">Klaim Pengobatan (OCR)</h2>
-            <p className="text-sm font-medium text-slate-500 mb-6">Sistem menggunakan teknologi pembaca teks untuk mencocokkan nominal yang Anda ketik dengan angka asli di kuitansi fisik.</p>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <Card className="p-6 rounded-lg border border-slate-200 bg-white shadow-sm">
+            <h2 className="text-base font-bold text-slate-800 mb-1">Klaim Pengobatan (OCR)</h2>
+            <p className="text-xs font-medium text-slate-500 mb-5 leading-relaxed">Sistem menggunakan pembaca teks otomatis untuk mencocokkan nominal kuitansi.</p>
 
             <div className="space-y-4">
               <div>
-                <label className="block text-sm font-bold text-slate-700 mb-2">Nominal Klaim (Ketikan Manual)</label>
+                <label className="block text-xs font-semibold text-slate-700 mb-1">Nominal Klaim</label>
                 <div className="relative">
-                  <span className="absolute left-4 top-1/2 -translate-y-1/2 font-black text-slate-400">Rp</span>
+                  <span className="absolute left-3 top-1/2 -translate-y-1/2 font-bold text-slate-400 text-sm">Rp</span>
                   <input 
                     type="number" 
                     value={claimAmount}
                     onChange={e => setClaimAmount(e.target.value)}
-                    className="w-full pl-12 pr-4 py-4 rounded-xl border-2 border-slate-200 focus:border-indigo-500 font-bold" 
+                    className="w-full pl-10 pr-3 py-2.5 rounded-md border border-slate-300 text-sm focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 font-semibold" 
                     placeholder="Contoh: 150000" 
                   />
                 </div>
               </div>
 
               <div>
-                <label className="block text-sm font-bold text-slate-700 mb-2">Upload Foto Kuitansi Fisik</label>
-                <div className="relative p-6 border-2 border-dashed border-slate-300 rounded-xl text-center bg-slate-50 cursor-pointer overflow-hidden group">
+                <label className="block text-xs font-semibold text-slate-700 mb-1">Upload Kuitansi Fisik</label>
+                <div className="relative p-6 border border-dashed border-slate-300 rounded-md text-center bg-slate-50 cursor-pointer overflow-hidden group hover:bg-slate-100 hover:border-indigo-300 transition-colors">
                   <input type="file" onChange={handleUploadOCR} className="absolute inset-0 opacity-0 cursor-pointer z-10" />
                   {ocrLoading ? (
-                    <div className="flex flex-col items-center justify-center text-indigo-500">
-                      <ScanLine className="w-8 h-8 mb-2 animate-bounce" />
-                      <span className="text-xs font-black uppercase tracking-widest">Membaca Teks (OCR)...</span>
+                    <div className="flex flex-col items-center justify-center text-indigo-600">
+                      <ScanLine className="w-6 h-6 mb-2 animate-bounce" />
+                      <span className="text-[10px] font-bold uppercase tracking-widest">Membaca Teks (OCR)...</span>
                     </div>
                   ) : (
                     <div className="flex flex-col items-center justify-center text-slate-400 group-hover:text-indigo-500 transition-colors">
-                      <FileText className="w-8 h-8 mb-2" />
-                      <span className="text-xs font-bold">Klik untuk Pilih Foto Kuitansi</span>
+                      <FileText className="w-6 h-6 mb-2" />
+                      <span className="text-xs font-semibold">Pilih Foto Kuitansi (Simulasi OCR)</span>
                     </div>
                   )}
                 </div>
               </div>
 
               {ocrResult === 'match' && (
-                <div className="p-4 bg-emerald-50 border border-emerald-200 rounded-xl flex gap-3 text-emerald-700">
-                  <CheckCircle2 className="w-5 h-5 shrink-0" />
-                  <p className="text-sm font-bold">Hasil OCR Valid! Nominal Rp {claimAmount} cocok dengan kuitansi fisik. Klaim diteruskan ke TU Keuangan.</p>
+                <div className="p-3 bg-emerald-50 border border-emerald-200 rounded-md flex gap-2 text-emerald-800">
+                  <CheckCircle2 className="w-4 h-4 shrink-0 text-emerald-600 mt-0.5" />
+                  <p className="text-xs font-semibold leading-relaxed">Hasil valid! Nominal Rp {claimAmount} cocok dengan kuitansi fisik. Klaim diteruskan ke TU.</p>
                 </div>
               )}
 
               {ocrResult === 'mismatch' && (
-                <div className="p-4 bg-rose-50 border border-rose-200 rounded-xl flex gap-3 text-rose-700">
-                  <ShieldAlert className="w-5 h-5 shrink-0" />
-                  <p className="text-sm font-bold">Ditolak! Sistem mendeteksi angka di foto kuitansi adalah Rp 150.000, sedangkan Anda mengetik Rp {claimAmount}. Silakan perbaiki.</p>
+                <div className="p-3 bg-rose-50 border border-rose-200 rounded-md flex gap-2 text-rose-800">
+                  <ShieldAlert className="w-4 h-4 shrink-0 text-rose-600 mt-0.5" />
+                  <p className="text-xs font-semibold leading-relaxed">Ditolak! Sistem mendeteksi Rp 150.000 pada kuitansi, tetapi Anda memasukkan Rp {claimAmount}.</p>
                 </div>
               )}
             </div>
