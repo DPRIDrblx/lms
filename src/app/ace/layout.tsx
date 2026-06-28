@@ -47,7 +47,7 @@ export default function ACELayout({ children }: { children: React.ReactNode }) {
   const isPrincipal = profile.role === "principal";
   const isTU = profile.role === "tu";
 
-  const navItems = [
+  const teacherNavItems = [
     { href: "/ace", label: "Dashboard ACE", icon: Briefcase },
     { href: "/ace/profil", label: "Profil & Portofolio", icon: UserCircle2 },
     { href: "/ace/kinerja", label: "E-Kinerja & Supervisi", icon: FileSignature },
@@ -55,8 +55,18 @@ export default function ACELayout({ children }: { children: React.ReactNode }) {
     { href: "/ace/diklat", label: "Diklat & Sertifikasi", icon: GraduationCap },
     { href: "/ace/jadwal", label: "Jadwal KBM", icon: CalendarClock },
     { href: "/ace/kesejahteraan", label: "Kesejahteraan", icon: Receipt },
-    { href: "/ace/helpdesk", label: "Helpdesk & Tiket", icon: FileSignature }, // using FileSignature as icon for now
+    { href: "/ace/helpdesk", label: "Helpdesk & Tiket", icon: ShieldCheck },
   ];
+
+  const tuNavItems = [
+    { href: "/ace/tu/kepegawaian", label: "TU Kepegawaian", icon: UserCircle2 },
+    { href: "/ace/tu/kehadiran", label: "TU Kurikulum & Umum", icon: CalendarCheck },
+    { href: "/ace/tu/kinerja", label: "TU Kepegawaian & Kepsek", icon: FileSignature },
+    { href: "/ace/tu/keuangan", label: "TU Keuangan / Bendahara", icon: Receipt },
+    { href: "/ace/tu/helpdesk", label: "Dashboard Utama TU", icon: ShieldCheck },
+  ];
+
+  const navItems = isTU ? tuNavItems : teacherNavItems;
 
   if (isPrincipal) {
     navItems.push({ href: "/ace/persetujuan", label: "Persetujuan", icon: ShieldCheck });
