@@ -15,6 +15,8 @@ export default function ACEKehadiran() {
 
   const [logbookForm, setLogbookForm] = useState({ materi: "", siswa_hadir: 30, catatan: "" });
   const [logbookLoading, setLogbookLoading] = useState(false);
+  const [leaveForm, setLeaveForm] = useState({ leave_date: "", leave_type: "Cuti Sakit" });
+  const [leaveLoading, setLeaveLoading] = useState(false);
 
   const [attendances, setAttendances] = useState<any[]>([]);
   const [teachers, setTeachers] = useState<any[]>([]);
@@ -92,6 +94,25 @@ export default function ACEKehadiran() {
       alert("Error: " + err.message);
     } finally {
       setLogbookLoading(false);
+    }
+  };
+
+  const handleLeaveSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!profile) return;
+    setLeaveLoading(true);
+    try {
+      await supabase.from('ace_leaves').insert({
+        teacher_id: profile.id,
+        leave_date: leaveForm.leave_date,
+        leave_type: leaveForm.leave_type
+      });
+      alert("Pengajuan cuti berhasil dikirim!");
+      setLeaveForm({ leave_date: "", leave_type: "Cuti Sakit" });
+    } catch (err: any) {
+      alert("Error: " + err.message);
+    } finally {
+      setLeaveLoading(false);
     }
   };
 
@@ -220,17 +241,18 @@ export default function ACEKehadiran() {
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
           <Card className="p-6 rounded-xl border border-slate-200 bg-white shadow-sm">
             <h2 className="text-base font-bold text-slate-800 mb-4">Formulir Pengajuan Cuti</h2>
-            <div className="space-y-4">
+            <form onSubmit={handleLeaveSubmit} className="space-y-4">
               <div>
                 <label className="block text-xs font-semibold text-slate-700 mb-1">Tanggal Cuti</label>
-                <input type="date" className="w-full p-2.5 rounded-md border border-slate-300 text-sm" />
+                <input required type="date" value={leaveForm.leave_date} onChange={e=>setLeaveForm({...leaveForm, leave_date: e.target.value})} className="w-full p-2.5 rounded-md border border-slate-300 text-sm" />
               </div>
               <div>
                 <label className="block text-xs font-semibold text-slate-700 mb-1">Jenis Cuti</label>
-                <select className="w-full p-2.5 rounded-md border border-slate-300 text-sm">
-                  <option>Cuti Sakit</option>
-                  <option>Cuti Alasan Penting</option>
-                  <option>Cuti Tahunan</option>
+                <select value={leaveForm.leave_type} onChange={e=>setLeaveForm({...leaveForm, leave_type: e.target.value})} className="w-full p-2.5 rounded-md border border-slate-300 text-sm">
+                  <option value="Cuti Sakit">Cuti Sakit</option>
+                  <option value="Cuti Alasan Penting">Cuti Alasan Penting</option>
+                  <option value="Cuti Tahunan">Cuti Tahunan</option>
+                  <option value="Dinas Luar (SPPD)">Dinas Luar (SPPD)</option>
                 </select>
               </div>
               <div className="p-4 border border-dashed border-slate-300 rounded-md text-center bg-slate-50 cursor-pointer hover:bg-slate-100 transition-colors">
@@ -240,8 +262,11 @@ export default function ACEKehadiran() {
                 <p className="text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-1">Alur Persetujuan Digital:</p>
                 <p className="text-xs text-slate-700 font-medium">Ketua Rumpun &rarr; Wakasek Kurikulum &rarr; Kepala TU &rarr; Principal</p>
               </div>
-              <button className="w-full py-2.5 bg-indigo-600 text-white rounded-md font-semibold text-xs shadow-sm hover:bg-indigo-700 transition-colors">Kirim Pengajuan</button>
-            </div>
+              <button disabled={leaveLoading} type="submit" className="w-full py-2.5 bg-indigo-600 text-white rounded-md font-semibold text-xs shadow-sm hover:bg-indigo-700 disabled:opacity-50 transition-colors flex items-center justify-center gap-2">
+                {leaveLoading && <Loader2 className="w-4 h-4 animate-spin" />}
+                Kirim Pengajuan
+              </button>
+            </form>
           </Card>
 
           <Card className="p-6 rounded-xl border border-slate-200 bg-white shadow-sm overflow-hidden">

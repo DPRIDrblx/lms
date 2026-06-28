@@ -124,6 +124,11 @@ CREATE POLICY "View all schedules" ON ace_schedules FOR SELECT USING (true); -- 
 CREATE POLICY "View own payslips" ON ace_payslips FOR SELECT USING (auth.uid() = teacher_id);
 CREATE POLICY "TU manage payslips" ON ace_payslips FOR ALL USING (EXISTS (SELECT 1 FROM profiles WHERE id = auth.uid() AND role = 'tu'));
 
+ALTER TABLE ace_leaves ENABLE ROW LEVEL SECURITY;
+CREATE POLICY "View own leaves" ON ace_leaves FOR SELECT USING (auth.uid() = teacher_id);
+CREATE POLICY "Insert own leaves" ON ace_leaves FOR INSERT WITH CHECK (auth.uid() = teacher_id);
+CREATE POLICY "TU manage leaves" ON ace_leaves FOR ALL USING (EXISTS (SELECT 1 FROM profiles WHERE id = auth.uid() AND role = 'tu'));
+
 -- PHASE 3 TABLES (SUPER-APP)
 
 -- 7. Table for Faculty Passport (Legalitas & Profil)
@@ -146,6 +151,17 @@ CREATE TABLE IF NOT EXISTS ace_logbooks (
   materi TEXT NOT NULL,
   siswa_hadir INTEGER NOT NULL,
   catatan TEXT,
+  created_at TIMESTAMPTZ NOT NULL DEFAULT now()
+);
+
+-- 8.5 Table for Cuti & Dinas Luar (Leaves)
+CREATE TABLE IF NOT EXISTS ace_leaves (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  teacher_id UUID NOT NULL REFERENCES profiles(id) ON DELETE CASCADE,
+  leave_date DATE NOT NULL,
+  leave_type TEXT NOT NULL,
+  file_url TEXT,
+  status TEXT NOT NULL DEFAULT 'pending' CHECK (status IN ('pending', 'approved', 'rejected')),
   created_at TIMESTAMPTZ NOT NULL DEFAULT now()
 );
 

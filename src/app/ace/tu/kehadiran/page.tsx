@@ -13,7 +13,18 @@ export default function TUKehadiran() {
 
   const [attendances, setAttendances] = useState<any[]>([]);
   const [substitutions, setSubstitutions] = useState<any[]>([]);
+  const [teachers, setTeachers] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
+  
+  const [scheduleForm, setScheduleForm] = useState({
+    teacher_id: "",
+    day_of_week: 1,
+    start_time: "07:00",
+    end_time: "08:30",
+    subject_name: "",
+    class_name: ""
+  });
+  const [scheduleLoading, setScheduleLoading] = useState(false);
 
   // Emergency State (No mock data, wait for real emergency trigger in future)
   const [emergencyActive, setEmergencyActive] = useState(false);
@@ -28,6 +39,13 @@ export default function TUKehadiran() {
     // Fetch substitutions pending
     const { data: subs } = await supabase.from('ace_substitutions').select('*, requestor:requestor_id(full_name), substitute:substitute_id(full_name)').eq('status', 'pending');
     if (subs) setSubstitutions(subs);
+
+    // Fetch teachers
+    const { data: tData } = await supabase.from('profiles').select('id, full_name').eq('role', 'teacher');
+    if (tData) {
+      setTeachers(tData);
+      if (tData.length > 0) setScheduleForm(prev => ({ ...prev, teacher_id: tData[0].id }));
+    }
 
     setLoading(false);
   };
@@ -44,6 +62,31 @@ export default function TUKehadiran() {
   const handleEmergencyDispatch = () => {
     alert("Disposisi manual berhasil! Jadwal otomatis dialihkan ke Guru Piket Standby.");
     setEmergencyActive(false);
+  };
+
+  const handleScheduleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!scheduleForm.teacher_id) {
+      alert("Pilih guru terlebih dahulu.");
+      return;
+    }
+    setScheduleLoading(true);
+    try {
+      await supabase.from('ace_schedules').insert({
+        teacher_id: scheduleForm.teacher_id,
+        day_of_week: scheduleForm.day_of_week,
+        start_time: scheduleForm.start_time,
+        end_time: scheduleForm.end_time,
+        subject_name: scheduleForm.subject_name,
+        class_name: scheduleForm.class_name
+      });
+      alert("Jadwal berhasil ditambahkan!");
+      setScheduleForm(prev => ({ ...prev, subject_name: "", class_name: "" }));
+    } catch (err: any) {
+      alert("Gagal menambahkan jadwal: " + err.message);
+    } finally {
+      setScheduleLoading(false);
+    }
   };
 
   if (!profile || profile.role !== 'tu') return null;
@@ -81,6 +124,7 @@ export default function TUKehadiran() {
         {[
           { id: 'monitor', label: 'Live Attendance Monitor' },
           { id: 'cuti', label: 'Manajer Cuti & Delegasi' },
+          { id: 'jadwal', label: 'Manajemen Jadwal KBM' },
         ].map(t => (
           <button 
             key={t.id}
@@ -119,12 +163,13 @@ export default function TUKehadiran() {
       )}
 
       {activeTab === 'cuti' && (
-        <Card className="p-6 rounded-lg border border-slate-200 bg-white shadow-sm">
-          <h2 className="text-sm font-bold text-slate-800 uppercase tracking-wider mb-4">Antrean Persetujuan Delegasi Jadwal</h2>
-          
-          <div className="space-y-4">
-            {loading ? <p className="text-xs text-slate-500">Memuat...</p> : substitutions.length === 0 ? <p className="text-xs text-slate-500 bg-slate-50 p-4 rounded-md border border-slate-200">Tidak ada pengajuan cuti/delegasi.</p> : substitutions.map(sub => (
-              <div key={sub.id} className="p-4 bg-slate-50 border border-slate-200 rounded-lg flex flex-col md:flex-row md:items-center justify-between gap-4">
+        <Card className="p-0 rounded-lg border border-slate-200 bg-white shadow-sm overflow-hidden">
+          <div className="p-4 border-b border-slate-200 bg-slate-50 flex items-center justify-between">
+            <h2 className="text-sm font-bold text-slate-800">Antrean Verifikasi Substitusi</h2>
+          </div>
+          <div className="divide-y divide-slate-100">
+            {loading ? <p className="p-4 text-xs text-slate-500">Memuat data...</p> : substitutions.length === 0 ? <p className="p-4 text-xs text-slate-500">Tidak ada antrean substitusi manual.</p> : substitutions.map(sub => (
+              <div key={sub.id} className="p-4 hover:bg-slate-50 transition-colors flex flex-col md:flex-row md:items-center justify-between gap-4">
                 <div>
                   <div className="flex items-center gap-2 mb-1">
                     <p className="text-sm font-bold text-slate-800">{sub.requestor?.full_name}</p>
