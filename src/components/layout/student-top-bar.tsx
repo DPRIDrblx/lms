@@ -81,8 +81,25 @@ export function StudentTopBar() {
       <div className="flex-1 flex justify-center lg:justify-end gap-6 items-center">
         {/* Streak */}
         <div className="flex items-center gap-2 hover:bg-slate-100 p-2 rounded-xl cursor-pointer transition-colors">
-          <Flame className="w-6 h-6 text-orange-500 fill-orange-500" />
-          <span className="font-black text-orange-600 text-lg">{streak}</span>
+          {streak > 0 ? (
+            <motion.div
+              animate={{ 
+                scale: [1, 1.15, 1],
+                rotate: [-3, 3, -3],
+                filter: [
+                  "drop-shadow(0 0 2px rgba(249,115,22,0.3))", 
+                  "drop-shadow(0 0 8px rgba(249,115,22,0.8))", 
+                  "drop-shadow(0 0 2px rgba(249,115,22,0.3))"
+                ]
+              }}
+              transition={{ duration: 1.5, repeat: Infinity, ease: "easeInOut" }}
+            >
+              <Flame className="w-7 h-7 text-orange-500 fill-orange-500" />
+            </motion.div>
+          ) : (
+            <Flame className="w-6 h-6 text-slate-400 fill-slate-300" />
+          )}
+          <span className={`font-black text-lg ${streak > 0 ? 'text-orange-600' : 'text-slate-500'}`}>{streak}</span>
         </div>
 
         {/* XP */}

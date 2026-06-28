@@ -24,6 +24,7 @@ import Link from "next/link";
 import toast from "react-hot-toast";
 import { useRouter } from "next/navigation";
 import dynamic from "next/dynamic";
+import { updateQuestProgress } from "@/lib/gamification";
 
 const Player = dynamic(() => import("react-player"), { ssr: false }) as any;
 
@@ -167,6 +168,11 @@ export default function LessonViewerPage({ params }: { params: Promise<{ id: str
     setIsCompleted(true);
     refreshProfile();
     setCompleting(false);
+    
+    // Update Daily Quest
+    if (profile?.id) {
+      updateQuestProgress(supabase, profile.id, 'complete_lesson', 1).catch(console.error);
+    }
     
     // Redirect back to course page after short delay
     setTimeout(() => {

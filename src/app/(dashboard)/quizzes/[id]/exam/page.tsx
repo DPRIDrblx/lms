@@ -6,6 +6,8 @@ import { useRouter } from "next/navigation";
 import { useEffect, useState, use, useCallback, useRef } from "react";
 import { Clock, Flag, ChevronLeft, ChevronRight, CheckCircle2, AlertTriangle, AlertCircle, PlayCircle, Star, Target } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
+import { playSound } from "@/lib/audio";
+import { updateQuestProgress } from "@/lib/gamification";
 
 export default function ExamPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = use(params);
@@ -218,6 +220,7 @@ export default function ExamPage({ params }: { params: Promise<{ id: string }> }
   }, [isFinished, loading, quiz, presenceChannel, profile, cheatWarnings]);
 
   const saveAnswer = async (qId: string, answer: any) => {
+    playSound('click');
     const newResponses = { ...responses, [qId]: answer };
     setResponses(newResponses);
     
@@ -231,6 +234,7 @@ export default function ExamPage({ params }: { params: Promise<{ id: string }> }
   };
 
   const setFlag = async (qId: string) => {
+    playSound('click');
     const val = !flags[qId];
     const newFlags = { ...flags, [qId]: val };
     setFlags(newFlags);
@@ -333,6 +337,12 @@ export default function ExamPage({ params }: { params: Promise<{ id: string }> }
     setFinalScore(finalPercentage);
     setNeedsManualGrading(hasEssay);
     setIsFinished(true);
+    playSound('finish');
+    
+    // Update daily quest for attempting a quiz
+    if (profile?.id) {
+      updateQuestProgress(supabase, profile.id, 'score_cbt', 1).catch(console.error);
+    }
   };
 
   const formatTime = (s: number) => {

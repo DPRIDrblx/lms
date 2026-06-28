@@ -125,3 +125,44 @@ export const generateDailyQuests = async (supabase: SupabaseClient, profileId: s
   
   return currentQuests || [];
 };
+
+export const updateQuestProgress = async (supabase: SupabaseClient, profileId: string, questId: string, amount: number = 1) => {
+  const { data: profile } = await supabase.from("profiles").select("daily_quests, xp, gems").eq("id", profileId).single();
+  if (!profile || !profile.daily_quests) return;
+
+  let updated = false;
+  let earnedXp = 0;
+  let earnedGems = 0;
+
+  const newQuests = profile.daily_quests.map((q: any) => {
+    if (q.id === questId && !q.is_claimed) {
+      const newProgress = Math.min(q.progress + amount, q.target);
+      const isCompleted = newProgress >= q.target;
+      
+      if (newProgress !== q.progress) updated = true;
+      
+      if (isCompleted) {
+        earnedXp += q.xp_reward;
+        // Standard gem reward for quests is 5
+        earnedGems += 5;
+      }
+      
+      return {
+        ...q,
+        progress: newProgress,
+        is_claimed: isCompleted
+      };
+    }
+    return q;
+  });
+
+  if (updated) {
+    const xp = (profile.xp || 0) + earnedXp;
+    const gems = (profile.gems || 0) + earnedGems;
+    await supabase.from("profiles").update({ daily_quests: newQuests, xp, gems }).eq("id", profileId);
+    
+    if (earnedXp > 0) {
+      triggerConfetti();
+    }
+  }
+};
