@@ -100,7 +100,7 @@ export default function HoDIzin() {
                 {schedule.is_absent ? (
                   <div className="flex-1 bg-rose-100 border border-rose-200 rounded p-2 text-xs font-bold text-rose-700 flex justify-between items-center">
                     <span>{schedule.class_name} ({schedule.subject}) - KOSONG (Guru {schedule.leave_type === 'cuti' ? 'Cuti' : 'Dinas Luar'})</span>
-                    <button className="px-2 py-0.5 bg-rose-600 text-white rounded shadow-sm text-[10px]">Tukar Jam</button>
+                    <button onClick={() => alert("Mengirim permintaan tukar jam ke guru yang bersangkutan...")} className="px-2 py-0.5 bg-rose-600 text-white rounded shadow-sm text-[10px]">Tukar Jam</button>
                   </div>
                 ) : (
                   <div className="flex-1 bg-emerald-100 border border-emerald-200 rounded p-2 text-xs font-bold text-emerald-700">
@@ -113,7 +113,7 @@ export default function HoDIzin() {
           
           <div className="mt-6 pt-4 border-t border-slate-100 flex items-center justify-between">
             <p className="text-xs text-slate-500 max-w-md">Jika ada kelas kosong, gunakan fitur <strong>Inter-Exchange Log</strong> untuk mencari substitusi guru serumpun yang memiliki jam kosong.</p>
-            <button className="px-4 py-2 bg-indigo-50 text-indigo-700 font-bold text-xs rounded hover:bg-indigo-100 transition-colors flex items-center gap-2">
+            <button onClick={() => alert("Membuka sistem pencarian guru serumpun yang sedang tidak memiliki jadwal kelas...")} className="px-4 py-2 bg-indigo-50 text-indigo-700 font-bold text-xs rounded hover:bg-indigo-100 transition-colors flex items-center gap-2">
               <Users className="w-4 h-4" /> Cari Guru Pengganti
             </button>
           </div>

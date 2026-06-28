@@ -43,12 +43,38 @@ export default function ACEKehadiran() {
         const lng = position.coords.longitude;
         
         try {
-          await supabase.from('ace_attendances').insert({
-            teacher_id: profile.id,
-            status: 'hadir',
-            latitude: lat,
-            longitude: lng
-          });
+          const now = new Date();
+          const today = now.toISOString().split('T')[0];
+          const isWeekend = now.getDay() === 0 || now.getDay() === 6;
+          
+          const { data: existing } = await supabase.from('ace_attendances')
+            .select('*')
+            .eq('teacher_id', profile.id)
+            .eq('date', today)
+            .maybeSingle();
+
+          if (existing) {
+            const isOvertime = isWeekend || now.getHours() >= 17;
+            await supabase.from('ace_attendances').update({
+              check_out_time: now.toISOString(),
+              is_overtime: existing.is_overtime || isOvertime
+            }).eq('id', existing.id);
+            alert("Berhasil Absen Pulang (Check-Out)!");
+          } else {
+            const isLate = now.getHours() >= 7 && (now.getHours() > 7 || now.getMinutes() > 0);
+            await supabase.from('ace_attendances').insert({
+              teacher_id: profile.id,
+              status: 'hadir',
+              latitude: lat,
+              longitude: lng,
+              check_in_time: now.toISOString(),
+              is_late: isLate,
+              is_overtime: isWeekend,
+              date: today
+            });
+            alert("Berhasil Absen Masuk (Check-In)!");
+          }
+          
           setGpsSuccess(true);
           
           // Refresh data
@@ -192,11 +218,16 @@ export default function ACEKehadiran() {
             ) : attendances.map(att => (
               <Card key={att.id} className="p-4 rounded-lg border border-slate-200 flex items-center justify-between shadow-sm">
                 <div>
-                  <p className="font-semibold text-slate-800 text-sm">{new Date(att.created_at).toLocaleDateString('id-ID', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}</p>
-                  <p className="text-xs text-emerald-600 font-semibold mt-0.5 capitalize">{att.status} &bull; Valid GPS</p>
+                  <p className="font-semibold text-slate-800 text-sm">{new Date(att.date).toLocaleDateString('id-ID', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}</p>
+                  <p className="text-xs font-semibold mt-0.5 capitalize flex gap-2">
+                    <span className="text-indigo-600">{att.status}</span>
+                    {att.is_late && <span className="text-rose-600">Telat</span>}
+                    {att.is_overtime && <span className="text-amber-600">Lembur</span>}
+                  </p>
                 </div>
                 <div className="text-right">
-                  <p className="font-bold text-base text-slate-800">{new Date(att.created_at).toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' })}</p>
+                  <p className="font-bold text-xs text-emerald-600">Masuk: {att.check_in_time ? new Date(att.check_in_time).toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' }) : '-'}</p>
+                  <p className="font-bold text-xs text-rose-600">Pulang: {att.check_out_time ? new Date(att.check_out_time).toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' }) : '-'}</p>
                 </div>
               </Card>
             ))}

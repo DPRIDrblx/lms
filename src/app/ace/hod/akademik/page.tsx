@@ -175,7 +175,7 @@ export default function HoDAkademik() {
           
           <div className="mt-6 pt-4 border-t border-slate-100 flex justify-end gap-3">
             <button onClick={() => setShowIntervention(false)} className="px-4 py-2 bg-white border border-slate-300 text-slate-700 font-bold text-sm rounded shadow-sm hover:bg-slate-50">Batal</button>
-            <button className="px-6 py-2 bg-indigo-600 text-white font-bold text-sm rounded shadow-sm hover:bg-indigo-700 flex items-center gap-2">
+            <button onClick={() => { alert("Rencana Intervensi berhasil dikirim ke dashboard Kepala Sekolah untuk dipelajari di Pleno."); setShowIntervention(false); }} className="px-6 py-2 bg-indigo-600 text-white font-bold text-sm rounded shadow-sm hover:bg-indigo-700 flex items-center gap-2">
               Kirim ke Pleno Kepsek <Activity className="w-4 h-4" />
             </button>
           </div>

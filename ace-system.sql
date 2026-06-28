@@ -8,7 +8,11 @@ CREATE TABLE IF NOT EXISTS ace_attendances (
   latitude DOUBLE PRECISION,
   longitude DOUBLE PRECISION,
   photo_url TEXT,
+  check_in_time TIMESTAMPTZ,
   check_out_time TIMESTAMPTZ,
+  is_late BOOLEAN NOT NULL DEFAULT false,
+  is_overtime BOOLEAN NOT NULL DEFAULT false,
+  date DATE NOT NULL DEFAULT CURRENT_DATE,
   created_at TIMESTAMPTZ NOT NULL DEFAULT now()
 );
 
@@ -62,41 +66,57 @@ ALTER TABLE ace_performances ENABLE ROW LEVEL SECURITY;
 ALTER TABLE ace_promotions ENABLE ROW LEVEL SECURITY;
 
 -- Policies for ace_attendances
+DROP POLICY IF EXISTS "Users can view their own attendances" ON ace_attendances;
 CREATE POLICY "Users can view their own attendances" ON ace_attendances FOR SELECT USING (auth.uid() = teacher_id);
+DROP POLICY IF EXISTS "Principals and TU can view all attendances" ON ace_attendances;
 CREATE POLICY "Principals and TU can view all attendances" ON ace_attendances FOR SELECT USING (
   EXISTS (SELECT 1 FROM profiles WHERE id = auth.uid() AND role IN ('principal', 'tu'))
 );
+DROP POLICY IF EXISTS "Teachers can insert their own attendances" ON ace_attendances;
 CREATE POLICY "Teachers can insert their own attendances" ON ace_attendances FOR INSERT WITH CHECK (auth.uid() = teacher_id);
 
 -- Policies for ace_leaves
+DROP POLICY IF EXISTS "Users can view their own leaves" ON ace_leaves;
 CREATE POLICY "Users can view their own leaves" ON ace_leaves FOR SELECT USING (auth.uid() = teacher_id);
+DROP POLICY IF EXISTS "Principals and TU can view all leaves" ON ace_leaves;
 CREATE POLICY "Principals and TU can view all leaves" ON ace_leaves FOR SELECT USING (
   EXISTS (SELECT 1 FROM profiles WHERE id = auth.uid() AND role IN ('principal', 'tu'))
 );
+DROP POLICY IF EXISTS "Teachers can request leaves" ON ace_leaves;
 CREATE POLICY "Teachers can request leaves" ON ace_leaves FOR INSERT WITH CHECK (auth.uid() = teacher_id);
+DROP POLICY IF EXISTS "Principals can update leaves" ON ace_leaves;
 CREATE POLICY "Principals can update leaves" ON ace_leaves FOR UPDATE USING (
   EXISTS (SELECT 1 FROM profiles WHERE id = auth.uid() AND role = 'principal')
 );
 
 -- Policies for ace_performances
+DROP POLICY IF EXISTS "Users can view their own performance" ON ace_performances;
 CREATE POLICY "Users can view their own performance" ON ace_performances FOR SELECT USING (auth.uid() = teacher_id);
+DROP POLICY IF EXISTS "Principals can view all performances" ON ace_performances;
 CREATE POLICY "Principals can view all performances" ON ace_performances FOR SELECT USING (
   EXISTS (SELECT 1 FROM profiles WHERE id = auth.uid() AND role = 'principal')
 );
+DROP POLICY IF EXISTS "Teachers can create performance plan" ON ace_performances;
 CREATE POLICY "Teachers can create performance plan" ON ace_performances FOR INSERT WITH CHECK (auth.uid() = teacher_id);
+DROP POLICY IF EXISTS "Teachers can update their own performance" ON ace_performances;
 CREATE POLICY "Teachers can update their own performance" ON ace_performances FOR UPDATE USING (auth.uid() = teacher_id);
+DROP POLICY IF EXISTS "Principals can update performances" ON ace_performances;
 CREATE POLICY "Principals can update performances" ON ace_performances FOR UPDATE USING (
   EXISTS (SELECT 1 FROM profiles WHERE id = auth.uid() AND role = 'principal')
 );
 
 -- Policies for ace_promotions
+DROP POLICY IF EXISTS "Users can view own promotions" ON ace_promotions;
 CREATE POLICY "Users can view own promotions" ON ace_promotions FOR SELECT USING (auth.uid() = teacher_id);
+DROP POLICY IF EXISTS "Principals and TU can view all promotions" ON ace_promotions;
 CREATE POLICY "Principals and TU can view all promotions" ON ace_promotions FOR SELECT USING (
   EXISTS (SELECT 1 FROM profiles WHERE id = auth.uid() AND role IN ('principal', 'tu'))
 );
+DROP POLICY IF EXISTS "TU can insert promotions" ON ace_promotions;
 CREATE POLICY "TU can insert promotions" ON ace_promotions FOR INSERT WITH CHECK (
   EXISTS (SELECT 1 FROM profiles WHERE id = auth.uid() AND role = 'tu')
 );
+DROP POLICY IF EXISTS "Principals can update promotions" ON ace_promotions;
 CREATE POLICY "Principals can update promotions" ON ace_promotions FOR UPDATE USING (
   EXISTS (SELECT 1 FROM profiles WHERE id = auth.uid() AND role = 'principal')
 );
@@ -146,18 +166,29 @@ ALTER TABLE ace_schedules ENABLE ROW LEVEL SECURITY;
 ALTER TABLE ace_payslips ENABLE ROW LEVEL SECURITY;
 
 -- Policies
+DROP POLICY IF EXISTS "View own certificates" ON ace_certificates;
 CREATE POLICY "View own certificates" ON ace_certificates FOR SELECT USING (auth.uid() = teacher_id);
+DROP POLICY IF EXISTS "Principal view all certificates" ON ace_certificates;
 CREATE POLICY "Principal view all certificates" ON ace_certificates FOR SELECT USING (EXISTS (SELECT 1 FROM profiles WHERE id = auth.uid() AND role = 'principal'));
+DROP POLICY IF EXISTS "Insert own certificates" ON ace_certificates;
 CREATE POLICY "Insert own certificates" ON ace_certificates FOR INSERT WITH CHECK (auth.uid() = teacher_id);
+DROP POLICY IF EXISTS "TU manage all certificates" ON ace_certificates;
+CREATE POLICY "TU manage all certificates" ON ace_certificates FOR ALL USING (EXISTS (SELECT 1 FROM profiles WHERE id = auth.uid() AND role = 'tu'));
 
+DROP POLICY IF EXISTS "View all schedules" ON ace_schedules;
 CREATE POLICY "View all schedules" ON ace_schedules FOR SELECT USING (true); -- Publicly viewable by logged in users
 
+DROP POLICY IF EXISTS "View own payslips" ON ace_payslips;
 CREATE POLICY "View own payslips" ON ace_payslips FOR SELECT USING (auth.uid() = teacher_id);
+DROP POLICY IF EXISTS "TU manage payslips" ON ace_payslips;
 CREATE POLICY "TU manage payslips" ON ace_payslips FOR ALL USING (EXISTS (SELECT 1 FROM profiles WHERE id = auth.uid() AND role = 'tu'));
 
 ALTER TABLE ace_leaves ENABLE ROW LEVEL SECURITY;
+DROP POLICY IF EXISTS "View own leaves" ON ace_leaves;
 CREATE POLICY "View own leaves" ON ace_leaves FOR SELECT USING (auth.uid() = teacher_id);
+DROP POLICY IF EXISTS "Insert own leaves" ON ace_leaves;
 CREATE POLICY "Insert own leaves" ON ace_leaves FOR INSERT WITH CHECK (auth.uid() = teacher_id);
+DROP POLICY IF EXISTS "TU manage leaves" ON ace_leaves;
 CREATE POLICY "TU manage leaves" ON ace_leaves FOR ALL USING (EXISTS (SELECT 1 FROM profiles WHERE id = auth.uid() AND role = 'tu'));
 
 -- PHASE 3 TABLES (SUPER-APP)
@@ -172,6 +203,16 @@ CREATE TABLE IF NOT EXISTS ace_documents (
   status TEXT NOT NULL DEFAULT 'pending' CHECK (status IN ('pending', 'verified', 'rejected')),
   created_at TIMESTAMPTZ NOT NULL DEFAULT now()
 );
+
+ALTER TABLE ace_documents ENABLE ROW LEVEL SECURITY;
+DROP POLICY IF EXISTS "View own documents" ON ace_documents;
+CREATE POLICY "View own documents" ON ace_documents FOR SELECT USING (auth.uid() = teacher_id);
+DROP POLICY IF EXISTS "Insert own documents" ON ace_documents;
+CREATE POLICY "Insert own documents" ON ace_documents FOR INSERT WITH CHECK (auth.uid() = teacher_id);
+DROP POLICY IF EXISTS "TU manage all documents" ON ace_documents;
+CREATE POLICY "TU manage all documents" ON ace_documents FOR ALL USING (EXISTS (SELECT 1 FROM profiles WHERE id = auth.uid() AND role = 'tu'));
+DROP POLICY IF EXISTS "Principal view all documents" ON ace_documents;
+CREATE POLICY "Principal view all documents" ON ace_documents FOR SELECT USING (EXISTS (SELECT 1 FROM profiles WHERE id = auth.uid() AND role = 'principal'));
 
 -- 8. Table for Logbook Mengajar
 CREATE TABLE IF NOT EXISTS ace_logbooks (
@@ -229,6 +270,14 @@ CREATE TABLE IF NOT EXISTS ace_tickets (
   created_at TIMESTAMPTZ NOT NULL DEFAULT now()
 );
 
+ALTER TABLE ace_tickets ENABLE ROW LEVEL SECURITY;
+DROP POLICY IF EXISTS "View own tickets" ON ace_tickets;
+CREATE POLICY "View own tickets" ON ace_tickets FOR SELECT USING (auth.uid() = requestor_id);
+DROP POLICY IF EXISTS "Insert own tickets" ON ace_tickets;
+CREATE POLICY "Insert own tickets" ON ace_tickets FOR INSERT WITH CHECK (auth.uid() = requestor_id);
+DROP POLICY IF EXISTS "TU manage all tickets" ON ace_tickets;
+CREATE POLICY "TU manage all tickets" ON ace_tickets FOR ALL USING (EXISTS (SELECT 1 FROM profiles WHERE id = auth.uid() AND role = 'tu'));
+
 -- 12. Table for Student Feedbacks (Kinerja)
 CREATE TABLE IF NOT EXISTS ace_student_feedbacks (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
@@ -259,25 +308,40 @@ ALTER TABLE ace_student_feedbacks ENABLE ROW LEVEL SECURITY;
 ALTER TABLE ace_workload_alerts ENABLE ROW LEVEL SECURITY;
 
 -- Policies Phase 3 (Simplified for MVP, all authenticated users can insert/view their own, principals/tu can view all)
+DROP POLICY IF EXISTS "View own documents" ON ace_documents;
 CREATE POLICY "View own documents" ON ace_documents FOR SELECT USING (auth.uid() = teacher_id);
+DROP POLICY IF EXISTS "Manage own documents" ON ace_documents;
 CREATE POLICY "Manage own documents" ON ace_documents FOR ALL USING (auth.uid() = teacher_id);
+DROP POLICY IF EXISTS "TU manage documents" ON ace_documents;
 CREATE POLICY "TU manage documents" ON ace_documents FOR ALL USING (EXISTS (SELECT 1 FROM profiles WHERE id = auth.uid() AND role = 'tu'));
 
+DROP POLICY IF EXISTS "View own logbooks" ON ace_logbooks;
 CREATE POLICY "View own logbooks" ON ace_logbooks FOR SELECT USING (auth.uid() = teacher_id);
+DROP POLICY IF EXISTS "Manage own logbooks" ON ace_logbooks;
 CREATE POLICY "Manage own logbooks" ON ace_logbooks FOR ALL USING (auth.uid() = teacher_id);
 
+DROP POLICY IF EXISTS "View involved substitutions" ON ace_substitutions;
 CREATE POLICY "View involved substitutions" ON ace_substitutions FOR SELECT USING (auth.uid() = requestor_id OR auth.uid() = substitute_id);
+DROP POLICY IF EXISTS "Manage substitutions" ON ace_substitutions;
 CREATE POLICY "Manage substitutions" ON ace_substitutions FOR ALL USING (auth.uid() = requestor_id OR auth.uid() = substitute_id);
 
+DROP POLICY IF EXISTS "View own benefits" ON ace_benefits;
 CREATE POLICY "View own benefits" ON ace_benefits FOR SELECT USING (auth.uid() = teacher_id);
+DROP POLICY IF EXISTS "Manage own benefits" ON ace_benefits;
 CREATE POLICY "Manage own benefits" ON ace_benefits FOR ALL USING (auth.uid() = teacher_id);
+DROP POLICY IF EXISTS "TU view benefits" ON ace_benefits;
 CREATE POLICY "TU view benefits" ON ace_benefits FOR SELECT USING (EXISTS (SELECT 1 FROM profiles WHERE id = auth.uid() AND role = 'tu'));
 
+DROP POLICY IF EXISTS "View own tickets" ON ace_tickets;
 CREATE POLICY "View own tickets" ON ace_tickets FOR SELECT USING (auth.uid() = requestor_id);
+DROP POLICY IF EXISTS "Manage own tickets" ON ace_tickets;
 CREATE POLICY "Manage own tickets" ON ace_tickets FOR ALL USING (auth.uid() = requestor_id);
+DROP POLICY IF EXISTS "TU manage tickets" ON ace_tickets;
 CREATE POLICY "TU manage tickets" ON ace_tickets FOR ALL USING (EXISTS (SELECT 1 FROM profiles WHERE id = auth.uid() AND role = 'tu'));
 
+DROP POLICY IF EXISTS "View own feedbacks" ON ace_student_feedbacks;
 CREATE POLICY "View own feedbacks" ON ace_student_feedbacks FOR SELECT USING (auth.uid() = teacher_id);
+DROP POLICY IF EXISTS "View own workload alerts" ON ace_workload_alerts;
 CREATE POLICY "View own workload alerts" ON ace_workload_alerts FOR SELECT USING (auth.uid() = teacher_id);
 
 -- --------------------------------------------------------
@@ -308,8 +372,11 @@ CREATE TABLE IF NOT EXISTS ace_lesson_plans (
 );
 
 ALTER TABLE ace_lesson_plans ENABLE ROW LEVEL SECURITY;
+DROP POLICY IF EXISTS "View own or hod lesson plans" ON ace_lesson_plans;
 CREATE POLICY "View own or hod lesson plans" ON ace_lesson_plans FOR SELECT USING (auth.uid() = teacher_id OR EXISTS (SELECT 1 FROM profiles p WHERE p.id = auth.uid() AND p.is_hod = true));
+DROP POLICY IF EXISTS "Teacher insert lesson plans" ON ace_lesson_plans;
 CREATE POLICY "Teacher insert lesson plans" ON ace_lesson_plans FOR INSERT WITH CHECK (auth.uid() = teacher_id);
+DROP POLICY IF EXISTS "HoD update lesson plans" ON ace_lesson_plans;
 CREATE POLICY "HoD update lesson plans" ON ace_lesson_plans FOR UPDATE USING (EXISTS (SELECT 1 FROM profiles p WHERE p.id = auth.uid() AND p.is_hod = true));
 
 -- Table for Asset Requests
@@ -326,8 +393,11 @@ CREATE TABLE IF NOT EXISTS ace_asset_requests (
 );
 
 ALTER TABLE ace_asset_requests ENABLE ROW LEVEL SECURITY;
+DROP POLICY IF EXISTS "View own or hod asset requests" ON ace_asset_requests;
 CREATE POLICY "View own or hod asset requests" ON ace_asset_requests FOR SELECT USING (auth.uid() = teacher_id OR EXISTS (SELECT 1 FROM profiles p WHERE p.id = auth.uid() AND p.is_hod = true));
+DROP POLICY IF EXISTS "Teacher insert asset requests" ON ace_asset_requests;
 CREATE POLICY "Teacher insert asset requests" ON ace_asset_requests FOR INSERT WITH CHECK (auth.uid() = teacher_id);
+DROP POLICY IF EXISTS "HoD update asset requests" ON ace_asset_requests;
 CREATE POLICY "HoD update asset requests" ON ace_asset_requests FOR UPDATE USING (EXISTS (SELECT 1 FROM profiles p WHERE p.id = auth.uid() AND p.is_hod = true));
 
 -- Table for Schedules
@@ -362,6 +432,8 @@ CREATE TABLE IF NOT EXISTS ace_exam_questions (
   grade_level TEXT NOT NULL,
   question_text TEXT NOT NULL,
   question_type TEXT NOT NULL CHECK (question_type IN ('HOTS', 'LOTS')),
+  difficulty TEXT NOT NULL DEFAULT 'Sedang' CHECK (difficulty IN ('Mudah', 'Sedang', 'Sulit')),
+  status TEXT NOT NULL DEFAULT 'Dikarantina' CHECK (status IN ('Dikarantina', 'Disahkan', 'Ditolak')),
   created_at TIMESTAMPTZ NOT NULL DEFAULT now()
 );
 

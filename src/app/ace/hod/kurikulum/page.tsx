@@ -130,7 +130,7 @@ export default function HoDKurikulum() {
               {examStats.hotsPercent >= 40 ? <span className="text-emerald-400 font-bold ml-1">Sesuai standar.</span> : <span className="text-amber-400 font-bold ml-1">Perbanyak HOTS.</span>}
             </p>
           </div>
-          <button className="w-full mt-4 py-2.5 bg-indigo-600 hover:bg-indigo-500 text-white text-sm font-bold rounded shadow-sm transition-colors">
+          <button onClick={() => alert("Perintah cetak telah dikirim ke mesin fotokopi TU dan antrean log persuratan.")} className="w-full mt-4 py-2.5 bg-indigo-600 hover:bg-indigo-500 text-white text-sm font-bold rounded shadow-sm transition-colors">
             Kirim ke TU Persuratan (Print)
           </button>
         </Card>

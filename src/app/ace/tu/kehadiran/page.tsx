@@ -146,15 +146,22 @@ export default function TUKehadiran() {
             {loading ? <p className="p-4 text-xs text-slate-500">Memuat...</p> : attendances.length === 0 ? <p className="p-4 text-xs text-slate-500">Belum ada data kehadiran.</p> : attendances.map(att => (
               <div key={att.id} className="p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-2 hover:bg-slate-50 transition-colors">
                 <div>
-                  <p className="font-bold text-sm text-slate-800">{att.profiles.full_name}</p>
-                  <p className="text-[11px] font-semibold text-slate-500">{new Date(att.created_at).toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' })} WIB</p>
+                  <p className="font-bold text-sm text-slate-800">{att.profiles?.full_name}</p>
+                  <p className="text-[11px] font-semibold text-slate-500">{new Date(att.date).toLocaleDateString('id-ID', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}</p>
+                  <div className="flex gap-2 mt-1">
+                    {att.is_late && <span className="px-2 py-0.5 bg-rose-100 text-rose-700 rounded text-[10px] font-bold uppercase">Telat</span>}
+                    {att.is_overtime && <span className="px-2 py-0.5 bg-amber-100 text-amber-700 rounded text-[10px] font-bold uppercase">Lembur</span>}
+                  </div>
                 </div>
-                <div className="flex items-center gap-3">
+                <div className="flex items-center gap-4">
+                  <div className="text-right">
+                    <p className="font-bold text-xs text-emerald-600">Masuk: {att.check_in_time ? new Date(att.check_in_time).toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' }) : '-'}</p>
+                    <p className="font-bold text-xs text-rose-600">Pulang: {att.check_out_time ? new Date(att.check_out_time).toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' }) : '-'}</p>
+                  </div>
                   <div className="flex items-center gap-1.5 px-2.5 py-1 bg-slate-100 rounded text-[10px] font-bold text-slate-600 border border-slate-200">
                     <MapPin className="w-3 h-3 text-emerald-500" />
-                    Valid GPS
+                    GPS
                   </div>
-                  <span className="px-2.5 py-1 bg-emerald-100 text-emerald-700 rounded text-[10px] font-bold uppercase tracking-wider">Hadir</span>
                 </div>
               </div>
             ))}
