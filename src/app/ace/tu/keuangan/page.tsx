@@ -3,7 +3,7 @@
 import { useAuth } from "@/lib/auth-context";
 import { createClient } from "@/lib/supabase";
 import { Card } from "@/components/ui/card";
-import { Receipt, ScanLine, Wallet, CheckCircle2, ShieldAlert, Lock, AlertTriangle } from "lucide-react";
+import { Receipt, ScanLine, Wallet, CheckCircle2, ShieldAlert, Lock, AlertTriangle, Edit2, X, Check } from "lucide-react";
 import { useEffect, useState } from "react";
 
 export default function TUKeuangan() {
@@ -16,6 +16,10 @@ export default function TUKeuangan() {
 
   const [teachers, setTeachers] = useState<any[]>([]);
   const [claims, setClaims] = useState<any[]>([]);
+
+  const [editTeacherId, setEditTeacherId] = useState<string | null>(null);
+  const [tempSalary, setTempSalary] = useState<string>("");
+  const [savingSalary, setSavingSalary] = useState(false);
 
   const fetchData = async () => {
     setLoading(true);
@@ -32,6 +36,20 @@ export default function TUKeuangan() {
     if (teachersData) setTeachers(teachersData);
 
     setLoading(false);
+  };
+
+  const handleSaveSalary = async (teacherId: string) => {
+    setSavingSalary(true);
+    const parsed = parseInt(tempSalary.replace(/\D/g, '')) || 0;
+    try {
+      await supabase.from('profiles').update({ base_salary: parsed }).eq('id', teacherId);
+      setTeachers(prev => prev.map(t => t.id === teacherId ? { ...t, base_salary: parsed } : t));
+      setEditTeacherId(null);
+    } catch (err: any) {
+      alert("Error: " + err.message);
+    } finally {
+      setSavingSalary(false);
+    }
   };
 
   useEffect(() => {
@@ -90,15 +108,38 @@ export default function TUKeuangan() {
                   <tr><td colSpan={5} className="p-3 text-center text-xs text-slate-500">Memuat data payroll...</td></tr>
                 ) : teachers.length === 0 ? (
                   <tr><td colSpan={5} className="p-3 text-center text-xs text-slate-500">Tidak ada data guru.</td></tr>
-                ) : teachers.map(teacher => (
+                ) : teachers.map(teacher => {
+                  const baseSalary = teacher.base_salary ?? 4500000;
+                  const isEditing = editTeacherId === teacher.id;
+                  return (
                   <tr key={teacher.id} className="hover:bg-slate-50 transition-colors">
                     <td className="p-3 font-semibold text-slate-800">{teacher.full_name}</td>
-                    <td className="p-3 text-slate-600">Rp 4.500.000</td>
+                    <td className="p-3 text-slate-600">
+                      {isEditing ? (
+                        <div className="flex items-center gap-2">
+                          <span className="text-sm font-semibold text-slate-500">Rp</span>
+                          <input 
+                            type="text" 
+                            className="w-28 p-1.5 border border-indigo-300 rounded text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500" 
+                            value={tempSalary}
+                            onChange={(e) => setTempSalary(e.target.value)}
+                            disabled={savingSalary}
+                          />
+                          <button disabled={savingSalary} onClick={() => handleSaveSalary(teacher.id)} className="p-1.5 bg-emerald-100 text-emerald-600 rounded hover:bg-emerald-200 transition-colors"><Check className="w-4 h-4" /></button>
+                          <button disabled={savingSalary} onClick={() => setEditTeacherId(null)} className="p-1.5 bg-rose-100 text-rose-600 rounded hover:bg-rose-200 transition-colors"><X className="w-4 h-4" /></button>
+                        </div>
+                      ) : (
+                        <div className="flex items-center gap-2 group">
+                          <span>Rp {baseSalary.toLocaleString('id-ID')}</span>
+                          <button onClick={() => { setEditTeacherId(teacher.id); setTempSalary(baseSalary.toString()); }} className="opacity-0 group-hover:opacity-100 p-1 text-slate-400 hover:text-indigo-600 transition-all"><Edit2 className="w-3.5 h-3.5" /></button>
+                        </div>
+                      )}
+                    </td>
                     <td className="p-3 text-slate-400 font-medium">- Rp 0</td>
                     <td className="p-3 text-emerald-600 font-semibold">+ Rp 0</td>
-                    <td className="p-3 font-bold text-slate-800">Rp 4.500.000</td>
+                    <td className="p-3 font-bold text-slate-800">Rp {baseSalary.toLocaleString('id-ID')}</td>
                   </tr>
-                ))}
+                )})}
               </tbody>
             </table>
           </div>

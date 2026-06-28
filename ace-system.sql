@@ -37,6 +37,9 @@ CREATE TABLE IF NOT EXISTS ace_performances (
   UNIQUE(teacher_id, year)
 );
 
+-- Profiles Extensions for ACE
+ALTER TABLE profiles ADD COLUMN IF NOT EXISTS base_salary INTEGER NOT NULL DEFAULT 4500000;
+
 -- Enable RLS
 ALTER TABLE ace_attendances ENABLE ROW LEVEL SECURITY;
 ALTER TABLE ace_leaves ENABLE ROW LEVEL SECURITY;
