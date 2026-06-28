@@ -190,6 +190,54 @@ export default function TUKehadiran() {
             ))}
           </div>
         </Card>
+      {activeTab === 'jadwal' && (
+        <Card className="p-6 rounded-lg border border-slate-200 bg-white shadow-sm max-w-2xl">
+          <h2 className="text-base font-bold text-slate-800 mb-4">Tambah Jadwal Mengajar (KBM)</h2>
+          <form onSubmit={handleScheduleSubmit} className="space-y-4">
+            <div>
+              <label className="block text-xs font-semibold text-slate-700 mb-1">Pilih Guru</label>
+              <select required value={scheduleForm.teacher_id} onChange={e=>setScheduleForm({...scheduleForm, teacher_id: e.target.value})} className="w-full p-2.5 rounded-md border border-slate-300 text-sm">
+                <option value="">-- Pilih Guru --</option>
+                {teachers.map(t => <option key={t.id} value={t.id}>{t.full_name}</option>)}
+              </select>
+            </div>
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <label className="block text-xs font-semibold text-slate-700 mb-1">Hari</label>
+                <select required value={scheduleForm.day_of_week} onChange={e=>setScheduleForm({...scheduleForm, day_of_week: parseInt(e.target.value)})} className="w-full p-2.5 rounded-md border border-slate-300 text-sm">
+                  <option value={1}>Senin</option>
+                  <option value={2}>Selasa</option>
+                  <option value={3}>Rabu</option>
+                  <option value={4}>Kamis</option>
+                  <option value={5}>Jumat</option>
+                  <option value={6}>Sabtu</option>
+                </select>
+              </div>
+              <div className="grid grid-cols-2 gap-2">
+                <div>
+                  <label className="block text-xs font-semibold text-slate-700 mb-1">Jam Mulai</label>
+                  <input required type="time" value={scheduleForm.start_time} onChange={e=>setScheduleForm({...scheduleForm, start_time: e.target.value})} className="w-full p-2.5 rounded-md border border-slate-300 text-sm" />
+                </div>
+                <div>
+                  <label className="block text-xs font-semibold text-slate-700 mb-1">Selesai</label>
+                  <input required type="time" value={scheduleForm.end_time} onChange={e=>setScheduleForm({...scheduleForm, end_time: e.target.value})} className="w-full p-2.5 rounded-md border border-slate-300 text-sm" />
+                </div>
+              </div>
+            </div>
+            <div>
+              <label className="block text-xs font-semibold text-slate-700 mb-1">Mata Pelajaran</label>
+              <input required type="text" placeholder="Contoh: Matematika Peminatan" value={scheduleForm.subject_name} onChange={e=>setScheduleForm({...scheduleForm, subject_name: e.target.value})} className="w-full p-2.5 rounded-md border border-slate-300 text-sm" />
+            </div>
+            <div>
+              <label className="block text-xs font-semibold text-slate-700 mb-1">Kelas</label>
+              <input required type="text" placeholder="Contoh: 12 MIPA 1" value={scheduleForm.class_name} onChange={e=>setScheduleForm({...scheduleForm, class_name: e.target.value})} className="w-full p-2.5 rounded-md border border-slate-300 text-sm" />
+            </div>
+            <button disabled={scheduleLoading} type="submit" className="w-full py-2.5 bg-indigo-600 text-white rounded-md font-semibold text-xs shadow-sm hover:bg-indigo-700 disabled:opacity-50 transition-colors flex items-center justify-center gap-2 mt-4">
+              {scheduleLoading && <Loader2 className="w-4 h-4 animate-spin" />}
+              Tambahkan Jadwal
+            </button>
+          </form>
+        </Card>
       )}
     </div>
   );
