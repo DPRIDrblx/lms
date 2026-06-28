@@ -3,7 +3,7 @@
 import { useAuth } from "@/lib/auth-context";
 import { createClient } from "@/lib/supabase";
 import { Card } from "@/components/ui/card";
-import { TrendingUp, AlertTriangle, Users, BookOpen, UserCircle2, CheckCircle2 } from "lucide-react";
+import { TrendingUp, AlertTriangle, Users, BookOpen, UserCircle2, CheckCircle2, Edit2, Check, X } from "lucide-react";
 import { useEffect, useState } from "react";
 
 export default function PrincipalMutu() {
@@ -13,6 +13,10 @@ export default function PrincipalMutu() {
   const [performances, setPerformances] = useState<any[]>([]);
   const [feedbacks, setFeedbacks] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
+  
+  const [editScoreId, setEditScoreId] = useState<string | null>(null);
+  const [tempScore, setTempScore] = useState<string>("");
+  const [savingScore, setSavingScore] = useState(false);
 
   const fetchData = async () => {
     setLoading(true);
@@ -32,6 +36,26 @@ export default function PrincipalMutu() {
     if (fbData) setFeedbacks(fbData);
     
     setLoading(false);
+  };
+
+  const handleSaveScore = async (id: string) => {
+    setSavingScore(true);
+    const parsedScore = parseInt(tempScore.replace(/\D/g, '')) || 0;
+    try {
+      await supabase.from('ace_performances').update({ 
+        principal_score: parsedScore,
+        phase: 'penilaian'
+      }).eq('id', id);
+      
+      setPerformances(prev => prev.map(p => 
+        p.id === id ? { ...p, principal_score: parsedScore, phase: 'penilaian' } : p
+      ));
+      setEditScoreId(null);
+    } catch (err: any) {
+      alert("Error: " + err.message);
+    } finally {
+      setSavingScore(false);
+    }
   };
 
   useEffect(() => {
@@ -104,9 +128,29 @@ export default function PrincipalMutu() {
                     <p className="text-xs text-slate-500">Fase: <span className="capitalize">{perf.phase}</span></p>
                   </div>
                 </div>
-                <div className="text-right">
-                  <div className="text-lg font-black text-slate-800">{perf.principal_score || '-'}</div>
-                  <div className="text-[10px] font-bold uppercase text-slate-400">Skor</div>
+                <div className="text-right flex items-center gap-2">
+                  {editScoreId === perf.id ? (
+                    <div className="flex items-center gap-1">
+                      <input 
+                        type="text" 
+                        className="w-14 p-1.5 border border-indigo-300 rounded text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 text-center" 
+                        value={tempScore}
+                        onChange={(e) => setTempScore(e.target.value)}
+                        disabled={savingScore}
+                        placeholder="0-100"
+                      />
+                      <button disabled={savingScore} onClick={() => handleSaveScore(perf.id)} className="p-1 bg-emerald-100 text-emerald-600 rounded hover:bg-emerald-200 transition-colors"><Check className="w-4 h-4" /></button>
+                      <button disabled={savingScore} onClick={() => setEditScoreId(null)} className="p-1 bg-rose-100 text-rose-600 rounded hover:bg-rose-200 transition-colors"><X className="w-4 h-4" /></button>
+                    </div>
+                  ) : (
+                    <div className="group flex flex-col items-end cursor-pointer" onClick={() => { setEditScoreId(perf.id); setTempScore(perf.principal_score?.toString() || ""); }}>
+                      <div className="flex items-center gap-1">
+                        <Edit2 className="w-3.5 h-3.5 opacity-0 group-hover:opacity-100 text-slate-400 transition-opacity" />
+                        <div className="text-lg font-black text-slate-800">{perf.principal_score || '-'}</div>
+                      </div>
+                      <div className="text-[10px] font-bold uppercase text-slate-400 group-hover:text-indigo-500 transition-colors">Skor</div>
+                    </div>
+                  )}
                 </div>
               </div>
             ))}
