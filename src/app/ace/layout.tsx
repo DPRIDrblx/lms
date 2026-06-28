@@ -4,7 +4,7 @@ import { useAuth } from "@/lib/auth-context";
 import { useRouter, usePathname } from "next/navigation";
 import { useEffect } from "react";
 import Link from "next/link";
-import { LogOut, UserCircle2, Briefcase, CalendarCheck, ShieldCheck, FileSignature, BookOpen } from "lucide-react";
+import { LogOut, UserCircle2, Briefcase, CalendarCheck, ShieldCheck, FileSignature, BookOpen, GraduationCap, CalendarClock, Receipt } from "lucide-react";
 import { Loader2 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -51,6 +51,9 @@ export default function ACELayout({ children }: { children: React.ReactNode }) {
     { href: "/ace", label: "Dashboard ACE", icon: Briefcase },
     { href: "/ace/kinerja", label: "E-Kinerja", icon: FileSignature },
     { href: "/ace/kehadiran", label: "Presensi & Cuti", icon: CalendarCheck },
+    { href: "/ace/diklat", label: "Diklat & Sertifikasi", icon: GraduationCap },
+    { href: "/ace/jadwal", label: "Jadwal KBM", icon: CalendarClock },
+    { href: "/ace/slip-gaji", label: "Slip Gaji", icon: Receipt },
   ];
 
   if (isPrincipal) {
