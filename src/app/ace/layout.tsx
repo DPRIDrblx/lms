@@ -4,7 +4,7 @@ import { useAuth } from "@/lib/auth-context";
 import { useRouter, usePathname } from "next/navigation";
 import { useEffect, useState } from "react";
 import Link from "next/link";
-import { LogOut, UserCircle2, Briefcase, CalendarCheck, ShieldCheck, FileSignature, BookOpen, GraduationCap, CalendarClock, Receipt, Scale, TrendingUp, Wallet, Activity } from "lucide-react";
+import { LogOut, UserCircle2, Briefcase, CalendarCheck, ShieldCheck, FileSignature, BookOpen, GraduationCap, CalendarClock, Receipt, Scale, TrendingUp, Wallet, Activity, Menu, X } from "lucide-react";
 import { Loader2 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -14,6 +14,7 @@ export default function ACELayout({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
   const [hodMode, setHodMode] = useState(false);
   const [assessmentMode, setAssessmentMode] = useState(false);
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
   useEffect(() => {
     if (!loading && !profile) {
@@ -109,9 +110,33 @@ export default function ACELayout({ children }: { children: React.ReactNode }) {
 
   return (
     <div className="h-screen w-full bg-slate-50 flex flex-col md:flex-row font-sans overflow-hidden">
+      {/* Mobile Header */}
+      {pathname !== "/ace/auth" && (
+        <div className="md:hidden flex items-center justify-between bg-slate-900 text-white p-4 shrink-0 z-30">
+          <div className="flex items-center gap-3">
+            <div className="w-8 h-8 rounded-lg bg-indigo-600 flex items-center justify-center font-bold">
+              A
+            </div>
+            <div>
+              <h1 className="text-base font-bold tracking-tight">Ruang ACE</h1>
+            </div>
+          </div>
+          <button 
+            onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)} 
+            className="p-1 rounded-md hover:bg-slate-800 transition-colors"
+          >
+            {isMobileMenuOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
+          </button>
+        </div>
+      )}
+
       {/* ACE Sidebar */}
       {pathname !== "/ace/auth" && (
-        <div className="w-full md:w-64 bg-slate-900 text-slate-300 flex flex-col shrink-0 h-full border-r border-slate-800">
+        <>
+          <div className={cn(
+            "fixed inset-y-0 left-0 z-40 w-64 bg-slate-900 text-slate-300 flex flex-col shrink-0 h-full border-r border-slate-800 transition-transform duration-300 ease-in-out md:translate-x-0 md:static",
+            isMobileMenuOpen ? "translate-x-0" : "-translate-x-full"
+          )}>
           <div className="p-5 border-b border-slate-800">
             <div className="flex items-center gap-3">
               <div className="w-8 h-8 rounded-lg bg-indigo-600 flex items-center justify-center text-white font-bold">
@@ -160,6 +185,7 @@ export default function ACELayout({ children }: { children: React.ReactNode }) {
                 <Link 
                   key={item.href} 
                   href={item.href}
+                  onClick={() => setIsMobileMenuOpen(false)}
                   className={cn(
                     "flex items-center gap-3 px-3 py-2.5 rounded-lg font-medium text-sm transition-colors group",
                     isActive 
@@ -197,12 +223,21 @@ export default function ACELayout({ children }: { children: React.ReactNode }) {
               Keluar
             </button>
           </div>
-        </div>
+          </div>
+        </>
+      )}
+
+      {/* Overlay for mobile */}
+      {isMobileMenuOpen && pathname !== "/ace/auth" && (
+        <div 
+          className="fixed inset-0 bg-slate-900/50 z-30 md:hidden"
+          onClick={() => setIsMobileMenuOpen(false)}
+        />
       )}
 
       {/* Main Content */}
       <div className={cn("flex-1 h-full overflow-y-auto", pathname === "/ace/auth" ? "bg-slate-900" : "bg-slate-50")}>
-        <main className={cn("max-w-7xl mx-auto h-full", pathname === "/ace/auth" ? "p-0" : "p-6 lg:p-8")}>
+        <main className={cn("max-w-7xl mx-auto h-full", pathname === "/ace/auth" ? "p-0" : "p-4 md:p-6 lg:p-8")}>
           {children}
         </main>
       </div>
