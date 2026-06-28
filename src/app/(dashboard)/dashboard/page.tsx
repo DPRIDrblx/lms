@@ -388,8 +388,8 @@ export default function DashboardPage() {
                  <span className="font-bold text-sm text-emerald-900">Scan QR</span>
                </Link>
             </div>
-         </div>
-
+          </div>
+       </div>
       </div>
     </div>
   );
