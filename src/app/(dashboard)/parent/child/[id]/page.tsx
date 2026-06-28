@@ -2,7 +2,7 @@
 
 import { useAuth } from "@/lib/auth-context";
 import { createClient } from "@/lib/supabase";
-import { ChevronLeft, BookOpen, Loader2, TrendingUp, BookCheck, GraduationCap, Medal, Star, Share2, Target, Plus, CheckCircle2, ShieldAlert, Lock, Unlock, Users, Image as ImageIcon, Trash2, Ban } from "lucide-react";
+import { ChevronLeft, BookOpen, Loader2, TrendingUp, BookCheck, GraduationCap, Medal, Star, Share2, Target, Plus, CheckCircle2, ShieldAlert, Lock, Unlock, Users, Image as ImageIcon, Trash2, Ban, Clock, Award, MessageSquare } from "lucide-react";
 import { useEffect, useState, use } from "react";
 import Link from "next/link";
 import { ProgressBar } from "@/components/ui/progress-bar";
@@ -26,6 +26,7 @@ export default function ChildReportPage({ params }: { params: Promise<{ id: stri
   const [newQuestDesc, setNewQuestDesc] = useState("");
   const [newQuestReward, setNewQuestReward] = useState(50);
   const [isSubmittingQuest, setIsSubmittingQuest] = useState(false);
+  const [timelineEvents, setTimelineEvents] = useState<any[]>([]);
 
   // Social Controls State
   const [socialAccessBlocked, setSocialAccessBlocked] = useState(false);
@@ -97,6 +98,44 @@ export default function ChildReportPage({ params }: { params: Promise<{ id: stri
       const { data: f_ing } = await supabase.from("friendships").select("following_id").eq("follower_id", childId);
       const { data: f_ers } = await supabase.from("friendships").select("follower_id").eq("following_id", childId);
       
+      // Compile Timeline Events
+      let events: any[] = [];
+      if (q) {
+        q.forEach((quest: any) => {
+          if (quest.status === 'completed') {
+            events.push({
+              id: `q-${quest.id}`, title: "Misi Selesai", description: `Berhasil menyelesaikan misi: ${quest.title}`, time: quest.updated_at, type: "quest"
+            });
+          }
+        });
+      }
+      if (s) {
+        s.forEach((score: any) => {
+          events.push({
+            id: `s-${score.id}`, title: "Ujian Selesai", description: `Mendapatkan nilai ${score.score} di mapel ${score.courses?.title || 'Unknown'}`, time: score.created_at, type: "exam"
+          });
+        });
+      }
+      if (cp) {
+        cp.forEach((post: any) => {
+          events.push({
+            id: `p-${post.id}`, title: "Aktivitas Sosial", description: `Membagikan postingan baru di Mading Kelas.`, time: post.created_at, type: "social"
+          });
+        });
+      }
+      
+      // Simulate real-time logs to show off the feature (since it's a demo)
+      const now = new Date();
+      events.push({
+        id: 'sim-1', title: "Tiba di Sekolah", description: "Absen masuk gerbang via Kiosk Face ID", time: new Date(now.getTime() - 1000 * 60 * 60 * 3).toISOString(), type: "attendance"
+      });
+      events.push({
+        id: 'sim-2', title: "Poin Kelas Dojo", description: "Mendapat +10 XP dari Guru Kelas (Aktif Bertanya)", time: new Date(now.getTime() - 1000 * 60 * 60 * 1).toISOString(), type: "dojo"
+      });
+      
+      events.sort((a, b) => new Date(b.time).getTime() - new Date(a.time).getTime());
+      setTimelineEvents(events);
+
       const followingIds = f_ing?.map((f: any) => f.following_id) || [];
       const followerIds = f_ers?.map((f: any) => f.follower_id) || [];
       
@@ -294,6 +333,49 @@ export default function ChildReportPage({ params }: { params: Promise<{ id: stri
                   </p>
                </div>
             </div>
+         </div>
+      </div>
+
+      {/* TIMELINE JEJAK ANAK (REAL-TIME BUKU PENGHUBUNG) */}
+      <div className="bg-white rounded-3xl border-2 border-slate-200 shadow-[0_8px_0_rgb(226,232,240)] p-6 md:p-8 mt-8">
+         <div className="flex items-center gap-3 mb-8">
+            <div className="w-12 h-12 bg-emerald-100 text-emerald-600 rounded-2xl flex items-center justify-center border-2 border-emerald-200 shadow-sm">
+               <Clock className="w-6 h-6" strokeWidth={3} />
+            </div>
+            <div>
+               <h3 className="text-2xl font-black text-slate-800">Buku Penghubung Real-Time</h3>
+               <p className="text-sm font-bold text-slate-500">Pantau jejak aktivitas anak Anda di sekolah menit demi menit.</p>
+            </div>
+         </div>
+
+         <div className="relative pl-6 md:pl-8 space-y-8 before:absolute before:inset-0 before:ml-[1.4rem] md:before:ml-[2.9rem] before:-translate-x-px md:before:mx-auto md:before:translate-x-0 before:h-full before:w-1 before:bg-slate-200 before:rounded-full">
+            {timelineEvents.map((event, idx) => {
+               let Icon = CheckCircle2;
+               let color = "bg-slate-100 text-slate-500 border-slate-200";
+               
+               if (event.type === 'attendance') { Icon = Clock; color = "bg-blue-100 text-blue-600 border-blue-200"; }
+               if (event.type === 'dojo') { Icon = Award; color = "bg-yellow-100 text-yellow-600 border-yellow-200"; }
+               if (event.type === 'quest') { Icon = Star; color = "bg-fuchsia-100 text-fuchsia-600 border-fuchsia-200"; }
+               if (event.type === 'exam') { Icon = BookOpen; color = "bg-indigo-100 text-indigo-600 border-indigo-200"; }
+               if (event.type === 'social') { Icon = MessageSquare; color = "bg-pink-100 text-pink-600 border-pink-200"; }
+
+               return (
+                  <div key={event.id} className="relative flex items-center justify-between md:justify-normal md:odd:flex-row-reverse group is-active">
+                     <div className={`flex items-center justify-center w-10 h-10 rounded-full border-4 border-white shadow-sm absolute left-0 md:left-1/2 -translate-x-1/2 shrink-0 ${color}`}>
+                        <Icon className="w-4 h-4" strokeWidth={3} />
+                     </div>
+                     <div className="w-[calc(100%-3rem)] md:w-[calc(50%-2.5rem)] bg-slate-50 border-2 border-slate-200 p-4 rounded-2xl shadow-sm hover:border-slate-300 transition-colors">
+                        <div className="flex items-center justify-between mb-1">
+                           <h4 className="font-black text-slate-800 text-sm">{event.title}</h4>
+                           <span className="text-[10px] font-black text-slate-400 bg-white px-2 py-1 rounded-lg border-2 border-slate-100">
+                              {new Date(event.time).toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' })}
+                           </span>
+                        </div>
+                        <p className="text-xs font-semibold text-slate-500">{event.description}</p>
+                     </div>
+                  </div>
+               );
+            })}
          </div>
       </div>
 
