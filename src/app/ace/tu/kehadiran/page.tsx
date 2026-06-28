@@ -190,6 +190,8 @@ export default function TUKehadiran() {
             ))}
           </div>
         </Card>
+      )}
+
       {activeTab === 'jadwal' && (
         <Card className="p-6 rounded-lg border border-slate-200 bg-white shadow-sm max-w-2xl">
           <h2 className="text-base font-bold text-slate-800 mb-4">Tambah Jadwal Mengajar (KBM)</h2>
