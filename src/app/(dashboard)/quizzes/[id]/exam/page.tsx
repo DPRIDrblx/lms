@@ -423,9 +423,9 @@ export default function ExamPage({ params }: { params: Promise<{ id: string }> }
     <div className="min-h-screen bg-white font-sans text-slate-800 flex flex-col relative overflow-hidden">
       
       {/* BACKGROUND WATERMARK */}
-      <div className="fixed inset-0 z-0 pointer-events-none select-none flex items-center justify-center opacity-[0.03]">
-        <h1 className="text-6xl md:text-8xl font-black uppercase tracking-widest text-slate-900 whitespace-nowrap -rotate-12">
-          Provided by Ruang CBT
+      <div className="fixed inset-0 z-0 pointer-events-none select-none flex items-center justify-center opacity-[0.03] overflow-hidden">
+        <h1 className="text-[25vw] md:text-[20vw] font-black uppercase tracking-widest text-slate-900 whitespace-nowrap -rotate-12">
+          IGNITE
         </h1>
       </div>
 
@@ -755,8 +755,8 @@ export default function ExamPage({ params }: { params: Promise<{ id: string }> }
           </div>
         </div>
 
-        {/* RIGHT PANEL: NUMBER GRID (Desktop) */}
-        <div className="hidden lg:flex flex-col w-80 shrink-0">
+        {/* RIGHT PANEL: NUMBER GRID (Mobile & Desktop) */}
+        <div className="flex flex-col w-full lg:w-80 shrink-0">
           <div className="bg-white rounded-3xl border-2 border-slate-200 p-6 shadow-sm sticky top-28">
             <h3 className="font-black text-slate-700 mb-6 uppercase tracking-widest text-sm flex items-center justify-between">
               Navigasi Soal
