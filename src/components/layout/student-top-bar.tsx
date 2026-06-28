@@ -121,7 +121,15 @@ export function StudentTopBar() {
         </div>
 
         {/* User Menu */}
-        <div className="ml-2 lg:ml-6 relative" ref={dropdownRef}>
+        <div className="ml-2 lg:ml-6 relative flex items-center" ref={dropdownRef}>
+          {profile?.active_title && (
+            <div className="hidden md:flex flex-col items-end mr-3">
+              <span className="text-[10px] font-black uppercase tracking-widest text-slate-400">Gelar</span>
+              <span className="text-xs font-black text-amber-500 bg-amber-50 px-2 py-0.5 rounded-md border border-amber-200">
+                {profile.active_title}
+              </span>
+            </div>
+          )}
           <button
             onClick={() => setDropdownOpen(!dropdownOpen)}
             className="flex items-center gap-2.5 p-1.5 pr-3 rounded-2xl hover:bg-slate-100 transition-all border-2 border-transparent hover:border-slate-200"

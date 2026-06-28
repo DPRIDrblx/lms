@@ -3,7 +3,7 @@
 import { useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Home, Shield, Swords, User, Compass, Users, MessageCircle, ShoppingBag, Tent, ShoppingCart, Map, Menu, X, Sparkles, Timer, Notebook, Trophy } from "lucide-react";
+import { Home, Shield, Swords, User, Compass, Users, MessageCircle, ShoppingBag, Tent, ShoppingCart, Map, Menu, X, Sparkles, Timer, Notebook, Trophy, PawPrint, Medal } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { motion, AnimatePresence } from "framer-motion";
 
@@ -15,6 +15,8 @@ export function StudentSidebar() {
     { name: "Learn", href: "/dashboard", icon: Home },
     { name: "Quests", href: "/student/quests", icon: Swords },
     { name: "Faksi & Asrama", href: "/student/faction", icon: Shield },
+    { name: "Peliharaan", href: "/student/pet", icon: PawPrint },
+    { name: "Gelar & Piala", href: "/student/badges", icon: Medal },
     { name: "Leaderboard", href: "/student/leaderboard", icon: Trophy },
     { name: "Hideout", href: "/student/hideout", icon: Tent },
     { name: "Social", href: "/student/social", icon: Users },

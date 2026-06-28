@@ -16,6 +16,7 @@ export interface Profile {
   force_password_change?: boolean;
   status?: "pending" | "approved" | "rejected";
   faction?: string;
+  active_title?: string;
 }
 
 interface AuthContextType {
