@@ -276,3 +276,53 @@ CREATE POLICY "TU manage tickets" ON ace_tickets FOR ALL USING (EXISTS (SELECT 1
 
 CREATE POLICY "View own feedbacks" ON ace_student_feedbacks FOR SELECT USING (auth.uid() = teacher_id);
 CREATE POLICY "View own workload alerts" ON ace_workload_alerts FOR SELECT USING (auth.uid() = teacher_id);
+
+-- --------------------------------------------------------
+-- Phase 8: HoD (Head of Department) Extensions
+-- --------------------------------------------------------
+
+ALTER TABLE profiles ADD COLUMN IF NOT EXISTS is_hod BOOLEAN NOT NULL DEFAULT false;
+ALTER TABLE profiles ADD COLUMN IF NOT EXISTS department TEXT;
+
+ALTER TABLE ace_leaves ADD COLUMN IF NOT EXISTS hod_status TEXT NOT NULL DEFAULT 'pending' CHECK (hod_status IN ('pending', 'approved', 'rejected'));
+
+ALTER TABLE ace_performances ADD COLUMN IF NOT EXISTS hod_score INTEGER;
+ALTER TABLE ace_performances ADD COLUMN IF NOT EXISTS hod_notes TEXT;
+
+-- Table for Lesson Plans
+CREATE TABLE IF NOT EXISTS ace_lesson_plans (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  teacher_id UUID NOT NULL REFERENCES profiles(id) ON DELETE CASCADE,
+  subject TEXT NOT NULL,
+  grade_level TEXT NOT NULL,
+  topic TEXT NOT NULL,
+  objectives TEXT NOT NULL,
+  activities TEXT NOT NULL,
+  status TEXT NOT NULL DEFAULT 'pending' CHECK (status IN ('pending', 'approved', 'revision_needed')),
+  feedback TEXT,
+  created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+  updated_at TIMESTAMPTZ NOT NULL DEFAULT now()
+);
+
+ALTER TABLE ace_lesson_plans ENABLE ROW LEVEL SECURITY;
+CREATE POLICY "View own or hod lesson plans" ON ace_lesson_plans FOR SELECT USING (auth.uid() = teacher_id OR EXISTS (SELECT 1 FROM profiles p WHERE p.id = auth.uid() AND p.is_hod = true));
+CREATE POLICY "Teacher insert lesson plans" ON ace_lesson_plans FOR INSERT WITH CHECK (auth.uid() = teacher_id);
+CREATE POLICY "HoD update lesson plans" ON ace_lesson_plans FOR UPDATE USING (EXISTS (SELECT 1 FROM profiles p WHERE p.id = auth.uid() AND p.is_hod = true));
+
+-- Table for Asset Requests
+CREATE TABLE IF NOT EXISTS ace_asset_requests (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  teacher_id UUID NOT NULL REFERENCES profiles(id) ON DELETE CASCADE,
+  item_name TEXT NOT NULL,
+  quantity INTEGER NOT NULL,
+  estimated_cost INTEGER NOT NULL,
+  priority TEXT NOT NULL DEFAULT 'normal' CHECK (priority IN ('low', 'normal', 'high', 'urgent')),
+  status TEXT NOT NULL DEFAULT 'pending_hod' CHECK (status IN ('pending_hod', 'approved_hod', 'processed_tu', 'completed', 'rejected')),
+  created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+  updated_at TIMESTAMPTZ NOT NULL DEFAULT now()
+);
+
+ALTER TABLE ace_asset_requests ENABLE ROW LEVEL SECURITY;
+CREATE POLICY "View own or hod asset requests" ON ace_asset_requests FOR SELECT USING (auth.uid() = teacher_id OR EXISTS (SELECT 1 FROM profiles p WHERE p.id = auth.uid() AND p.is_hod = true));
+CREATE POLICY "Teacher insert asset requests" ON ace_asset_requests FOR INSERT WITH CHECK (auth.uid() = teacher_id);
+CREATE POLICY "HoD update asset requests" ON ace_asset_requests FOR UPDATE USING (EXISTS (SELECT 1 FROM profiles p WHERE p.id = auth.uid() AND p.is_hod = true));

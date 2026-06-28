@@ -17,6 +17,7 @@ export interface Profile {
   status?: "pending" | "approved" | "rejected";
   faction?: string;
   active_title?: string;
+  is_hod?: boolean;
 }
 
 interface AuthContextType {

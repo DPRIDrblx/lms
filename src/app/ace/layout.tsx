@@ -2,7 +2,7 @@
 
 import { useAuth } from "@/lib/auth-context";
 import { useRouter, usePathname } from "next/navigation";
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import Link from "next/link";
 import { LogOut, UserCircle2, Briefcase, CalendarCheck, ShieldCheck, FileSignature, BookOpen, GraduationCap, CalendarClock, Receipt, Scale, TrendingUp, Wallet, Activity } from "lucide-react";
 import { Loader2 } from "lucide-react";
@@ -12,12 +12,21 @@ export default function ACELayout({ children }: { children: React.ReactNode }) {
   const { profile, loading, signOut } = useAuth();
   const router = useRouter();
   const pathname = usePathname();
+  const [hodMode, setHodMode] = useState(false);
 
   useEffect(() => {
     if (!loading && !profile) {
       router.push("/login");
     }
   }, [profile, loading, router]);
+
+  useEffect(() => {
+    if (pathname.startsWith('/ace/hod')) {
+      setHodMode(true);
+    } else {
+      setHodMode(false);
+    }
+  }, [pathname]);
 
   if (loading) {
     return (
@@ -74,7 +83,15 @@ export default function ACELayout({ children }: { children: React.ReactNode }) {
     { href: "/ace/principal/akuntabilitas", label: "Akuntabilitas TU", icon: Activity },
   ];
 
-  const navItems = isPrincipal ? principalNavItems : isTU ? tuNavItems : teacherNavItems;
+  const hodNavItems = [
+    { href: "/ace/hod/kurikulum", label: "Kurikulum & RPP", icon: BookOpen },
+    { href: "/ace/hod/izin", label: "Otorisasi Cuti", icon: CalendarCheck },
+    { href: "/ace/hod/supervisi", label: "Supervisi Klinis", icon: TrendingUp },
+    { href: "/ace/hod/akademik", label: "Kesenjangan Nilai", icon: Activity },
+    { href: "/ace/hod/inventaris", label: "Sarana & Prasarana", icon: Wallet },
+  ];
+
+  const navItems = isPrincipal ? principalNavItems : isTU ? tuNavItems : (profile.is_hod && hodMode ? hodNavItems : teacherNavItems);
 
   return (
     <div className="h-screen w-full bg-slate-50 flex flex-col md:flex-row font-sans overflow-hidden">
@@ -92,6 +109,25 @@ export default function ACELayout({ children }: { children: React.ReactNode }) {
               </div>
             </div>
           </div>
+
+          {profile?.is_hod && (
+            <div className="px-3 pt-4">
+              <div className="p-1 bg-slate-800 rounded-lg flex text-[10px] font-bold uppercase tracking-wider">
+                <button 
+                  onClick={() => router.push('/ace')}
+                  className={cn("flex-1 py-1.5 rounded-md text-center transition-colors", !hodMode ? "bg-indigo-600 text-white" : "text-slate-400 hover:text-slate-200")}
+                >
+                  Guru
+                </button>
+                <button 
+                  onClick={() => router.push('/ace/hod/kurikulum')}
+                  className={cn("flex-1 py-1.5 rounded-md text-center transition-colors", hodMode ? "bg-emerald-600 text-white" : "text-slate-400 hover:text-slate-200")}
+                >
+                  HoD
+                </button>
+              </div>
+            </div>
+          )}
 
           <div className="flex-1 overflow-y-auto p-3 space-y-1">
             {navItems.map((item) => {
