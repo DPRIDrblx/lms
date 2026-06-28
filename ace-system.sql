@@ -123,3 +123,87 @@ CREATE POLICY "View all schedules" ON ace_schedules FOR SELECT USING (true); -- 
 
 CREATE POLICY "View own payslips" ON ace_payslips FOR SELECT USING (auth.uid() = teacher_id);
 CREATE POLICY "TU manage payslips" ON ace_payslips FOR ALL USING (EXISTS (SELECT 1 FROM profiles WHERE id = auth.uid() AND role = 'tu'));
+
+-- PHASE 3 TABLES (SUPER-APP)
+
+-- 7. Table for Faculty Passport (Legalitas & Profil)
+CREATE TABLE IF NOT EXISTS ace_documents (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  teacher_id UUID NOT NULL REFERENCES profiles(id) ON DELETE CASCADE,
+  doc_type TEXT NOT NULL CHECK (doc_type IN ('ijazah', 'sk_pengangkatan', 'sertifikat_pendidik', 'lainnya')),
+  file_url TEXT NOT NULL,
+  expiry_date DATE,
+  status TEXT NOT NULL DEFAULT 'pending' CHECK (status IN ('pending', 'verified', 'rejected')),
+  created_at TIMESTAMPTZ NOT NULL DEFAULT now()
+);
+
+-- 8. Table for Logbook Mengajar
+CREATE TABLE IF NOT EXISTS ace_logbooks (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  teacher_id UUID NOT NULL REFERENCES profiles(id) ON DELETE CASCADE,
+  schedule_id UUID REFERENCES ace_schedules(id),
+  date DATE NOT NULL,
+  materi TEXT NOT NULL,
+  siswa_hadir INTEGER NOT NULL,
+  catatan TEXT,
+  created_at TIMESTAMPTZ NOT NULL DEFAULT now()
+);
+
+-- 9. Table for Substitusi Guru (Manual Matrix)
+CREATE TABLE IF NOT EXISTS ace_substitutions (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  leave_id UUID REFERENCES ace_leaves(id) ON DELETE CASCADE,
+  requestor_id UUID NOT NULL REFERENCES profiles(id),
+  substitute_id UUID NOT NULL REFERENCES profiles(id),
+  status TEXT NOT NULL DEFAULT 'pending' CHECK (status IN ('pending', 'accepted', 'rejected')),
+  created_at TIMESTAMPTZ NOT NULL DEFAULT now()
+);
+
+-- 10. Table for Plafon Tunjangan
+CREATE TABLE IF NOT EXISTS ace_benefits (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  teacher_id UUID NOT NULL REFERENCES profiles(id) ON DELETE CASCADE,
+  year INTEGER NOT NULL,
+  package_name TEXT NOT NULL,
+  claimed_amount INTEGER DEFAULT 0,
+  max_plafond INTEGER NOT NULL,
+  created_at TIMESTAMPTZ NOT NULL DEFAULT now()
+);
+
+-- 11. Table for TU Helpdesk Tickets
+CREATE TABLE IF NOT EXISTS ace_tickets (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  requestor_id UUID NOT NULL REFERENCES profiles(id) ON DELETE CASCADE,
+  category TEXT NOT NULL CHECK (category IN ('surat', 'sarpras', 'it', 'lainnya')),
+  title TEXT NOT NULL,
+  description TEXT NOT NULL,
+  status TEXT NOT NULL DEFAULT 'blue' CHECK (status IN ('blue', 'yellow', 'green', 'red')),
+  rejection_reason TEXT,
+  created_at TIMESTAMPTZ NOT NULL DEFAULT now()
+);
+
+-- RLS for Phase 3
+ALTER TABLE ace_documents ENABLE ROW LEVEL SECURITY;
+ALTER TABLE ace_logbooks ENABLE ROW LEVEL SECURITY;
+ALTER TABLE ace_substitutions ENABLE ROW LEVEL SECURITY;
+ALTER TABLE ace_benefits ENABLE ROW LEVEL SECURITY;
+ALTER TABLE ace_tickets ENABLE ROW LEVEL SECURITY;
+
+-- Policies Phase 3 (Simplified for MVP, all authenticated users can insert/view their own, principals/tu can view all)
+CREATE POLICY "View own documents" ON ace_documents FOR SELECT USING (auth.uid() = teacher_id);
+CREATE POLICY "Manage own documents" ON ace_documents FOR ALL USING (auth.uid() = teacher_id);
+CREATE POLICY "TU manage documents" ON ace_documents FOR ALL USING (EXISTS (SELECT 1 FROM profiles WHERE id = auth.uid() AND role = 'tu'));
+
+CREATE POLICY "View own logbooks" ON ace_logbooks FOR SELECT USING (auth.uid() = teacher_id);
+CREATE POLICY "Manage own logbooks" ON ace_logbooks FOR ALL USING (auth.uid() = teacher_id);
+
+CREATE POLICY "View involved substitutions" ON ace_substitutions FOR SELECT USING (auth.uid() = requestor_id OR auth.uid() = substitute_id);
+CREATE POLICY "Manage substitutions" ON ace_substitutions FOR ALL USING (auth.uid() = requestor_id OR auth.uid() = substitute_id);
+
+CREATE POLICY "View own benefits" ON ace_benefits FOR SELECT USING (auth.uid() = teacher_id);
+CREATE POLICY "Manage own benefits" ON ace_benefits FOR ALL USING (auth.uid() = teacher_id);
+CREATE POLICY "TU view benefits" ON ace_benefits FOR SELECT USING (EXISTS (SELECT 1 FROM profiles WHERE id = auth.uid() AND role = 'tu'));
+
+CREATE POLICY "View own tickets" ON ace_tickets FOR SELECT USING (auth.uid() = requestor_id);
+CREATE POLICY "Manage own tickets" ON ace_tickets FOR ALL USING (auth.uid() = requestor_id);
+CREATE POLICY "TU manage tickets" ON ace_tickets FOR ALL USING (EXISTS (SELECT 1 FROM profiles WHERE id = auth.uid() AND role = 'tu'));

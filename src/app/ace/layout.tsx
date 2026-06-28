@@ -49,11 +49,13 @@ export default function ACELayout({ children }: { children: React.ReactNode }) {
 
   const navItems = [
     { href: "/ace", label: "Dashboard ACE", icon: Briefcase },
-    { href: "/ace/kinerja", label: "E-Kinerja", icon: FileSignature },
-    { href: "/ace/kehadiran", label: "Presensi & Cuti", icon: CalendarCheck },
+    { href: "/ace/profil", label: "Profil & Portofolio", icon: UserCircle2 },
+    { href: "/ace/kinerja", label: "E-Kinerja & Supervisi", icon: FileSignature },
+    { href: "/ace/kehadiran", label: "Presensi & Dinas Luar", icon: CalendarCheck },
     { href: "/ace/diklat", label: "Diklat & Sertifikasi", icon: GraduationCap },
     { href: "/ace/jadwal", label: "Jadwal KBM", icon: CalendarClock },
-    { href: "/ace/slip-gaji", label: "Slip Gaji", icon: Receipt },
+    { href: "/ace/kesejahteraan", label: "Kesejahteraan", icon: Receipt },
+    { href: "/ace/helpdesk", label: "Helpdesk & Tiket", icon: FileSignature }, // using FileSignature as icon for now
   ];
 
   if (isPrincipal) {
@@ -63,68 +65,70 @@ export default function ACELayout({ children }: { children: React.ReactNode }) {
   return (
     <div className="min-h-screen bg-slate-50 flex flex-col md:flex-row font-sans">
       {/* ACE Sidebar */}
-      <div className="w-full md:w-64 bg-slate-900 text-slate-300 flex flex-col shrink-0">
-        <div className="p-6 border-b border-slate-800">
-          <div className="flex items-center gap-3 mb-2">
-            <div className="w-10 h-10 rounded-xl bg-gradient-to-tr from-indigo-500 to-blue-500 flex items-center justify-center text-white font-black shadow-lg">
-              A
-            </div>
-            <div>
-              <h1 className="text-xl font-black text-white tracking-tight">Ruang ACE</h1>
-              <p className="text-[10px] font-bold text-indigo-400 uppercase tracking-widest">Educator Center</p>
-            </div>
-          </div>
-        </div>
-
-        <div className="flex-1 overflow-y-auto p-4 space-y-2">
-          {navItems.map((item) => {
-            const isActive = pathname === item.href || (item.href !== "/ace" && pathname.startsWith(item.href));
-            return (
-              <Link 
-                key={item.href} 
-                href={item.href}
-                className={cn(
-                  "flex items-center gap-3 px-4 py-3 rounded-xl font-bold text-sm transition-all group",
-                  isActive 
-                    ? "bg-indigo-600 text-white shadow-md shadow-indigo-900/20" 
-                    : "hover:bg-slate-800 hover:text-white"
-                )}
-              >
-                <item.icon className={cn("w-5 h-5", isActive ? "text-white" : "text-slate-500 group-hover:text-indigo-400")} />
-                {item.label}
-              </Link>
-            );
-          })}
-        </div>
-
-        <div className="p-4 border-t border-slate-800">
-          <div className="flex items-center gap-3 mb-4 px-2">
-            <UserCircle2 className="w-10 h-10 text-slate-400" />
-            <div className="overflow-hidden">
-              <p className="text-sm font-bold text-white truncate">{profile.full_name}</p>
-              <p className="text-xs text-slate-500 uppercase font-black">{profile.role}</p>
+      {pathname !== "/ace/auth" && (
+        <div className="w-full md:w-64 bg-slate-900 text-slate-300 flex flex-col shrink-0">
+          <div className="p-6 border-b border-slate-800">
+            <div className="flex items-center gap-3 mb-2">
+              <div className="w-10 h-10 rounded-xl bg-gradient-to-tr from-indigo-500 to-blue-500 flex items-center justify-center text-white font-black shadow-lg">
+                A
+              </div>
+              <div>
+                <h1 className="text-xl font-black text-white tracking-tight">Ruang ACE</h1>
+                <p className="text-[10px] font-bold text-indigo-400 uppercase tracking-widest">Educator Center</p>
+              </div>
             </div>
           </div>
-          <Link 
-            href="/dashboard"
-            className="flex items-center justify-center gap-2 w-full py-2.5 mb-2 rounded-xl bg-slate-800 text-slate-300 font-bold text-sm hover:bg-slate-700 transition-colors"
-          >
-            <BookOpen className="w-4 h-4" />
-            Kembali ke IGNITE
-          </Link>
-          <button 
-            onClick={() => signOut()}
-            className="flex items-center justify-center gap-2 w-full py-2.5 rounded-xl bg-rose-500/10 text-rose-500 font-bold text-sm hover:bg-rose-500/20 transition-colors"
-          >
-            <LogOut className="w-4 h-4" />
-            Keluar
-          </button>
+
+          <div className="flex-1 overflow-y-auto p-4 space-y-2 hide-scrollbar">
+            {navItems.map((item) => {
+              const isActive = pathname === item.href || (item.href !== "/ace" && pathname.startsWith(item.href));
+              return (
+                <Link 
+                  key={item.href} 
+                  href={item.href}
+                  className={cn(
+                    "flex items-center gap-3 px-4 py-3 rounded-xl font-bold text-sm transition-all group",
+                    isActive 
+                      ? "bg-indigo-600 text-white shadow-md shadow-indigo-900/20" 
+                      : "hover:bg-slate-800 hover:text-white"
+                  )}
+                >
+                  <item.icon className={cn("w-5 h-5", isActive ? "text-white" : "text-slate-500 group-hover:text-indigo-400")} />
+                  {item.label}
+                </Link>
+              );
+            })}
+          </div>
+
+          <div className="p-4 border-t border-slate-800">
+            <div className="flex items-center gap-3 mb-4 px-2">
+              <UserCircle2 className="w-10 h-10 text-slate-400" />
+              <div className="overflow-hidden">
+                <p className="text-sm font-bold text-white truncate">{profile.full_name}</p>
+                <p className="text-xs text-slate-500 uppercase font-black">{profile.role}</p>
+              </div>
+            </div>
+            <Link 
+              href="/dashboard"
+              className="flex items-center justify-center gap-2 w-full py-2.5 mb-2 rounded-xl bg-slate-800 text-slate-300 font-bold text-sm hover:bg-slate-700 transition-colors"
+            >
+              <BookOpen className="w-4 h-4" />
+              Kembali ke IGNITE
+            </Link>
+            <button 
+              onClick={() => signOut()}
+              className="flex items-center justify-center gap-2 w-full py-2.5 rounded-xl bg-rose-500/10 text-rose-500 font-bold text-sm hover:bg-rose-500/20 transition-colors"
+            >
+              <LogOut className="w-4 h-4" />
+              Keluar
+            </button>
+          </div>
         </div>
-      </div>
+      )}
 
       {/* Main Content */}
-      <div className="flex-1 flex flex-col h-screen overflow-hidden bg-slate-50">
-        <main className="flex-1 overflow-y-auto p-6 md:p-10">
+      <div className={cn("flex-1 flex flex-col h-screen overflow-hidden", pathname === "/ace/auth" ? "bg-slate-900" : "bg-slate-50")}>
+        <main className={cn("flex-1 overflow-y-auto", pathname === "/ace/auth" ? "p-0" : "p-6 md:p-10")}>
           {children}
         </main>
       </div>
