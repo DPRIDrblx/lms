@@ -18,6 +18,7 @@ export interface Profile {
   faction?: string;
   active_title?: string;
   is_hod?: boolean;
+  is_hod_assistant?: boolean;
 }
 
 interface AuthContextType {

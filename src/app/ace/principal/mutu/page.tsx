@@ -146,9 +146,9 @@ export default function PrincipalMutu() {
                     <div className="group flex flex-col items-end cursor-pointer" onClick={() => { setEditScoreId(perf.id); setTempScore(perf.principal_score?.toString() || ""); }}>
                       <div className="flex items-center gap-1">
                         <Edit2 className="w-3.5 h-3.5 opacity-0 group-hover:opacity-100 text-slate-400 transition-opacity" />
-                        <div className="text-lg font-black text-slate-800">{perf.principal_score || '-'}</div>
+                        <div className="text-lg font-black text-slate-800">{perf.principal_score !== null ? perf.principal_score : '-'}</div>
                       </div>
-                      <div className="text-[10px] font-bold uppercase text-slate-400 group-hover:text-indigo-500 transition-colors">Skor</div>
+                      <div className="text-[10px] font-bold uppercase text-slate-400 group-hover:text-indigo-500 transition-colors">Skor Kepsek</div>
                     </div>
                   )}
                 </div>

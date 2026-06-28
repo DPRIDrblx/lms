@@ -41,6 +41,8 @@ CREATE TABLE IF NOT EXISTS ace_performances (
 -- Profiles Extensions for ACE
 ALTER TABLE profiles ADD COLUMN IF NOT EXISTS base_salary INTEGER NOT NULL DEFAULT 4500000;
 ALTER TABLE profiles ADD COLUMN IF NOT EXISTS employment_status TEXT NOT NULL DEFAULT 'kontrak';
+ALTER TABLE profiles ADD COLUMN IF NOT EXISTS is_hod BOOLEAN NOT NULL DEFAULT false;
+ALTER TABLE profiles ADD COLUMN IF NOT EXISTS is_hod_assistant BOOLEAN NOT NULL DEFAULT false;
 
 -- Table for Principal Promotions/Mutations
 CREATE TABLE IF NOT EXISTS ace_promotions (

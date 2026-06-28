@@ -12,6 +12,7 @@ export default function PrincipalOtorisasi() {
 
   const [promotions, setPromotions] = useState<any[]>([]);
   const [teachers, setTeachers] = useState<any[]>([]);
+  const [allStaff, setAllStaff] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [processing, setProcessing] = useState(false);
 
@@ -26,14 +27,17 @@ export default function PrincipalOtorisasi() {
       
     if (promoData) setPromotions(promoData);
 
-    // Fetch teachers to review contract renewals
+    // Fetch all teachers to review contract renewals and structural roles
     const { data: teacherData } = await supabase
       .from('profiles')
       .select('*')
       .eq('role', 'teacher')
-      .eq('employment_status', 'kontrak');
+      .order('full_name');
       
-    if (teacherData) setTeachers(teacherData);
+    if (teacherData) {
+      setTeachers(teacherData.filter((t: any) => t.employment_status === 'kontrak'));
+      setAllStaff(teacherData);
+    }
     
     setLoading(false);
   };
@@ -74,6 +78,19 @@ export default function PrincipalOtorisasi() {
       await supabase.from('profiles').update({ employment_status: newStatus }).eq('id', teacherId);
       setTeachers(prev => prev.filter(t => t.id !== teacherId));
       alert(`Status kontrak guru berhasil diperbarui menjadi: ${newStatus}`);
+    } catch (err: any) {
+      alert("Error: " + err.message);
+    } finally {
+      setProcessing(false);
+    }
+  };
+
+  const handleRoleAssignment = async (teacherId: string, roleType: 'is_hod' | 'is_hod_assistant', currentValue: boolean) => {
+    setProcessing(true);
+    try {
+      await supabase.from('profiles').update({ [roleType]: !currentValue }).eq('id', teacherId);
+      setAllStaff(prev => prev.map(t => t.id === teacherId ? { ...t, [roleType]: !currentValue } : t));
+      alert(`Jabatan struktural berhasil diperbarui.`);
     } catch (err: any) {
       alert("Error: " + err.message);
     } finally {
@@ -180,6 +197,61 @@ export default function PrincipalOtorisasi() {
                     className="col-span-2 px-3 py-1.5 bg-rose-100 text-rose-700 font-bold text-[11px] rounded hover:bg-rose-200 transition-colors text-center"
                   >
                     Putus Kontrak (Non-Aktifkan)
+                  </button>
+                </div>
+              </div>
+            ))}
+          </div>
+        </Card>
+
+        {/* New Card for Structural Assignment */}
+        <Card className="p-6 rounded-lg border border-slate-200 shadow-sm bg-white lg:col-span-2">
+          <div className="flex items-center gap-3 mb-6 pb-4 border-b border-slate-100">
+            <div className="p-2 bg-emerald-50 rounded-lg text-emerald-600">
+              <Scale className="w-5 h-5" />
+            </div>
+            <div>
+              <h2 className="text-base font-bold text-slate-800">Penunjukan Jabatan Struktural</h2>
+              <p className="text-xs text-slate-500 font-medium">Angkat Guru Menjadi Kepala Departemen atau Asisten</p>
+            </div>
+          </div>
+
+          <div className="space-y-3">
+            {loading ? <p className="text-xs text-slate-500">Memuat data...</p> : allStaff.length === 0 ? (
+              <p className="text-sm font-medium text-slate-500 text-center py-4">Belum ada guru yang terdaftar.</p>
+            ) : allStaff.map(staff => (
+              <div key={staff.id} className="flex flex-col md:flex-row items-center justify-between p-3 bg-slate-50 border border-slate-200 rounded-lg">
+                <div className="mb-3 md:mb-0 w-full md:w-auto">
+                  <h3 className="font-bold text-slate-800 text-sm">{staff.full_name}</h3>
+                  <div className="flex gap-2 mt-1">
+                    {staff.is_hod && <span className="px-2 py-0.5 bg-emerald-100 text-emerald-800 rounded text-[10px] font-bold uppercase">Kepala Departemen</span>}
+                    {staff.is_hod_assistant && <span className="px-2 py-0.5 bg-indigo-100 text-indigo-800 rounded text-[10px] font-bold uppercase">Asisten HoD</span>}
+                    {!staff.is_hod && !staff.is_hod_assistant && <span className="text-xs text-slate-500">Guru Reguler</span>}
+                  </div>
+                </div>
+                
+                <div className="flex gap-2 w-full md:w-auto">
+                  <button 
+                    disabled={processing}
+                    onClick={() => handleRoleAssignment(staff.id, 'is_hod', !!staff.is_hod)}
+                    className={`flex-1 md:flex-none px-3 py-1.5 font-bold text-[11px] rounded transition-colors text-center border ${
+                      staff.is_hod 
+                        ? 'bg-rose-50 text-rose-600 border-rose-200 hover:bg-rose-100' 
+                        : 'bg-emerald-50 text-emerald-600 border-emerald-200 hover:bg-emerald-100'
+                    }`}
+                  >
+                    {staff.is_hod ? 'Cabut Posisi HoD' : 'Angkat Jadi HoD'}
+                  </button>
+                  <button 
+                    disabled={processing}
+                    onClick={() => handleRoleAssignment(staff.id, 'is_hod_assistant', !!staff.is_hod_assistant)}
+                    className={`flex-1 md:flex-none px-3 py-1.5 font-bold text-[11px] rounded transition-colors text-center border ${
+                      staff.is_hod_assistant 
+                        ? 'bg-rose-50 text-rose-600 border-rose-200 hover:bg-rose-100' 
+                        : 'bg-indigo-50 text-indigo-600 border-indigo-200 hover:bg-indigo-100'
+                    }`}
+                  >
+                    {staff.is_hod_assistant ? 'Cabut Posisi Asisten' : 'Angkat Jadi Asisten'}
                   </button>
                 </div>
               </div>
