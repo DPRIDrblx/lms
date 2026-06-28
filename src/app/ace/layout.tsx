@@ -13,6 +13,7 @@ export default function ACELayout({ children }: { children: React.ReactNode }) {
   const router = useRouter();
   const pathname = usePathname();
   const [hodMode, setHodMode] = useState(false);
+  const [assessmentMode, setAssessmentMode] = useState(false);
 
   useEffect(() => {
     if (!loading && !profile) {
@@ -23,8 +24,13 @@ export default function ACELayout({ children }: { children: React.ReactNode }) {
   useEffect(() => {
     if (pathname.startsWith('/ace/hod')) {
       setHodMode(true);
+      setAssessmentMode(false);
+    } else if (pathname.startsWith('/ace/assessment')) {
+      setAssessmentMode(true);
+      setHodMode(false);
     } else {
       setHodMode(false);
+      setAssessmentMode(false);
     }
   }, [pathname]);
 
@@ -91,7 +97,15 @@ export default function ACELayout({ children }: { children: React.ReactNode }) {
     { href: "/ace/hod/inventaris", label: "Sarana & Prasarana", icon: Wallet },
   ];
 
-  const navItems = isPrincipal ? principalNavItems : isTU ? tuNavItems : (profile.is_hod && hodMode ? hodNavItems : teacherNavItems);
+  const assessmentNavItems = [
+    { href: "/ace/assessment/brankas", label: "Brankas Soal Ujian", icon: ShieldCheck },
+    { href: "/ace/assessment/distribusi", label: "Tenggat Nilai", icon: CalendarClock },
+    { href: "/ace/assessment/validasi", label: "Validasi Anomali", icon: Activity },
+    { href: "/ace/assessment/konsol", label: "Konsol Rapor", icon: FileSignature },
+    { href: "/ace/assessment/evaluasi", label: "Arsip Rubrik", icon: BookOpen },
+  ];
+
+  const navItems = isPrincipal ? principalNavItems : isTU ? tuNavItems : (profile.is_hod && hodMode ? hodNavItems : (profile.is_assessment_head && assessmentMode ? assessmentNavItems : teacherNavItems));
 
   return (
     <div className="h-screen w-full bg-slate-50 flex flex-col md:flex-row font-sans overflow-hidden">
@@ -110,21 +124,31 @@ export default function ACELayout({ children }: { children: React.ReactNode }) {
             </div>
           </div>
 
-          {profile?.is_hod && (
+          {(profile?.is_hod || profile?.is_assessment_head) && (
             <div className="px-3 pt-4">
-              <div className="p-1 bg-slate-800 rounded-lg flex text-[10px] font-bold uppercase tracking-wider">
+              <div className="p-1 bg-slate-800 rounded-lg flex text-[10px] font-bold uppercase tracking-wider overflow-x-auto hide-scrollbar">
                 <button 
                   onClick={() => router.push('/ace')}
-                  className={cn("flex-1 py-1.5 rounded-md text-center transition-colors", !hodMode ? "bg-indigo-600 text-white" : "text-slate-400 hover:text-slate-200")}
+                  className={cn("px-3 py-1.5 rounded-md text-center transition-colors flex-shrink-0", !hodMode && !assessmentMode ? "bg-indigo-600 text-white" : "text-slate-400 hover:text-slate-200")}
                 >
                   Guru
                 </button>
-                <button 
-                  onClick={() => router.push('/ace/hod/kurikulum')}
-                  className={cn("flex-1 py-1.5 rounded-md text-center transition-colors", hodMode ? "bg-emerald-600 text-white" : "text-slate-400 hover:text-slate-200")}
-                >
-                  HoD
-                </button>
+                {profile?.is_hod && (
+                  <button 
+                    onClick={() => router.push('/ace/hod/kurikulum')}
+                    className={cn("px-3 py-1.5 rounded-md text-center transition-colors flex-shrink-0", hodMode ? "bg-emerald-600 text-white" : "text-slate-400 hover:text-slate-200")}
+                  >
+                    HoD
+                  </button>
+                )}
+                {profile?.is_assessment_head && (
+                  <button 
+                    onClick={() => router.push('/ace/assessment/brankas')}
+                    className={cn("px-3 py-1.5 rounded-md text-center transition-colors flex-shrink-0", assessmentMode ? "bg-amber-600 text-white" : "text-slate-400 hover:text-slate-200")}
+                  >
+                    Asesmen
+                  </button>
+                )}
               </div>
             </div>
           )}

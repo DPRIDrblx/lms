@@ -19,6 +19,7 @@ export interface Profile {
   active_title?: string;
   is_hod?: boolean;
   is_hod_assistant?: boolean;
+  is_assessment_head?: boolean;
 }
 
 interface AuthContextType {

@@ -43,6 +43,7 @@ ALTER TABLE profiles ADD COLUMN IF NOT EXISTS base_salary INTEGER NOT NULL DEFAU
 ALTER TABLE profiles ADD COLUMN IF NOT EXISTS employment_status TEXT NOT NULL DEFAULT 'kontrak';
 ALTER TABLE profiles ADD COLUMN IF NOT EXISTS is_hod BOOLEAN NOT NULL DEFAULT false;
 ALTER TABLE profiles ADD COLUMN IF NOT EXISTS is_hod_assistant BOOLEAN NOT NULL DEFAULT false;
+ALTER TABLE profiles ADD COLUMN IF NOT EXISTS is_assessment_head BOOLEAN NOT NULL DEFAULT false;
 
 -- Table for Principal Promotions/Mutations
 CREATE TABLE IF NOT EXISTS ace_promotions (
@@ -382,5 +383,64 @@ CREATE TABLE IF NOT EXISTS ace_budgets (
   department_name TEXT NOT NULL,
   total_budget INTEGER NOT NULL,
   year INTEGER NOT NULL,
+  created_at TIMESTAMPTZ NOT NULL DEFAULT now()
+);
+
+-- Table for Exam Vault (Karantina Soal)
+CREATE TABLE IF NOT EXISTS ace_exam_vault (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  teacher_id UUID NOT NULL REFERENCES profiles(id) ON DELETE CASCADE,
+  subject TEXT NOT NULL,
+  grade_level TEXT NOT NULL,
+  exam_type TEXT NOT NULL,
+  difficulty_ratio JSONB,
+  status TEXT NOT NULL DEFAULT 'dikarantina' CHECK (status IN ('dikarantina', 'disahkan', 'ditolak')),
+  watermark_code TEXT,
+  created_at TIMESTAMPTZ NOT NULL DEFAULT now()
+);
+
+-- Table for Grade Deadlines (Pengendali Tenggat Nilai)
+CREATE TABLE IF NOT EXISTS ace_grade_deadlines (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  term TEXT NOT NULL,
+  deadline_date TIMESTAMPTZ NOT NULL,
+  is_locked BOOLEAN NOT NULL DEFAULT false,
+  created_at TIMESTAMPTZ NOT NULL DEFAULT now()
+);
+
+-- Table for Remedial Requests (Otorisasi Remedial)
+CREATE TABLE IF NOT EXISTS ace_remedial_requests (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  teacher_id UUID NOT NULL REFERENCES profiles(id) ON DELETE CASCADE,
+  student_name TEXT NOT NULL,
+  subject TEXT NOT NULL,
+  old_score INTEGER NOT NULL,
+  proposed_score INTEGER NOT NULL,
+  scan_evidence_url TEXT,
+  status TEXT NOT NULL DEFAULT 'pending' CHECK (status IN ('pending', 'approved', 'rejected')),
+  created_at TIMESTAMPTZ NOT NULL DEFAULT now()
+);
+
+-- Table for Report Cards (Konsol Kelayakan Rapor)
+CREATE TABLE IF NOT EXISTS ace_report_cards (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  student_name TEXT NOT NULL,
+  class_name TEXT NOT NULL,
+  term TEXT NOT NULL,
+  academic_status TEXT NOT NULL DEFAULT 'incomplete' CHECK (academic_status IN ('complete', 'incomplete')),
+  extracurricular_status TEXT NOT NULL DEFAULT 'incomplete' CHECK (extracurricular_status IN ('complete', 'incomplete')),
+  attendance_status TEXT NOT NULL DEFAULT 'incomplete' CHECK (attendance_status IN ('complete', 'incomplete')),
+  hoa_signature BOOLEAN NOT NULL DEFAULT false,
+  principal_signature BOOLEAN NOT NULL DEFAULT false,
+  created_at TIMESTAMPTZ NOT NULL DEFAULT now()
+);
+
+-- Table for Rubric Archives (Evaluasi Mutu Asesmen)
+CREATE TABLE IF NOT EXISTS ace_rubric_archives (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  title TEXT NOT NULL,
+  rubric_type TEXT NOT NULL,
+  file_url TEXT,
+  is_locked BOOLEAN NOT NULL DEFAULT true,
   created_at TIMESTAMPTZ NOT NULL DEFAULT now()
 );
