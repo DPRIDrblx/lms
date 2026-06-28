@@ -516,3 +516,8 @@ CREATE TABLE IF NOT EXISTS ace_rubric_archives (
   is_locked BOOLEAN NOT NULL DEFAULT true,
   created_at TIMESTAMPTZ NOT NULL DEFAULT now()
 );
+
+DROP POLICY IF EXISTS "TU manage schedules" ON ace_schedules;
+CREATE POLICY "TU manage schedules" ON ace_schedules FOR ALL USING (EXISTS (SELECT 1 FROM profiles WHERE id = auth.uid() AND role = 'tu'));
+DROP POLICY IF EXISTS "Teachers update schedules" ON ace_schedules;
+CREATE POLICY "Teachers update schedules" ON ace_schedules FOR UPDATE USING (auth.uid() = teacher_id);

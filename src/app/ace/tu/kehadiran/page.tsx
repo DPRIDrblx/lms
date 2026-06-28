@@ -72,7 +72,7 @@ export default function TUKehadiran() {
     }
     setScheduleLoading(true);
     try {
-      await supabase.from('ace_schedules').insert({
+      const { error } = await supabase.from('ace_schedules').insert({
         teacher_id: scheduleForm.teacher_id,
         day_of_week: scheduleForm.day_of_week,
         start_time: scheduleForm.start_time,
@@ -80,6 +80,7 @@ export default function TUKehadiran() {
         subject_name: scheduleForm.subject_name,
         class_name: scheduleForm.class_name
       });
+      if (error) throw error;
       alert("Jadwal berhasil ditambahkan!");
       setScheduleForm(prev => ({ ...prev, subject_name: "", class_name: "" }));
     } catch (err: any) {

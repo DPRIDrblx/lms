@@ -51,7 +51,7 @@ export default function ACEJadwal() {
   if (!profile) return null;
 
   const days = ["Senin", "Selasa", "Rabu", "Kamis", "Jumat", "Sabtu", "Minggu"];
-  const filteredSchedules = schedules.filter(sch => sch.day_of_week === selectedDay);
+  const filteredSchedules = schedules.filter(sch => Number(sch.day_of_week) === selectedDay);
 
   return (
     <div className="max-w-6xl mx-auto space-y-8 pb-20">
