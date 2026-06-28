@@ -182,12 +182,34 @@ CREATE TABLE IF NOT EXISTS ace_tickets (
   created_at TIMESTAMPTZ NOT NULL DEFAULT now()
 );
 
--- RLS for Phase 3
+-- 12. Table for Student Feedbacks (Kinerja)
+CREATE TABLE IF NOT EXISTS ace_student_feedbacks (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  teacher_id UUID NOT NULL REFERENCES profiles(id) ON DELETE CASCADE,
+  criteria_1_score DOUBLE PRECISION NOT NULL CHECK (criteria_1_score >= 1 AND criteria_1_score <= 4),
+  criteria_2_score DOUBLE PRECISION NOT NULL CHECK (criteria_2_score >= 1 AND criteria_2_score <= 4),
+  criteria_3_score DOUBLE PRECISION NOT NULL CHECK (criteria_3_score >= 1 AND criteria_3_score <= 4),
+  semester TEXT NOT NULL,
+  created_at TIMESTAMPTZ NOT NULL DEFAULT now()
+);
+
+-- 13. Table for Workload Alerts (Kinerja)
+CREATE TABLE IF NOT EXISTS ace_workload_alerts (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  teacher_id UUID NOT NULL REFERENCES profiles(id) ON DELETE CASCADE,
+  task_title TEXT NOT NULL,
+  days_overdue INTEGER NOT NULL,
+  created_at TIMESTAMPTZ NOT NULL DEFAULT now()
+);
+
+-- RLS for Phase 3 & 5
 ALTER TABLE ace_documents ENABLE ROW LEVEL SECURITY;
 ALTER TABLE ace_logbooks ENABLE ROW LEVEL SECURITY;
 ALTER TABLE ace_substitutions ENABLE ROW LEVEL SECURITY;
 ALTER TABLE ace_benefits ENABLE ROW LEVEL SECURITY;
 ALTER TABLE ace_tickets ENABLE ROW LEVEL SECURITY;
+ALTER TABLE ace_student_feedbacks ENABLE ROW LEVEL SECURITY;
+ALTER TABLE ace_workload_alerts ENABLE ROW LEVEL SECURITY;
 
 -- Policies Phase 3 (Simplified for MVP, all authenticated users can insert/view their own, principals/tu can view all)
 CREATE POLICY "View own documents" ON ace_documents FOR SELECT USING (auth.uid() = teacher_id);
@@ -207,3 +229,6 @@ CREATE POLICY "TU view benefits" ON ace_benefits FOR SELECT USING (EXISTS (SELEC
 CREATE POLICY "View own tickets" ON ace_tickets FOR SELECT USING (auth.uid() = requestor_id);
 CREATE POLICY "Manage own tickets" ON ace_tickets FOR ALL USING (auth.uid() = requestor_id);
 CREATE POLICY "TU manage tickets" ON ace_tickets FOR ALL USING (EXISTS (SELECT 1 FROM profiles WHERE id = auth.uid() AND role = 'tu'));
+
+CREATE POLICY "View own feedbacks" ON ace_student_feedbacks FOR SELECT USING (auth.uid() = teacher_id);
+CREATE POLICY "View own workload alerts" ON ace_workload_alerts FOR SELECT USING (auth.uid() = teacher_id);

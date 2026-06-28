@@ -17,11 +17,17 @@ export default function ACEKehadiran() {
   const [logbookLoading, setLogbookLoading] = useState(false);
 
   const [attendances, setAttendances] = useState<any[]>([]);
+  const [teachers, setTeachers] = useState<any[]>([]);
 
   useEffect(() => {
-    if (profile && activeTab === 'presensi') {
-      supabase.from('ace_attendances').select('*').eq('teacher_id', profile.id).order('created_at', { ascending: false }).limit(5)
-        .then(({ data }: any) => { if (data) setAttendances(data); });
+    if (profile) {
+      if (activeTab === 'presensi') {
+        supabase.from('ace_attendances').select('*').eq('teacher_id', profile.id).order('created_at', { ascending: false }).limit(5)
+          .then(({ data }: any) => { if (data) setAttendances(data); });
+      } else if (activeTab === 'cuti') {
+        supabase.from('profiles').select('*').eq('role', 'teacher').neq('id', profile.id)
+          .then(({ data }: any) => { if (data) setTeachers(data); });
+      }
     }
   }, [profile, activeTab]);
 
@@ -248,20 +254,15 @@ export default function ACEKehadiran() {
             </div>
             
             <div className="space-y-2">
-              <div className="p-3 rounded-lg border border-slate-200 flex justify-between items-center bg-slate-50">
-                <div>
-                  <p className="font-semibold text-sm text-slate-800">Pak Budi (Matematika)</p>
-                  <p className="text-xs text-slate-500">Kosong di Jam ke 3-4</p>
+              {teachers.map(t => (
+                <div key={t.id} className="p-3 rounded-lg border border-slate-200 flex justify-between items-center bg-slate-50">
+                  <div>
+                    <p className="font-semibold text-sm text-slate-800">{t.full_name}</p>
+                    <p className="text-xs text-slate-500">Guru Serumpun</p>
+                  </div>
+                  <button onClick={() => handleSubstitution(t.id)} className="px-3 py-1.5 bg-white border border-slate-300 text-slate-700 hover:bg-slate-100 font-semibold text-xs rounded-md shadow-sm transition-colors">Minta Tolong</button>
                 </div>
-                <button onClick={() => handleSubstitution('user-mock-1')} className="px-3 py-1.5 bg-white border border-slate-300 text-slate-700 hover:bg-slate-100 font-semibold text-xs rounded-md shadow-sm transition-colors">Minta Tolong</button>
-              </div>
-              <div className="p-3 rounded-lg border border-slate-200 flex justify-between items-center bg-slate-50">
-                <div>
-                  <p className="font-semibold text-sm text-slate-800">Bu Dina (Fisika)</p>
-                  <p className="text-xs text-slate-500">Kosong di Jam ke 3-5</p>
-                </div>
-                <button onClick={() => handleSubstitution('user-mock-2')} className="px-3 py-1.5 bg-white border border-slate-300 text-slate-700 hover:bg-slate-100 font-semibold text-xs rounded-md shadow-sm transition-colors">Minta Tolong</button>
-              </div>
+              ))}
             </div>
           </Card>
         </div>

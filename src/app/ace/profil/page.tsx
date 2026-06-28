@@ -11,7 +11,7 @@ export default function ACEProfil() {
   const supabase = createClient();
   const [documents, setDocuments] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
-  const [creditPoints, setCreditPoints] = useState(45);
+  const [creditPoints, setCreditPoints] = useState(0);
   const [uploadingDoc, setUploadingDoc] = useState<string | null>(null);
   
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -19,8 +19,14 @@ export default function ACEProfil() {
 
   const fetchDocs = async () => {
     if (profile) {
-      const { data } = await supabase.from('ace_documents').select('*').eq('teacher_id', profile.id);
-      if (data) setDocuments(data);
+      const { data: docs } = await supabase.from('ace_documents').select('*').eq('teacher_id', profile.id);
+      if (docs) setDocuments(docs);
+
+      const { data: certs } = await supabase.from('ace_certificates').select('points').eq('teacher_id', profile.id).eq('status', 'verified');
+      if (certs) {
+        const total = certs.reduce((sum: number, cert: any) => sum + (cert.points || 0), 0);
+        setCreditPoints(total);
+      }
     }
     setLoading(false);
   };

@@ -1,16 +1,36 @@
 "use client";
 
 import { useAuth } from "@/lib/auth-context";
+import { createClient } from "@/lib/supabase";
 import { Card } from "@/components/ui/card";
-import { FileSignature, Upload, FileText, CheckCircle2, Lock, Users, AlertCircle, BarChart3 } from "lucide-react";
-import { useState } from "react";
+import { FileSignature, Upload, CheckCircle2, AlertCircle, BarChart3, Loader2 } from "lucide-react";
+import { useState, useEffect } from "react";
 
 export default function ACEKinerja() {
   const { profile } = useAuth();
+  const supabase = createClient();
   const [activeTab, setActiveTab] = useState("supervisi");
   
   const [password, setPassword] = useState("");
   const [isSigned, setIsSigned] = useState(false);
+
+  // Kinerja Data
+  const [feedbacks, setFeedbacks] = useState<any[]>([]);
+  const [alerts, setAlerts] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    if (profile) {
+      Promise.all([
+        supabase.from('ace_student_feedbacks').select('*').eq('teacher_id', profile.id),
+        supabase.from('ace_workload_alerts').select('*').eq('teacher_id', profile.id)
+      ]).then(([fRes, aRes]) => {
+        if (fRes.data) setFeedbacks(fRes.data);
+        if (aRes.data) setAlerts(aRes.data);
+        setLoading(false);
+      });
+    }
+  }, [profile]);
 
   const handleSign = (e: React.FormEvent) => {
     e.preventDefault();
@@ -23,6 +43,25 @@ export default function ACEKinerja() {
   };
 
   if (!profile) return null;
+
+  // Calculate Average Feedback Score
+  let totalScore = 0;
+  let count = 0;
+  let c1Avg = 0, c2Avg = 0, c3Avg = 0;
+
+  if (feedbacks.length > 0) {
+    feedbacks.forEach(f => {
+      c1Avg += f.criteria_1_score;
+      c2Avg += f.criteria_2_score;
+      c3Avg += f.criteria_3_score;
+      totalScore += (f.criteria_1_score + f.criteria_2_score + f.criteria_3_score) / 3;
+      count++;
+    });
+    totalScore = totalScore / count;
+    c1Avg = c1Avg / count;
+    c2Avg = c2Avg / count;
+    c3Avg = c3Avg / count;
+  }
 
   return (
     <div className="space-y-6 pb-20">
@@ -143,7 +182,7 @@ export default function ACEKinerja() {
               <div className="w-24 h-24 mx-auto relative flex items-center justify-center mb-4">
                 <div className="absolute inset-0 rounded-full border-[8px] border-emerald-50" />
                 <div className="absolute inset-0 rounded-full border-[8px] border-emerald-500 border-t-transparent -rotate-45" />
-                <span className="text-3xl font-black text-slate-800">3.8</span>
+                <span className="text-3xl font-black text-slate-800">{count > 0 ? totalScore.toFixed(1) : "N/A"}</span>
               </div>
               <h2 className="text-lg font-bold text-slate-800">Indeks Kepuasan Siswa</h2>
               <p className="text-slate-500 text-xs font-semibold mt-1">Skala Likert (Max 4.0)</p>
@@ -151,32 +190,34 @@ export default function ACEKinerja() {
             
             <div className="w-full md:w-2/3 space-y-5">
               <p className="text-xs font-medium text-slate-500 leading-relaxed bg-slate-50 p-3 rounded-md border border-slate-100">
-                Data ditarik otomatis dari kuesioner akhir semester yang diisi oleh siswa sebelum mereka dapat melihat rapor. Semua data dijamin anonim oleh sistem.
+                Data ditarik otomatis dari kuesioner akhir semester yang diisi oleh siswa sebelum mereka dapat melihat rapor. Semua data dijamin anonim oleh sistem. {count === 0 ? "Belum ada feedback." : ""}
               </p>
               
-              <div className="space-y-4">
-                <div>
-                  <div className="flex justify-between text-xs font-bold mb-1.5">
-                    <span className="text-slate-700">Guru menjelaskan dengan jernih</span>
-                    <span className="text-emerald-700">3.9 / 4.0</span>
+              {count > 0 && (
+                <div className="space-y-4">
+                  <div>
+                    <div className="flex justify-between text-xs font-bold mb-1.5">
+                      <span className="text-slate-700">Guru menjelaskan dengan jernih</span>
+                      <span className="text-emerald-700">{c1Avg.toFixed(1)} / 4.0</span>
+                    </div>
+                    <div className="h-1.5 w-full bg-slate-100 rounded-full"><div className="h-full bg-emerald-500 rounded-full" style={{width: `${(c1Avg/4)*100}%`}} /></div>
                   </div>
-                  <div className="h-1.5 w-full bg-slate-100 rounded-full"><div className="h-full bg-emerald-500 rounded-full w-[95%]" /></div>
-                </div>
-                <div>
-                  <div className="flex justify-between text-xs font-bold mb-1.5">
-                    <span className="text-slate-700">Guru adil dalam memberi nilai</span>
-                    <span className="text-emerald-700">3.8 / 4.0</span>
+                  <div>
+                    <div className="flex justify-between text-xs font-bold mb-1.5">
+                      <span className="text-slate-700">Guru adil dalam memberi nilai</span>
+                      <span className="text-emerald-700">{c2Avg.toFixed(1)} / 4.0</span>
+                    </div>
+                    <div className="h-1.5 w-full bg-slate-100 rounded-full"><div className="h-full bg-emerald-500 rounded-full" style={{width: `${(c2Avg/4)*100}%`}} /></div>
                   </div>
-                  <div className="h-1.5 w-full bg-slate-100 rounded-full"><div className="h-full bg-emerald-500 rounded-full w-[90%]" /></div>
-                </div>
-                <div>
-                  <div className="flex justify-between text-xs font-bold mb-1.5">
-                    <span className="text-slate-700">Tugas yang diberikan relevan</span>
-                    <span className="text-emerald-700">3.7 / 4.0</span>
+                  <div>
+                    <div className="flex justify-between text-xs font-bold mb-1.5">
+                      <span className="text-slate-700">Tugas yang diberikan relevan</span>
+                      <span className="text-emerald-700">{c3Avg.toFixed(1)} / 4.0</span>
+                    </div>
+                    <div className="h-1.5 w-full bg-slate-100 rounded-full"><div className="h-full bg-emerald-500 rounded-full" style={{width: `${(c3Avg/4)*100}%`}} /></div>
                   </div>
-                  <div className="h-1.5 w-full bg-slate-100 rounded-full"><div className="h-full bg-emerald-500 rounded-full w-[85%]" /></div>
                 </div>
-              </div>
+              )}
             </div>
           </div>
         </Card>
@@ -186,15 +227,25 @@ export default function ACEKinerja() {
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           <Card className="p-6 rounded-lg border border-rose-200 bg-rose-50 shadow-sm">
             <h2 className="text-sm font-bold text-rose-800 mb-1 uppercase tracking-wider">Peringatan Beban Kerja!</h2>
-            <p className="text-rose-600/90 text-xs font-medium mb-4">Sistem mendeteksi ada tugas yang belum Anda koreksi lebih dari 7 hari.</p>
+            <p className="text-rose-600/90 text-xs font-medium mb-4">Sistem mendeteksi ada tugas yang belum Anda koreksi lebih dari batas wajar.</p>
             
-            <div className="p-3 bg-white rounded-md border border-rose-200 flex items-center justify-between">
-              <div>
-                <p className="font-bold text-sm text-slate-800 leading-tight mb-0.5">Ulangan Harian Bab 1</p>
-                <p className="text-[10px] font-bold text-rose-500 uppercase">Telat 9 Hari (Diinput: 10 Juni)</p>
+            {alerts.length === 0 ? (
+              <div className="p-3 bg-white rounded-md border border-emerald-200 text-emerald-700 text-sm font-bold text-center">
+                Bagus! Semua tugas terkoreksi tepat waktu.
               </div>
-              <button className="px-3 py-1.5 bg-rose-100 text-rose-700 font-bold rounded text-[10px] hover:bg-rose-200 transition-colors">Menuju Kelas</button>
-            </div>
+            ) : (
+              <div className="space-y-3">
+                {alerts.map(alert => (
+                  <div key={alert.id} className="p-3 bg-white rounded-md border border-rose-200 flex items-center justify-between">
+                    <div>
+                      <p className="font-bold text-sm text-slate-800 leading-tight mb-0.5">{alert.task_title}</p>
+                      <p className="text-[10px] font-bold text-rose-500 uppercase">Telat {alert.days_overdue} Hari</p>
+                    </div>
+                    <button className="px-3 py-1.5 bg-rose-100 text-rose-700 font-bold rounded text-[10px] hover:bg-rose-200 transition-colors">Menuju Kelas</button>
+                  </div>
+                ))}
+              </div>
+            )}
           </Card>
 
           <Card className="p-6 rounded-lg border border-slate-200 flex flex-col justify-center text-center bg-white shadow-sm">
