@@ -5,12 +5,13 @@ import { createClient } from "@/lib/supabase";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { useState, useEffect } from "react";
-import { useRouter } from "next/navigation";
+import { useRouter, useParams } from "next/navigation";
 import { Star, CheckCircle2, AlertTriangle, ArrowLeft, Loader2, Sparkles, Send } from "lucide-react";
 import Link from "next/link";
 import { motion, AnimatePresence } from "framer-motion";
 
-export default function StudentFeedbackForm({ params }: { params: { id: string } }) {
+export default function StudentFeedbackForm() {
+  const params = useParams();
   const { profile } = useAuth();
   const supabase = createClient();
   const router = useRouter();
@@ -31,7 +32,7 @@ export default function StudentFeedbackForm({ params }: { params: { id: string }
 
   useEffect(() => {
     async function fetchSession() {
-      if (!profile) return;
+      if (!profile || !params.id) return;
       const { data } = await supabase
         .from("ace_feedback_sessions")
         .select("*, profiles!teacher_id(full_name)")
