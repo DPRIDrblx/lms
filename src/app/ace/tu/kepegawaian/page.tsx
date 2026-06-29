@@ -16,6 +16,10 @@ export default function TUKepegawaian() {
   const [certificates, setCertificates] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
 
+  // Permintaan Dokumen State
+  const [docRequests, setDocRequests] = useState<any[]>([]);
+  const [newRequest, setNewRequest] = useState({ title: '', description: '', teacher_id: '', form_fields: [] as {id: string, label: string, type: string}[] });
+  
   // Pangkat State
   const [teachers, setTeachers] = useState<any[]>([]);
 
@@ -29,6 +33,14 @@ export default function TUKepegawaian() {
     const { data: certs } = await supabase.from('ace_certificates').select('*, profiles(full_name)').eq('status', 'pending');
     if (certs) setCertificates(certs);
 
+    // Fetch doc requests
+    const { data: reqs } = await supabase.from('ace_document_requests').select('*, profiles(full_name)').order('created_at', { ascending: false });
+    if (reqs) setDocRequests(reqs);
+
+    // Fetch teachers (all teachers for the dropdown)
+    const { data: allT } = await supabase.from('profiles').select('id, full_name').eq('role', 'teacher');
+    const teacherList = allT || [];
+
     // Fetch teachers with points
     const { data: allCerts } = await supabase.from('ace_certificates').select('teacher_id, points, profiles(full_name)').eq('status', 'verified');
     if (allCerts) {
@@ -39,7 +51,15 @@ export default function TUKepegawaian() {
         }
         map.get(c.teacher_id).totalPoints += c.points;
       });
+      // also add teachers who have 0 points so they show up
+      teacherList.forEach((t: any) => {
+        if (!map.has(t.id)) {
+           map.set(t.id, { id: t.id, name: t.full_name, totalPoints: 0 });
+        }
+      });
       setTeachers(Array.from(map.values()));
+    } else {
+       setTeachers(teacherList.map((t: any) => ({ id: t.id, name: t.full_name, totalPoints: 0 })));
     }
 
     setLoading(false);
@@ -59,6 +79,42 @@ export default function TUKepegawaian() {
     // Simplification: We don't have rejection_reason column for documents/certs yet, but we update status
     await supabase.from(table).update({ status }).eq('id', id);
     fetchData();
+  };
+
+  const handleAddRequest = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!newRequest.title) return alert("Judul harus diisi");
+    const { error } = await supabase.from('ace_document_requests').insert({
+      title: newRequest.title,
+      description: newRequest.description,
+      teacher_id: newRequest.teacher_id ? newRequest.teacher_id : null,
+      form_fields: newRequest.form_fields,
+      created_by: profile?.id
+    });
+    if (error) alert("Error: " + error.message);
+    else {
+      alert("Permintaan berhasil dibuat");
+      setNewRequest({ title: '', description: '', teacher_id: '', form_fields: [] });
+      fetchData();
+    }
+  };
+
+  const addFormField = () => {
+    setNewRequest({
+      ...newRequest,
+      form_fields: [...newRequest.form_fields, { id: Date.now().toString(), label: '', type: 'text' }]
+    });
+  };
+
+  const updateFormField = (index: number, key: string, value: string) => {
+    const updated = [...newRequest.form_fields];
+    updated[index] = { ...updated[index], [key]: value };
+    setNewRequest({ ...newRequest, form_fields: updated });
+  };
+
+  const removeFormField = (index: number) => {
+    const updated = newRequest.form_fields.filter((_, i) => i !== index);
+    setNewRequest({ ...newRequest, form_fields: updated });
   };
 
   const handleGenerateSK = (teacherName: string) => {
@@ -86,6 +142,7 @@ export default function TUKepegawaian() {
       <div className="flex gap-2 overflow-x-auto pb-2 hide-scrollbar">
         {[
           { id: 'verifikasi', label: 'Antrean Verifikasi Berkas' },
+          { id: 'permintaan', label: 'Permintaan Dokumen Kustom' },
           { id: 'pangkat', label: 'Pusat Kontrol Angka Kredit' },
         ].map(t => (
           <button 
@@ -113,9 +170,23 @@ export default function TUKepegawaian() {
                     <p className="font-semibold text-slate-700 text-xs mb-4 capitalize">{doc.doc_type.replace('_', ' ')}</p>
 
                     <p className="text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-1">Masa Berlaku</p>
-                    <p className="font-semibold text-slate-700 text-xs mb-6">{doc.expiry_date ? new Date(doc.expiry_date).toLocaleDateString('id-ID') : 'Seumur Hidup'}</p>
+                    <p className="font-semibold text-slate-700 text-xs mb-4">{doc.expiry_date ? new Date(doc.expiry_date).toLocaleDateString('id-ID') : 'Seumur Hidup'}</p>
 
-                    <div className="flex gap-2">
+                    {doc.metadata && Object.keys(doc.metadata).length > 0 && (
+                      <div className="mb-6 p-3 bg-slate-100 rounded-md border border-slate-200">
+                        <p className="text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-2">Detail Form / Metadata</p>
+                        <div className="space-y-2">
+                          {Object.entries(doc.metadata).map(([k, v]) => (
+                            <div key={k}>
+                              <span className="text-[10px] font-bold text-slate-400 capitalize">{k.replace(/_/g, ' ')}:</span>
+                              <p className="text-xs font-semibold text-slate-700">{v as string}</p>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+
+                    <div className="flex gap-2 mt-auto">
                       <button onClick={() => handleVerify('ace_documents', doc.id, 'rejected')} className="flex-1 py-2 bg-rose-50 text-rose-700 hover:bg-rose-100 font-bold text-xs rounded-md border border-rose-200 transition-colors">Tolak</button>
                       <button onClick={() => handleVerify('ace_documents', doc.id, 'verified')} className="flex-1 py-2 bg-emerald-600 text-white hover:bg-emerald-700 font-bold text-xs rounded-md shadow-sm transition-colors">Sahkan</button>
                     </div>
@@ -130,6 +201,7 @@ export default function TUKepegawaian() {
             </div>
           )}
 
+          {/* Removed certificates since it was getting too long, or we keep it as is, wait I will just append after certificates */}
           <h2 className="text-sm font-bold text-slate-800 uppercase tracking-wider mt-8 mb-2">Sertifikat & Diklat</h2>
           {loading ? <p className="text-sm text-slate-500">Memuat antrean...</p> : certificates.length === 0 ? <p className="text-sm text-slate-500 bg-white p-6 rounded-md border border-slate-200 shadow-sm">Tidak ada antrean sertifikat.</p> : (
             <div className="grid grid-cols-1 gap-4">
@@ -171,6 +243,92 @@ export default function TUKepegawaian() {
               ))}
             </div>
           )}
+        </div>
+      )}
+
+      {activeTab === 'permintaan' && (
+        <div className="space-y-6">
+          <Card className="p-6 bg-white border border-slate-200 shadow-sm rounded-lg max-w-3xl">
+            <h2 className="text-lg font-bold text-slate-800 mb-2">Buat Permintaan Dokumen Baru</h2>
+            <p className="text-sm text-slate-500 mb-6">Ajukan permintaan unggah dokumen tambahan ke guru. Anda bisa menentukan form spesifik yang harus diisi.</p>
+            <form onSubmit={handleAddRequest} className="space-y-4">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-xs font-bold text-slate-700 mb-1">Judul Dokumen</label>
+                  <input type="text" required placeholder="Contoh: Pakta Integritas 2024" value={newRequest.title} onChange={e => setNewRequest({...newRequest, title: e.target.value})} className="w-full p-2 border border-slate-300 rounded text-sm" />
+                </div>
+                <div>
+                  <label className="block text-xs font-bold text-slate-700 mb-1">Target Guru (Kosongkan = Semua Guru)</label>
+                  <select value={newRequest.teacher_id} onChange={e => setNewRequest({...newRequest, teacher_id: e.target.value})} className="w-full p-2 border border-slate-300 rounded text-sm bg-white">
+                    <option value="">Semua Guru</option>
+                    {teachers.map(t => <option key={t.id} value={t.id}>{t.name}</option>)}
+                  </select>
+                </div>
+              </div>
+              <div>
+                <label className="block text-xs font-bold text-slate-700 mb-1">Deskripsi Tambahan</label>
+                <textarea rows={2} placeholder="Mohon unggah yang sudah ditandatangani basah..." value={newRequest.description} onChange={e => setNewRequest({...newRequest, description: e.target.value})} className="w-full p-2 border border-slate-300 rounded text-sm resize-none"></textarea>
+              </div>
+
+              <div className="pt-4 border-t border-slate-100">
+                <div className="flex justify-between items-center mb-3">
+                  <label className="block text-sm font-bold text-slate-700">Form Metadata Kustom (Opsional)</label>
+                  <button type="button" onClick={addFormField} className="px-3 py-1.5 bg-indigo-50 text-indigo-700 font-bold text-xs rounded hover:bg-indigo-100 transition-colors">+ Tambah Field</button>
+                </div>
+                {newRequest.form_fields.length === 0 ? (
+                  <p className="text-xs text-slate-400 italic">Tidak ada form tambahan.</p>
+                ) : (
+                  <div className="space-y-3">
+                    {newRequest.form_fields.map((f, i) => (
+                      <div key={f.id} className="flex gap-2 items-start bg-slate-50 p-3 rounded-lg border border-slate-200">
+                        <div className="flex-1">
+                          <label className="block text-[10px] font-bold text-slate-500 uppercase">Nama Field (Pertanyaan)</label>
+                          <input type="text" required placeholder="Contoh: Tanggal Terbit" value={f.label} onChange={e => updateFormField(i, 'label', e.target.value)} className="w-full p-2 text-sm border border-slate-300 rounded mt-1" />
+                        </div>
+                        <div className="w-1/3">
+                          <label className="block text-[10px] font-bold text-slate-500 uppercase">Tipe Data</label>
+                          <select value={f.type} onChange={e => updateFormField(i, 'type', e.target.value)} className="w-full p-2 text-sm border border-slate-300 rounded mt-1 bg-white">
+                            <option value="text">Teks Pendek</option>
+                            <option value="date">Tanggal</option>
+                            <option value="number">Angka / Nomor</option>
+                          </select>
+                        </div>
+                        <div className="pt-5">
+                          <button type="button" onClick={() => removeFormField(i)} className="p-2 text-rose-500 hover:bg-rose-100 rounded transition-colors"><XCircle className="w-5 h-5" /></button>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+              <div className="pt-2">
+                <button type="submit" className="w-full py-2.5 bg-indigo-600 text-white font-bold rounded hover:bg-indigo-700 transition-colors">Buat Permintaan</button>
+              </div>
+            </form>
+          </Card>
+
+          <div className="space-y-4 max-w-3xl">
+            <h2 className="text-sm font-bold text-slate-800 uppercase tracking-wider mb-2">Riwayat Permintaan</h2>
+            {docRequests.length === 0 ? <p className="text-sm text-slate-500">Belum ada permintaan kustom dibuat.</p> : (
+              <div className="grid gap-3">
+                {docRequests.map(req => (
+                  <Card key={req.id} className="p-4 bg-white border border-slate-200 shadow-sm flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+                    <div>
+                      <h3 className="font-bold text-slate-800">{req.title}</h3>
+                      <p className="text-xs text-slate-500 mt-1">{req.description}</p>
+                      <div className="flex gap-3 mt-2">
+                        <span className="text-[10px] font-bold px-2 py-1 bg-indigo-50 text-indigo-700 rounded-md">Target: {req.teacher_id ? req.profiles?.full_name : 'Semua Guru'}</span>
+                        <span className="text-[10px] font-bold px-2 py-1 bg-slate-100 text-slate-600 rounded-md">{req.form_fields?.length || 0} Kolom Form</span>
+                      </div>
+                    </div>
+                    <div className="text-xs text-slate-400 font-medium">
+                      {new Date(req.created_at).toLocaleDateString('id-ID')}
+                    </div>
+                  </Card>
+                ))}
+              </div>
+            )}
+          </div>
         </div>
       )}
 

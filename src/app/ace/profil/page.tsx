@@ -12,15 +12,38 @@ export default function ACEProfil() {
   const [documents, setDocuments] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [creditPoints, setCreditPoints] = useState(0);
-  const [uploadingDoc, setUploadingDoc] = useState<string | null>(null);
   
-  const fileInputRef = useRef<HTMLInputElement>(null);
   const certFileInputRef = useRef<HTMLInputElement>(null);
-  const [selectedType, setSelectedType] = useState<string | null>(null);
 
   const [showCertModal, setShowCertModal] = useState(false);
   const [certForm, setCertForm] = useState({ title: "", issuer: "", date_issued: "", file: null as File | null });
   const [certSubmitting, setCertSubmitting] = useState(false);
+
+  const [docRequests, setDocRequests] = useState<any[]>([]);
+  const [showDocModal, setShowDocModal] = useState(false);
+  const [docModalData, setDocModalData] = useState<{ type: string, requestId?: string, label: string, fields: any[] }>({ type: '', label: '', fields: [] });
+  const [docFormData, setDocFormData] = useState<Record<string, string>>({});
+  const [docFile, setDocFile] = useState<File | null>(null);
+  const [docSubmitting, setDocSubmitting] = useState(false);
+
+  const standardForms: Record<string, { id: string, label: string, type: string }[]> = {
+    ijazah: [
+      { id: 'universitas', label: 'Universitas / Perguruan Tinggi', type: 'text' },
+      { id: 'tanggal_terbit', label: 'Tanggal Terbit', type: 'date' },
+      { id: 'nomor_ijazah', label: 'Nomor Ijazah', type: 'text' }
+    ],
+    sk_pengangkatan: [
+      { id: 'instansi', label: 'Instansi Penerbit', type: 'text' },
+      { id: 'tanggal_terbit', label: 'Tanggal Terbit', type: 'date' },
+      { id: 'nomor_sk', label: 'Nomor SK', type: 'text' }
+    ],
+    sertifikat_pendidik: [
+      { id: 'bidang_studi', label: 'Bidang Studi', type: 'text' },
+      { id: 'tahun_sertifikasi', label: 'Tahun Sertifikasi', type: 'number' },
+      { id: 'nomor_sertifikat', label: 'Nomor Sertifikat', type: 'text' }
+    ]
+  };
+
 
   const fetchDocs = async () => {
     if (profile) {
@@ -32,6 +55,9 @@ export default function ACEProfil() {
         const total = certs.reduce((sum: number, cert: any) => sum + (cert.points || 0), 0);
         setCreditPoints(total);
       }
+
+      const { data: reqs } = await supabase.from('ace_document_requests').select('*').or(`teacher_id.eq.${profile.id},teacher_id.is.null`);
+      if (reqs) setDocRequests(reqs);
     }
     setLoading(false);
   };
@@ -70,56 +96,66 @@ export default function ACEProfil() {
   
   const isLocked = missingOrExpiredDocs.length > 0;
 
-  const handleTriggerUpload = (type: string) => {
-    setSelectedType(type);
-    if (fileInputRef.current) {
-      fileInputRef.current.click();
-    }
+  const handleTriggerUpload = (type: string, label: string, requestId?: string, customFields?: any[]) => {
+    let fields = [];
+    if (type === 'custom' && customFields) fields = customFields;
+    else if (standardForms[type]) fields = standardForms[type];
+    
+    setDocModalData({ type, label, requestId, fields });
+    setDocFormData({});
+    setDocFile(null);
+    setShowDocModal(true);
   };
 
-  const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file || !selectedType || !profile) return;
+  const handleDocSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!docFile || !profile) {
+      alert("Mohon pilih file dokumen terlebih dahulu.");
+      return;
+    }
+    setDocSubmitting(true);
     
-    setUploadingDoc(selectedType);
     try {
-      const fileExt = file.name.split('.').pop();
-      const fileName = `${profile.id}-${selectedType}-${Date.now()}.${fileExt}`;
+      const fileExt = docFile.name.split('.').pop();
+      const fileName = `${profile.id}-${docModalData.type}-${Date.now()}.${fileExt}`;
       const filePath = `documents/${fileName}`;
 
-      const { error: uploadError } = await supabase.storage
-        .from('ace_storage')
-        .upload(filePath, file);
-
+      const { error: uploadError } = await supabase.storage.from('ace_storage').upload(filePath, docFile);
       if (uploadError) throw uploadError;
 
-      const { data: publicUrlData } = supabase.storage
-        .from('ace_storage')
-        .getPublicUrl(filePath);
+      const { data: publicUrlData } = supabase.storage.from('ace_storage').getPublicUrl(filePath);
 
-      // Upsert doc record
-      const existingDoc = documents.find(d => d.doc_type === selectedType);
-      
+      let existingDoc = null;
+      if (docModalData.type !== 'custom') {
+        existingDoc = documents.find(d => d.doc_type === docModalData.type);
+      } else if (docModalData.requestId) {
+        existingDoc = documents.find(d => d.request_id === docModalData.requestId);
+      }
+
       if (existingDoc) {
         await supabase.from('ace_documents').update({
           file_url: publicUrlData.publicUrl,
-          status: 'pending'
+          status: 'pending',
+          metadata: docFormData
         }).eq('id', existingDoc.id);
       } else {
         await supabase.from('ace_documents').insert({
           teacher_id: profile.id,
-          doc_type: selectedType,
+          doc_type: docModalData.type,
           file_url: publicUrlData.publicUrl,
-          status: 'pending'
+          status: 'pending',
+          request_id: docModalData.requestId || null,
+          metadata: docFormData
         });
       }
       
-      await fetchDocs();
+      alert("Dokumen berhasil diunggah dan menunggu verifikasi!");
+      setShowDocModal(false);
+      fetchDocs();
     } catch (err: any) {
       alert("Error uploading file: " + err.message);
     } finally {
-      setUploadingDoc(null);
-      fileInputRef.current && (fileInputRef.current.value = '');
+      setDocSubmitting(false);
     }
   };
 
@@ -189,13 +225,7 @@ export default function ACEProfil() {
         </div>
       )}
 
-      <input 
-        type="file" 
-        ref={fileInputRef} 
-        onChange={handleFileUpload} 
-        className="hidden" 
-        accept=".pdf,.jpg,.jpeg,.png"
-      />
+      {/* Form triggers modal now, removed file input */}
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         <div className="space-y-4">
@@ -206,7 +236,6 @@ export default function ACEProfil() {
           <div className="space-y-3">
             {requiredDocs.map(docReq => {
               const status = getDocStatus(docReq.type);
-              const isUploading = uploadingDoc === docReq.type;
               
               return (
                 <Card key={docReq.type} className={`p-4 rounded-lg border ${status.bg} transition-colors shadow-sm`}>
@@ -220,12 +249,11 @@ export default function ACEProfil() {
                     </div>
                     {status.status !== 'verified' && (
                       <button 
-                        onClick={() => handleTriggerUpload(docReq.type)}
-                        disabled={isUploading}
-                        className="px-3 py-1.5 bg-white text-slate-600 font-semibold text-xs rounded-md border border-slate-200 hover:bg-slate-50 flex items-center gap-1.5 transition-colors disabled:opacity-50"
+                        onClick={() => handleTriggerUpload(docReq.type, docReq.label)}
+                        className="px-3 py-1.5 bg-white text-slate-600 font-semibold text-xs rounded-md border border-slate-200 hover:bg-slate-50 flex items-center gap-1.5 transition-colors"
                       >
-                        {isUploading ? <Loader2 className="w-3 h-3 animate-spin" /> : <Upload className="w-3 h-3" />}
-                        {isUploading ? 'Mengunggah...' : 'Unggah File'}
+                        <Upload className="w-3 h-3" />
+                        Unggah / Lengkapi
                       </button>
                     )}
                   </div>
@@ -236,6 +264,48 @@ export default function ACEProfil() {
               );
             })}
           </div>
+
+          {docRequests.length > 0 && (
+            <div className="mt-8 space-y-4">
+              <h2 className="text-sm font-bold text-slate-700 uppercase tracking-wider flex items-center gap-2">
+                <FileText className="w-4 h-4 text-rose-500" /> Permintaan Dokumen Tambahan
+              </h2>
+              <div className="space-y-3">
+                {docRequests.map(req => {
+                  const submittedDoc = documents.find(d => d.request_id === req.id);
+                  let status = { status: 'missing', text: 'Belum Diunggah', color: 'text-rose-600', bg: 'bg-rose-50 border-rose-200' };
+                  if (submittedDoc) {
+                    if (submittedDoc.status === 'pending') status = { status: 'pending', text: 'Menunggu Verifikasi', color: 'text-amber-600', bg: 'bg-amber-50 border-amber-200' };
+                    if (submittedDoc.status === 'rejected') status = { status: 'rejected', text: 'Ditolak TU', color: 'text-rose-600', bg: 'bg-rose-50 border-rose-200' };
+                    if (submittedDoc.status === 'verified') status = { status: 'verified', text: 'Terverifikasi', color: 'text-emerald-700', bg: 'bg-emerald-50 border-emerald-200' };
+                  }
+
+                  return (
+                    <Card key={req.id} className={`p-4 rounded-lg border ${status.bg} transition-colors shadow-sm`}>
+                      <div className="flex justify-between items-start mb-3">
+                        <div>
+                          <h3 className="font-semibold text-slate-800 text-sm">{req.title}</h3>
+                          {req.description && <p className="text-[10px] text-slate-500 mt-1">{req.description}</p>}
+                          <p className={`text-xs ${status.color} mt-2 flex items-center gap-1 font-medium`}>
+                            {status.status === 'verified' ? <CheckCircle2 className="w-3.5 h-3.5" /> : <AlertTriangle className="w-3.5 h-3.5" />}
+                            {status.text}
+                          </p>
+                        </div>
+                        {status.status !== 'verified' && (
+                          <button 
+                            onClick={() => handleTriggerUpload('custom', req.title, req.id, req.form_fields)}
+                            className="px-3 py-1.5 bg-white text-slate-600 font-semibold text-xs rounded-md border border-slate-200 hover:bg-slate-50 flex items-center gap-1.5 transition-colors"
+                          >
+                            <Upload className="w-3 h-3" /> Lengkapi Dokumen
+                          </button>
+                        )}
+                      </div>
+                    </Card>
+                  );
+                })}
+              </div>
+            </div>
+          )}
         </div>
 
         <div className="space-y-4">
@@ -272,6 +342,48 @@ export default function ACEProfil() {
         </div>
       </div>
 
+      {/* Document Upload Modal */}
+      {showDocModal && (
+        <div className="fixed inset-0 bg-slate-900/50 z-50 flex items-center justify-center p-4 backdrop-blur-sm">
+          <Card className="w-full max-w-lg bg-white shadow-2xl rounded-2xl overflow-hidden animate-in zoom-in-95">
+            <div className="p-4 border-b border-slate-100 bg-slate-50 flex justify-between items-center">
+              <h2 className="font-bold text-slate-800">Unggah: {docModalData.label}</h2>
+              <button onClick={() => setShowDocModal(false)} className="text-slate-400 hover:text-slate-600 p-1"><XCircle className="w-5 h-5" /></button>
+            </div>
+            <form onSubmit={handleDocSubmit} className="p-6 space-y-4">
+              {docModalData.fields.map(field => (
+                <div key={field.id}>
+                  <label className="block text-xs font-bold text-slate-700 mb-1">{field.label}</label>
+                  <input 
+                    type={field.type === 'number' ? 'number' : field.type === 'date' ? 'date' : 'text'} 
+                    required 
+                    value={docFormData[field.id] || ''} 
+                    onChange={e => setDocFormData({...docFormData, [field.id]: e.target.value})} 
+                    className="w-full p-2 border border-slate-200 rounded-lg text-sm bg-slate-50" 
+                  />
+                </div>
+              ))}
+              <div>
+                <label className="block text-xs font-bold text-slate-700 mb-1">File Dokumen Pindaian (PDF/Image)</label>
+                <input 
+                  type="file" 
+                  required 
+                  accept=".pdf,.jpg,.jpeg,.png"
+                  onChange={e => setDocFile(e.target.files?.[0] || null)}
+                  className="w-full p-2 border border-slate-200 rounded-lg text-sm bg-white" 
+                />
+              </div>
+              <div className="pt-2">
+                <button disabled={docSubmitting} type="submit" className="w-full py-2.5 bg-indigo-600 text-white font-bold rounded-lg hover:bg-indigo-700 disabled:opacity-50 transition-colors">
+                  {docSubmitting ? 'Mengunggah & Menyimpan...' : 'Simpan & Unggah Dokumen'}
+                </button>
+              </div>
+            </form>
+          </Card>
+        </div>
+      )}
+
+      {/* Cert Modal */}
       {showCertModal && (
         <div className="fixed inset-0 bg-slate-900/50 z-50 flex items-center justify-center p-4">
           <Card className="w-full max-w-md p-6 bg-white shadow-xl rounded-xl border border-slate-200">
