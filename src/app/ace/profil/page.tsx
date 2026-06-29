@@ -15,7 +15,12 @@ export default function ACEProfil() {
   const [uploadingDoc, setUploadingDoc] = useState<string | null>(null);
   
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const certFileInputRef = useRef<HTMLInputElement>(null);
   const [selectedType, setSelectedType] = useState<string | null>(null);
+
+  const [showCertModal, setShowCertModal] = useState(false);
+  const [certForm, setCertForm] = useState({ title: "", issuer: "", date_issued: "", file: null as File | null });
+  const [certSubmitting, setCertSubmitting] = useState(false);
 
   const fetchDocs = async () => {
     if (profile) {
@@ -111,11 +116,49 @@ export default function ACEProfil() {
       
       await fetchDocs();
     } catch (err: any) {
-      alert("Gagal mengunggah: " + err.message);
+      alert("Error uploading file: " + err.message);
     } finally {
       setUploadingDoc(null);
-      setSelectedType(null);
-      if (e.target) e.target.value = '';
+      fileInputRef.current && (fileInputRef.current.value = '');
+    }
+  };
+
+  const handleCertSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!profile || !certForm.title || !certForm.issuer || !certForm.date_issued || !certForm.file) {
+      alert("Mohon lengkapi semua data dan unggah sertifikat.");
+      return;
+    }
+    setCertSubmitting(true);
+    try {
+      const fileExt = certForm.file.name.split('.').pop();
+      const fileName = `${profile.id}-cert-${Date.now()}.${fileExt}`;
+      const filePath = `certificates/${fileName}`;
+
+      const { error: uploadError } = await supabase.storage.from('ace_storage').upload(filePath, certForm.file);
+      if (uploadError) throw uploadError;
+
+      const { data: publicUrlData } = supabase.storage.from('ace_storage').getPublicUrl(filePath);
+
+      const { error: insertError } = await supabase.from('ace_certificates').insert({
+        teacher_id: profile.id,
+        title: certForm.title,
+        issuer: certForm.issuer,
+        date_issued: certForm.date_issued,
+        file_url: publicUrlData.publicUrl,
+        points: 0,
+        status: 'pending'
+      });
+      if (insertError) throw insertError;
+
+      alert("Sertifikat berhasil diunggah dan menunggu verifikasi!");
+      setShowCertModal(false);
+      setCertForm({ title: "", issuer: "", date_issued: "", file: null });
+      fetchDocs();
+    } catch (err: any) {
+      alert("Gagal mengunggah sertifikat: " + err.message);
+    } finally {
+      setCertSubmitting(false);
     }
   };
 
@@ -221,13 +264,46 @@ export default function ACEProfil() {
               <div className="h-full bg-indigo-500 rounded-full" style={{ width: `${(creditPoints/100)*100}%` }} />
             </div>
 
-            <button className="w-full py-2.5 rounded-md border border-slate-200 text-slate-600 hover:bg-slate-50 font-semibold text-xs flex items-center justify-center gap-2 transition-colors">
+            <button onClick={() => setShowCertModal(true)} className="w-full py-2.5 rounded-md border border-slate-200 text-slate-600 hover:bg-slate-50 font-semibold text-xs flex items-center justify-center gap-2 transition-colors">
               <FileText className="w-3.5 h-3.5" />
               Input Kegiatan Mandiri (+ Poin)
             </button>
           </Card>
         </div>
       </div>
+
+      {showCertModal && (
+        <div className="fixed inset-0 bg-slate-900/50 z-50 flex items-center justify-center p-4">
+          <Card className="w-full max-w-md p-6 bg-white shadow-xl rounded-xl border border-slate-200">
+            <div className="flex justify-between items-center mb-4">
+              <h3 className="font-bold text-slate-800">Input Kegiatan Mandiri</h3>
+              <button onClick={() => setShowCertModal(false)} className="text-slate-400 hover:text-slate-600"><XCircle className="w-5 h-5" /></button>
+            </div>
+            <form onSubmit={handleCertSubmit} className="space-y-4">
+              <div>
+                <label className="block text-xs font-semibold text-slate-700 mb-1">Nama Kegiatan/Diklat</label>
+                <input required type="text" value={certForm.title} onChange={e=>setCertForm({...certForm, title: e.target.value})} className="w-full p-2 rounded border border-slate-300 text-sm" placeholder="Contoh: Pelatihan Kurikulum Merdeka" />
+              </div>
+              <div>
+                <label className="block text-xs font-semibold text-slate-700 mb-1">Penyelenggara</label>
+                <input required type="text" value={certForm.issuer} onChange={e=>setCertForm({...certForm, issuer: e.target.value})} className="w-full p-2 rounded border border-slate-300 text-sm" placeholder="Contoh: Kemdikbud" />
+              </div>
+              <div>
+                <label className="block text-xs font-semibold text-slate-700 mb-1">Tanggal Terbit</label>
+                <input required type="date" value={certForm.date_issued} onChange={e=>setCertForm({...certForm, date_issued: e.target.value})} className="w-full p-2 rounded border border-slate-300 text-sm" />
+              </div>
+              <div>
+                <label className="block text-xs font-semibold text-slate-700 mb-1">Unggah Sertifikat (PDF/Gambar)</label>
+                <input required type="file" accept=".pdf,.jpg,.jpeg,.png" onChange={e=>setCertForm({...certForm, file: e.target.files?.[0] || null})} className="w-full text-sm text-slate-500 file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:text-xs file:font-semibold file:bg-indigo-50 file:text-indigo-700 hover:file:bg-indigo-100" />
+              </div>
+              <button disabled={certSubmitting} type="submit" className="w-full py-2.5 bg-indigo-600 text-white rounded-md font-bold text-xs flex justify-center items-center gap-2 hover:bg-indigo-700 disabled:opacity-50 mt-2">
+                {certSubmitting && <Loader2 className="w-4 h-4 animate-spin" />}
+                {certSubmitting ? 'Menyimpan...' : 'Simpan & Ajukan Verifikasi'}
+              </button>
+            </form>
+          </Card>
+        </div>
+      )}
     </div>
   );
 }

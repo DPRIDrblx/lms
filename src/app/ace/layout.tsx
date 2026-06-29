@@ -96,6 +96,7 @@ export default function ACELayout({ children }: { children: React.ReactNode }) {
     { href: "/ace/hod/supervisi", label: "Supervisi Klinis", icon: TrendingUp },
     { href: "/ace/hod/akademik", label: "Kesenjangan Nilai", icon: Activity },
     { href: "/ace/hod/inventaris", label: "Sarana & Prasarana", icon: Wallet },
+    { href: "/ace/hod/kredit", label: "Angka Kredit", icon: ShieldCheck },
   ];
 
   const assessmentNavItems = [

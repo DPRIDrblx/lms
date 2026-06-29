@@ -524,3 +524,6 @@ CREATE POLICY "Teachers update schedules" ON ace_schedules FOR UPDATE USING (aut
 
 DROP POLICY IF EXISTS "Teachers update attendances" ON ace_attendances;
 CREATE POLICY "Teachers update attendances" ON ace_attendances FOR UPDATE USING (auth.uid() = teacher_id);
+
+DROP POLICY IF EXISTS "HoD manage all certificates" ON ace_certificates;
+CREATE POLICY "HoD manage all certificates" ON ace_certificates FOR ALL USING (EXISTS (SELECT 1 FROM profiles WHERE id = auth.uid() AND is_hod = true));
