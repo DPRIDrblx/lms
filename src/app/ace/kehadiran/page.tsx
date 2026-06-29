@@ -15,7 +15,8 @@ export default function ACEKehadiran() {
 
   const [logbookForm, setLogbookForm] = useState({ materi: "", siswa_hadir: 30, catatan: "" });
   const [logbookLoading, setLogbookLoading] = useState(false);
-  const [leaveForm, setLeaveForm] = useState({ leave_date: "", leave_type: "Cuti Sakit" });
+
+  const [leaveForm, setLeaveForm] = useState({ start_date: "", end_date: "", type: "cuti", reason: "" });
   const [leaveLoading, setLeaveLoading] = useState(false);
 
   const [attendances, setAttendances] = useState<any[]>([]);
@@ -192,13 +193,16 @@ export default function ACEKehadiran() {
     if (!profile) return;
     setLeaveLoading(true);
     try {
-      await supabase.from('ace_leaves').insert({
+      const { error } = await supabase.from('ace_leaves').insert({
         teacher_id: profile.id,
-        leave_date: leaveForm.leave_date,
-        leave_type: leaveForm.leave_type
+        start_date: leaveForm.start_date,
+        end_date: leaveForm.end_date,
+        type: leaveForm.type,
+        reason: leaveForm.reason
       });
+      if (error) throw error;
       alert("Pengajuan cuti berhasil dikirim!");
-      setLeaveForm({ leave_date: "", leave_type: "Cuti Sakit" });
+      setLeaveForm({ start_date: "", end_date: "", type: "cuti", reason: "" });
     } catch (err: any) {
       alert("Error: " + err.message);
     } finally {
@@ -347,18 +351,26 @@ export default function ACEKehadiran() {
           <Card className="p-6 rounded-xl border border-slate-200 bg-white shadow-sm">
             <h2 className="text-base font-bold text-slate-800 mb-4">Formulir Pengajuan Cuti</h2>
             <form onSubmit={handleLeaveSubmit} className="space-y-4">
-              <div>
-                <label className="block text-xs font-semibold text-slate-700 mb-1">Tanggal Cuti</label>
-                <input required type="date" value={leaveForm.leave_date} onChange={e=>setLeaveForm({...leaveForm, leave_date: e.target.value})} className="w-full p-2.5 rounded-md border border-slate-300 text-sm" />
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-xs font-semibold text-slate-700 mb-1">Tanggal Mulai</label>
+                  <input required type="date" value={leaveForm.start_date} onChange={e=>setLeaveForm({...leaveForm, start_date: e.target.value})} className="w-full p-2.5 rounded-md border border-slate-300 text-sm" />
+                </div>
+                <div>
+                  <label className="block text-xs font-semibold text-slate-700 mb-1">Tanggal Selesai</label>
+                  <input required type="date" value={leaveForm.end_date} onChange={e=>setLeaveForm({...leaveForm, end_date: e.target.value})} className="w-full p-2.5 rounded-md border border-slate-300 text-sm" />
+                </div>
               </div>
               <div>
                 <label className="block text-xs font-semibold text-slate-700 mb-1">Jenis Cuti</label>
-                <select value={leaveForm.leave_type} onChange={e=>setLeaveForm({...leaveForm, leave_type: e.target.value})} className="w-full p-2.5 rounded-md border border-slate-300 text-sm">
-                  <option value="Cuti Sakit">Cuti Sakit</option>
-                  <option value="Cuti Alasan Penting">Cuti Alasan Penting</option>
-                  <option value="Cuti Tahunan">Cuti Tahunan</option>
-                  <option value="Dinas Luar (SPPD)">Dinas Luar (SPPD)</option>
+                <select value={leaveForm.type} onChange={e=>setLeaveForm({...leaveForm, type: e.target.value})} className="w-full p-2.5 rounded-md border border-slate-300 text-sm">
+                  <option value="cuti">Cuti Tahunan / Alasan Penting</option>
+                  <option value="dinas_luar">Dinas Luar (SPPD)</option>
                 </select>
+              </div>
+              <div>
+                <label className="block text-xs font-semibold text-slate-700 mb-1">Alasan Cuti / Dinas</label>
+                <input required type="text" placeholder="Masukkan alasan dengan jelas..." value={leaveForm.reason} onChange={e=>setLeaveForm({...leaveForm, reason: e.target.value})} className="w-full p-2.5 rounded-md border border-slate-300 text-sm" />
               </div>
               <div className="p-4 border border-dashed border-slate-300 rounded-md text-center bg-slate-50 cursor-pointer hover:bg-slate-100 transition-colors">
                 <p className="text-xs font-semibold text-slate-500">Upload Surat Pendukung (PDF/JPG)</p>
