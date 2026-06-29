@@ -39,6 +39,7 @@ export default function TUKehadiran() {
   // Emergency State (No mock data, wait for real emergency trigger in future)
   const [emergencyActive, setEmergencyActive] = useState(false);
   const standbyTeachers: string[] = [];
+  const [subEdits, setSubEdits] = useState<Record<string, string>>({});
 
   const fetchData = async () => {
     setLoading(true);
@@ -47,7 +48,9 @@ export default function TUKehadiran() {
     if (atts) setAttendances(atts);
 
     // Fetch substitutions pending
-    const { data: subs } = await supabase.from('ace_substitutions').select('*, requestor:requestor_id(full_name), substitute:substitute_id(full_name)').eq('status', 'pending');
+    const { data: subs } = await supabase.from('ace_substitutions')
+      .select('*, requestor:requestor_id(full_name), substitute:substitute_id(full_name), schedule:schedule_id(*)')
+      .in('status', ['pending_tu', 'rejected_sub']);
     if (subs) setSubstitutions(subs);
 
     // Fetch teachers
@@ -80,8 +83,12 @@ export default function TUKehadiran() {
     fetchData();
   }, [profile]);
 
-  const handleSubApproval = async (id: string, status: string) => {
-    await supabase.from('ace_substitutions').update({ status }).eq('id', id);
+  const handleSubApproval = async (id: string, status: string, currentSubstituteId: string) => {
+    const updateData: any = { status };
+    if (subEdits[id] && subEdits[id] !== currentSubstituteId) {
+      updateData.substitute_id = subEdits[id];
+    }
+    await supabase.from('ace_substitutions').update(updateData).eq('id', id);
     fetchData();
   };
 
@@ -250,25 +257,37 @@ export default function TUKehadiran() {
       {activeTab === 'cuti' && (
         <Card className="p-0 rounded-lg border border-slate-200 bg-white shadow-sm overflow-hidden">
           <div className="p-4 border-b border-slate-200 bg-slate-50 flex items-center justify-between">
-            <h2 className="text-sm font-bold text-slate-800">Antrean Verifikasi Substitusi</h2>
+            <h2 className="text-sm font-bold text-slate-800">Antrean Verifikasi Guru Piket / Pengganti</h2>
           </div>
           <div className="divide-y divide-slate-100">
             {loading ? <p className="p-4 text-xs text-slate-500">Memuat data...</p> : substitutions.length === 0 ? <p className="p-4 text-xs text-slate-500">Tidak ada antrean substitusi manual.</p> : substitutions.map(sub => (
-              <div key={sub.id} className="p-4 hover:bg-slate-50 transition-colors flex flex-col md:flex-row md:items-center justify-between gap-4">
+              <div key={sub.id} className="p-4 hover:bg-slate-50 transition-colors flex flex-col md:flex-row md:items-start justify-between gap-4">
                 <div>
-                  <div className="flex items-center gap-2 mb-1">
+                  <div className="flex items-center gap-2 mb-2">
                     <p className="text-sm font-bold text-slate-800">{sub.requestor?.full_name}</p>
                     <span className="text-xs text-slate-400">&rarr;</span>
-                    <p className="text-sm font-bold text-indigo-600">{sub.substitute?.full_name}</p>
+                    {/* TU can override the substitute */}
+                    <select 
+                      className="p-1 border border-indigo-200 bg-indigo-50 text-indigo-700 font-bold text-xs rounded"
+                      value={subEdits[sub.id] || sub.substitute_id}
+                      onChange={(e) => setSubEdits({ ...subEdits, [sub.id]: e.target.value })}
+                    >
+                      {teachers.map(t => <option key={t.id} value={t.id}>{t.full_name}</option>)}
+                    </select>
                   </div>
-                  <p className="text-[11px] font-semibold text-slate-500">Conflict Checker: <span className="text-emerald-600">Jadwal Pengganti Kosong (Aman)</span></p>
+                  <div className="text-[11px] font-semibold text-slate-500 space-y-0.5">
+                    <p>Mata Pelajaran: <span className="text-slate-700">{sub.schedule?.subject_name} ({sub.schedule?.class_name})</span></p>
+                    <p>Waktu: <span className="text-slate-700">{sub.schedule?.start_time.substring(0,5)} - {sub.schedule?.end_time.substring(0,5)}</span></p>
+                    <p>Tanggal Absen: <span className="text-rose-600">{sub.substitution_date}</span></p>
+                    {sub.status === 'rejected_sub' && <p className="text-rose-600 font-bold mt-1">Ditolak oleh Guru Piket sebelumnya. Pilih guru lain.</p>}
+                  </div>
                 </div>
-                <div className="flex gap-2">
-                  <button onClick={() => handleSubApproval(sub.id, 'rejected')} className="px-4 py-2 bg-white text-rose-600 border border-rose-200 hover:bg-rose-50 font-bold text-xs rounded shadow-sm transition-colors flex items-center gap-1">
-                    <XCircle className="w-3.5 h-3.5" /> Tolak
+                <div className="flex gap-2 mt-2 md:mt-0">
+                  <button onClick={() => handleSubApproval(sub.id, 'rejected_tu', sub.substitute_id)} className="px-4 py-2 bg-white text-rose-600 border border-rose-200 hover:bg-rose-50 font-bold text-xs rounded shadow-sm transition-colors flex items-center gap-1">
+                    <XCircle className="w-3.5 h-3.5" /> Tolak Total
                   </button>
-                  <button onClick={() => handleSubApproval(sub.id, 'accepted')} className="px-4 py-2 bg-emerald-600 text-white hover:bg-emerald-700 font-bold text-xs rounded shadow-sm transition-colors flex items-center gap-1">
-                    <CheckCircle2 className="w-3.5 h-3.5" /> Setujui (E-Sign)
+                  <button onClick={() => handleSubApproval(sub.id, 'pending_sub', sub.substitute_id)} className="px-4 py-2 bg-emerald-600 text-white hover:bg-emerald-700 font-bold text-xs rounded shadow-sm transition-colors flex items-center gap-1">
+                    <CheckCircle2 className="w-3.5 h-3.5" /> Teruskan ke Guru Piket
                   </button>
                 </div>
               </div>

@@ -241,9 +241,11 @@ CREATE TABLE IF NOT EXISTS ace_leaves (
 CREATE TABLE IF NOT EXISTS ace_substitutions (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   leave_id UUID REFERENCES ace_leaves(id) ON DELETE CASCADE,
+  schedule_id UUID REFERENCES ace_schedules(id) ON DELETE CASCADE,
+  substitution_date DATE,
   requestor_id UUID NOT NULL REFERENCES profiles(id),
   substitute_id UUID NOT NULL REFERENCES profiles(id),
-  status TEXT NOT NULL DEFAULT 'pending' CHECK (status IN ('pending', 'accepted', 'rejected')),
+  status TEXT NOT NULL DEFAULT 'pending_tu' CHECK (status IN ('pending_tu', 'rejected_tu', 'pending_sub', 'rejected_sub', 'accepted')),
   created_at TIMESTAMPTZ NOT NULL DEFAULT now()
 );
 
