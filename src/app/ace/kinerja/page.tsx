@@ -3,8 +3,8 @@
 import { useAuth } from "@/lib/auth-context";
 import { createClient } from "@/lib/supabase";
 import { Card } from "@/components/ui/card";
-import { FileSignature, Upload, CheckCircle2, AlertCircle, BarChart3, Loader2 } from "lucide-react";
-import { useState, useEffect } from "react";
+import { FileSignature, Upload, CheckCircle2, AlertCircle, BarChart3, Loader2, FileText } from "lucide-react";
+import { useState, useEffect, useRef } from "react";
 
 export default function ACEKinerja() {
   const { profile } = useAuth();
@@ -19,18 +19,66 @@ export default function ACEKinerja() {
   const [alerts, setAlerts] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
 
+  // RPP State
+  const [rppData, setRppData] = useState<any>(null);
+  const [rppLoading, setRppLoading] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
   useEffect(() => {
     if (profile) {
       Promise.all([
         supabase.from('ace_student_feedbacks').select('*').eq('teacher_id', profile.id),
-        supabase.from('ace_workload_alerts').select('*').eq('teacher_id', profile.id)
-      ]).then(([fRes, aRes]) => {
+        supabase.from('ace_workload_alerts').select('*').eq('teacher_id', profile.id),
+        supabase.from('ace_lesson_plans').select('*').eq('teacher_id', profile.id).eq('subject', 'Observasi Kelas').order('created_at', { ascending: false }).limit(1)
+      ]).then(([fRes, aRes, rRes]) => {
         if (fRes.data) setFeedbacks(fRes.data);
         if (aRes.data) setAlerts(aRes.data);
+        if (rRes.data && rRes.data.length > 0) setRppData(rRes.data[0]);
         setLoading(false);
       });
     }
   }, [profile]);
+
+  const handleUploadRpp = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file || !profile) return;
+    
+    setRppLoading(true);
+    try {
+      const fileExt = file.name.split('.').pop();
+      const fileName = `rpp-observasi-${profile.id}-${Date.now()}.${fileExt}`;
+      const { error: uploadError } = await supabase.storage
+        .from('ace_storage')
+        .upload(`rpps/${fileName}`, file);
+
+      if (uploadError) throw uploadError;
+
+      const { data: urlData } = supabase.storage
+        .from('ace_storage')
+        .getPublicUrl(`rpps/${fileName}`);
+
+      const { data: insertData, error: insertError } = await supabase
+        .from('ace_lesson_plans')
+        .insert({
+          teacher_id: profile.id,
+          subject: 'Observasi Kelas',
+          grade_level: 'Semua',
+          file_url: urlData.publicUrl
+        })
+        .select()
+        .single();
+
+      if (insertError) throw insertError;
+
+      setRppData(insertData);
+      alert("RPP berhasil diunggah!");
+    } catch (err: any) {
+      alert("Gagal mengunggah RPP: " + err.message);
+    } finally {
+      setRppLoading(false);
+      if (fileInputRef.current) fileInputRef.current.value = '';
+    }
+  };
 
   const handleSign = (e: React.FormEvent) => {
     e.preventDefault();
@@ -103,14 +151,30 @@ export default function ACEKinerja() {
               <div className="p-4 bg-slate-50 border border-slate-200 rounded-lg mb-6 flex flex-col sm:flex-row gap-4 items-center justify-between">
                 <div className="text-center sm:text-left">
                   <p className="text-xs font-bold text-slate-500 mb-1">Status RPP / Lesson Plan</p>
-                  <p className="font-bold text-sm text-rose-600 flex items-center justify-center sm:justify-start gap-1.5">
-                    <AlertCircle className="w-4 h-4" /> Belum Diunggah
-                  </p>
+                  {rppData ? (
+                    <p className="font-bold text-sm text-emerald-600 flex items-center justify-center sm:justify-start gap-1.5">
+                      <CheckCircle2 className="w-4 h-4" /> Telah Diunggah
+                    </p>
+                  ) : (
+                    <p className="font-bold text-sm text-rose-600 flex items-center justify-center sm:justify-start gap-1.5">
+                      <AlertCircle className="w-4 h-4" /> Belum Diunggah
+                    </p>
+                  )}
                   <p className="text-[11px] text-slate-500 mt-1 font-medium">Wajib diunggah maksimal H-2 (13 Agustus 2026). Jika terlambat, nilai kedisiplinan -10%.</p>
                 </div>
-                <button className="px-4 py-2 bg-indigo-600 text-white font-semibold text-xs rounded-md shadow-sm w-full sm:w-auto flex items-center justify-center gap-2 hover:bg-indigo-700 transition-colors shrink-0">
-                  <Upload className="w-3.5 h-3.5" /> Upload PDF
-                </button>
+                <div>
+                  <input type="file" ref={fileInputRef} className="hidden" accept=".pdf,.doc,.docx" onChange={handleUploadRpp} />
+                  {rppData ? (
+                    <a href={rppData.file_url} target="_blank" rel="noreferrer" className="px-4 py-2 bg-white text-indigo-700 border border-indigo-200 font-semibold text-xs rounded-md shadow-sm w-full sm:w-auto flex items-center justify-center gap-2 hover:bg-indigo-50 transition-colors shrink-0">
+                      <FileText className="w-3.5 h-3.5" /> Lihat RPP
+                    </a>
+                  ) : (
+                    <button onClick={() => fileInputRef.current?.click()} disabled={rppLoading} className="px-4 py-2 bg-indigo-600 text-white font-semibold text-xs rounded-md shadow-sm w-full sm:w-auto flex items-center justify-center gap-2 hover:bg-indigo-700 transition-colors shrink-0 disabled:opacity-50">
+                      {rppLoading ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Upload className="w-3.5 h-3.5" />} 
+                      {rppLoading ? 'Mengunggah...' : 'Upload PDF'}
+                    </button>
+                  )}
+                </div>
               </div>
 
               <div className="border-t border-slate-100 pt-6">
