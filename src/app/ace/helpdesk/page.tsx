@@ -81,6 +81,25 @@ export default function ACEHelpdesk() {
     }
   };
 
+  useEffect(() => {
+    if (!chatTicketId) return;
+
+    const channel = supabase
+      .channel('realtime_chat')
+      .on(
+        'postgres_changes',
+        { event: 'INSERT', schema: 'public', table: 'ace_ticket_messages', filter: `ticket_id=eq.${chatTicketId}` },
+        (payload) => {
+          handleOpenChat(chatTicketId);
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [chatTicketId]);
+
   if (!profile) return null;
 
   const getStatusUI = (status: string) => {
