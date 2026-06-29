@@ -33,7 +33,7 @@ export default function ACEKehadiran() {
     }
   }, [profile, activeTab]);
 
-  const handleAbsen = () => {
+  const handleAbsen = (type: 'masuk' | 'pulang') => {
     if (!profile) return;
     setLoadingGps(true);
     
@@ -53,7 +53,17 @@ export default function ACEKehadiran() {
             .eq('date', today)
             .maybeSingle();
 
-          if (existing) {
+          if (type === 'pulang') {
+            if (!existing) {
+              alert("Anda belum melakukan Absen Masuk hari ini!");
+              setLoadingGps(false);
+              return;
+            }
+            if (existing.check_out_time) {
+              alert("Anda sudah melakukan Absen Pulang hari ini!");
+              setLoadingGps(false);
+              return;
+            }
             const isOvertime = isWeekend || now.getHours() >= 17;
             await supabase.from('ace_attendances').update({
               check_out_time: now.toISOString(),
@@ -61,6 +71,11 @@ export default function ACEKehadiran() {
             }).eq('id', existing.id);
             alert("Berhasil Absen Pulang (Check-Out)!");
           } else {
+            if (existing) {
+              alert("Anda sudah melakukan Absen Masuk hari ini!");
+              setLoadingGps(false);
+              return;
+            }
             const isLate = now.getHours() >= 7 && (now.getHours() > 7 || now.getMinutes() > 0);
             await supabase.from('ace_attendances').insert({
               teacher_id: profile.id,
@@ -89,7 +104,7 @@ export default function ACEKehadiran() {
       }, (error) => {
         alert("Gagal mendapatkan lokasi: " + error.message);
         setLoadingGps(false);
-      });
+      }, { enableHighAccuracy: false, timeout: 10000, maximumAge: 10000 });
     } else {
       alert("Browser tidak mendukung Geolocation.");
       setLoadingGps(false);
@@ -201,14 +216,24 @@ export default function ACEKehadiran() {
             <p className="text-slate-500 text-sm mb-6 px-4">
               {gpsSuccess ? 'Koordinat Anda telah diverifikasi berada di area sekolah.' : 'Sistem akan mengunci koordinat GPS perangkat Anda untuk verifikasi lokasi.'}
             </p>
-            <button 
-              onClick={handleAbsen}
-              disabled={loadingGps || gpsSuccess}
-              className="w-full py-3 bg-indigo-600 text-white rounded-lg font-bold text-sm shadow-sm hover:bg-indigo-700 disabled:opacity-50 transition-colors flex items-center justify-center gap-2"
-            >
-              {loadingGps && <Loader2 className="w-4 h-4 animate-spin" />}
-              {loadingGps ? "Mencari Satelit..." : gpsSuccess ? "Selesai" : "Kunci Koordinat & Absen"}
-            </button>
+            <div className="grid grid-cols-2 gap-3">
+              <button 
+                onClick={() => handleAbsen('masuk')}
+                disabled={loadingGps}
+                className="w-full py-3 bg-emerald-600 text-white rounded-lg font-bold text-sm shadow-sm hover:bg-emerald-700 disabled:opacity-50 transition-colors flex items-center justify-center gap-2"
+              >
+                {loadingGps ? <Loader2 className="w-4 h-4 animate-spin" /> : null}
+                {loadingGps ? "Mencari Satelit..." : "Absen Masuk"}
+              </button>
+              <button 
+                onClick={() => handleAbsen('pulang')}
+                disabled={loadingGps}
+                className="w-full py-3 bg-rose-600 text-white rounded-lg font-bold text-sm shadow-sm hover:bg-rose-700 disabled:opacity-50 transition-colors flex items-center justify-center gap-2"
+              >
+                {loadingGps ? <Loader2 className="w-4 h-4 animate-spin" /> : null}
+                {loadingGps ? "Mencari Satelit..." : "Absen Pulang"}
+              </button>
+            </div>
           </Card>
           
           <div className="space-y-3">
