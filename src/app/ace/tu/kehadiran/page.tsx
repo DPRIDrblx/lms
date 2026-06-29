@@ -14,9 +14,11 @@ export default function TUKehadiran() {
   const [attendances, setAttendances] = useState<any[]>([]);
   const [substitutions, setSubstitutions] = useState<any[]>([]);
   const [teachers, setTeachers] = useState<any[]>([]);
+  const [schedules, setSchedules] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   
   const [scheduleForm, setScheduleForm] = useState({
+    id: null as string | null,
     teacher_id: "",
     day_of_week: 1,
     start_time: "07:00",
@@ -49,6 +51,10 @@ export default function TUKehadiran() {
       }
     }
 
+    // Fetch schedules
+    const { data: sData } = await supabase.from('ace_schedules').select('*, profiles(full_name)').order('day_of_week', { ascending: true });
+    if (sData) setSchedules(sData);
+
     setLoading(false);
   };
 
@@ -74,19 +80,48 @@ export default function TUKehadiran() {
     }
     setScheduleLoading(true);
     try {
-      const { error } = await supabase.from('ace_schedules').insert({
-        teacher_id: scheduleForm.teacher_id,
-        day_of_week: scheduleForm.day_of_week,
-        start_time: scheduleForm.start_time,
-        end_time: scheduleForm.end_time,
-        subject_name: scheduleForm.subject_name,
-        class_name: scheduleForm.class_name
-      });
-      if (error) throw error;
-      alert("Jadwal berhasil ditambahkan!");
-      setScheduleForm(prev => ({ ...prev, subject_name: "", class_name: "" }));
+      if (scheduleForm.id) {
+        const { error } = await supabase.from('ace_schedules').update({
+          teacher_id: scheduleForm.teacher_id,
+          day_of_week: scheduleForm.day_of_week,
+          start_time: scheduleForm.start_time,
+          end_time: scheduleForm.end_time,
+          subject_name: scheduleForm.subject_name,
+          class_name: scheduleForm.class_name
+        }).eq('id', scheduleForm.id);
+        if (error) throw error;
+        alert("Jadwal berhasil diperbarui!");
+      } else {
+        const { error } = await supabase.from('ace_schedules').insert({
+          teacher_id: scheduleForm.teacher_id,
+          day_of_week: scheduleForm.day_of_week,
+          start_time: scheduleForm.start_time,
+          end_time: scheduleForm.end_time,
+          subject_name: scheduleForm.subject_name,
+          class_name: scheduleForm.class_name
+        });
+        if (error) throw error;
+        alert("Jadwal berhasil ditambahkan!");
+      }
+      setScheduleForm({ id: null, teacher_id: teachers[0]?.id || "", day_of_week: 1, start_time: "07:00", end_time: "08:30", subject_name: "", class_name: "" });
+      fetchData();
     } catch (err: any) {
-      alert("Gagal menambahkan jadwal: " + err.message);
+      alert("Gagal menyimpan jadwal: " + err.message);
+    } finally {
+      setScheduleLoading(false);
+    }
+  };
+
+  const handleScheduleDelete = async (id: string) => {
+    if (!window.confirm("Yakin ingin menghapus jadwal ini?")) return;
+    setScheduleLoading(true);
+    try {
+      const { error } = await supabase.from('ace_schedules').delete().eq('id', id);
+      if (error) throw error;
+      alert("Jadwal berhasil dihapus!");
+      fetchData();
+    } catch (err: any) {
+      alert("Gagal menghapus: " + err.message);
     } finally {
       setScheduleLoading(false);
     }
@@ -246,9 +281,40 @@ export default function TUKehadiran() {
             </div>
             <button disabled={scheduleLoading} type="submit" className="w-full py-2.5 bg-indigo-600 text-white rounded-md font-semibold text-xs shadow-sm hover:bg-indigo-700 disabled:opacity-50 transition-colors flex items-center justify-center gap-2 mt-4">
               {scheduleLoading && <Loader2 className="w-4 h-4 animate-spin" />}
-              Tambahkan Jadwal
+              {scheduleForm.id ? "Simpan Perubahan Jadwal" : "Tambahkan Jadwal"}
             </button>
+            {scheduleForm.id && (
+              <button type="button" onClick={() => setScheduleForm({ id: null, teacher_id: teachers[0]?.id || "", day_of_week: 1, start_time: "07:00", end_time: "08:30", subject_name: "", class_name: "" })} className="w-full py-2.5 bg-slate-100 text-slate-700 rounded-md font-semibold text-xs shadow-sm hover:bg-slate-200 transition-colors mt-2">
+                Batal Edit
+              </button>
+            )}
           </form>
+
+          <div className="mt-8 border-t border-slate-200 pt-6">
+            <h3 className="text-sm font-bold text-slate-800 mb-4">Daftar Jadwal KBM Terdaftar</h3>
+            <div className="space-y-3">
+              {schedules.map(sch => (
+                <div key={sch.id} className="p-3 border border-slate-200 rounded-md bg-slate-50 flex flex-col md:flex-row md:items-center justify-between gap-3">
+                  <div>
+                    <p className="text-sm font-bold text-slate-800">{sch.profiles?.full_name}</p>
+                    <p className="text-xs text-slate-600">{['Senin','Selasa','Rabu','Kamis','Jumat','Sabtu'][sch.day_of_week - 1]} | {sch.start_time} - {sch.end_time}</p>
+                    <p className="text-xs font-semibold text-indigo-600 mt-1">{sch.subject_name} • Kelas {sch.class_name}</p>
+                  </div>
+                  <div className="flex gap-2">
+                    <button onClick={() => setScheduleForm(sch)} className="px-3 py-1.5 bg-amber-100 text-amber-700 hover:bg-amber-200 rounded text-xs font-bold transition-colors">
+                      Edit
+                    </button>
+                    <button onClick={() => handleScheduleDelete(sch.id)} className="px-3 py-1.5 bg-rose-100 text-rose-700 hover:bg-rose-200 rounded text-xs font-bold transition-colors">
+                      Hapus
+                    </button>
+                  </div>
+                </div>
+              ))}
+              {schedules.length === 0 && !loading && (
+                <p className="text-xs text-slate-500 text-center py-4">Belum ada jadwal KBM yang terdaftar.</p>
+              )}
+            </div>
+          </div>
         </Card>
       )}
     </div>
