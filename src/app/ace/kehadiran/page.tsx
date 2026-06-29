@@ -56,6 +56,7 @@ export default function ACEKehadiran() {
           setLoadingGps(false);
           return;
         }
+        const isOvertime = isWeekend || now.getHours() >= 17;
         const { error: updateError } = await supabase.from('ace_attendances').update({
           check_out_time: now.toISOString(),
           is_overtime: existing.is_overtime || isOvertime
