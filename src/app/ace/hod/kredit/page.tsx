@@ -24,7 +24,7 @@ export default function HoDKredit() {
     if (certs) {
       setCertificates(certs);
       const pts: Record<string, number> = {};
-      certs.forEach(c => {
+      certs.forEach((c: any) => {
         pts[c.id] = c.points || 0;
       });
       setPoints(pts);

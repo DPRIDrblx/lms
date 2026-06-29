@@ -3,7 +3,7 @@
 import { useAuth } from "@/lib/auth-context";
 import { createClient } from "@/lib/supabase";
 import { Card } from "@/components/ui/card";
-import { ShieldAlert, CheckCircle2, Upload, FileText, AlertTriangle, Calculator, Lock, Loader2 } from "lucide-react";
+import { ShieldAlert, CheckCircle2, Upload, FileText, AlertTriangle, Calculator, Lock, Loader2, XCircle } from "lucide-react";
 import { useEffect, useState, useRef } from "react";
 
 export default function ACEProfil() {
