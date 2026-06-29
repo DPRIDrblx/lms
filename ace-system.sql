@@ -521,3 +521,6 @@ DROP POLICY IF EXISTS "TU manage schedules" ON ace_schedules;
 CREATE POLICY "TU manage schedules" ON ace_schedules FOR ALL USING (EXISTS (SELECT 1 FROM profiles WHERE id = auth.uid() AND role = 'tu'));
 DROP POLICY IF EXISTS "Teachers update schedules" ON ace_schedules;
 CREATE POLICY "Teachers update schedules" ON ace_schedules FOR UPDATE USING (auth.uid() = teacher_id);
+
+DROP POLICY IF EXISTS "Teachers update attendances" ON ace_attendances;
+CREATE POLICY "Teachers update attendances" ON ace_attendances FOR UPDATE USING (auth.uid() = teacher_id);

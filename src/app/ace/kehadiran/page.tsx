@@ -56,11 +56,11 @@ export default function ACEKehadiran() {
           setLoadingGps(false);
           return;
         }
-        const isOvertime = isWeekend || now.getHours() >= 17;
-        await supabase.from('ace_attendances').update({
+        const { error: updateError } = await supabase.from('ace_attendances').update({
           check_out_time: now.toISOString(),
           is_overtime: existing.is_overtime || isOvertime
         }).eq('id', existing.id);
+        if (updateError) throw updateError;
         alert("Berhasil Absen Pulang (Check-Out)!");
       } else {
         if (existing) {
@@ -69,7 +69,7 @@ export default function ACEKehadiran() {
           return;
         }
         const isLate = now.getHours() >= 7 && (now.getHours() > 7 || now.getMinutes() > 0);
-        await supabase.from('ace_attendances').insert({
+        const { error: insertError } = await supabase.from('ace_attendances').insert({
           teacher_id: profile?.id,
           status: 'hadir',
           latitude: lat,
@@ -79,6 +79,7 @@ export default function ACEKehadiran() {
           is_overtime: isWeekend,
           date: today
         });
+        if (insertError) throw insertError;
         alert("Berhasil Absen Masuk (Check-In)!");
       }
       
