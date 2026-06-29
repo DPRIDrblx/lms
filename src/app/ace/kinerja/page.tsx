@@ -24,20 +24,43 @@ export default function ACEKinerja() {
   const [rppLoading, setRppLoading] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
+  // Feedback Session State
+  const [hasActiveSession, setHasActiveSession] = useState(false);
+  const [sessionLoading, setSessionLoading] = useState(false);
+
   useEffect(() => {
     if (profile) {
       Promise.all([
         supabase.from('ace_student_feedbacks').select('*').eq('teacher_id', profile.id),
         supabase.from('ace_workload_alerts').select('*').eq('teacher_id', profile.id),
-        supabase.from('ace_lesson_plans').select('*').eq('teacher_id', profile.id).eq('subject', 'Observasi Kelas').order('created_at', { ascending: false }).limit(1)
-      ]).then(([fRes, aRes, rRes]) => {
+        supabase.from('ace_lesson_plans').select('*').eq('teacher_id', profile.id).eq('subject', 'Observasi Kelas').order('created_at', { ascending: false }).limit(1),
+        supabase.from('ace_feedback_sessions').select('*').eq('teacher_id', profile.id).eq('is_active', true).limit(1)
+      ]).then(([fRes, aRes, rRes, sRes]) => {
         if (fRes.data) setFeedbacks(fRes.data);
         if (aRes.data) setAlerts(aRes.data);
         if (rRes.data && rRes.data.length > 0) setRppData(rRes.data[0]);
+        if (sRes.data && sRes.data.length > 0) setHasActiveSession(true);
         setLoading(false);
       });
     }
   }, [profile]);
+
+  const handleReleaseFeedback = async () => {
+    if (!profile) return;
+    setSessionLoading(true);
+    try {
+      await supabase.from('ace_feedback_sessions').insert({
+        teacher_id: profile.id,
+        semester: 'Ganjil 2026/2027'
+      });
+      setHasActiveSession(true);
+      alert("Berhasil! Kuesioner feedback telah dirilis ke dashboard siswa.");
+    } catch (err: any) {
+      alert("Error merilis feedback: " + err.message);
+    } finally {
+      setSessionLoading(false);
+    }
+  };
 
   const handleUploadRpp = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -240,51 +263,82 @@ export default function ACEKinerja() {
       )}
 
       {activeTab === 'siswa' && (
-        <Card className="p-8 rounded-lg border border-slate-200 shadow-sm bg-white">
-          <div className="flex flex-col md:flex-row gap-8 items-center">
-            <div className="w-full md:w-1/3 text-center">
-              <div className="w-24 h-24 mx-auto relative flex items-center justify-center mb-4">
-                <div className="absolute inset-0 rounded-full border-[8px] border-emerald-50" />
-                <div className="absolute inset-0 rounded-full border-[8px] border-emerald-500 border-t-transparent -rotate-45" />
-                <span className="text-3xl font-black text-slate-800">{count > 0 ? totalScore.toFixed(1) : "N/A"}</span>
-              </div>
-              <h2 className="text-lg font-bold text-slate-800">Indeks Kepuasan Siswa</h2>
-              <p className="text-slate-500 text-xs font-semibold mt-1">Skala Likert (Max 4.0)</p>
-            </div>
-            
-            <div className="w-full md:w-2/3 space-y-5">
-              <p className="text-xs font-medium text-slate-500 leading-relaxed bg-slate-50 p-3 rounded-md border border-slate-100">
-                Data ditarik otomatis dari kuesioner akhir semester yang diisi oleh siswa sebelum mereka dapat melihat rapor. Semua data dijamin anonim oleh sistem. {count === 0 ? "Belum ada feedback." : ""}
-              </p>
-              
-              {count > 0 && (
-                <div className="space-y-4">
-                  <div>
-                    <div className="flex justify-between text-xs font-bold mb-1.5">
-                      <span className="text-slate-700">Guru menjelaskan dengan jernih</span>
-                      <span className="text-emerald-700">{c1Avg.toFixed(1)} / 4.0</span>
-                    </div>
-                    <div className="h-1.5 w-full bg-slate-100 rounded-full"><div className="h-full bg-emerald-500 rounded-full" style={{width: `${(c1Avg/4)*100}%`}} /></div>
-                  </div>
-                  <div>
-                    <div className="flex justify-between text-xs font-bold mb-1.5">
-                      <span className="text-slate-700">Guru adil dalam memberi nilai</span>
-                      <span className="text-emerald-700">{c2Avg.toFixed(1)} / 4.0</span>
-                    </div>
-                    <div className="h-1.5 w-full bg-slate-100 rounded-full"><div className="h-full bg-emerald-500 rounded-full" style={{width: `${(c2Avg/4)*100}%`}} /></div>
-                  </div>
-                  <div>
-                    <div className="flex justify-between text-xs font-bold mb-1.5">
-                      <span className="text-slate-700">Tugas yang diberikan relevan</span>
-                      <span className="text-emerald-700">{c3Avg.toFixed(1)} / 4.0</span>
-                    </div>
-                    <div className="h-1.5 w-full bg-slate-100 rounded-full"><div className="h-full bg-emerald-500 rounded-full" style={{width: `${(c3Avg/4)*100}%`}} /></div>
-                  </div>
+        <div className="space-y-6">
+          <Card className="p-8 rounded-lg border border-slate-200 shadow-sm bg-white">
+            <div className="flex flex-col md:flex-row gap-8 items-center">
+              <div className="w-full md:w-1/3 text-center">
+                <div className="w-24 h-24 mx-auto relative flex items-center justify-center mb-4">
+                  <div className="absolute inset-0 rounded-full border-[8px] border-emerald-50" />
+                  <div className="absolute inset-0 rounded-full border-[8px] border-emerald-500 border-t-transparent -rotate-45" />
+                  <span className="text-3xl font-black text-slate-800">{count > 0 ? totalScore.toFixed(1) : "N/A"}</span>
                 </div>
-              )}
+                <h2 className="text-lg font-bold text-slate-800">Indeks Kepuasan Siswa</h2>
+                <p className="text-slate-500 text-xs font-semibold mt-1">Skala Likert (Max 4.0)</p>
+                <div className="mt-6">
+                  {hasActiveSession ? (
+                    <div className="px-4 py-2 bg-emerald-50 text-emerald-700 rounded-lg text-xs font-bold border border-emerald-200">
+                      Sesi Kuesioner Sedang Aktif
+                    </div>
+                  ) : (
+                    <button 
+                      onClick={handleReleaseFeedback} 
+                      disabled={sessionLoading}
+                      className="w-full px-4 py-2 bg-indigo-600 text-white rounded-lg text-xs font-bold shadow-sm hover:bg-indigo-700 transition-colors flex items-center justify-center gap-2"
+                    >
+                      {sessionLoading ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Upload className="w-3.5 h-3.5" />}
+                      Rilis Kuesioner ke Siswa
+                    </button>
+                  )}
+                </div>
+              </div>
+              
+              <div className="w-full md:w-2/3 space-y-5">
+                <p className="text-xs font-medium text-slate-500 leading-relaxed bg-slate-50 p-3 rounded-md border border-slate-100">
+                  Data ditarik otomatis dari kuesioner akhir semester yang diisi oleh siswa sebelum mereka dapat melihat rapor. Semua data dijamin anonim oleh sistem. {count === 0 ? "Belum ada feedback." : ""}
+                </p>
+                
+                {count > 0 && (
+                  <div className="space-y-4">
+                    <div>
+                      <div className="flex justify-between text-xs font-bold mb-1.5">
+                        <span className="text-slate-700">Guru menjelaskan dengan jernih</span>
+                        <span className="text-emerald-700">{c1Avg.toFixed(1)} / 4.0</span>
+                      </div>
+                      <div className="h-1.5 w-full bg-slate-100 rounded-full"><div className="h-full bg-emerald-500 rounded-full" style={{width: `${(c1Avg/4)*100}%`}} /></div>
+                    </div>
+                    <div>
+                      <div className="flex justify-between text-xs font-bold mb-1.5">
+                        <span className="text-slate-700">Guru adil dalam memberi nilai</span>
+                        <span className="text-emerald-700">{c2Avg.toFixed(1)} / 4.0</span>
+                      </div>
+                      <div className="h-1.5 w-full bg-slate-100 rounded-full"><div className="h-full bg-emerald-500 rounded-full" style={{width: `${(c2Avg/4)*100}%`}} /></div>
+                    </div>
+                    <div>
+                      <div className="flex justify-between text-xs font-bold mb-1.5">
+                        <span className="text-slate-700">Tugas yang diberikan relevan</span>
+                        <span className="text-emerald-700">{c3Avg.toFixed(1)} / 4.0</span>
+                      </div>
+                      <div className="h-1.5 w-full bg-slate-100 rounded-full"><div className="h-full bg-emerald-500 rounded-full" style={{width: `${(c3Avg/4)*100}%`}} /></div>
+                    </div>
+                  </div>
+                )}
+              </div>
             </div>
-          </div>
-        </Card>
+          </Card>
+          
+          {feedbacks.filter(f => f.suggestion).length > 0 && (
+            <Card className="p-6 rounded-lg border border-slate-200 shadow-sm bg-white">
+              <h3 className="font-bold text-slate-800 text-sm mb-4">Saran & Masukan Anonim</h3>
+              <div className="space-y-3 max-h-64 overflow-y-auto pr-2">
+                {feedbacks.filter(f => f.suggestion).map((fb, idx) => (
+                  <div key={idx} className="p-4 bg-slate-50 border border-slate-100 rounded-lg text-sm text-slate-700 italic">
+                    "{fb.suggestion}"
+                  </div>
+                ))}
+              </div>
+            </Card>
+          )}
+        </div>
       )}
 
       {activeTab === 'koreksi' && (

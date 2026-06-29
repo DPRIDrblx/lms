@@ -3,7 +3,7 @@
 import { useAuth } from "@/lib/auth-context";
 import { createClient } from "@/lib/supabase";
 import { Card } from "@/components/ui/card";
-import { TrendingUp, AlertTriangle, Users, BookOpen, UserCircle2, CheckCircle2, Edit2, Check, X } from "lucide-react";
+import { TrendingUp, AlertTriangle, Users, BookOpen, UserCircle2, CheckCircle2, Edit2, Check, X, Star } from "lucide-react";
 import { useEffect, useState } from "react";
 
 export default function PrincipalMutu() {
@@ -186,6 +186,65 @@ export default function PrincipalMutu() {
                 </button>
               </div>
             ))}
+          </div>
+        </Card>
+      </div>
+
+      <div className="mt-8">
+        <Card className="p-6 rounded-lg border border-slate-200 shadow-sm bg-white">
+          <div className="flex items-center justify-between mb-6 pb-4 border-b border-slate-100">
+            <div>
+              <h2 className="text-lg font-bold text-slate-800">Detail Kuesioner & Feedback Siswa</h2>
+              <p className="text-xs text-slate-500 font-medium">Berdasarkan hasil survei anonim terbaru.</p>
+            </div>
+            <BookOpen className="w-5 h-5 text-indigo-500" />
+          </div>
+
+          <div className="overflow-x-auto">
+            <table className="w-full text-left border-collapse">
+              <thead>
+                <tr className="bg-slate-50 text-slate-500 text-xs uppercase tracking-wider font-bold">
+                  <th className="p-4 border-b border-slate-200 rounded-tl-lg">Nama Guru</th>
+                  <th className="p-4 border-b border-slate-200">Rating</th>
+                  <th className="p-4 border-b border-slate-200">Interaktif (1-4)</th>
+                  <th className="p-4 border-b border-slate-200">Pemahaman (1-4)</th>
+                  <th className="p-4 border-b border-slate-200 rounded-tr-lg">Saran & Masukan</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-slate-100">
+                {feedbacks.length === 0 && (
+                  <tr>
+                    <td colSpan={5} className="p-8 text-center text-slate-400 text-sm italic">
+                      Belum ada data kuesioner siswa.
+                    </td>
+                  </tr>
+                )}
+                {feedbacks.map(fb => (
+                  <tr key={fb.id} className="hover:bg-slate-50 transition-colors">
+                    <td className="p-4">
+                      <div className="font-bold text-slate-800 text-sm">{fb.profiles?.full_name}</div>
+                      <div className="text-[10px] text-slate-500 font-bold uppercase">{fb.semester}</div>
+                    </td>
+                    <td className="p-4">
+                      <div className="flex text-yellow-400">
+                        {Array.from({length: 5}).map((_, i) => (
+                          <Star key={i} className={`w-4 h-4 ${i < (fb.rating || 0) ? 'fill-yellow-400' : 'text-slate-200'}`} />
+                        ))}
+                      </div>
+                    </td>
+                    <td className="p-4">
+                      <div className="font-bold text-indigo-600">{fb.engaging_score || '-'}</div>
+                    </td>
+                    <td className="p-4">
+                      <div className="font-bold text-emerald-600">{fb.understanding_score || '-'}</div>
+                    </td>
+                    <td className="p-4 max-w-xs text-xs text-slate-600 italic">
+                      {fb.suggestion ? `"${fb.suggestion}"` : '-'}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
           </div>
         </Card>
       </div>

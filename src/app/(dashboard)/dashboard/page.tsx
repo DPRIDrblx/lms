@@ -59,6 +59,7 @@ export default function DashboardPage() {
   const [streak, setStreak] = useState(0);
   const [quests, setQuests] = useState<any[]>([]);
   const [drills, setDrills] = useState<any[]>([]);
+  const [activeFeedbacks, setActiveFeedbacks] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [profileTimeout, setProfileTimeout] = useState(false);
 
@@ -141,6 +142,19 @@ export default function DashboardPage() {
        }
     }
 
+    // 6. Fetch Active Feedbacks
+    const { data: sessions } = await supabase
+      .from('ace_feedback_sessions')
+      .select('*, profiles!teacher_id(full_name, id), ace_student_feedbacks(id, student_id)')
+      .eq('is_active', true);
+      
+    if (sessions) {
+      const pending = sessions.filter((s: any) => 
+        !s.ace_student_feedbacks?.some((fb: any) => fb.student_id === profile.id)
+      );
+      setActiveFeedbacks(pending);
+    }
+
     if (courseData) setCourses(courseData.map((c: any) => ({ ...c, lessons_count: c.lessons[0]?.count || 0 })));
     if (progData) setProgressData(progData);
     if (eventData) setEvents(eventData as SchoolEvent[]);
@@ -201,6 +215,27 @@ export default function DashboardPage() {
       <div className="w-full">
         <AnnouncementBoard />
       </div>
+
+      {activeFeedbacks.length > 0 && (
+        <div className="w-full space-y-4">
+          {activeFeedbacks.map(fb => (
+            <div key={fb.id} className="w-full bg-gradient-to-r from-indigo-500 to-purple-600 rounded-3xl p-6 md:p-8 shadow-xl text-white flex flex-col md:flex-row items-center justify-between gap-6 transform hover:scale-[1.01] transition-transform">
+              <div className="flex items-center gap-6">
+                <div className="w-16 h-16 bg-white/20 rounded-2xl flex items-center justify-center shrink-0 backdrop-blur-sm border border-white/30">
+                  <Star className="w-8 h-8 text-yellow-300 fill-yellow-300" />
+                </div>
+                <div>
+                  <h3 className="text-xl md:text-2xl font-black mb-2 tracking-tight">Yuk, isi kuisioner feedback siswa dari {fb.profiles?.full_name}!</h3>
+                  <p className="text-indigo-100 font-medium">Bantu sekolah kita menjadi lebih baik. Waktumu hanya 2 menit dan semua jawaban dijamin 100% anonim.</p>
+                </div>
+              </div>
+              <Link href={`/student/feedback/${fb.id}`} className="w-full md:w-auto px-8 py-3 bg-white text-indigo-600 rounded-xl font-bold text-lg text-center shadow-lg hover:bg-indigo-50 hover:shadow-indigo-500/20 active:scale-95 transition-all">
+                Mulai Isi 🚀
+              </Link>
+            </div>
+          ))}
+        </div>
+      )}
 
       <div className="flex flex-col lg:flex-row gap-8">
         {/* LEFT COLUMN: THE LEARNING PATH */}
