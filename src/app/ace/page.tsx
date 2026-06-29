@@ -89,7 +89,7 @@ export default function ACEDashboard() {
               <h2 className="text-xl font-black text-slate-800 mb-1">Persetujuan</h2>
               <p className="text-slate-500 text-sm font-medium mb-6">Cuti & Dinas Luar Guru</p>
             </div>
-            <Link href="/ace/persetujuan" className="block w-full py-3 bg-amber-500 text-white text-center font-black rounded-xl hover:bg-amber-600 transition-colors shadow-sm shadow-amber-500/20">
+            <Link href={profile.role === 'principal' ? "/ace/principal/izin" : "/ace/tu/kehadiran"} className="block w-full py-3 bg-amber-500 text-white text-center font-black rounded-xl hover:bg-amber-600 transition-colors shadow-sm shadow-amber-500/20">
               Tinjau Sekarang
             </Link>
           </div>
