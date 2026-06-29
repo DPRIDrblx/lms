@@ -20,6 +20,12 @@ export default function TUKepegawaian() {
   const [docRequests, setDocRequests] = useState<any[]>([]);
   const [newRequest, setNewRequest] = useState({ title: '', description: '', teacher_id: '', form_fields: [] as {id: string, label: string, type: string}[] });
   
+  // Hasil Pelengkapan Modal State
+  const [showRequestDocsModal, setShowRequestDocsModal] = useState(false);
+  const [requestDocs, setRequestDocs] = useState<any[]>([]);
+  const [loadingRequestDocs, setLoadingRequestDocs] = useState(false);
+  const [selectedRequestTitle, setSelectedRequestTitle] = useState('');
+  
   // Pangkat State
   const [teachers, setTeachers] = useState<any[]>([]);
 
@@ -115,6 +121,20 @@ export default function TUKepegawaian() {
   const removeFormField = (index: number) => {
     const updated = newRequest.form_fields.filter((_, i) => i !== index);
     setNewRequest({ ...newRequest, form_fields: updated });
+  };
+
+  const handleViewRequestDocs = async (reqId: string, title: string) => {
+    setLoadingRequestDocs(true);
+    setSelectedRequestTitle(title);
+    setShowRequestDocsModal(true);
+    const { data } = await supabase
+      .from('ace_documents')
+      .select('*, profiles(full_name)')
+      .eq('request_id', reqId)
+      .order('created_at', { ascending: false });
+    
+    if (data) setRequestDocs(data);
+    setLoadingRequestDocs(false);
   };
 
   const handleGenerateSK = (teacherName: string) => {
@@ -321,8 +341,16 @@ export default function TUKepegawaian() {
                         <span className="text-[10px] font-bold px-2 py-1 bg-slate-100 text-slate-600 rounded-md">{req.form_fields?.length || 0} Kolom Form</span>
                       </div>
                     </div>
-                    <div className="text-xs text-slate-400 font-medium">
-                      {new Date(req.created_at).toLocaleDateString('id-ID')}
+                    <div className="flex flex-col gap-2 md:items-end mt-4 md:mt-0">
+                      <div className="text-xs text-slate-400 font-medium">
+                        {new Date(req.created_at).toLocaleDateString('id-ID')}
+                      </div>
+                      <button 
+                        onClick={() => handleViewRequestDocs(req.id, req.title)}
+                        className="px-3 py-1.5 bg-indigo-50 text-indigo-700 font-bold text-xs rounded-md border border-indigo-100 hover:bg-indigo-100 transition-colors"
+                      >
+                        Lihat Hasil Pelengkapan
+                      </button>
                     </div>
                   </Card>
                 ))}
@@ -365,6 +393,68 @@ export default function TUKepegawaian() {
             )}
           </div>
         </Card>
+      )}
+
+      {/* Request Docs Modal */}
+      {showRequestDocsModal && (
+        <div className="fixed inset-0 bg-slate-900/50 z-50 flex items-center justify-center p-4 backdrop-blur-sm">
+          <Card className="w-full max-w-2xl bg-white shadow-2xl rounded-2xl overflow-hidden animate-in zoom-in-95 max-h-[85vh] flex flex-col">
+            <div className="p-4 border-b border-slate-100 bg-slate-50 flex justify-between items-center shrink-0">
+              <div>
+                <h2 className="font-bold text-slate-800">Hasil Pelengkapan</h2>
+                <p className="text-xs text-slate-500">{selectedRequestTitle}</p>
+              </div>
+              <button onClick={() => setShowRequestDocsModal(false)} className="text-slate-400 hover:text-slate-600 p-1"><XCircle className="w-5 h-5" /></button>
+            </div>
+            <div className="p-4 overflow-y-auto grow bg-slate-50">
+              {loadingRequestDocs ? (
+                <p className="text-sm text-slate-500 text-center py-4">Memuat dokumen...</p>
+              ) : requestDocs.length === 0 ? (
+                <p className="text-sm text-slate-500 text-center py-8 bg-white rounded border border-slate-200">Belum ada guru yang melengkapi dokumen ini.</p>
+              ) : (
+                <div className="space-y-4">
+                  {requestDocs.map(doc => (
+                    <div key={doc.id} className="bg-white p-4 rounded-lg border border-slate-200 shadow-sm flex flex-col md:flex-row md:items-center justify-between gap-4">
+                      <div>
+                        <p className="text-[10px] font-bold text-indigo-600 uppercase tracking-wider mb-1">Pengunggah</p>
+                        <p className="font-bold text-slate-800 text-sm mb-3">{doc.profiles?.full_name || 'Tidak Diketahui'}</p>
+                        
+                        <div className="flex items-center gap-2 mb-3">
+                          <span className={`text-[10px] font-bold px-2 py-1 rounded-md ${
+                            doc.status === 'verified' ? 'bg-emerald-50 text-emerald-700' :
+                            doc.status === 'rejected' ? 'bg-rose-50 text-rose-700' :
+                            'bg-amber-50 text-amber-700'
+                          }`}>
+                            Status: {doc.status === 'verified' ? 'Disetujui' : doc.status === 'rejected' ? 'Ditolak' : 'Menunggu'}
+                          </span>
+                        </div>
+
+                        {doc.metadata && Object.keys(doc.metadata).length > 0 && (
+                          <div className="mb-2">
+                            <p className="text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-1">Isian Form</p>
+                            <div className="grid grid-cols-2 gap-x-4 gap-y-2">
+                              {Object.entries(doc.metadata).map(([k, v]) => (
+                                <div key={k}>
+                                  <span className="text-[10px] font-bold text-slate-400 capitalize block">{k.replace(/_/g, ' ')}:</span>
+                                  <span className="text-xs font-semibold text-slate-700">{v as string}</span>
+                                </div>
+                              ))}
+                            </div>
+                          </div>
+                        )}
+                      </div>
+                      <div className="shrink-0 flex items-center justify-center">
+                        <a href={doc.file_url} target="_blank" rel="noreferrer" className="px-3 py-2 bg-slate-800 text-white font-bold text-xs rounded-md hover:bg-slate-900 transition-colors flex items-center gap-2 shadow-sm">
+                          <Download className="w-3 h-3" /> Unduh / Lihat File
+                        </a>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          </Card>
+        </div>
       )}
     </div>
   );
