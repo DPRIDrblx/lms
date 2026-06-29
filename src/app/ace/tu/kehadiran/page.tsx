@@ -9,12 +9,13 @@ import { useEffect, useState } from "react";
 export default function TUKehadiran() {
   const { profile } = useAuth();
   const supabase = createClient();
-  const [activeTab, setActiveTab] = useState("monitor");
+  const [activeTab, setActiveTab] = useState("piket");
 
   const [attendances, setAttendances] = useState<any[]>([]);
   const [substitutions, setSubstitutions] = useState<any[]>([]);
   const [teachers, setTeachers] = useState<any[]>([]);
   const [schedules, setSchedules] = useState<any[]>([]);
+  const [piketSchedules, setPiketSchedules] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   
   const [scheduleForm, setScheduleForm] = useState({
@@ -41,6 +42,7 @@ export default function TUKehadiran() {
   const [emergencyActive, setEmergencyActive] = useState(false);
   const standbyTeachers: string[] = [];
   const [subEdits, setSubEdits] = useState<Record<string, string>>({});
+  const [newPiket, setNewPiket] = useState({ teacher_id: '', day_of_week: 1 });
 
   const fetchData = async () => {
     setLoading(true);
@@ -66,6 +68,10 @@ export default function TUKehadiran() {
     // Fetch schedules
     const { data: sData } = await supabase.from('ace_schedules').select('*, profiles(full_name)').order('day_of_week', { ascending: true });
     if (sData) setSchedules(sData);
+
+    // Fetch piket schedules
+    const { data: pData } = await supabase.from('ace_piket_schedules').select('*, profiles(full_name)').order('day_of_week', { ascending: true });
+    if (pData) setPiketSchedules(pData);
 
     // Fetch settings
     const { data: setts } = await supabase.from('ace_attendance_settings').select('*').eq('id', 1).single();
@@ -152,6 +158,23 @@ export default function TUKehadiran() {
     } finally {
       setScheduleLoading(false);
     }
+  };
+
+  const handleAddPiket = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!newPiket.teacher_id) return alert("Pilih guru terlebih dahulu!");
+    const { error } = await supabase.from('ace_piket_schedules').insert({
+      teacher_id: newPiket.teacher_id,
+      day_of_week: newPiket.day_of_week
+    });
+    if (error) alert("Gagal menambahkan piket: " + error.message);
+    else fetchData();
+  };
+
+  const handleRemovePiket = async (id: string) => {
+    if (!confirm("Hapus jadwal piket ini?")) return;
+    await supabase.from('ace_piket_schedules').delete().eq('id', id);
+    fetchData();
   };
 
   const handleSettingsSubmit = async (e: React.FormEvent) => {
@@ -263,6 +286,7 @@ export default function TUKehadiran() {
         {[
           { id: 'monitor', label: 'Live Attendance Monitor' },
           { id: 'cuti', label: 'Manajer Cuti & Delegasi' },
+          { id: 'piket', label: 'Jadwal Guru Piket' },
           { id: 'jadwal', label: 'Manajemen Jadwal KBM' },
           { id: 'pengaturan', label: 'Pengaturan Jam & Libur' },
         ].map(t => (
@@ -428,6 +452,63 @@ export default function TUKehadiran() {
                 <p className="text-xs text-slate-500 text-center py-4">Belum ada jadwal KBM yang terdaftar.</p>
               )}
             </div>
+          </div>
+        </Card>
+      )}
+
+      {activeTab === 'piket' && (
+        <Card className="p-6 rounded-lg border border-slate-200 bg-white shadow-sm max-w-2xl">
+          <h2 className="text-lg font-bold text-slate-800 mb-2">Manajemen Jadwal Guru Piket</h2>
+          <p className="text-sm text-slate-500 mb-6">Guru yang didaftarkan di sini akan mendapatkan batas absen khusus (Max masuk 07:00 & Min pulang 15:30) pada hari piketnya.</p>
+          
+          <form onSubmit={handleAddPiket} className="bg-slate-50 p-4 rounded-lg border border-slate-200 flex flex-col md:flex-row gap-4 mb-6">
+            <div className="flex-1">
+              <label className="block text-xs font-bold text-slate-700 mb-1">Hari Piket</label>
+              <select value={newPiket.day_of_week} onChange={e => setNewPiket({...newPiket, day_of_week: Number(e.target.value)})} className="w-full p-2.5 border border-slate-300 rounded text-sm bg-white">
+                <option value={1}>Senin</option>
+                <option value={2}>Selasa</option>
+                <option value={3}>Rabu</option>
+                <option value={4}>Kamis</option>
+                <option value={5}>Jumat</option>
+                <option value={6}>Sabtu</option>
+              </select>
+            </div>
+            <div className="flex-1">
+              <label className="block text-xs font-bold text-slate-700 mb-1">Guru Piket</label>
+              <select value={newPiket.teacher_id} onChange={e => setNewPiket({...newPiket, teacher_id: e.target.value})} className="w-full p-2.5 border border-slate-300 rounded text-sm bg-white">
+                <option value="">-- Pilih Guru --</option>
+                {teachers.map(t => <option key={t.id} value={t.id}>{t.full_name}</option>)}
+              </select>
+            </div>
+            <div className="flex items-end">
+              <button type="submit" className="w-full px-6 py-2.5 bg-indigo-600 text-white font-bold text-sm rounded hover:bg-indigo-700 transition-colors">Tambah</button>
+            </div>
+          </form>
+
+          <div className="space-y-4">
+            {[1, 2, 3, 4, 5, 6].map(day => {
+              const piketsForDay = piketSchedules.filter(p => p.day_of_week === day);
+              if (piketsForDay.length === 0) return null;
+              return (
+                <div key={day} className="border border-slate-200 rounded-lg overflow-hidden">
+                  <div className="bg-slate-100 px-4 py-2 font-bold text-slate-800 text-sm flex items-center gap-2">
+                    <CalendarCheck className="w-4 h-4 text-indigo-600" />
+                    {['Minggu', 'Senin', 'Selasa', 'Rabu', 'Kamis', 'Jumat', 'Sabtu'][day]}
+                  </div>
+                  <div className="divide-y divide-slate-100">
+                    {piketsForDay.map(p => (
+                      <div key={p.id} className="flex justify-between items-center p-3 px-4 bg-white">
+                        <span className="font-semibold text-sm text-slate-700">{p.profiles?.full_name}</span>
+                        <button onClick={() => handleRemovePiket(p.id)} className="text-xs text-rose-600 font-bold px-3 py-1.5 bg-rose-50 rounded hover:bg-rose-100 transition-colors">Hapus</button>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              );
+            })}
+            {piketSchedules.length === 0 && (
+              <p className="text-sm text-slate-500 text-center py-4">Belum ada jadwal Guru Piket yang ditambahkan.</p>
+            )}
           </div>
         </Card>
       )}

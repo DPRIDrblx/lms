@@ -25,6 +25,8 @@ export default function ACEJadwal() {
   const [substituteTeacherId, setSubstituteTeacherId] = useState('');
   const [substituteDate, setSubstituteDate] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [journalStudents, setJournalStudents] = useState<any[]>([]);
+  const [studentPresences, setStudentPresences] = useState<Record<string, string>>({});
 
   useEffect(() => {
     const fetchData = async () => {
@@ -77,13 +79,45 @@ export default function ACEJadwal() {
     return nextDate.toISOString().split('T')[0];
   };
 
-  const openModal = (sch: any) => {
+  const openModal = async (sch: any) => {
     setSelectedSchedule(sch);
     setModalTab('jurnal');
     const nextDate = calculateNextDate(sch.day_of_week);
     setJournalForm({ date: nextDate, materi: '', siswa_hadir: '', catatan: '' });
     setSubstituteDate(nextDate);
     if (teachers.length > 0) setSubstituteTeacherId(teachers[0].id);
+
+    setJournalStudents([]);
+    setStudentPresences({});
+    
+    // Fetch students based on class_name
+    try {
+      const classNameClean = sch.class_name.replace(/kelas/i, '').trim();
+      const { data: classMatch } = await supabase
+        .from('classes')
+        .select('id, name')
+        .ilike('name', `%${classNameClean}%`)
+        .limit(1)
+        .single();
+        
+      if (classMatch) {
+        const { data: students } = await supabase
+          .from('profiles')
+          .select('id, full_name')
+          .eq('role', 'student')
+          .eq('class_id', classMatch.id)
+          .order('full_name');
+          
+        if (students && students.length > 0) {
+          setJournalStudents(students);
+          const presences: Record<string, string> = {};
+          students.forEach((s: any) => presences[s.id] = 'hadir');
+          setStudentPresences(presences);
+        }
+      }
+    } catch (e) {
+      // ignore silently if class doesn't match
+    }
   };
 
   const handleJournalSubmit = async (e: React.FormEvent) => {
@@ -91,12 +125,25 @@ export default function ACEJadwal() {
     if (!selectedSchedule || !profile) return;
     setIsSubmitting(true);
     try {
+      const presencesArray = journalStudents.map(s => ({
+        student_id: s.id,
+        name: s.full_name,
+        status: studentPresences[s.id]
+      }));
+
+      let siswaHadirVal = journalForm.siswa_hadir;
+      if (journalStudents.length > 0) {
+        const hadirCount = Object.values(studentPresences).filter(v => v === 'hadir').length;
+        siswaHadirVal = `${hadirCount} Hadir dari ${journalStudents.length}`;
+      }
+
       const { error } = await supabase.from('ace_logbooks').insert({
         teacher_id: profile.id,
         date: journalForm.date,
         materi: `(${selectedSchedule.subject_name} - ${selectedSchedule.class_name}) ${journalForm.materi}`,
-        siswa_hadir: journalForm.siswa_hadir,
-        catatan: journalForm.catatan
+        siswa_hadir: siswaHadirVal,
+        catatan: journalForm.catatan,
+        student_presences: presencesArray.length > 0 ? presencesArray : []
       });
       if (error) throw error;
       alert('Jurnal berhasil disimpan!');
@@ -267,16 +314,45 @@ export default function ACEJadwal() {
             <div className="p-6">
               {modalTab === 'jurnal' && (
                 <form onSubmit={handleJournalSubmit} className="space-y-4">
-                  <div className="grid grid-cols-2 gap-4">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div>
                       <label className="block text-xs font-bold text-slate-700 mb-1">Tanggal</label>
                       <input type="date" required value={journalForm.date} onChange={e => setJournalForm({...journalForm, date: e.target.value})} className="w-full p-2 border border-slate-200 rounded-lg text-sm bg-slate-50" />
                     </div>
-                    <div>
-                      <label className="block text-xs font-bold text-slate-700 mb-1">Presensi Siswa</label>
-                      <input type="text" placeholder="Cth: Hadir semua / 2 Sakit" required value={journalForm.siswa_hadir} onChange={e => setJournalForm({...journalForm, siswa_hadir: e.target.value})} className="w-full p-2 border border-slate-200 rounded-lg text-sm" />
-                    </div>
+                    {journalStudents.length === 0 && (
+                      <div>
+                        <label className="block text-xs font-bold text-slate-700 mb-1">Presensi Siswa</label>
+                        <input type="text" placeholder="Cth: Hadir semua / 2 Sakit" required value={journalForm.siswa_hadir} onChange={e => setJournalForm({...journalForm, siswa_hadir: e.target.value})} className="w-full p-2 border border-slate-200 rounded-lg text-sm" />
+                      </div>
+                    )}
                   </div>
+                  {journalStudents.length > 0 && (
+                    <div className="border border-slate-200 rounded-lg overflow-hidden">
+                      <div className="bg-slate-100 p-2 px-3 border-b border-slate-200 text-xs font-bold text-slate-700 flex justify-between items-center">
+                        <span>Daftar Siswa Kelas {selectedSchedule?.class_name}</span>
+                        <span className="bg-white px-2 py-0.5 rounded-full border border-slate-200">{journalStudents.length} Siswa</span>
+                      </div>
+                      <div className="max-h-48 overflow-y-auto divide-y divide-slate-100">
+                        {journalStudents.map(student => (
+                          <div key={student.id} className="flex items-center justify-between p-2 px-3 hover:bg-slate-50 transition-colors">
+                            <span className="text-sm font-medium text-slate-700 truncate mr-2">{student.full_name}</span>
+                            <div className="flex gap-1 shrink-0">
+                              {['hadir', 'sakit', 'izin', 'alpha'].map(status => (
+                                <button
+                                  key={status}
+                                  type="button"
+                                  onClick={() => setStudentPresences(prev => ({ ...prev, [student.id]: status }))}
+                                  className={`px-2 py-1 text-[10px] font-bold rounded capitalize transition-colors ${studentPresences[student.id] === status ? (status === 'hadir' ? 'bg-emerald-500 text-white' : status === 'alpha' ? 'bg-rose-500 text-white' : 'bg-amber-500 text-white') : 'bg-slate-100 text-slate-500 hover:bg-slate-200'}`}
+                                >
+                                  {status.substring(0,1)}
+                                </button>
+                              ))}
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
                   <div>
                     <label className="block text-xs font-bold text-slate-700 mb-1">Materi / Kegiatan</label>
                     <textarea required placeholder="Deskripsikan materi yang diajarkan..." rows={3} value={journalForm.materi} onChange={e => setJournalForm({...journalForm, materi: e.target.value})} className="w-full p-2 border border-slate-200 rounded-lg text-sm resize-none"></textarea>

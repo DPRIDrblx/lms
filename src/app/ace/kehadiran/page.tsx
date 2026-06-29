@@ -53,10 +53,23 @@ export default function ACEKehadiran() {
       }
 
       const dayOfWeek = now.getDay();
-      const isWeekend = routineHolidays.includes(dayOfWeek);
       
-      if (isWeekend) {
-        isHolidayMode = true;
+      const { data: piketMatch } = await supabase
+        .from('ace_piket_schedules')
+        .select('id')
+        .eq('teacher_id', profile?.id)
+        .eq('day_of_week', dayOfWeek)
+        .maybeSingle();
+
+      if (piketMatch) {
+        lateThreshold = "07:00:00";
+        overtimeThreshold = "15:30:00";
+        isHolidayMode = false;
+      } else {
+        const isWeekend = routineHolidays.includes(dayOfWeek);
+        if (isWeekend) {
+          isHolidayMode = true;
+        }
       }
 
       const [lateH, lateM] = lateThreshold.split(':').map(Number);
@@ -65,7 +78,8 @@ export default function ACEKehadiran() {
       const currentM = now.getMinutes();
 
       const isLate = isHolidayMode ? false : (currentH > lateH || (currentH === lateH && currentM > lateM));
-      const isOvertime = isWeekend || isHolidayMode || (currentH > overH || (currentH === overH && currentM >= overM));
+      // Overtime if holiday OR if late enough (overH/overM)
+      const isOvertime = isHolidayMode || (currentH > overH || (currentH === overH && currentM >= overM));
 
       const { data: existing } = await supabase.from('ace_attendances')
         .select('*')
