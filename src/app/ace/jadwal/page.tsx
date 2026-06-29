@@ -10,8 +10,8 @@ export default function ACEJadwal() {
   const { profile } = useAuth();
   const supabase = createClient();
   const [schedules, setSchedules] = useState<any[]>([]);
-  const [teachers, setTeachers] = useState<any[]>([]);
   const [pendingSubs, setPendingSubs] = useState<any[]>([]);
+  const [piketTeachers, setPiketTeachers] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const currentDayOfWeek = new Date().getDay() === 0 ? 7 : new Date().getDay();
   const [selectedDay, setSelectedDay] = useState(currentDayOfWeek);
@@ -27,6 +27,29 @@ export default function ACEJadwal() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [journalStudents, setJournalStudents] = useState<any[]>([]);
   const [studentPresences, setStudentPresences] = useState<Record<string, string>>({});
+
+  useEffect(() => {
+    if (!substituteDate) return;
+    const fetchPiket = async () => {
+      const dateObj = new Date(substituteDate);
+      const day = dateObj.getDay() === 0 ? 7 : dateObj.getDay();
+      
+      const { data } = await supabase
+        .from('ace_piket_schedules')
+        .select('teacher_id, profiles!inner(full_name)')
+        .eq('day_of_week', day);
+        
+      if (data && data.length > 0) {
+        const pTeachers = data.map((d: any) => ({ id: d.teacher_id, full_name: d.profiles?.full_name || 'Tanpa Nama' }));
+        setPiketTeachers(pTeachers);
+        setSubstituteTeacherId(pTeachers[0].id);
+      } else {
+        setPiketTeachers([]);
+        setSubstituteTeacherId('');
+      }
+    };
+    fetchPiket();
+  }, [substituteDate, supabase]);
 
   useEffect(() => {
     const fetchData = async () => {
@@ -60,10 +83,6 @@ export default function ACEJadwal() {
         .eq('status', 'pending_sub');
       if (pSubs) setPendingSubs(pSubs);
 
-      // Fetch all teachers for substitution dropdown
-      const { data: tData } = await supabase.from('profiles').select('id, full_name').eq('role', 'teacher');
-      if (tData) setTeachers(tData);
-
       setLoading(false);
     };
     fetchData();
@@ -85,7 +104,6 @@ export default function ACEJadwal() {
     const nextDate = calculateNextDate(sch.day_of_week);
     setJournalForm({ date: nextDate, materi: '', siswa_hadir: '', catatan: '' });
     setSubstituteDate(nextDate);
-    if (teachers.length > 0) setSubstituteTeacherId(teachers[0].id);
 
     setJournalStudents([]);
     setStudentPresences({});
@@ -395,9 +413,13 @@ export default function ACEJadwal() {
                         <div>
                           <label className="block text-xs font-bold text-slate-700 mb-1">Pilih Guru Piket</label>
                           <select required value={substituteTeacherId} onChange={e => setSubstituteTeacherId(e.target.value)} className="w-full p-2 border border-slate-200 rounded-lg text-sm bg-white">
-                            {teachers.map(t => (
-                              <option key={t.id} value={t.id}>{t.full_name}</option>
-                            ))}
+                            {piketTeachers.length > 0 ? (
+                              piketTeachers.map(t => (
+                                <option key={t.id} value={t.id}>{t.full_name}</option>
+                              ))
+                            ) : (
+                              <option value="">-- Tidak Ada Guru Piket Terjadwal --</option>
+                            )}
                           </select>
                         </div>
                       </div>
