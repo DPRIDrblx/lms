@@ -40,7 +40,8 @@ export default function TUKepegawaian() {
     if (certs) setCertificates(certs);
 
     // Fetch doc requests
-    const { data: reqs } = await supabase.from('ace_document_requests').select('*, profiles(full_name)').order('created_at', { ascending: false });
+    const { data: reqs, error: reqsError } = await supabase.from('ace_document_requests').select('*, profiles!teacher_id(full_name)').order('created_at', { ascending: false });
+    if (reqsError) console.error("Error fetching doc requests:", reqsError);
     if (reqs) setDocRequests(reqs);
 
     // Fetch teachers (all teachers for the dropdown)
