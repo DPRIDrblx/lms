@@ -44,7 +44,9 @@ export default function TUKehadiran() {
     const { data: tData } = await supabase.from('profiles').select('id, full_name').eq('role', 'teacher');
     if (tData) {
       setTeachers(tData);
-      if (tData.length > 0) setScheduleForm(prev => ({ ...prev, teacher_id: tData[0].id }));
+      if (tData.length > 0) {
+        setScheduleForm(prev => ({ ...prev, teacher_id: prev.teacher_id || tData[0].id }));
+      }
     }
 
     setLoading(false);
