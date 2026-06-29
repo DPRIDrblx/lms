@@ -111,7 +111,7 @@ export default function ACEKehadiran() {
         } else {
           setLoadingGps(false);
         }
-      }, { enableHighAccuracy: false, timeout: 10000, maximumAge: 10000 });
+      }, { enableHighAccuracy: true, timeout: 60000, maximumAge: 0 });
     } else {
       alert("Browser tidak mendukung Geolocation.");
       setLoadingGps(false);
