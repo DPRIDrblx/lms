@@ -37,20 +37,35 @@ export default function ACEKehadiran() {
     try {
       const now = new Date();
       const today = now.toISOString().split('T')[0];
-      const isWeekend = now.getDay() === 0 || now.getDay() === 6;
-      
-      const { data: setts } = await supabase.from('ace_attendance_settings').select('*').eq('id', 1).single();
-      const lateTimeStr = setts?.late_time || "07:15:00";
-      const overtimeStr = setts?.overtime_start || "15:00:00";
-      const isHoliday = setts?.is_holiday || false;
+      let lateThreshold = "07:15:00";
+      let overtimeThreshold = "15:00:00";
+      let isHolidayMode = false;
+      let routineHolidays = [0, 6];
 
-      const [lateH, lateM] = lateTimeStr.split(':').map(Number);
-      const [overH, overM] = overtimeStr.split(':').map(Number);
+      const { data: setts } = await supabase.from('ace_attendance_settings').select('*').eq('id', 1).single();
+      if (setts) {
+        lateThreshold = setts.late_time;
+        overtimeThreshold = setts.overtime_start;
+        isHolidayMode = setts.is_holiday;
+        if (setts.routine_holidays) {
+          routineHolidays = setts.routine_holidays;
+        }
+      }
+
+      const dayOfWeek = now.getDay();
+      const isWeekend = routineHolidays.includes(dayOfWeek);
+      
+      if (isWeekend) {
+        isHolidayMode = true;
+      }
+
+      const [lateH, lateM] = lateThreshold.split(':').map(Number);
+      const [overH, overM] = overtimeThreshold.split(':').map(Number);
       const currentH = now.getHours();
       const currentM = now.getMinutes();
 
-      const isLate = isHoliday ? false : (currentH > lateH || (currentH === lateH && currentM > lateM));
-      const isOvertime = isWeekend || isHoliday || (currentH > overH || (currentH === overH && currentM >= overM));
+      const isLate = isHolidayMode ? false : (currentH > lateH || (currentH === lateH && currentM > lateM));
+      const isOvertime = isWeekend || isHolidayMode || (currentH > overH || (currentH === overH && currentM >= overM));
 
       const { data: existing } = await supabase.from('ace_attendances')
         .select('*')

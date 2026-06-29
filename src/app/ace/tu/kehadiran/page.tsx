@@ -32,7 +32,8 @@ export default function TUKehadiran() {
   const [settings, setSettings] = useState({
     late_time: "07:15:00",
     overtime_start: "15:00:00",
-    is_holiday: false
+    is_holiday: false,
+    routine_holidays: [0, 6] as number[]
   });
   const [settingsLoading, setSettingsLoading] = useState(false);
 
@@ -72,7 +73,8 @@ export default function TUKehadiran() {
       setSettings({
         late_time: setts.late_time,
         overtime_start: setts.overtime_start,
-        is_holiday: setts.is_holiday
+        is_holiday: setts.is_holiday,
+        routine_holidays: setts.routine_holidays || [0, 6]
       });
     }
 
@@ -161,6 +163,7 @@ export default function TUKehadiran() {
         late_time: settings.late_time,
         overtime_start: settings.overtime_start,
         is_holiday: settings.is_holiday,
+        routine_holidays: settings.routine_holidays,
         updated_at: new Date().toISOString()
       });
       if (error) throw error;
@@ -168,6 +171,58 @@ export default function TUKehadiran() {
       fetchData();
     } catch (err: any) {
       alert("Gagal menyimpan pengaturan: " + err.message);
+    } finally {
+      setSettingsLoading(false);
+    }
+  };
+
+  const handleSyncTodayAttendances = async () => {
+    if (!confirm("Fitur ini akan mengevaluasi ulang status Telat/Lembur semua absen yang masuk hari ini berdasarkan pengaturan terbaru. Lanjutkan?")) return;
+    setSettingsLoading(true);
+    try {
+      const today = new Date().toISOString().split('T')[0];
+      const { data: todayAtts, error: fetchErr } = await supabase.from('ace_attendances').select('*').eq('date', today);
+      if (fetchErr) throw fetchErr;
+
+      const dayOfWeek = new Date().getDay();
+      const isWeekend = settings.routine_holidays.includes(dayOfWeek);
+      const isHolidayMode = settings.is_holiday || isWeekend;
+
+      for (const att of todayAtts) {
+        if (!att.check_in_time) continue;
+        const checkInDate = new Date(att.check_in_time);
+        
+        const [lateHour, lateMin] = settings.late_time.split(':').map(Number);
+        const lateThreshold = new Date(checkInDate);
+        lateThreshold.setHours(lateHour, lateMin, 0, 0);
+
+        let isLate = false;
+        let isOvertime = false;
+
+        if (isHolidayMode) {
+          isOvertime = true;
+        } else {
+          if (checkInDate > lateThreshold) isLate = true;
+          // Check overtime based on checkout time if present
+          if (att.check_out_time) {
+            const checkOutDate = new Date(att.check_out_time);
+            const [overHour, overMin] = settings.overtime_start.split(':').map(Number);
+            const overThreshold = new Date(checkOutDate);
+            overThreshold.setHours(overHour, overMin, 0, 0);
+            if (checkOutDate >= overThreshold) isOvertime = true;
+          }
+        }
+
+        await supabase.from('ace_attendances').update({
+          is_late: isLate,
+          is_overtime: isOvertime
+        }).eq('id', att.id);
+      }
+
+      alert("Selesai! Seluruh absen hari ini telah disinkronisasi ulang dengan pengaturan baru.");
+      fetchData();
+    } catch (err: any) {
+      alert("Gagal sinkronisasi: " + err.message);
     } finally {
       setSettingsLoading(false);
     }
@@ -422,10 +477,39 @@ export default function TUKehadiran() {
               </div>
             </div>
 
-            <div className="pt-4">
-              <button disabled={settingsLoading} type="submit" className="w-full md:w-auto px-6 py-2.5 bg-indigo-600 text-white rounded-md font-bold text-xs flex justify-center items-center gap-2 hover:bg-indigo-700 disabled:opacity-50 transition-colors">
+            <div className="pt-4 border-t border-slate-100">
+              <p className="block text-xs font-semibold text-slate-700 mb-2">Hari Libur Rutin Mingguan</p>
+              <div className="flex flex-wrap gap-2">
+                {[
+                  { label: "Senin", val: 1 }, { label: "Selasa", val: 2 }, { label: "Rabu", val: 3 },
+                  { label: "Kamis", val: 4 }, { label: "Jumat", val: 5 }, { label: "Sabtu", val: 6 }, { label: "Minggu", val: 0 }
+                ].map(day => (
+                  <label key={day.val} className="flex items-center gap-1.5 p-2 border border-slate-200 rounded text-xs font-semibold text-slate-700 cursor-pointer hover:bg-slate-50 transition-colors">
+                    <input 
+                      type="checkbox" 
+                      className="accent-indigo-600 w-3.5 h-3.5"
+                      checked={settings.routine_holidays.includes(day.val)}
+                      onChange={(e) => {
+                        if (e.target.checked) {
+                          setSettings({ ...settings, routine_holidays: [...settings.routine_holidays, day.val] });
+                        } else {
+                          setSettings({ ...settings, routine_holidays: settings.routine_holidays.filter(d => d !== day.val) });
+                        }
+                      }}
+                    />
+                    {day.label}
+                  </label>
+                ))}
+              </div>
+            </div>
+
+            <div className="pt-4 flex flex-col md:flex-row gap-2">
+              <button disabled={settingsLoading} type="submit" className="flex-1 px-6 py-2.5 bg-indigo-600 text-white rounded-md font-bold text-xs flex justify-center items-center gap-2 hover:bg-indigo-700 disabled:opacity-50 transition-colors">
                 {settingsLoading && <Loader2 className="w-4 h-4 animate-spin" />}
                 {settingsLoading ? 'Menyimpan...' : 'Simpan Pengaturan'}
+              </button>
+              <button disabled={settingsLoading} type="button" onClick={handleSyncTodayAttendances} className="flex-1 px-6 py-2.5 bg-amber-500 text-white rounded-md font-bold text-xs flex justify-center items-center gap-2 hover:bg-amber-600 disabled:opacity-50 transition-colors">
+                <CalendarCheck className="w-4 h-4" /> Sinkronisasi Status Absen Hari Ini
               </button>
             </div>
           </form>
