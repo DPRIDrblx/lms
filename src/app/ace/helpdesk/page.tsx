@@ -89,7 +89,7 @@ export default function ACEHelpdesk() {
       .on(
         'postgres_changes',
         { event: 'INSERT', schema: 'public', table: 'ace_ticket_messages', filter: `ticket_id=eq.${chatTicketId}` },
-        (payload) => {
+        (payload: any) => {
           handleOpenChat(chatTicketId);
         }
       )
