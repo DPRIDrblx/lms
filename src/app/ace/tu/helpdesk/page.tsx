@@ -3,7 +3,7 @@
 import { useAuth } from "@/lib/auth-context";
 import { createClient } from "@/lib/supabase";
 import { Card } from "@/components/ui/card";
-import { Headphones, Ticket, FileText, CheckCircle2, Clock, XCircle, FileSignature, AlertTriangle } from "lucide-react";
+import { Headphones, Ticket, FileText, CheckCircle2, Clock, XCircle, FileSignature, AlertTriangle, MessageSquare, Send } from "lucide-react";
 import { useEffect, useState } from "react";
 
 export default function TUHelpdesk() {
@@ -14,6 +14,12 @@ export default function TUHelpdesk() {
   const [tickets, setTickets] = useState<any[]>([]);
   const [breachedTickets, setBreachedTickets] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
+
+  // Chat State
+  const [chatTicketId, setChatTicketId] = useState<string | null>(null);
+  const [chatMessages, setChatMessages] = useState<any[]>([]);
+  const [newMessage, setNewMessage] = useState("");
+  const [chatLoading, setChatLoading] = useState(false);
 
   const fetchData = async () => {
     setLoading(true);
@@ -48,6 +54,32 @@ export default function TUHelpdesk() {
     if (category === 'surat') {
       alert("Surat Keterangan otomatis digenerate dengan NIP/Nama dari database. Template PDF sudah siap dicetak untuk Tanda Tangan Kepsek.");
       handleProcessTicket(id, 'green'); // auto set ready
+    }
+  };
+
+  const handleOpenChat = async (ticketId: string) => {
+    setChatTicketId(ticketId);
+    setChatLoading(true);
+    const { data } = await supabase
+      .from('ace_ticket_messages')
+      .select('*, profiles(full_name, role)')
+      .eq('ticket_id', ticketId)
+      .order('created_at', { ascending: true });
+    if (data) setChatMessages(data);
+    setChatLoading(false);
+  };
+
+  const handleSendMessage = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!chatTicketId || !profile || !newMessage.trim()) return;
+    const { error } = await supabase.from('ace_ticket_messages').insert({
+      ticket_id: chatTicketId,
+      sender_id: profile.id,
+      message: newMessage
+    });
+    if (!error) {
+      setNewMessage("");
+      handleOpenChat(chatTicketId);
     }
   };
 
@@ -119,6 +151,11 @@ export default function TUHelpdesk() {
                         Ambil Tiket (Proses)
                       </button>
                     )}
+                    {ticket.status === 'yellow' && (
+                      <button onClick={() => handleOpenChat(ticket.id)} className="w-full py-2 bg-blue-50 text-blue-600 border border-blue-200 font-bold text-xs rounded-md shadow-sm hover:bg-blue-100 transition-colors flex items-center justify-center gap-1.5">
+                        <MessageSquare className="w-3.5 h-3.5" /> Diskusi / Chat Tiket
+                      </button>
+                    )}
                     {ticket.status === 'yellow' && ticket.category === 'surat' && (
                       <button onClick={() => handleGenerateTemplate(ticket.id, ticket.category)} className="w-full py-2 bg-indigo-50 text-indigo-700 border border-indigo-200 font-bold text-xs rounded-md shadow-sm hover:bg-indigo-100 transition-colors flex items-center justify-center gap-1.5">
                         <FileSignature className="w-3.5 h-3.5" /> Gunakan Template & Selesai
@@ -165,6 +202,64 @@ export default function TUHelpdesk() {
             Sistem secara otomatis mendeteksi tiket layanan yang melewati batas waktu Service Level Agreement (SLA) 48 jam. Staf terkait akan dievaluasi oleh Kepala Tata Usaha.
           </p>
         </Card>
+      )}
+
+      {/* Chat Modal */}
+      {chatTicketId && (
+        <div className="fixed inset-0 bg-slate-900/50 z-50 flex items-center justify-center p-4 backdrop-blur-sm">
+          <Card className="w-full max-w-lg bg-white shadow-2xl rounded-2xl overflow-hidden animate-in zoom-in-95 flex flex-col max-h-[85vh]">
+            <div className="p-4 border-b border-slate-100 bg-slate-50 flex justify-between items-center shrink-0">
+              <div>
+                <h2 className="font-bold text-slate-800">Diskusi Tiket</h2>
+                <p className="text-xs text-slate-500">TKT-{chatTicketId.split('-')[0].toUpperCase()}</p>
+              </div>
+              <button onClick={() => setChatTicketId(null)} className="text-slate-400 hover:text-slate-600 p-1"><XCircle className="w-5 h-5" /></button>
+            </div>
+            
+            <div className="p-4 overflow-y-auto grow bg-slate-50 flex flex-col gap-3 min-h-[300px]">
+              {chatLoading ? (
+                <p className="text-sm text-slate-500 text-center py-4">Memuat pesan...</p>
+              ) : chatMessages.length === 0 ? (
+                <div className="text-center py-8">
+                  <p className="text-sm text-slate-500">Belum ada obrolan.</p>
+                  <p className="text-xs text-slate-400 mt-1">Kirim pesan pertama untuk diskusi dengan pemohon.</p>
+                </div>
+              ) : (
+                chatMessages.map(msg => {
+                  const isMe = msg.sender_id === profile?.id;
+                  return (
+                    <div key={msg.id} className={`flex flex-col ${isMe ? 'items-end' : 'items-start'}`}>
+                      <div className={`max-w-[80%] rounded-2xl px-4 py-2 text-sm ${isMe ? 'bg-indigo-600 text-white rounded-tr-sm' : 'bg-white border border-slate-200 text-slate-700 rounded-tl-sm shadow-sm'}`}>
+                        {!isMe && <p className="text-[10px] font-bold text-indigo-600 mb-1">{msg.profiles?.full_name}</p>}
+                        <p>{msg.message}</p>
+                      </div>
+                      <span className="text-[9px] text-slate-400 mt-1">{new Date(msg.created_at).toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' })}</span>
+                    </div>
+                  );
+                })
+              )}
+            </div>
+
+            <div className="p-4 bg-white border-t border-slate-100 shrink-0">
+              <form onSubmit={handleSendMessage} className="flex gap-2">
+                <input 
+                  type="text" 
+                  value={newMessage}
+                  onChange={e => setNewMessage(e.target.value)}
+                  placeholder="Ketik pesan balasan..." 
+                  className="flex-1 px-4 py-2 border border-slate-200 rounded-full text-sm bg-slate-50 focus:bg-white focus:outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 transition-all"
+                />
+                <button 
+                  type="submit" 
+                  disabled={!newMessage.trim()}
+                  className="w-10 h-10 bg-indigo-600 text-white rounded-full flex items-center justify-center hover:bg-indigo-700 disabled:opacity-50 disabled:hover:bg-indigo-600 transition-colors shrink-0"
+                >
+                  <Send className="w-4 h-4 -ml-0.5" />
+                </button>
+              </form>
+            </div>
+          </Card>
+        </div>
       )}
     </div>
   );
