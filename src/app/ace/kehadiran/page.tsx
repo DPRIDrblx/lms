@@ -33,77 +33,84 @@ export default function ACEKehadiran() {
     }
   }, [profile, activeTab]);
 
+  const processAttendance = async (lat: number, lng: number, type: 'masuk' | 'pulang') => {
+    try {
+      const now = new Date();
+      const today = now.toISOString().split('T')[0];
+      const isWeekend = now.getDay() === 0 || now.getDay() === 6;
+      
+      const { data: existing } = await supabase.from('ace_attendances')
+        .select('*')
+        .eq('teacher_id', profile?.id)
+        .eq('date', today)
+        .maybeSingle();
+
+      if (type === 'pulang') {
+        if (!existing) {
+          alert("Anda belum melakukan Absen Masuk hari ini!");
+          setLoadingGps(false);
+          return;
+        }
+        if (existing.check_out_time) {
+          alert("Anda sudah melakukan Absen Pulang hari ini!");
+          setLoadingGps(false);
+          return;
+        }
+        const isOvertime = isWeekend || now.getHours() >= 17;
+        await supabase.from('ace_attendances').update({
+          check_out_time: now.toISOString(),
+          is_overtime: existing.is_overtime || isOvertime
+        }).eq('id', existing.id);
+        alert("Berhasil Absen Pulang (Check-Out)!");
+      } else {
+        if (existing) {
+          alert("Anda sudah melakukan Absen Masuk hari ini!");
+          setLoadingGps(false);
+          return;
+        }
+        const isLate = now.getHours() >= 7 && (now.getHours() > 7 || now.getMinutes() > 0);
+        await supabase.from('ace_attendances').insert({
+          teacher_id: profile?.id,
+          status: 'hadir',
+          latitude: lat,
+          longitude: lng,
+          check_in_time: now.toISOString(),
+          is_late: isLate,
+          is_overtime: isWeekend,
+          date: today
+        });
+        alert("Berhasil Absen Masuk (Check-In)!");
+      }
+      
+      setGpsSuccess(true);
+      
+      // Refresh data
+      const { data } = await supabase.from('ace_attendances').select('*').eq('teacher_id', profile?.id).order('created_at', { ascending: false }).limit(5);
+      if (data) setAttendances(data);
+      
+    } catch (err: any) {
+      alert("Gagal menyimpan presensi: " + err.message);
+    } finally {
+      setLoadingGps(false);
+    }
+  };
+
   const handleAbsen = (type: 'masuk' | 'pulang') => {
     if (!profile) return;
     setLoadingGps(true);
     
     if (navigator.geolocation) {
-      navigator.geolocation.getCurrentPosition(async (position) => {
+      navigator.geolocation.getCurrentPosition((position) => {
         const lat = position.coords.latitude;
         const lng = position.coords.longitude;
-        
-        try {
-          const now = new Date();
-          const today = now.toISOString().split('T')[0];
-          const isWeekend = now.getDay() === 0 || now.getDay() === 6;
-          
-          const { data: existing } = await supabase.from('ace_attendances')
-            .select('*')
-            .eq('teacher_id', profile.id)
-            .eq('date', today)
-            .maybeSingle();
-
-          if (type === 'pulang') {
-            if (!existing) {
-              alert("Anda belum melakukan Absen Masuk hari ini!");
-              setLoadingGps(false);
-              return;
-            }
-            if (existing.check_out_time) {
-              alert("Anda sudah melakukan Absen Pulang hari ini!");
-              setLoadingGps(false);
-              return;
-            }
-            const isOvertime = isWeekend || now.getHours() >= 17;
-            await supabase.from('ace_attendances').update({
-              check_out_time: now.toISOString(),
-              is_overtime: existing.is_overtime || isOvertime
-            }).eq('id', existing.id);
-            alert("Berhasil Absen Pulang (Check-Out)!");
-          } else {
-            if (existing) {
-              alert("Anda sudah melakukan Absen Masuk hari ini!");
-              setLoadingGps(false);
-              return;
-            }
-            const isLate = now.getHours() >= 7 && (now.getHours() > 7 || now.getMinutes() > 0);
-            await supabase.from('ace_attendances').insert({
-              teacher_id: profile.id,
-              status: 'hadir',
-              latitude: lat,
-              longitude: lng,
-              check_in_time: now.toISOString(),
-              is_late: isLate,
-              is_overtime: isWeekend,
-              date: today
-            });
-            alert("Berhasil Absen Masuk (Check-In)!");
-          }
-          
-          setGpsSuccess(true);
-          
-          // Refresh data
-          const { data } = await supabase.from('ace_attendances').select('*').eq('teacher_id', profile.id).order('created_at', { ascending: false }).limit(5);
-          if (data) setAttendances(data);
-          
-        } catch (err: any) {
-          alert("Gagal menyimpan presensi: " + err.message);
-        } finally {
+        processAttendance(lat, lng, type);
+      }, (error) => {
+        if (window.confirm(`Gagal mendapatkan lokasi GPS (${error.message}). Sinyal satelit di perangkat ini lemah/diblokir. Apakah Anda ingin menggunakan lokasi Bypass (Pusat Sekolah) untuk sementara?`)) {
+          // Fallback to School coordinate
+          processAttendance(-6.200000, 106.816666, type);
+        } else {
           setLoadingGps(false);
         }
-      }, (error) => {
-        alert("Gagal mendapatkan lokasi: " + error.message);
-        setLoadingGps(false);
       }, { enableHighAccuracy: false, timeout: 10000, maximumAge: 10000 });
     } else {
       alert("Browser tidak mendukung Geolocation.");
