@@ -39,6 +39,19 @@ export default function ACEKehadiran() {
       const today = now.toISOString().split('T')[0];
       const isWeekend = now.getDay() === 0 || now.getDay() === 6;
       
+      const { data: setts } = await supabase.from('ace_attendance_settings').select('*').eq('id', 1).single();
+      const lateTimeStr = setts?.late_time || "07:15:00";
+      const overtimeStr = setts?.overtime_start || "15:00:00";
+      const isHoliday = setts?.is_holiday || false;
+
+      const [lateH, lateM] = lateTimeStr.split(':').map(Number);
+      const [overH, overM] = overtimeStr.split(':').map(Number);
+      const currentH = now.getHours();
+      const currentM = now.getMinutes();
+
+      const isLate = isHoliday ? false : (currentH > lateH || (currentH === lateH && currentM > lateM));
+      const isOvertime = isWeekend || isHoliday || (currentH > overH || (currentH === overH && currentM >= overM));
+
       const { data: existing } = await supabase.from('ace_attendances')
         .select('*')
         .eq('teacher_id', profile?.id)
@@ -56,7 +69,6 @@ export default function ACEKehadiran() {
           setLoadingGps(false);
           return;
         }
-        const isOvertime = isWeekend || now.getHours() >= 17;
         const { error: updateError } = await supabase.from('ace_attendances').update({
           check_out_time: now.toISOString(),
           is_overtime: existing.is_overtime || isOvertime
@@ -69,7 +81,6 @@ export default function ACEKehadiran() {
           setLoadingGps(false);
           return;
         }
-        const isLate = now.getHours() >= 7 && (now.getHours() > 7 || now.getMinutes() > 0);
         const { error: insertError } = await supabase.from('ace_attendances').insert({
           teacher_id: profile?.id,
           status: 'hadir',
@@ -77,7 +88,7 @@ export default function ACEKehadiran() {
           longitude: lng,
           check_in_time: now.toISOString(),
           is_late: isLate,
-          is_overtime: isWeekend,
+          is_overtime: isOvertime,
           date: today
         });
         if (insertError) throw insertError;

@@ -28,6 +28,14 @@ export default function TUKehadiran() {
   });
   const [scheduleLoading, setScheduleLoading] = useState(false);
 
+  // Settings State
+  const [settings, setSettings] = useState({
+    late_time: "07:15:00",
+    overtime_start: "15:00:00",
+    is_holiday: false
+  });
+  const [settingsLoading, setSettingsLoading] = useState(false);
+
   // Emergency State (No mock data, wait for real emergency trigger in future)
   const [emergencyActive, setEmergencyActive] = useState(false);
   const standbyTeachers: string[] = [];
@@ -54,6 +62,16 @@ export default function TUKehadiran() {
     // Fetch schedules
     const { data: sData } = await supabase.from('ace_schedules').select('*, profiles(full_name)').order('day_of_week', { ascending: true });
     if (sData) setSchedules(sData);
+
+    // Fetch settings
+    const { data: setts } = await supabase.from('ace_attendance_settings').select('*').eq('id', 1).single();
+    if (setts) {
+      setSettings({
+        late_time: setts.late_time,
+        overtime_start: setts.overtime_start,
+        is_holiday: setts.is_holiday
+      });
+    }
 
     setLoading(false);
   };
@@ -127,6 +145,27 @@ export default function TUKehadiran() {
     }
   };
 
+  const handleSettingsSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setSettingsLoading(true);
+    try {
+      const { error } = await supabase.from('ace_attendance_settings').upsert({
+        id: 1,
+        late_time: settings.late_time,
+        overtime_start: settings.overtime_start,
+        is_holiday: settings.is_holiday,
+        updated_at: new Date().toISOString()
+      });
+      if (error) throw error;
+      alert("Pengaturan kehadiran berhasil disimpan!");
+      fetchData();
+    } catch (err: any) {
+      alert("Gagal menyimpan pengaturan: " + err.message);
+    } finally {
+      setSettingsLoading(false);
+    }
+  };
+
   if (!profile || profile.role !== 'tu') return null;
 
   return (
@@ -163,6 +202,7 @@ export default function TUKehadiran() {
           { id: 'monitor', label: 'Live Attendance Monitor' },
           { id: 'cuti', label: 'Manajer Cuti & Delegasi' },
           { id: 'jadwal', label: 'Manajemen Jadwal KBM' },
+          { id: 'pengaturan', label: 'Pengaturan Jam & Libur' },
         ].map(t => (
           <button 
             key={t.id}
@@ -315,6 +355,61 @@ export default function TUKehadiran() {
               )}
             </div>
           </div>
+        </Card>
+      )}
+
+      {activeTab === 'pengaturan' && (
+        <Card className="p-6 rounded-lg border border-slate-200 bg-white shadow-sm max-w-2xl">
+          <h2 className="text-lg font-bold text-slate-800 mb-2">Pengaturan Waktu Presensi Global</h2>
+          <p className="text-sm text-slate-500 mb-6">Sesuaikan batas jam masuk, jam pulang (lembur), serta aktifkan mode libur jika seluruh jadwal sedang ditiadakan (contoh: libur semester) sehingga yang absen akan tercatat lembur.</p>
+          
+          <form onSubmit={handleSettingsSubmit} className="space-y-4">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div>
+                <label className="block text-xs font-semibold text-slate-700 mb-1">Batas Jam Terlambat (Mulai Pagi)</label>
+                <input 
+                  type="time" 
+                  step="1"
+                  required 
+                  value={settings.late_time} 
+                  onChange={e => setSettings({...settings, late_time: e.target.value})} 
+                  className="w-full p-2 rounded border border-slate-300 text-sm" 
+                />
+              </div>
+              <div>
+                <label className="block text-xs font-semibold text-slate-700 mb-1">Jam Kepulangan (Hitungan Lembur)</label>
+                <input 
+                  type="time" 
+                  step="1"
+                  required 
+                  value={settings.overtime_start} 
+                  onChange={e => setSettings({...settings, overtime_start: e.target.value})} 
+                  className="w-full p-2 rounded border border-slate-300 text-sm" 
+                />
+              </div>
+            </div>
+
+            <div className="flex items-center gap-3 p-4 border border-rose-200 bg-rose-50 rounded-lg">
+              <input 
+                type="checkbox" 
+                id="holiday-mode" 
+                checked={settings.is_holiday}
+                onChange={e => setSettings({...settings, is_holiday: e.target.checked})}
+                className="w-5 h-5 accent-rose-600 rounded"
+              />
+              <div>
+                <label htmlFor="holiday-mode" className="font-bold text-rose-800 text-sm cursor-pointer">Aktifkan Mode Libur/Akhir Pekan</label>
+                <p className="text-xs text-rose-600 font-medium">Jika dicentang, seluruh guru yang absen hari ini akan langsung terhitung masuk status "Lembur".</p>
+              </div>
+            </div>
+
+            <div className="pt-4">
+              <button disabled={settingsLoading} type="submit" className="w-full md:w-auto px-6 py-2.5 bg-indigo-600 text-white rounded-md font-bold text-xs flex justify-center items-center gap-2 hover:bg-indigo-700 disabled:opacity-50 transition-colors">
+                {settingsLoading && <Loader2 className="w-4 h-4 animate-spin" />}
+                {settingsLoading ? 'Menyimpan...' : 'Simpan Pengaturan'}
+              </button>
+            </div>
+          </form>
         </Card>
       )}
     </div>
