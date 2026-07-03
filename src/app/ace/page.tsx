@@ -1,116 +1,149 @@
 "use client";
 
 import { useAuth } from "@/lib/auth-context";
-import { Card } from "@/components/ui/card";
-import { MapPin, FileSignature, BookOpen, AlertCircle, CalendarCheck, ShieldCheck } from "lucide-react";
+import { BookOpen, Search, UserCircle2, Briefcase, CalendarCheck, ShieldCheck, FileSignature, Users, AlertCircle, MapPin, CalendarClock, Book, TrendingUp, MonitorCheck } from "lucide-react";
 import Link from "next/link";
-import { useEffect, useState } from "react";
-import { createClient } from "@/lib/supabase";
 
 export default function ACEDashboard() {
   const { profile } = useAuth();
-  const supabase = createClient();
-  const [stats, setStats] = useState({ present: 0, leave: 0, requests: 0 });
-
-  useEffect(() => {
-    if (!profile) return;
-    const fetchStats = async () => {
-      // Just mock/basic stats for demo
-      const today = new Date().toISOString().split('T')[0];
-      
-      if (profile.role === 'principal' || profile.role === 'tu') {
-        const { count: present } = await supabase.from('ace_attendances').select('*', { count: 'exact', head: true }).eq('status', 'hadir').gte('created_at', today);
-        const { count: pending } = await supabase.from('ace_leaves').select('*', { count: 'exact', head: true }).eq('status', 'pending');
-        setStats({ present: present || 0, leave: 0, requests: pending || 0 });
-      }
-    };
-    fetchStats();
-  }, [profile]);
-
+  
   if (!profile) return null;
 
+  // Grid services based on the Rumah Pendidikan UI screenshot
+  const services = [
+    { href: "/ace/kinerja", label: "Ruang Kinerja", icon: FileSignature, bg: "bg-blue-500", text: "text-white" },
+    { href: "/ace/jadwal", label: "Ruang KBM", icon: CalendarClock, bg: "bg-orange-500", text: "text-white" },
+    { href: "/ace/kehadiran", label: "Ruang Absensi", icon: MapPin, bg: "bg-teal-500", text: "text-white" },
+    { href: "/ace/profil", label: "Ruang Profil", icon: UserCircle2, bg: "bg-amber-700", text: "text-white" },
+  ];
+
+  // Additional services based on role
+  if (profile.role === 'principal') {
+    services.push(
+      { href: "/ace/principal/izin", label: "Ruang Kepsek", icon: ShieldCheck, bg: "bg-emerald-600", text: "text-white" }
+    );
+  } else if (profile.role === 'tu') {
+    services.push(
+      { href: "/ace/tu/kepegawaian", label: "Ruang TU", icon: Briefcase, bg: "bg-slate-700", text: "text-white" }
+    );
+  }
+  
+  if (profile.is_hod) {
+    services.push(
+      { href: "/ace/hod/kurikulum", label: "Ruang HoD", icon: TrendingUp, bg: "bg-indigo-600", text: "text-white" }
+    );
+  }
+
+  // Fill up the rest with generic/placeholder services to make it look like the 8-grid in the screenshot
+  const defaultFillers = [
+    { href: "/ace/diklat", label: "Ruang Diklat", icon: Book, bg: "bg-rose-500", text: "text-white" },
+    { href: "/student-feedback", label: "Ruang Siswa", icon: Users, bg: "bg-fuchsia-500", text: "text-white" },
+    { href: "/ace/helpdesk", label: "Ruang Bantuan", icon: AlertCircle, bg: "bg-sky-500", text: "text-white" },
+    { href: "/ace", label: "Ruang Mitra", icon: MonitorCheck, bg: "bg-indigo-400", text: "text-white" },
+  ];
+
+  // Append fillers until we have 8 items
+  for (const filler of defaultFillers) {
+    if (services.length < 8) {
+      services.push(filler);
+    }
+  }
+
   return (
-    <div className="space-y-8 max-w-5xl mx-auto">
-      <div>
-        <h1 className="text-3xl font-black text-slate-800 tracking-tight">Selamat Datang, {profile.full_name?.split(' ')[0]}</h1>
-        <p className="text-slate-500 font-medium mt-1">Portal Academic & Educator Center IGNITE</p>
+    <div className="max-w-md mx-auto bg-slate-50 min-h-full pb-10 shadow-sm rounded-3xl overflow-hidden border border-slate-100">
+      
+      {/* Header */}
+      <div className="bg-slate-50 p-6 pb-4">
+        <div className="flex items-center gap-3 mb-6">
+          <div className="w-12 h-12 bg-blue-500 rounded-xl flex items-center justify-center shadow-sm">
+            <BookOpen className="w-6 h-6 text-white" />
+          </div>
+          <div>
+            <h1 className="text-lg font-black text-slate-800">Halo, {profile.full_name?.split(' ')[0]}</h1>
+            <p className="text-xs font-medium text-slate-500">Selamat datang di <span className="font-bold text-slate-700">Rumah Pendidikan</span></p>
+          </div>
+        </div>
+
+        {/* Search Bar */}
+        <div className="flex bg-white border border-slate-200 rounded-xl overflow-hidden shadow-sm focus-within:border-blue-500 focus-within:ring-2 focus-within:ring-blue-100 transition-all">
+          <input 
+            type="text" 
+            placeholder="Cari Layanan.." 
+            className="flex-1 px-4 py-3 text-sm outline-none bg-transparent"
+          />
+          <button className="px-4 border-l border-slate-200 bg-white flex items-center justify-center hover:bg-slate-50 transition-colors">
+            <Search className="w-5 h-5 text-blue-600" />
+          </button>
+        </div>
       </div>
 
-      {/* Hero / Quick Actions */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+      {/* Banner Carousel */}
+      <div className="px-6 mb-6">
+        <div className="bg-[#0f4b8f] rounded-2xl p-6 text-white relative overflow-hidden shadow-md">
+          {/* Decorative background elements */}
+          <div className="absolute top-4 right-4 w-12 h-4 bg-emerald-400/80 rounded-sm"></div>
+          <div className="absolute bottom-4 right-8 w-16 h-4 bg-emerald-400/80 rounded-sm"></div>
+          <div className="absolute top-1/2 right-6 w-8 h-8 border-4 border-emerald-400/80 rounded-sm"></div>
+          
+          <div className="relative z-10 w-2/3">
+            <h2 className="text-xl font-black mb-2 leading-tight">Data Rapor Pendidikan IGNITE Terbaru Telah Dirilis</h2>
+            <p className="text-[10px] text-blue-100 mb-4 leading-relaxed">
+              Mari akses dan manfaatkan Rapor Pendidikan sebagai upaya gotong royong menuju pendidikan bermutu untuk semua
+            </p>
+            <button className="bg-white text-[#0f4b8f] text-xs font-bold px-4 py-2 rounded-full shadow-sm hover:bg-blue-50 transition-colors">
+              Akses Sekarang
+            </button>
+          </div>
+        </div>
+        <div className="flex justify-center gap-2 mt-4">
+          <div className="w-2.5 h-2.5 rounded-full bg-blue-600"></div>
+          <div className="w-2.5 h-2.5 rounded-full border border-slate-300 bg-transparent"></div>
+        </div>
+      </div>
+
+      {/* Main Content Area */}
+      <div className="bg-white pt-6 px-6 pb-8 border-t border-slate-100">
+        <h2 className="text-lg font-black text-slate-800 mb-6">Jelajahi Ruang di Rumah Pendidikan</h2>
         
-        {/* Absensi Card */}
-        <div className="bg-gradient-to-br from-indigo-500 to-blue-600 rounded-[2rem] p-6 text-white shadow-lg relative overflow-hidden group">
-          <div className="absolute -right-6 -bottom-6 opacity-20 transform group-hover:scale-110 transition-transform">
-            <MapPin className="w-40 h-40" />
-          </div>
-          <div className="relative z-10 h-full flex flex-col justify-between">
-            <div>
-              <div className="w-12 h-12 bg-white/20 rounded-2xl flex items-center justify-center backdrop-blur-md mb-4 border border-white/20">
-                <CalendarCheck className="w-6 h-6 text-white" />
+        {/* Grid Icons */}
+        <div className="grid grid-cols-4 gap-y-8 gap-x-2">
+          {services.map((service, idx) => (
+            <Link key={idx} href={service.href} className="flex flex-col items-center text-center group">
+              <div className={`w-14 h-14 ${service.bg} rounded-2xl flex items-center justify-center mb-2 shadow-sm group-hover:scale-105 transition-transform`}>
+                <service.icon className={`w-7 h-7 ${service.text}`} strokeWidth={2.5} />
               </div>
-              <h2 className="text-xl font-black mb-1">Presensi Hari Ini</h2>
-              <p className="text-indigo-100 text-sm font-medium mb-6">Catat kehadiran Anda dari sekolah</p>
-            </div>
-            <Link href="/ace/kehadiran" className="block w-full py-3 bg-white text-indigo-600 text-center font-black rounded-xl hover:bg-indigo-50 transition-colors shadow-sm">
-              Buka Portal Kehadiran
+              <span className="text-[10px] font-bold text-slate-600 leading-tight w-full px-1">
+                {service.label.split(' ').map((word, i) => (
+                  <span key={i} className="block">{word}</span>
+                ))}
+              </span>
             </Link>
-          </div>
+          ))}
         </div>
-
-        {/* E-Kinerja Card */}
-        <div className="bg-white rounded-[2rem] p-6 border-2 border-slate-200 shadow-sm flex flex-col justify-between hover:border-slate-300 transition-colors">
-          <div>
-            <div className="w-12 h-12 bg-emerald-100 rounded-2xl flex items-center justify-center border border-emerald-200 mb-4">
-              <FileSignature className="w-6 h-6 text-emerald-600" />
-            </div>
-            <h2 className="text-xl font-black text-slate-800 mb-1">Pengelolaan Kinerja</h2>
-            <p className="text-slate-500 text-sm font-medium mb-6">Kelola target dan hasil observasi</p>
-          </div>
-          <Link href="/ace/kinerja" className="block w-full py-3 bg-slate-100 text-slate-700 text-center font-black rounded-xl hover:bg-slate-200 transition-colors">
-            Mulai Penilaian
-          </Link>
-        </div>
-
-        {/* Principal Only / Admin Card */}
-        {(profile.role === 'principal' || profile.role === 'tu') && (
-          <div className="bg-white rounded-[2rem] p-6 border-2 border-amber-200 shadow-sm flex flex-col justify-between relative overflow-hidden bg-amber-50/30">
-            <div>
-              <div className="flex justify-between items-start mb-4">
-                <div className="w-12 h-12 bg-amber-100 rounded-2xl flex items-center justify-center border border-amber-200">
-                  <ShieldCheck className="w-6 h-6 text-amber-600" />
-                </div>
-                {stats.requests > 0 && (
-                  <span className="bg-rose-500 text-white text-xs font-black px-3 py-1 rounded-full animate-pulse shadow-sm">
-                    {stats.requests} Pending
-                  </span>
-                )}
-              </div>
-              <h2 className="text-xl font-black text-slate-800 mb-1">Persetujuan</h2>
-              <p className="text-slate-500 text-sm font-medium mb-6">Cuti & Dinas Luar Guru</p>
-            </div>
-            <Link href={profile.role === 'principal' ? "/ace/principal/izin" : "/ace/tu/kehadiran"} className="block w-full py-3 bg-amber-500 text-white text-center font-black rounded-xl hover:bg-amber-600 transition-colors shadow-sm shadow-amber-500/20">
-              Tinjau Sekarang
-            </Link>
-          </div>
-        )}
-
       </div>
 
-      {/* Info Section */}
-      <Card className="p-8 border-2 border-slate-200 bg-white rounded-3xl">
-        <div className="flex gap-6 items-start">
-          <div className="p-4 bg-slate-100 rounded-2xl shrink-0">
-            <AlertCircle className="w-8 h-8 text-slate-400" />
-          </div>
-          <div>
-            <h3 className="text-lg font-black text-slate-800 mb-2">Informasi Ruang ACE</h3>
-            <p className="text-slate-600 leading-relaxed">
-              Ruang ACE merupakan portal terpusat untuk segala urusan kepegawaian dan performa akademik pendidik di IGNITE. Pastikan Anda melakukan presensi harian hanya dari dalam area sekolah, dan lengkapi dokumen E-Kinerja Anda setiap semesternya sesuai dengan jadwal yang ditentukan oleh Kepala Sekolah.
+      {/* Bottom Section */}
+      <div className="bg-slate-50 px-6 py-8 border-t border-slate-100">
+        <h2 className="text-lg font-black text-slate-800 mb-4">Layanan Pilihanmu</h2>
+        
+        <div className="bg-white rounded-2xl p-5 border border-slate-200 shadow-sm">
+          <div className="flex items-center gap-4 mb-4">
+            <div className="w-12 h-12 bg-fuchsia-100 rounded-xl flex items-center justify-center shrink-0 border border-fuchsia-200 relative">
+              <UserCircle2 className="w-6 h-6 text-fuchsia-600" />
+              <div className="absolute -bottom-1 -right-1 w-5 h-5 bg-emerald-500 rounded-full flex items-center justify-center border-2 border-white">
+                <div className="w-2 h-2 border-b-2 border-r-2 border-white transform rotate-45 -mt-0.5"></div>
+              </div>
+            </div>
+            <p className="text-sm font-bold text-slate-700 leading-snug">
+              Akses cepat layanan pilihanmu langsung dari Beranda
             </p>
           </div>
+          <button className="w-full py-3 bg-[#2a2a2a] text-white text-sm font-bold rounded-xl hover:bg-black transition-colors">
+            Pilih Layananmu
+          </button>
         </div>
-      </Card>
+      </div>
+
     </div>
   );
 }
