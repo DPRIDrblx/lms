@@ -2,11 +2,10 @@
 
 import { useAuth } from "@/lib/auth-context";
 import { createClient } from "@/lib/supabase";
-import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { useState, useEffect } from "react";
 import { useRouter, useParams } from "next/navigation";
-import { Star, CheckCircle2, AlertTriangle, ArrowLeft, Loader2, Sparkles, Send, MessageCircleHeart } from "lucide-react";
+import { Star, CheckCircle2, ArrowLeft, Loader2, Info } from "lucide-react";
 import Link from "next/link";
 import { motion, AnimatePresence } from "framer-motion";
 
@@ -22,15 +21,19 @@ export default function StudentFeedbackForm() {
   const [success, setSuccess] = useState(false);
 
   // Form State
-  const [c1, setC1] = useState(0); // Penjelasan
-  const [c2, setC2] = useState(0); // Keadilan nilai
-  const [c3, setC3] = useState(0); // Tugas/PR relevan
-  const [c4, setC4] = useState(0); // Peduli & membantu (NEW)
-  const [c5, setC5] = useState(0); // Memberi semangat/pujian (NEW)
-  const [engaging, setEngaging] = useState(0); // Suasana kelas seru
-  const [understanding, setUnderstanding] = useState(0); // Manfaat materi
-  const [rating, setRating] = useState(0); // Bintang keseluruhan (1-5)
-  const [suggestion, setSuggestion] = useState(""); // Saran
+  const [c1, setC1] = useState(0); 
+  const [c2, setC2] = useState(0); 
+  const [c3, setC3] = useState(0); 
+  const [engaging, setEngaging] = useState(0); 
+  const [understanding, setUnderstanding] = useState(0); 
+  const [c4, setC4] = useState(0); 
+  const [c5, setC5] = useState(0); 
+  const [c6, setC6] = useState(0); 
+  const [c7, setC7] = useState(0); 
+  const [c8, setC8] = useState(0); 
+  
+  const [rating, setRating] = useState(0); 
+  const [suggestion, setSuggestion] = useState(""); 
 
   useEffect(() => {
     async function fetchSession() {
@@ -51,8 +54,8 @@ export default function StudentFeedbackForm() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!c1 || !c2 || !c3 || !c4 || !c5 || !engaging || !understanding || !rating) {
-      alert("Halo! Pastikan kamu sudah mengisi semua pertanyaan pilihan dan memberikan rating bintang ya.");
+    if (!c1 || !c2 || !c3 || !c4 || !c5 || !c6 || !c7 || !c8 || !engaging || !understanding || !rating) {
+      alert("Mohon lengkapi seluruh pertanyaan dan berikan rating bintang sebelum mengirimkan evaluasi.");
       return;
     }
     
@@ -68,6 +71,9 @@ export default function StudentFeedbackForm() {
         criteria_3_score: c3,
         criteria_4_score: c4,
         criteria_5_score: c5,
+        criteria_6_score: c6,
+        criteria_7_score: c7,
+        criteria_8_score: c8,
         engaging_score: engaging,
         understanding_score: understanding,
         rating: rating,
@@ -78,14 +84,14 @@ export default function StudentFeedbackForm() {
         router.push("/dashboard");
       }, 3000);
     } catch (err: any) {
-      alert("Yah, ada error saat mengirim: " + err.message);
+      alert("Terjadi kesalahan sistem: " + err.message);
       setSubmitting(false);
     }
   };
 
-  const renderEmojiLikert = (val: number, setVal: (v: number) => void, emojis: { icon: string, label: string }[]) => (
-    <div className="grid grid-cols-2 md:grid-cols-4 gap-2 md:gap-3 mt-4">
-      {emojis.map((item, index) => {
+  const renderMinimalLikert = (val: number, setVal: (v: number) => void, labels: string[]) => (
+    <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mt-5">
+      {labels.map((label, index) => {
         const num = index + 1;
         const isSelected = val === num;
         return (
@@ -93,203 +99,219 @@ export default function StudentFeedbackForm() {
             key={num}
             type="button"
             onClick={() => setVal(num)}
-            className={`py-4 px-3 rounded-2xl border-2 transition-all duration-300 flex flex-col items-center justify-center gap-2 ${
+            className={`py-3 px-4 rounded-xl border text-sm font-medium transition-all duration-200 ${
               isSelected 
-                ? 'border-fuchsia-500 bg-fuchsia-50 text-fuchsia-700 shadow-[0_4px_0_rgb(217,70,239)] -translate-y-1' 
-                : 'border-slate-200 bg-white text-slate-500 hover:border-fuchsia-200 hover:bg-fuchsia-50/50 hover:-translate-y-0.5 shadow-sm'
+                ? 'border-slate-800 bg-slate-800 text-white shadow-md' 
+                : 'border-slate-200 bg-white text-slate-600 hover:border-slate-300 hover:bg-slate-50'
             }`}
           >
-            <span className="text-3xl md:text-4xl filter drop-shadow-sm">{item.icon}</span>
-            <span className={`text-[11px] md:text-xs text-center leading-tight ${isSelected ? 'font-extrabold' : 'font-semibold'}`}>
-              {item.label}
-            </span>
+            {label}
           </button>
         );
       })}
     </div>
   );
 
-  if (loading) return <div className="p-10 flex justify-center"><Loader2 className="w-8 h-8 animate-spin text-fuchsia-500" /></div>;
-  if (!session) return <div className="p-10 text-center font-bold text-slate-500">Sesi Kuesioner tidak ditemukan atau sudah ditutup ya.</div>;
-
-  const standardEmojis = [
-    { icon: "😞", label: "Sangat Kurang" },
-    { icon: "😕", label: "Kurang" },
-    { icon: "🙂", label: "Bagus" },
-    { icon: "🤩", label: "Sangat Bagus!" }
-  ];
-
-  const funEmojis = [
-    { icon: "🥱", label: "Membosankan" },
-    { icon: "😐", label: "Biasa Aja" },
-    { icon: "😊", label: "Seru" },
-    { icon: "🔥", label: "Sangat Seru!" }
-  ];
-  
-  const helpfulEmojis = [
-    { icon: "🙅‍♂️", label: "Gak Peduli" },
-    { icon: "🤷‍♂️", label: "Kurang" },
-    { icon: "👍", label: "Membantu" },
-    { icon: "🦸‍♂️", label: "Sangat Peduli!" }
-  ];
+  if (loading) return <div className="min-h-screen flex items-center justify-center bg-[#FAFAFA]"><Loader2 className="w-8 h-8 animate-spin text-slate-400" /></div>;
+  if (!session) return <div className="min-h-screen flex items-center justify-center bg-[#FAFAFA]"><div className="text-center font-medium text-slate-500">Sesi evaluasi tidak ditemukan atau telah ditutup.</div></div>;
 
   return (
-    <div className="max-w-3xl mx-auto py-8 px-4 font-sans pb-24">
-      <Link href="/dashboard" className="inline-flex items-center gap-2 text-slate-400 hover:text-slate-700 font-semibold text-sm mb-6 transition-colors bg-white px-4 py-2 rounded-full shadow-sm border border-slate-100">
-        <ArrowLeft className="w-4 h-4" /> Kembali ke Dashboard
-      </Link>
+    <div className="min-h-screen bg-[#FAFAFA] font-sans selection:bg-slate-200">
+      <div className="max-w-3xl mx-auto py-10 px-4 sm:px-6 lg:px-8 pb-32">
+        
+        <Link href="/dashboard" className="inline-flex items-center gap-2 text-slate-500 hover:text-slate-900 text-sm mb-10 transition-colors">
+          <ArrowLeft className="w-4 h-4" /> Kembali ke Dasbor
+        </Link>
 
-      <AnimatePresence mode="wait">
-        {success ? (
-          <motion.div 
-            initial={{ opacity: 0, scale: 0.9 }}
-            animate={{ opacity: 1, scale: 1 }}
-            className="bg-white rounded-[2rem] p-12 shadow-2xl border border-emerald-100 text-center flex flex-col items-center"
-          >
-            <div className="w-24 h-24 bg-emerald-100 rounded-full flex items-center justify-center mb-6">
-              <CheckCircle2 className="w-12 h-12 text-emerald-500" />
-            </div>
-            <h1 className="text-3xl font-black text-slate-800 mb-3">Terima Kasih Banyak! 🎉</h1>
-            <p className="text-slate-500 font-medium max-w-sm text-lg">Masukan kamu sangat berarti dan bikin guru-guru kita makin keren. Kamu akan otomatis kembali ke Dashboard ya...</p>
-          </motion.div>
-        ) : (
-          <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }}>
-            <div className="bg-gradient-to-br from-fuchsia-600 via-purple-600 to-indigo-600 rounded-t-[2rem] p-8 md:p-10 text-white relative overflow-hidden shadow-lg">
-              <Sparkles className="absolute top-4 right-4 w-32 h-32 text-white/10" />
-              <div className="relative z-10">
-                <div className="inline-flex items-center gap-2 bg-white/20 backdrop-blur-md px-3 py-1.5 rounded-full text-xs font-bold uppercase tracking-wider mb-4 border border-white/30">
-                  <MessageCircleHeart className="w-4 h-4" /> Polling Rahasia
-                </div>
-                <h1 className="text-3xl md:text-4xl font-black mb-2">Suara Kamu Penting! 📣</h1>
-                <p className="text-fuchsia-100 font-medium text-base md:text-lg">
-                  Yuk, kasih nilai jujur buat: <strong className="bg-white/20 px-2 py-0.5 rounded-md text-white">{session.profiles?.full_name}</strong>
+        <AnimatePresence mode="wait">
+          {success ? (
+            <motion.div 
+              initial={{ opacity: 0, scale: 0.95 }}
+              animate={{ opacity: 1, scale: 1 }}
+              className="bg-white rounded-2xl p-12 border border-slate-200 text-center flex flex-col items-center mt-10 shadow-sm"
+            >
+              <div className="w-16 h-16 bg-slate-50 border border-slate-100 rounded-full flex items-center justify-center mb-6">
+                <CheckCircle2 className="w-8 h-8 text-slate-800" />
+              </div>
+              <h1 className="text-2xl font-bold text-slate-900 mb-3">Evaluasi Berhasil Disimpan</h1>
+              <p className="text-slate-500 text-base max-w-md leading-relaxed">
+                Terima kasih atas partisipasi Anda. Evaluasi ini sangat berarti untuk menjaga dan meningkatkan kualitas pembelajaran di sekolah. Mengalihkan...
+              </p>
+            </motion.div>
+          ) : (
+            <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }}>
+              
+              <div className="mb-12">
+                <h1 className="text-3xl sm:text-4xl font-bold text-slate-900 tracking-tight mb-3">
+                  Formulir Evaluasi Pembelajaran
+                </h1>
+                <p className="text-slate-500 text-base sm:text-lg">
+                  Penilaian kinerja mengajar untuk <span className="font-semibold text-slate-800">{session.profiles?.full_name}</span>
                 </p>
               </div>
-            </div>
-            
-            <Card className="rounded-b-[2rem] rounded-t-none border-t-0 p-6 md:p-10 shadow-2xl bg-white border-slate-200">
-              <div className="mb-10 p-5 bg-sky-50 border-2 border-sky-100 rounded-2xl flex gap-4 text-sky-800">
-                <div className="bg-sky-200 p-2 rounded-full h-fit">
-                  <AlertTriangle className="w-6 h-6 text-sky-600" />
-                </div>
+              
+              <div className="bg-blue-50/50 border border-blue-100 rounded-xl p-5 mb-10 flex gap-4 items-start">
+                <Info className="w-5 h-5 text-blue-600 shrink-0 mt-0.5" />
                 <div>
-                  <h4 className="font-bold mb-1">100% Rahasia & Aman! 🕵️‍♀️</h4>
-                  <p className="text-sm font-medium opacity-90 leading-relaxed">
-                    Jangan takut buat ngasih penilaian jujur. Guru kamu <strong>nggak akan tahu</strong> siapa yang ngisi ini, dan pastinya <strong>nggak bakal ngaruh</strong> ke nilai rapormu!
+                  <h4 className="font-semibold text-blue-900 mb-1 text-sm">Identitas Dirahasiakan</h4>
+                  <p className="text-sm text-blue-800/80 leading-relaxed">
+                    Evaluasi ini bersifat anonim dan tertutup. Identitas Anda tidak akan disertakan dalam laporan hasil akhir yang diterima oleh guru bersangkutan.
                   </p>
                 </div>
               </div>
 
               <form onSubmit={handleSubmit} className="space-y-12">
                 
-                {/* SECTION 1: LIKERT */}
-                <div className="space-y-10">
-                  <div className="group">
-                    <h3 className="font-bold text-slate-800 text-base md:text-lg flex items-start gap-2">
-                      <span className="text-fuchsia-500">1.</span> Apakah penjelasan Bapak/Ibu Guru mudah kamu pahami saat belajar?
+                {/* SECTION 1: LIKERT QUESTIONS */}
+                <div className="space-y-8">
+                  
+                  {/* Q1 */}
+                  <div className="bg-white p-6 sm:p-8 rounded-2xl border border-slate-200 shadow-sm">
+                    <h3 className="text-lg font-semibold text-slate-900">
+                      Apakah penjelasan materi dari beliau mudah Anda pahami saat belajar di kelas?
                     </h3>
-                    {renderEmojiLikert(c1, setC1, standardEmojis)}
+                    <p className="text-sm text-slate-500 mt-2">Mengevaluasi tingkat kejelasan dan penyampaian materi.</p>
+                    {renderMinimalLikert(c1, setC1, ["Sangat Membingungkan", "Kurang Jelas", "Cukup Jelas", "Sangat Jelas & Paham"])}
                   </div>
                   
-                  <div className="group">
-                    <h3 className="font-bold text-slate-800 text-base md:text-lg flex items-start gap-2">
-                      <span className="text-fuchsia-500">2.</span> Apakah kamu merasa Bapak/Ibu Guru selalu adil dalam memberikan nilai atau sanksi?
+                  {/* Q2 */}
+                  <div className="bg-white p-6 sm:p-8 rounded-2xl border border-slate-200 shadow-sm">
+                    <h3 className="text-lg font-semibold text-slate-900">
+                      Apakah Anda merasa beliau berlaku adil dalam memberikan nilai maupun sanksi?
                     </h3>
-                    {renderEmojiLikert(c2, setC2, standardEmojis)}
+                    <p className="text-sm text-slate-500 mt-2">Mengevaluasi objektivitas dan perlakuan setara kepada seluruh siswa.</p>
+                    {renderMinimalLikert(c2, setC2, ["Sangat Pilih Kasih", "Kurang Adil", "Cukup Adil", "Sangat Objektif & Adil"])}
                   </div>
                   
-                  <div className="group">
-                    <h3 className="font-bold text-slate-800 text-base md:text-lg flex items-start gap-2">
-                      <span className="text-fuchsia-500">3.</span> Apakah tugas dan PR yang diberikan sesuai dengan apa yang diajarkan di kelas?
+                  {/* Q3 */}
+                  <div className="bg-white p-6 sm:p-8 rounded-2xl border border-slate-200 shadow-sm">
+                    <h3 className="text-lg font-semibold text-slate-900">
+                      Apakah tugas dan pekerjaan rumah (PR) yang diberikan relevan dengan materi?
                     </h3>
-                    {renderEmojiLikert(c3, setC3, standardEmojis)}
+                    <p className="text-sm text-slate-500 mt-2">Menilai keterkaitan beban tugas dengan topik pembelajaran utama.</p>
+                    {renderMinimalLikert(c3, setC3, ["Sangat Tidak Relevan", "Kurang Sesuai", "Relevan", "Sangat Tepat Sasaran"])}
                   </div>
                   
-                  <div className="group">
-                    <h3 className="font-bold text-slate-800 text-base md:text-lg flex items-start gap-2">
-                      <span className="text-fuchsia-500">4.</span> Bagaimana suasana kelas saat Bapak/Ibu Guru mengajar?
+                  {/* Q4 (engaging) */}
+                  <div className="bg-white p-6 sm:p-8 rounded-2xl border border-slate-200 shadow-sm">
+                    <h3 className="text-lg font-semibold text-slate-900">
+                      Bagaimana suasana belajar di dalam kelas saat beliau sedang mengajar?
                     </h3>
-                    {renderEmojiLikert(engaging, setEngaging, funEmojis)}
+                    <p className="text-sm text-slate-500 mt-2">Mengevaluasi interaktivitas dan manajemen suasana kelas.</p>
+                    {renderMinimalLikert(engaging, setEngaging, ["Sangat Membosankan", "Kaku / Monoton", "Cukup Asik", "Sangat Interaktif & Seru"])}
                   </div>
                   
-                  <div className="group">
-                    <h3 className="font-bold text-slate-800 text-base md:text-lg flex items-start gap-2">
-                      <span className="text-fuchsia-500">5.</span> Apakah materi pelajaran yang diajarkan terasa bermanfaat buat kamu?
+                  {/* Q5 (understanding) */}
+                  <div className="bg-white p-6 sm:p-8 rounded-2xl border border-slate-200 shadow-sm">
+                    <h3 className="text-lg font-semibold text-slate-900">
+                      Secara keseluruhan, seberapa besar manfaat ilmu dan materi yang beliau sampaikan?
                     </h3>
-                    {renderEmojiLikert(understanding, setUnderstanding, standardEmojis)}
+                    <p className="text-sm text-slate-500 mt-2">Menilai efektivitas dan kebermanfaatan sesi pembelajaran.</p>
+                    {renderMinimalLikert(understanding, setUnderstanding, ["Tidak Bermanfaat", "Kurang Terasa", "Cukup Berguna", "Sangat Bermanfaat"])}
                   </div>
 
-                  <div className="group">
-                    <h3 className="font-bold text-slate-800 text-base md:text-lg flex items-start gap-2">
-                      <span className="text-fuchsia-500">6.</span> Apakah Bapak/Ibu Guru peduli dan mau membantu kalau kamu kesulitan dalam belajar?
+                  {/* Q6 (c4) */}
+                  <div className="bg-white p-6 sm:p-8 rounded-2xl border border-slate-200 shadow-sm">
+                    <h3 className="text-lg font-semibold text-slate-900">
+                      Saat Anda mengalami kesulitan belajar, apakah beliau bersedia meluangkan waktu untuk membantu?
                     </h3>
-                    {renderEmojiLikert(c4, setC4, helpfulEmojis)}
+                    <p className="text-sm text-slate-500 mt-2">Mengevaluasi kepedulian dan empati guru terhadap siswa.</p>
+                    {renderMinimalLikert(c4, setC4, ["Tidak Pernah Membantu", "Jarang Peduli", "Sering Membantu", "Sangat Peduli & Sabar"])}
                   </div>
 
-                  <div className="group">
-                    <h3 className="font-bold text-slate-800 text-base md:text-lg flex items-start gap-2">
-                      <span className="text-fuchsia-500">7.</span> Apakah Bapak/Ibu Guru sering memberikan pujian atau kata semangat?
+                  {/* Q7 (c5) */}
+                  <div className="bg-white p-6 sm:p-8 rounded-2xl border border-slate-200 shadow-sm">
+                    <h3 className="text-lg font-semibold text-slate-900">
+                      Apakah beliau sering memberikan apresiasi (pujian/semangat) atas usaha yang Anda lakukan?
                     </h3>
-                    {renderEmojiLikert(c5, setC5, standardEmojis)}
+                    <p className="text-sm text-slate-500 mt-2">Mengevaluasi dukungan moral dan motivasi eksternal dari guru.</p>
+                    {renderMinimalLikert(c5, setC5, ["Sering Mengkritik Tajam", "Jarang Mengapresiasi", "Sering Memuji", "Selalu Memberi Semangat"])}
                   </div>
+
+                  {/* Q8 (c6) */}
+                  <div className="bg-white p-6 sm:p-8 rounded-2xl border border-slate-200 shadow-sm">
+                    <h3 className="text-lg font-semibold text-slate-900">
+                      Bagaimana tingkat kedisiplinan beliau terkait waktu kehadiran di kelas?
+                    </h3>
+                    <p className="text-sm text-slate-500 mt-2">Mengevaluasi kepatuhan terhadap jadwal yang telah ditetapkan.</p>
+                    {renderMinimalLikert(c6, setC6, ["Sering Terlambat Lama", "Kadang Terlambat", "Tepat Waktu", "Sangat Disiplin"])}
+                  </div>
+
+                  {/* Q9 (c7) */}
+                  <div className="bg-white p-6 sm:p-8 rounded-2xl border border-slate-200 shadow-sm">
+                    <h3 className="text-lg font-semibold text-slate-900">
+                      Apakah Anda merasa nyaman untuk bertanya pendapat secara bebas saat kelas berlangsung?
+                    </h3>
+                    <p className="text-sm text-slate-500 mt-2">Mengevaluasi ruang aman berekspresi secara akademik.</p>
+                    {renderMinimalLikert(c7, setC7, ["Takut untuk Bertanya", "Kurang Nyaman", "Cukup Nyaman", "Sangat Bebas & Dihargai"])}
+                  </div>
+
+                  {/* Q10 (c8) */}
+                  <div className="bg-white p-6 sm:p-8 rounded-2xl border border-slate-200 shadow-sm">
+                    <h3 className="text-lg font-semibold text-slate-900">
+                      Apakah cara mengajar beliau mampu memotivasi Anda untuk belajar lebih mandiri dan giat?
+                    </h3>
+                    <p className="text-sm text-slate-500 mt-2">Mengevaluasi dampak inspirasional pasca pembelajaran.</p>
+                    {renderMinimalLikert(c8, setC8, ["Malah Membuat Malas", "Biasa Saja", "Cukup Termotivasi", "Sangat Terinspirasi"])}
+                  </div>
+
                 </div>
 
-                <div className="h-px bg-gradient-to-r from-transparent via-slate-200 to-transparent my-10" />
+                <div className="h-px bg-slate-200 w-full" />
 
                 {/* SECTION 2: RATING & SUGGESTION */}
-                <div className="space-y-10 bg-slate-50 p-6 md:p-8 rounded-[2rem] border border-slate-100">
-                  <div className="text-center">
-                    <h3 className="font-black text-slate-800 text-xl md:text-2xl mb-4">Kasih Bintang Dong! ⭐️</h3>
-                    <p className="text-sm text-slate-500 mb-6 font-medium">Secara keseluruhan, berapa bintang untuk performa mengajar beliau?</p>
-                    <div className="flex justify-center gap-2 md:gap-4">
+                <div className="bg-white p-6 sm:p-10 rounded-2xl border border-slate-200 shadow-sm">
+                  
+                  <div className="mb-10">
+                    <h3 className="text-xl font-bold text-slate-900 mb-2">Penilaian Akhir (Overall Rating)</h3>
+                    <p className="text-sm text-slate-500 mb-6">Berdasarkan seluruh pengalaman Anda, berikan evaluasi bintang untuk performa beliau.</p>
+                    <div className="flex gap-2">
                       {[1,2,3,4,5].map(star => (
                         <button
                           key={star}
                           type="button"
                           onClick={() => setRating(star)}
-                          className={`focus:outline-none transition-all duration-300 ${rating >= star ? 'scale-125' : 'hover:scale-110 opacity-60 hover:opacity-100'}`}
+                          className="focus:outline-none group p-1"
                         >
-                          <Star className={`w-12 h-12 md:w-16 md:h-16 ${rating >= star ? 'text-amber-400 fill-amber-400 drop-shadow-[0_0_15px_rgba(251,191,36,0.6)]' : 'text-slate-300 fill-slate-200'}`} />
+                          <Star className={`w-10 h-10 transition-all ${rating >= star ? 'text-slate-800 fill-slate-800' : 'text-slate-200 group-hover:text-slate-400'}`} />
                         </button>
                       ))}
                     </div>
                   </div>
 
                   <div>
-                    <h3 className="font-bold text-slate-800 text-base mb-3 flex items-center gap-2">
-                      Ada pesan, saran, atau masukan buat {session.profiles?.full_name}? ✍️
+                    <h3 className="text-xl font-bold text-slate-900 mb-2">
+                      Masukan Konstruktif untuk {session.profiles?.full_name}
                     </h3>
-                    <p className="text-xs text-slate-500 mb-3 font-medium">Boleh cerita, ngasih saran, atau curhat pengalaman belajarmu di kelas. Tenang, ini rahasia kok!</p>
+                    <p className="text-sm text-slate-500 mb-4">Tuliskan pesan, saran, atau hal yang menurut Anda perlu dipertahankan maupun diperbaiki.</p>
                     <textarea 
                       value={suggestion}
                       onChange={e => setSuggestion(e.target.value)}
-                      placeholder="Contoh: 'Cara ngajarnya asik banget, tapi tugasnya dikurangin dikit ya Pak/Bu...'"
-                      className="w-full p-5 rounded-2xl border-2 border-slate-200 bg-white focus:bg-white focus:border-fuchsia-500 focus:ring-4 focus:ring-fuchsia-500/20 transition-all outline-none resize-none h-40 text-sm md:text-base text-slate-700 font-medium placeholder:text-slate-300 shadow-inner"
+                      placeholder="Contoh: 'Saya sangat menyukai sesi diskusinya, namun sebaiknya contoh soal diperbanyak...'"
+                      className="w-full p-4 rounded-xl border border-slate-300 bg-white focus:outline-none focus:ring-2 focus:ring-slate-900 focus:border-transparent transition-all resize-y min-h-[160px] text-slate-700 text-sm"
                     />
                   </div>
                 </div>
 
-                <Button 
-                  type="submit" 
-                  disabled={submitting} 
-                  className="w-full h-16 text-lg font-black rounded-2xl bg-gradient-to-r from-fuchsia-600 to-indigo-600 hover:from-fuchsia-700 hover:to-indigo-700 shadow-[0_6px_0_rgb(67,56,202)] hover:shadow-[0_4px_0_rgb(67,56,202)] hover:translate-y-[2px] active:shadow-none active:translate-y-[6px] transition-all flex items-center justify-center gap-3 text-white border-none mt-8"
-                >
-                  {submitting ? (
-                    <>
-                      <Loader2 className="w-6 h-6 animate-spin" /> Sedang Mengirim...
-                    </>
-                  ) : (
-                    <>
-                      Kirim Penilaian Rahasia <Send className="w-6 h-6" />
-                    </>
-                  )}
-                </Button>
+                <div className="pt-4 flex justify-end">
+                  <Button 
+                    type="submit" 
+                    disabled={submitting} 
+                    className="h-12 px-8 text-sm font-semibold rounded-xl bg-slate-900 hover:bg-slate-800 transition-all text-white min-w-[200px]"
+                  >
+                    {submitting ? (
+                      <Loader2 className="w-5 h-5 animate-spin mx-auto" />
+                    ) : (
+                      "Kirim Evaluasi"
+                    )}
+                  </Button>
+                </div>
 
               </form>
-            </Card>
-          </motion.div>
-        )}
-      </AnimatePresence>
+            </motion.div>
+          )}
+        </AnimatePresence>
+      </div>
     </div>
   );
 }
