@@ -49,12 +49,26 @@ export default function ACEKinerja() {
     if (!profile) return;
     setSessionLoading(true);
     try {
-      await supabase.from('ace_feedback_sessions').insert({
-        teacher_id: profile.id,
-        semester: 'Ganjil 2026/2027'
-      });
+      const { data: existing } = await supabase
+        .from('ace_feedback_sessions')
+        .select('id')
+        .eq('teacher_id', profile.id)
+        .eq('semester', 'Ganjil 2026/2027')
+        .maybeSingle();
+
+      if (existing) {
+        await supabase.from('ace_feedback_sessions')
+          .update({ is_active: true })
+          .eq('id', existing.id);
+      } else {
+        await supabase.from('ace_feedback_sessions').insert({
+          teacher_id: profile.id,
+          semester: 'Ganjil 2026/2027',
+          is_active: true
+        });
+      }
       setHasActiveSession(true);
-      alert("Berhasil! Kuesioner feedback telah dirilis ke dashboard siswa.");
+      alert("Berhasil! Kuesioner feedback telah dibuka/dirilis ke dashboard siswa.");
     } catch (err: any) {
       alert("Error merilis feedback: " + err.message);
     } finally {
