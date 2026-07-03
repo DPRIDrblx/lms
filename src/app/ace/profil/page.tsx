@@ -324,7 +324,8 @@ export default function ACEProfil() {
               </div>
               <button 
                 disabled={creditPoints < 100}
-                className="px-4 py-2 bg-indigo-600 text-white rounded-md font-semibold text-xs shadow-sm hover:bg-indigo-700 transition-colors disabled:opacity-50 disabled:bg-slate-300 disabled:text-slate-500"
+                onClick={() => alert("Pengajuan Kenaikan Pangkat Anda telah dikirim dan sedang dalam antrean verifikasi oleh Kepala Departemen Guru.")}
+                className="px-4 py-2 bg-indigo-600 text-white rounded-md font-semibold text-xs shadow-sm hover:bg-indigo-700 transition-colors disabled:opacity-50 disabled:bg-slate-300 disabled:text-slate-500 active:scale-95"
               >
                 Ajukan Kenaikan
               </button>
