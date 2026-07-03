@@ -19,6 +19,7 @@ export default function StudentFeedbackForm() {
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
   const [success, setSuccess] = useState(false);
+  const [alreadySubmitted, setAlreadySubmitted] = useState(false);
 
   // Form State
   const [c1, setC1] = useState(0); 
@@ -46,6 +47,17 @@ export default function StudentFeedbackForm() {
         
       if (data) {
         setSession(data);
+        
+        // Check if already submitted
+        const { count } = await supabase
+          .from("ace_student_feedbacks")
+          .select("*", { count: 'exact', head: true })
+          .eq("session_id", data.id)
+          .eq("student_id", profile.id);
+          
+        if (count && count > 0) {
+          setAlreadySubmitted(true);
+        }
       }
       setLoading(false);
     }
@@ -113,7 +125,19 @@ export default function StudentFeedbackForm() {
   );
 
   if (loading) return <div className="min-h-screen flex items-center justify-center bg-[#FAFAFA]"><Loader2 className="w-8 h-8 animate-spin text-slate-400" /></div>;
-  if (!session) return <div className="min-h-screen flex items-center justify-center bg-[#FAFAFA]"><div className="text-center font-medium text-slate-500">Sesi evaluasi tidak ditemukan atau telah ditutup.</div></div>;
+  if (!session || !session.is_active) return <div className="min-h-screen flex items-center justify-center bg-[#FAFAFA]"><div className="text-center font-medium text-slate-500">Sesi evaluasi tidak ditemukan atau telah ditutup.</div></div>;
+  if (alreadySubmitted) {
+    return (
+      <div className="min-h-screen flex flex-col items-center justify-center bg-[#FAFAFA] p-4 text-center">
+        <CheckCircle2 className="w-16 h-16 text-emerald-500 mb-4" />
+        <h1 className="text-2xl font-bold text-slate-900 mb-2">Evaluasi Selesai</h1>
+        <p className="text-slate-500 max-w-md mb-8">Anda sudah mengisi kuesioner evaluasi untuk sesi ini. Terima kasih atas partisipasi Anda!</p>
+        <Link href="/dashboard" className="px-6 py-2.5 bg-slate-900 text-white rounded-lg font-medium hover:bg-slate-800 transition-colors">
+          Kembali ke Dasbor
+        </Link>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-[#FAFAFA] font-sans selection:bg-slate-200">

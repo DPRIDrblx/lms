@@ -62,6 +62,23 @@ export default function ACEKinerja() {
     }
   };
 
+  const handleCloseFeedback = async () => {
+    if (!profile) return;
+    setSessionLoading(true);
+    try {
+      await supabase.from('ace_feedback_sessions')
+        .update({ is_active: false })
+        .eq('teacher_id', profile.id)
+        .eq('is_active', true);
+      setHasActiveSession(false);
+      alert("Sesi kuesioner berhasil ditutup. Siswa tidak lagi bisa mengisi form evaluasi.");
+    } catch (err: any) {
+      alert("Error menutup feedback: " + err.message);
+    } finally {
+      setSessionLoading(false);
+    }
+  };
+
   const handleUploadRpp = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file || !profile) return;
@@ -299,8 +316,17 @@ export default function ACEKinerja() {
                 <p className="text-slate-500 text-xs font-semibold mt-1">Skala Likert (Max 4.0)</p>
                 <div className="mt-6">
                   {hasActiveSession ? (
-                    <div className="px-4 py-2 bg-emerald-50 text-emerald-700 rounded-lg text-xs font-bold border border-emerald-200">
-                      Sesi Kuesioner Sedang Aktif
+                    <div className="flex flex-col gap-2">
+                      <div className="px-4 py-2 bg-emerald-50 text-emerald-700 rounded-lg text-xs font-bold border border-emerald-200">
+                        Sesi Kuesioner Sedang Aktif
+                      </div>
+                      <button 
+                        onClick={handleCloseFeedback} 
+                        disabled={sessionLoading}
+                        className="w-full px-4 py-2 bg-rose-50 text-rose-600 rounded-lg text-xs font-bold shadow-sm hover:bg-rose-100 border border-rose-200 transition-colors flex items-center justify-center gap-2"
+                      >
+                        {sessionLoading ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : "Tutup Sesi Kuesioner"}
+                      </button>
                     </div>
                   ) : (
                     <button 
