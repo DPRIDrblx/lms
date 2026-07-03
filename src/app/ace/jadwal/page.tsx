@@ -3,7 +3,7 @@
 import { useAuth } from "@/lib/auth-context";
 import { createClient } from "@/lib/supabase";
 import { Card } from "@/components/ui/card";
-import { CalendarClock, MapPin, Users, Clock, BookOpen, AlertCircle, X } from "lucide-react";
+import { CalendarClock, MapPin, Users, Clock, BookOpen, AlertCircle, X, CheckCircle2 } from "lucide-react";
 import { useEffect, useState } from "react";
 
 export default function ACEJadwal() {
@@ -27,6 +27,7 @@ export default function ACEJadwal() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [journalStudents, setJournalStudents] = useState<any[]>([]);
   const [studentPresences, setStudentPresences] = useState<Record<string, string>>({});
+  const [allLogbooks, setAllLogbooks] = useState<any[]>([]);
 
   useEffect(() => {
     if (!substituteDate) return;
@@ -82,6 +83,10 @@ export default function ACEJadwal() {
         .eq('substitute_id', profile.id)
         .eq('status', 'pending_sub');
       if (pSubs) setPendingSubs(pSubs);
+
+      // Fetch existing logbooks to prevent duplicates
+      const { data: logs } = await supabase.from('ace_logbooks').select('schedule_id, date').eq('teacher_id', profile.id);
+      if (logs) setAllLogbooks(logs);
 
       setLoading(false);
     };
@@ -157,6 +162,7 @@ export default function ACEJadwal() {
 
       const { error } = await supabase.from('ace_logbooks').insert({
         teacher_id: profile.id,
+        schedule_id: selectedSchedule.real_schedule_id || selectedSchedule.id,
         date: journalForm.date,
         materi: `(${selectedSchedule.subject_name} - ${selectedSchedule.class_name}) ${journalForm.materi}`,
         siswa_hadir: siswaHadirVal,
@@ -164,6 +170,10 @@ export default function ACEJadwal() {
         student_presences: presencesArray.length > 0 ? presencesArray : []
       });
       if (error) throw error;
+      
+      // Update local state
+      setAllLogbooks(prev => [...prev, { schedule_id: selectedSchedule.real_schedule_id || selectedSchedule.id, date: journalForm.date }]);
+      
       alert('Jurnal berhasil disimpan!');
       setSelectedSchedule(null);
     } catch (err: any) {
@@ -330,13 +340,25 @@ export default function ACEJadwal() {
             </div>
 
             <div className="p-6">
-              {modalTab === 'jurnal' && (
-                <form onSubmit={handleJournalSubmit} className="space-y-4">
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <div>
-                      <label className="block text-xs font-bold text-slate-700 mb-1">Tanggal</label>
-                      <input type="date" required value={journalForm.date} onChange={e => setJournalForm({...journalForm, date: e.target.value})} className="w-full p-2 border border-slate-200 rounded-lg text-sm bg-slate-50" />
-                    </div>
+              {modalTab === 'jurnal' && (() => {
+                const isAlreadySubmitted = selectedSchedule && allLogbooks.some(l => 
+                  l.schedule_id === (selectedSchedule.real_schedule_id || selectedSchedule.id) && 
+                  l.date === journalForm.date
+                );
+                
+                return (
+                  <form onSubmit={handleJournalSubmit} className="space-y-4">
+                    {isAlreadySubmitted && (
+                      <div className="p-3 bg-amber-50 border border-amber-200 text-amber-700 text-sm font-bold rounded-lg flex items-center gap-2">
+                        <CheckCircle2 className="w-5 h-5 text-amber-500" />
+                        Jurnal untuk jadwal dan tanggal ini sudah diisi.
+                      </div>
+                    )}
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <div>
+                        <label className="block text-xs font-bold text-slate-700 mb-1">Tanggal</label>
+                        <input type="date" required value={journalForm.date} onChange={e => setJournalForm({...journalForm, date: e.target.value})} disabled={isAlreadySubmitted} className="w-full p-2 border border-slate-200 rounded-lg text-sm bg-slate-50 disabled:opacity-50" />
+                      </div>
                     {journalStudents.length === 0 && (
                       <div>
                         <label className="block text-xs font-bold text-slate-700 mb-1">Presensi Siswa</label>
@@ -371,19 +393,20 @@ export default function ACEJadwal() {
                       </div>
                     </div>
                   )}
-                  <div>
-                    <label className="block text-xs font-bold text-slate-700 mb-1">Materi / Kegiatan</label>
-                    <textarea required placeholder="Deskripsikan materi yang diajarkan..." rows={3} value={journalForm.materi} onChange={e => setJournalForm({...journalForm, materi: e.target.value})} className="w-full p-2 border border-slate-200 rounded-lg text-sm resize-none"></textarea>
-                  </div>
-                  <div>
-                    <label className="block text-xs font-bold text-slate-700 mb-1">Kendala (Opsional)</label>
-                    <input type="text" placeholder="Ada kendala selama KBM?" value={journalForm.catatan} onChange={e => setJournalForm({...journalForm, catatan: e.target.value})} className="w-full p-2 border border-slate-200 rounded-lg text-sm" />
-                  </div>
-                  <button disabled={isSubmitting} type="submit" className="w-full py-2.5 bg-indigo-600 text-white font-bold rounded-lg hover:bg-indigo-700 transition-colors disabled:opacity-50">
-                    {isSubmitting ? 'Menyimpan...' : 'Simpan Jurnal'}
-                  </button>
-                </form>
-              )}
+                    <div>
+                      <label className="block text-xs font-bold text-slate-700 mb-1">Materi / Kegiatan</label>
+                      <textarea required disabled={isAlreadySubmitted} placeholder="Deskripsikan materi yang diajarkan..." rows={3} value={journalForm.materi} onChange={e => setJournalForm({...journalForm, materi: e.target.value})} className="w-full p-2 border border-slate-200 rounded-lg text-sm resize-none disabled:opacity-50"></textarea>
+                    </div>
+                    <div>
+                      <label className="block text-xs font-bold text-slate-700 mb-1">Kendala (Opsional)</label>
+                      <input type="text" disabled={isAlreadySubmitted} placeholder="Ada kendala selama KBM?" value={journalForm.catatan} onChange={e => setJournalForm({...journalForm, catatan: e.target.value})} className="w-full p-2 border border-slate-200 rounded-lg text-sm disabled:opacity-50" />
+                    </div>
+                    <button disabled={isSubmitting || isAlreadySubmitted} type="submit" className="w-full py-2.5 bg-indigo-600 text-white font-bold rounded-lg hover:bg-indigo-700 transition-colors disabled:opacity-50 disabled:bg-slate-400">
+                      {isSubmitting ? 'Menyimpan...' : (isAlreadySubmitted ? 'Telah Disimpan' : 'Simpan Jurnal')}
+                    </button>
+                  </form>
+                );
+              })()}
 
               {modalTab === 'detail' && (
                 <div className="space-y-6">
