@@ -149,10 +149,10 @@ export default function ACEJadwal() {
         status: studentPresences[s.id]
       }));
 
-      let siswaHadirVal = journalForm.siswa_hadir;
+      let siswaHadirVal = parseInt(journalForm.siswa_hadir) || 0;
       if (journalStudents.length > 0) {
         const hadirCount = Object.values(studentPresences).filter(v => v === 'hadir').length;
-        siswaHadirVal = `${hadirCount} Hadir dari ${journalStudents.length}`;
+        siswaHadirVal = hadirCount;
       }
 
       const { error } = await supabase.from('ace_logbooks').insert({
