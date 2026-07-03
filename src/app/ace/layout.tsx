@@ -9,6 +9,7 @@ import { Loader2 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { AnimatePresence, motion } from "framer-motion";
 import { createClient } from "@/lib/supabase";
+import { getACEServices } from "@/lib/ace-services";
 
 export default function ACELayout({ children }: { children: React.ReactNode }) {
   const { profile, loading, signOut } = useAuth();
@@ -94,31 +95,15 @@ export default function ACELayout({ children }: { children: React.ReactNode }) {
   const isPrincipal = profile.role === "principal";
   const isTU = profile.role === "tu";
 
-  // Build the services grid based on role
+  // Build the services grid based on role using the helper
+  const baseServices = getACEServices(profile);
+  
+  // Prepend Beranda and Append IGNITE
   const services = [
     { href: "/ace", label: "Beranda", icon: LayoutGrid, bg: "bg-slate-800" },
-    { href: "/ace/kinerja", label: "Ruang Kinerja", icon: FileSignature, bg: "bg-blue-500" },
-    { href: "/ace/jadwal", label: "Ruang KBM", icon: CalendarClock, bg: "bg-orange-500" },
-    { href: "/ace/kehadiran", label: "Ruang Absensi", icon: MapPin, bg: "bg-teal-500" },
-    { href: "/ace/profil", label: "Ruang Profil", icon: UserCircle2, bg: "bg-amber-700" },
-  ];
-
-  if (isPrincipal) {
-    services.push({ href: "/ace/principal/izin", label: "Ruang Kepsek", icon: ShieldCheck, bg: "bg-emerald-600" });
-  } else if (isTU) {
-    services.push({ href: "/ace/tu/kepegawaian", label: "Ruang TU", icon: Briefcase, bg: "bg-slate-700" });
-  }
-  
-  if (profile.is_hod) {
-    services.push({ href: "/ace/hod/kurikulum", label: "Ruang HoD", icon: TrendingUp, bg: "bg-indigo-600" });
-  }
-
-  services.push(
-    { href: "/ace/diklat", label: "Ruang Diklat", icon: Book, bg: "bg-rose-500" },
-    { href: "/student-feedback", label: "Ruang Siswa", icon: Users, bg: "bg-fuchsia-500" },
-    { href: "/ace/helpdesk", label: "Ruang Bantuan", icon: AlertCircle, bg: "bg-sky-500" },
+    ...baseServices,
     { href: "/dashboard", label: "IGNITE", icon: MonitorCheck, bg: "bg-indigo-400" }
-  );
+  ];
 
   return (
     <div className="min-h-screen w-full bg-[#f8f9fa] relative font-sans overflow-x-hidden">
@@ -251,7 +236,7 @@ export default function ACELayout({ children }: { children: React.ReactNode }) {
                     <service.icon className="w-7 h-7 text-white" strokeWidth={2.5} />
                   </div>
                   <span className="text-[10px] font-bold text-slate-600 leading-tight w-full px-1">
-                    {service.label.split(' ').map((word, i) => (
+                    {service.label.split(' ').map((word: string, i: number) => (
                       <span key={i} className="block">{word}</span>
                     ))}
                   </span>

@@ -3,48 +3,27 @@
 import { useAuth } from "@/lib/auth-context";
 import { BookOpen, Search, UserCircle2, Briefcase, CalendarCheck, ShieldCheck, FileSignature, Users, AlertCircle, MapPin, CalendarClock, Book, TrendingUp, MonitorCheck } from "lucide-react";
 import Link from "next/link";
-
+import { getACEServices } from "@/lib/ace-services";
 export default function ACEDashboard() {
   const { profile } = useAuth();
   
   if (!profile) return null;
 
-  // Grid services based on the Rumah Pendidikan UI screenshot
-  const services = [
-    { href: "/ace/kinerja", label: "Ruang Kinerja", icon: FileSignature, bg: "bg-blue-500", text: "text-white" },
-    { href: "/ace/jadwal", label: "Ruang KBM", icon: CalendarClock, bg: "bg-orange-500", text: "text-white" },
-    { href: "/ace/kehadiran", label: "Ruang Absensi", icon: MapPin, bg: "bg-teal-500", text: "text-white" },
-    { href: "/ace/profil", label: "Ruang Profil", icon: UserCircle2, bg: "bg-amber-700", text: "text-white" },
-  ];
-
-  // Additional services based on role
-  if (profile.role === 'principal') {
-    services.push(
-      { href: "/ace/principal/izin", label: "Ruang Kepsek", icon: ShieldCheck, bg: "bg-emerald-600", text: "text-white" }
-    );
-  } else if (profile.role === 'tu') {
-    services.push(
-      { href: "/ace/tu/kepegawaian", label: "Ruang TU", icon: Briefcase, bg: "bg-slate-700", text: "text-white" }
-    );
-  }
+  const baseServices = getACEServices(profile);
   
-  if (profile.is_hod) {
-    services.push(
-      { href: "/ace/hod/kurikulum", label: "Ruang HoD", icon: TrendingUp, bg: "bg-indigo-600", text: "text-white" }
-    );
-  }
+  // Create a copy so we don't mutate the imported base services if we need to add fillers
+  const services = [...baseServices];
 
-  // Fill up the rest with generic/placeholder services to make it look like the 8-grid in the screenshot
+  // Fill up the rest with generic/placeholder services to make it look like the 8-grid in the screenshot if there are too few
   const defaultFillers = [
     { href: "/ace/diklat", label: "Ruang Diklat", icon: Book, bg: "bg-rose-500", text: "text-white" },
     { href: "/student-feedback", label: "Ruang Siswa", icon: Users, bg: "bg-fuchsia-500", text: "text-white" },
     { href: "/ace/helpdesk", label: "Ruang Bantuan", icon: AlertCircle, bg: "bg-sky-500", text: "text-white" },
-    { href: "/ace", label: "Ruang Mitra", icon: MonitorCheck, bg: "bg-indigo-400", text: "text-white" },
+    { href: "/dashboard", label: "IGNITE", icon: MonitorCheck, bg: "bg-indigo-400", text: "text-white" },
   ];
 
-  // Append fillers until we have 8 items
   for (const filler of defaultFillers) {
-    if (services.length < 8) {
+    if (services.length < 8 && !services.some(s => s.label === filler.label)) {
       services.push(filler);
     }
   }
@@ -113,7 +92,7 @@ export default function ACEDashboard() {
                 <service.icon className={`w-7 h-7 ${service.text}`} strokeWidth={2.5} />
               </div>
               <span className="text-[10px] font-bold text-slate-600 leading-tight w-full px-1">
-                {service.label.split(' ').map((word, i) => (
+                {service.label.split(' ').map((word: string, i: number) => (
                   <span key={i} className="block">{word}</span>
                 ))}
               </span>
