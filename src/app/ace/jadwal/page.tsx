@@ -357,7 +357,7 @@ export default function ACEJadwal() {
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                       <div>
                         <label className="block text-xs font-bold text-slate-700 mb-1">Tanggal</label>
-                        <input type="date" required value={journalForm.date} onChange={e => setJournalForm({...journalForm, date: e.target.value})} disabled={isAlreadySubmitted} className="w-full p-2 border border-slate-200 rounded-lg text-sm bg-slate-50 disabled:opacity-50" />
+                        <input type="date" required value={journalForm.date} onChange={e => setJournalForm({...journalForm, date: e.target.value})} className="w-full p-2 border border-slate-200 rounded-lg text-sm bg-slate-50" />
                       </div>
                     {journalStudents.length === 0 && (
                       <div>
