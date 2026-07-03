@@ -13,6 +13,9 @@ export default function ACEProfil() {
   const [loading, setLoading] = useState(true);
   const [creditPoints, setCreditPoints] = useState(0);
   const [promotionRequested, setPromotionRequested] = useState(false);
+  const [showPromoModal, setShowPromoModal] = useState(false);
+  const [promoForm, setPromoForm] = useState({ notes: "", file: null as File | null });
+  const [promoSubmitting, setPromoSubmitting] = useState(false);
   
   const certFileInputRef = useRef<HTMLInputElement>(null);
 
@@ -59,6 +62,14 @@ export default function ACEProfil() {
 
       const { data: reqs } = await supabase.from('ace_document_requests').select('*').or(`teacher_id.eq.${profile.id},teacher_id.is.null`);
       if (reqs) setDocRequests(reqs);
+
+      const { data: promoReq } = await supabase
+        .from('ace_promotion_requests')
+        .select('*')
+        .eq('teacher_id', profile.id)
+        .in('status', ['pending'])
+        .maybeSingle();
+      if (promoReq) setPromotionRequested(true);
     }
     setLoading(false);
   };
@@ -199,6 +210,41 @@ export default function ACEProfil() {
     }
   };
 
+  const handlePromoSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!profile) return;
+    setPromoSubmitting(true);
+    try {
+      let fileUrl = null;
+      if (promoForm.file) {
+        const fileExt = promoForm.file.name.split('.').pop();
+        const fileName = `${profile.id}-promo-${Date.now()}.${fileExt}`;
+        const filePath = `promotions/${fileName}`;
+        const { error: uploadError } = await supabase.storage.from('ace_storage').upload(filePath, promoForm.file);
+        if (uploadError) throw uploadError;
+        const { data: publicUrlData } = supabase.storage.from('ace_storage').getPublicUrl(filePath);
+        fileUrl = publicUrlData.publicUrl;
+      }
+
+      const { error } = await supabase.from('ace_promotion_requests').insert({
+        teacher_id: profile.id,
+        notes: promoForm.notes,
+        file_url: fileUrl,
+        status: 'pending'
+      });
+      if (error) throw error;
+
+      alert("Pengajuan berhasil dikirim! Silakan menunggu verifikasi.");
+      setShowPromoModal(false);
+      setPromotionRequested(true);
+      setPromoForm({ notes: "", file: null });
+    } catch (err: any) {
+      alert("Gagal mengirim pengajuan: " + err.message);
+    } finally {
+      setPromoSubmitting(false);
+    }
+  };
+
   return (
     <div className="space-y-6 pb-20">
       <div>
@@ -325,7 +371,7 @@ export default function ACEProfil() {
               </div>
               <button 
                 disabled={creditPoints < 100 || promotionRequested}
-                onClick={() => setPromotionRequested(true)}
+                onClick={() => setShowPromoModal(true)}
                 className={`px-4 py-2 text-white rounded-md font-semibold text-xs shadow-sm transition-all ${
                   promotionRequested 
                     ? 'bg-emerald-500 cursor-default' 
@@ -422,6 +468,37 @@ export default function ACEProfil() {
           </Card>
         </div>
       )}
+      {/* Promo Modal */}
+      {showPromoModal && (
+        <div className="fixed inset-0 bg-slate-900/50 z-50 flex items-center justify-center p-4">
+          <Card className="w-full max-w-md p-6 bg-white shadow-xl rounded-xl border border-slate-200">
+            <div className="flex justify-between items-center mb-4">
+              <h3 className="font-bold text-slate-800">Form Pengajuan Kenaikan Pangkat</h3>
+              <button onClick={() => setShowPromoModal(false)} className="text-slate-400 hover:text-slate-600"><XCircle className="w-5 h-5" /></button>
+            </div>
+            <form onSubmit={handlePromoSubmit} className="space-y-4">
+              <div className="bg-indigo-50 p-3 rounded-md border border-indigo-100 mb-4">
+                <p className="text-xs text-indigo-700 font-medium">Selamat! Poin Anda ({creditPoints}/100) sudah memenuhi syarat. Silakan lengkapi formulir di bawah ini.</p>
+              </div>
+              <div>
+                <label className="block text-xs font-semibold text-slate-700 mb-1">Catatan Tambahan (Opsional)</label>
+                <textarea rows={3} value={promoForm.notes} onChange={e=>setPromoForm({...promoForm, notes: e.target.value})} className="w-full p-2 rounded border border-slate-300 text-sm" placeholder="Tuliskan catatan untuk tim penilai..." />
+              </div>
+              <div>
+                <label className="block text-xs font-semibold text-slate-700 mb-1">Dokumen Pendukung Tambahan (PDF/Image)</label>
+                <input type="file" accept=".pdf,.png,.jpg,.jpeg" onChange={e=>setPromoForm({...promoForm, file: e.target.files?.[0] || null})} className="w-full p-2 rounded border border-slate-300 text-sm bg-white" />
+              </div>
+              <div className="pt-4 flex gap-3">
+                <button type="button" onClick={() => setShowPromoModal(false)} className="flex-1 py-2 rounded border border-slate-300 text-slate-700 font-bold text-sm hover:bg-slate-50 transition-colors">Batal</button>
+                <button type="submit" disabled={promoSubmitting} className="flex-1 py-2 bg-indigo-600 text-white rounded font-bold text-sm hover:bg-indigo-700 transition-colors disabled:opacity-50">
+                  {promoSubmitting ? 'Mengirim...' : 'Kirim Pengajuan'}
+                </button>
+              </div>
+            </form>
+          </Card>
+        </div>
+      )}
+
     </div>
   );
 }
