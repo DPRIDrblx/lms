@@ -12,6 +12,7 @@ export default function ACEProfil() {
   const [documents, setDocuments] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [creditPoints, setCreditPoints] = useState(0);
+  const [promotionRequested, setPromotionRequested] = useState(false);
   
   const certFileInputRef = useRef<HTMLInputElement>(null);
 
@@ -323,11 +324,15 @@ export default function ACEProfil() {
                 </div>
               </div>
               <button 
-                disabled={creditPoints < 100}
-                onClick={() => alert("Pengajuan Kenaikan Pangkat Anda telah dikirim dan sedang dalam antrean verifikasi oleh Kepala Departemen Guru.")}
-                className="px-4 py-2 bg-indigo-600 text-white rounded-md font-semibold text-xs shadow-sm hover:bg-indigo-700 transition-colors disabled:opacity-50 disabled:bg-slate-300 disabled:text-slate-500 active:scale-95"
+                disabled={creditPoints < 100 || promotionRequested}
+                onClick={() => setPromotionRequested(true)}
+                className={`px-4 py-2 text-white rounded-md font-semibold text-xs shadow-sm transition-all ${
+                  promotionRequested 
+                    ? 'bg-emerald-500 cursor-default' 
+                    : 'bg-indigo-600 hover:bg-indigo-700 active:scale-95 disabled:opacity-50 disabled:bg-slate-300 disabled:text-slate-500'
+                }`}
               >
-                Ajukan Kenaikan
+                {promotionRequested ? "Pengajuan Terkirim ✓" : "Ajukan Kenaikan"}
               </button>
             </div>
 
