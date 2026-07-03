@@ -4,7 +4,7 @@ import { useAuth } from "@/lib/auth-context";
 import { useRouter, usePathname } from "next/navigation";
 import { useEffect, useState } from "react";
 import Link from "next/link";
-import { LogOut, UserCircle2, Briefcase, CalendarCheck, ShieldCheck, FileSignature, BookOpen, GraduationCap, CalendarClock, Receipt, Scale, TrendingUp, Wallet, Activity, Menu, X } from "lucide-react";
+import { LogOut, UserCircle2, Briefcase, CalendarCheck, ShieldCheck, FileSignature, BookOpen, GraduationCap, CalendarClock, Receipt, Scale, TrendingUp, Wallet, Activity, LayoutGrid, X, Users, AlertCircle, MonitorCheck, MapPin, Book } from "lucide-react";
 import { Loader2 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -14,7 +14,7 @@ export default function ACELayout({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
   const [hodMode, setHodMode] = useState(false);
   const [assessmentMode, setAssessmentMode] = useState(false);
-  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  const [isMenuOpen, setIsMenuOpen] = useState(false);
 
   useEffect(() => {
     if (!loading && !profile) {
@@ -33,6 +33,8 @@ export default function ACELayout({ children }: { children: React.ReactNode }) {
       setHodMode(false);
       setAssessmentMode(false);
     }
+    // Close menu on navigation
+    setIsMenuOpen(false);
   }, [pathname]);
 
   if (loading) {
@@ -63,185 +65,110 @@ export default function ACELayout({ children }: { children: React.ReactNode }) {
   const isPrincipal = profile.role === "principal";
   const isTU = profile.role === "tu";
 
-  const teacherNavItems = [
-    { href: "/ace", label: "Dashboard ACE", icon: Briefcase },
-    { href: "/ace/profil", label: "Profil & Portofolio", icon: UserCircle2 },
-    { href: "/ace/kinerja", label: "E-Kinerja & Supervisi", icon: FileSignature },
-    { href: "/ace/kehadiran", label: "Presensi & Dinas Luar", icon: CalendarCheck },
-    { href: "/ace/diklat", label: "Diklat & Sertifikasi", icon: GraduationCap },
-    { href: "/ace/jadwal", label: "Jadwal KBM", icon: CalendarClock },
-    { href: "/ace/kesejahteraan", label: "Kesejahteraan", icon: Receipt },
-    { href: "/ace/helpdesk", label: "Helpdesk & Tiket", icon: ShieldCheck },
+  // Build the services grid based on role
+  const services = [
+    { href: "/ace", label: "Beranda", icon: LayoutGrid, bg: "bg-slate-800" },
+    { href: "/ace/kinerja", label: "Ruang Kinerja", icon: FileSignature, bg: "bg-blue-500" },
+    { href: "/ace/jadwal", label: "Ruang KBM", icon: CalendarClock, bg: "bg-orange-500" },
+    { href: "/ace/kehadiran", label: "Ruang Absensi", icon: MapPin, bg: "bg-teal-500" },
+    { href: "/ace/profil", label: "Ruang Profil", icon: UserCircle2, bg: "bg-amber-700" },
   ];
 
-  const tuNavItems = [
-    { href: "/ace/tu/kepegawaian", label: "TU Kepegawaian", icon: UserCircle2 },
-    { href: "/ace/tu/kehadiran", label: "TU Kurikulum & Umum", icon: CalendarCheck },
-    { href: "/ace/tu/kinerja", label: "TU Kepegawaian & Kepsek", icon: FileSignature },
-    { href: "/ace/tu/keuangan", label: "TU Keuangan / Bendahara", icon: Receipt },
-    { href: "/ace/tu/helpdesk", label: "Dashboard Utama TU", icon: ShieldCheck },
-  ];
+  if (isPrincipal) {
+    services.push({ href: "/ace/principal/izin", label: "Ruang Kepsek", icon: ShieldCheck, bg: "bg-emerald-600" });
+  } else if (isTU) {
+    services.push({ href: "/ace/tu/kepegawaian", label: "Ruang TU", icon: Briefcase, bg: "bg-slate-700" });
+  }
+  
+  if (profile.is_hod) {
+    services.push({ href: "/ace/hod/kurikulum", label: "Ruang HoD", icon: TrendingUp, bg: "bg-indigo-600" });
+  }
 
-  const principalNavItems = [
-    { href: "/ace/principal/otorisasi", label: "Otorisasi Hukum & Mutasi", icon: Scale },
-    { href: "/ace/principal/izin", label: "Otorisasi Cuti & Dinas", icon: CalendarCheck },
-    { href: "/ace/principal/mutu", label: "Rapor Mutu Guru", icon: TrendingUp },
-    { href: "/ace/principal/keuangan", label: "Pengawasan Anggaran", icon: Wallet },
-    { href: "/ace/principal/akuntabilitas", label: "Akuntabilitas TU", icon: Activity },
-  ];
-
-  const hodNavItems = [
-    { href: "/ace/hod/kurikulum", label: "Kurikulum & RPP", icon: BookOpen },
-    { href: "/ace/hod/izin", label: "Otorisasi Cuti", icon: CalendarCheck },
-    { href: "/ace/hod/supervisi", label: "Supervisi Klinis", icon: TrendingUp },
-    { href: "/ace/hod/akademik", label: "Kesenjangan Nilai", icon: Activity },
-    { href: "/ace/hod/inventaris", label: "Sarana & Prasarana", icon: Wallet },
-    { href: "/ace/hod/kredit", label: "Angka Kredit", icon: ShieldCheck },
-  ];
-
-  const assessmentNavItems = [
-    { href: "/ace/assessment/brankas", label: "Brankas Soal Ujian", icon: ShieldCheck },
-    { href: "/ace/assessment/distribusi", label: "Tenggat Nilai", icon: CalendarClock },
-    { href: "/ace/assessment/validasi", label: "Validasi Anomali", icon: Activity },
-    { href: "/ace/assessment/konsol", label: "Konsol Rapor", icon: FileSignature },
-    { href: "/ace/assessment/evaluasi", label: "Arsip Rubrik", icon: BookOpen },
-  ];
-
-  const navItems = isPrincipal ? principalNavItems : isTU ? tuNavItems : (profile.is_hod && hodMode ? hodNavItems : (profile.is_assessment_head && assessmentMode ? assessmentNavItems : teacherNavItems));
+  services.push(
+    { href: "/ace/diklat", label: "Ruang Diklat", icon: Book, bg: "bg-rose-500" },
+    { href: "/student-feedback", label: "Ruang Siswa", icon: Users, bg: "bg-fuchsia-500" },
+    { href: "/ace/helpdesk", label: "Ruang Bantuan", icon: AlertCircle, bg: "bg-sky-500" },
+    { href: "/dashboard", label: "IGNITE", icon: MonitorCheck, bg: "bg-indigo-400" }
+  );
 
   return (
-    <div className="h-screen w-full bg-slate-50 flex flex-col md:flex-row font-sans overflow-hidden">
-      {/* Mobile Header */}
+    <div className="min-h-screen w-full bg-[#f8f9fa] relative font-sans overflow-x-hidden">
+      {/* Main Content Area */}
+      <div className={cn("w-full min-h-screen", pathname === "/ace/auth" ? "bg-slate-900" : "")}>
+        <main className={cn("mx-auto h-full", pathname === "/ace/auth" ? "p-0" : "p-0 pb-24")}>
+          {children}
+        </main>
+      </div>
+
+      {/* Floating Action Button */}
       {pathname !== "/ace/auth" && (
-        <div className="md:hidden flex items-center justify-between bg-slate-900 text-white p-4 shrink-0 z-30">
-          <div className="flex items-center gap-3">
-            <div className="w-8 h-8 rounded-lg bg-indigo-600 flex items-center justify-center font-bold">
-              A
-            </div>
-            <div>
-              <h1 className="text-base font-bold tracking-tight">Ruang ACE</h1>
-            </div>
-          </div>
+        <div className="fixed bottom-6 right-6 z-40">
           <button 
-            onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)} 
-            className="p-1 rounded-md hover:bg-slate-800 transition-colors"
+            onClick={() => setIsMenuOpen(true)} 
+            className="w-14 h-14 bg-[#0f4b8f] rounded-full shadow-2xl shadow-blue-900/30 flex items-center justify-center text-white hover:bg-blue-800 hover:scale-105 transition-all focus:outline-none"
           >
-            {isMobileMenuOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
+            <LayoutGrid className="w-6 h-6" />
           </button>
         </div>
       )}
 
-      {/* ACE Sidebar */}
-      {pathname !== "/ace/auth" && (
-        <>
-          <div className={cn(
-            "fixed inset-y-0 left-0 z-40 w-64 bg-slate-900 text-slate-300 flex flex-col shrink-0 h-full border-r border-slate-800 transition-transform duration-300 ease-in-out md:translate-x-0 md:static",
-            isMobileMenuOpen ? "translate-x-0" : "-translate-x-full"
-          )}>
-          <div className="p-5 border-b border-slate-800">
-            <div className="flex items-center gap-3">
-              <div className="w-8 h-8 rounded-lg bg-indigo-600 flex items-center justify-center text-white font-bold">
-                A
-              </div>
+      {/* Floating Menu Overlay */}
+      {isMenuOpen && (
+        <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center">
+          <div 
+            className="absolute inset-0 bg-slate-900/60 backdrop-blur-sm transition-opacity" 
+            onClick={() => setIsMenuOpen(false)}
+          />
+          <div className="bg-white w-full sm:w-auto sm:min-w-[600px] sm:max-w-3xl rounded-t-3xl sm:rounded-3xl p-6 sm:p-8 shadow-2xl relative z-10 animate-in slide-in-from-bottom-10 sm:zoom-in-95">
+            <div className="flex justify-between items-center mb-6">
               <div>
-                <h1 className="text-base font-bold text-white tracking-tight">Ruang ACE</h1>
-                <p className="text-[10px] font-medium text-slate-400 uppercase tracking-widest">Educator Center</p>
+                <h2 className="text-xl font-black text-slate-800">Layanan Ruang ACE</h2>
+                <p className="text-sm font-medium text-slate-500">Pilih ruang yang ingin Anda kunjungi</p>
               </div>
+              <button 
+                onClick={() => setIsMenuOpen(false)} 
+                className="p-2 bg-slate-100 rounded-full text-slate-500 hover:bg-slate-200 transition-colors"
+              >
+                <X className="w-5 h-5" />
+              </button>
             </div>
-          </div>
-
-          {(profile?.is_hod || profile?.is_assessment_head) && (
-            <div className="px-3 pt-4">
-              <div className="p-1 bg-slate-800 rounded-lg flex text-[10px] font-bold uppercase tracking-wider overflow-x-auto hide-scrollbar">
-                <button 
-                  onClick={() => router.push('/ace')}
-                  className={cn("px-3 py-1.5 rounded-md text-center transition-colors flex-shrink-0", !hodMode && !assessmentMode ? "bg-indigo-600 text-white" : "text-slate-400 hover:text-slate-200")}
-                >
-                  Guru
-                </button>
-                {profile?.is_hod && (
-                  <button 
-                    onClick={() => router.push('/ace/hod/kurikulum')}
-                    className={cn("px-3 py-1.5 rounded-md text-center transition-colors flex-shrink-0", hodMode ? "bg-emerald-600 text-white" : "text-slate-400 hover:text-slate-200")}
-                  >
-                    HoD
-                  </button>
-                )}
-                {profile?.is_assessment_head && (
-                  <button 
-                    onClick={() => router.push('/ace/assessment/brankas')}
-                    className={cn("px-3 py-1.5 rounded-md text-center transition-colors flex-shrink-0", assessmentMode ? "bg-amber-600 text-white" : "text-slate-400 hover:text-slate-200")}
-                  >
-                    Asesmen
-                  </button>
-                )}
-              </div>
-            </div>
-          )}
-
-          <div className="flex-1 overflow-y-auto p-3 space-y-1">
-            {navItems.map((item) => {
-              const isActive = pathname === item.href || (item.href !== "/ace" && pathname.startsWith(item.href));
-              return (
-                <Link 
-                  key={item.href} 
-                  href={item.href}
-                  onClick={() => setIsMobileMenuOpen(false)}
-                  className={cn(
-                    "flex items-center gap-3 px-3 py-2.5 rounded-lg font-medium text-sm transition-colors group",
-                    isActive 
-                      ? "bg-indigo-600/10 text-indigo-400" 
-                      : "text-slate-400 hover:bg-slate-800 hover:text-slate-200"
-                  )}
-                >
-                  <item.icon className={cn("w-4 h-4", isActive ? "text-indigo-400" : "text-slate-500 group-hover:text-slate-300")} />
-                  {item.label}
+            
+            <div className="grid grid-cols-4 sm:grid-cols-6 gap-y-6 gap-x-2">
+              {services.map((service, idx) => (
+                <Link key={idx} href={service.href} className="flex flex-col items-center text-center group">
+                  <div className={`w-14 h-14 ${service.bg} rounded-2xl flex items-center justify-center mb-2 shadow-sm group-hover:scale-105 transition-transform`}>
+                    <service.icon className="w-7 h-7 text-white" strokeWidth={2.5} />
+                  </div>
+                  <span className="text-[10px] font-bold text-slate-600 leading-tight w-full px-1">
+                    {service.label.split(' ').map((word, i) => (
+                      <span key={i} className="block">{word}</span>
+                    ))}
+                  </span>
                 </Link>
-              );
-            })}
-          </div>
-
-          <div className="p-4 border-t border-slate-800 bg-slate-900">
-            <div className="flex items-center gap-3 mb-4">
-              <UserCircle2 className="w-8 h-8 text-slate-500" />
-              <div className="overflow-hidden">
-                <p className="text-sm font-semibold text-slate-200 truncate">{profile.full_name}</p>
-                <p className="text-xs text-slate-500 font-medium">{profile.role}</p>
-              </div>
+              ))}
             </div>
-            <Link 
-              href="/dashboard"
-              className="flex items-center justify-center gap-2 w-full py-2 mb-2 rounded-lg bg-slate-800 text-slate-300 font-medium text-xs hover:bg-slate-700 transition-colors"
-            >
-              <BookOpen className="w-3.5 h-3.5" />
-              Kembali ke IGNITE
-            </Link>
-            <button 
-              onClick={() => signOut()}
-              className="flex items-center justify-center gap-2 w-full py-2 rounded-lg text-slate-400 hover:text-rose-400 hover:bg-rose-500/10 font-medium text-xs transition-colors"
-            >
-              <LogOut className="w-3.5 h-3.5" />
-              Keluar
-            </button>
-          </div>
-          </div>
-        </>
-      )}
 
-      {/* Overlay for mobile */}
-      {isMobileMenuOpen && pathname !== "/ace/auth" && (
-        <div 
-          className="fixed inset-0 bg-slate-900/50 z-30 md:hidden"
-          onClick={() => setIsMobileMenuOpen(false)}
-        />
+            <div className="mt-8 pt-6 border-t border-slate-100 flex justify-between items-center">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 bg-slate-100 rounded-full flex items-center justify-center">
+                  <UserCircle2 className="w-5 h-5 text-slate-500" />
+                </div>
+                <div>
+                  <p className="text-sm font-bold text-slate-700">{profile.full_name}</p>
+                  <p className="text-xs text-slate-500 font-medium capitalize">{profile.role}</p>
+                </div>
+              </div>
+              <button 
+                onClick={() => signOut()}
+                className="flex items-center gap-2 px-4 py-2 rounded-xl text-rose-500 font-bold text-sm hover:bg-rose-50 transition-colors"
+              >
+                <LogOut className="w-4 h-4" />
+                Keluar
+              </button>
+            </div>
+          </div>
+        </div>
       )}
-
-      {/* Main Content */}
-      <div className={cn("flex-1 h-full overflow-y-auto", pathname === "/ace/auth" ? "bg-slate-900" : "bg-slate-50")}>
-        <main className={cn("max-w-7xl mx-auto h-full", pathname === "/ace/auth" ? "p-0" : "p-4 md:p-6 lg:p-8")}>
-          {children}
-        </main>
-      </div>
     </div>
   );
 }

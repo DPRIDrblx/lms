@@ -50,7 +50,7 @@ export default function ACEDashboard() {
   }
 
   return (
-    <div className="max-w-md mx-auto bg-slate-50 min-h-full pb-10 shadow-sm rounded-3xl overflow-hidden border border-slate-100">
+    <div className="max-w-7xl mx-auto bg-slate-50 min-h-full pb-10 shadow-sm md:rounded-3xl overflow-hidden border border-slate-100 md:my-6">
       
       {/* Header */}
       <div className="bg-slate-50 p-6 pb-4">
@@ -106,7 +106,7 @@ export default function ACEDashboard() {
         <h2 className="text-lg font-black text-slate-800 mb-6">Jelajahi Ruang di Rumah Pendidikan</h2>
         
         {/* Grid Icons */}
-        <div className="grid grid-cols-4 gap-y-8 gap-x-2">
+        <div className="grid grid-cols-4 md:grid-cols-6 lg:grid-cols-8 gap-y-8 gap-x-2">
           {services.map((service, idx) => (
             <Link key={idx} href={service.href} className="flex flex-col items-center text-center group">
               <div className={`w-14 h-14 ${service.bg} rounded-2xl flex items-center justify-center mb-2 shadow-sm group-hover:scale-105 transition-transform`}>
