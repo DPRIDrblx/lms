@@ -2,7 +2,7 @@
 
 CREATE TABLE IF NOT EXISTS ace_promotion_requests (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-  teacher_id UUID REFERENCES ace_profiles(id) ON DELETE CASCADE,
+  teacher_id UUID REFERENCES profiles(id) ON DELETE CASCADE,
   status VARCHAR NOT NULL DEFAULT 'pending', -- 'pending', 'approved', 'rejected'
   notes TEXT,
   file_url TEXT,
