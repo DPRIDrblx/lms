@@ -118,20 +118,43 @@ export default function ACEKinerja() {
   // Calculate Average Feedback Score
   let totalScore = 0;
   let count = 0;
-  let c1Avg = 0, c2Avg = 0, c3Avg = 0;
+  let c1Avg = 0, engagingAvg = 0, c4Avg = 0, c8Avg = 0;
 
   if (feedbacks.length > 0) {
     feedbacks.forEach(f => {
-      c1Avg += f.criteria_1_score;
-      c2Avg += f.criteria_2_score;
-      c3Avg += f.criteria_3_score;
-      totalScore += (f.criteria_1_score + f.criteria_2_score + f.criteria_3_score) / 3;
+      // Handle older feedbacks that might not have new criteria yet
+      const c1 = f.criteria_1_score || 0;
+      const c2 = f.criteria_2_score || 0;
+      const c3 = f.criteria_3_score || 0;
+      const c4 = f.criteria_4_score || 0;
+      const c5 = f.criteria_5_score || 0;
+      const c6 = f.criteria_6_score || 0;
+      const c7 = f.criteria_7_score || 0;
+      const c8 = f.criteria_8_score || 0;
+      const engaging = f.engaging_score || 0;
+      const understanding = f.understanding_score || 0;
+      
+      const totalCriteria = (c1 ? 1 : 0) + (c2 ? 1 : 0) + (c3 ? 1 : 0) + (c4 ? 1 : 0) + 
+                            (c5 ? 1 : 0) + (c6 ? 1 : 0) + (c7 ? 1 : 0) + (c8 ? 1 : 0) + 
+                            (engaging ? 1 : 0) + (understanding ? 1 : 0);
+                            
+      const sum = c1 + c2 + c3 + c4 + c5 + c6 + c7 + c8 + engaging + understanding;
+      
+      if (totalCriteria > 0) {
+        totalScore += (sum / totalCriteria);
+      }
+      
+      c1Avg += c1;
+      engagingAvg += engaging;
+      c4Avg += c4;
+      c8Avg += c8;
       count++;
     });
     totalScore = totalScore / count;
     c1Avg = c1Avg / count;
-    c2Avg = c2Avg / count;
-    c3Avg = c3Avg / count;
+    engagingAvg = engagingAvg / count;
+    c4Avg = c4Avg / count;
+    c8Avg = c8Avg / count;
   }
 
   return (
@@ -301,24 +324,31 @@ export default function ACEKinerja() {
                   <div className="space-y-4">
                     <div>
                       <div className="flex justify-between text-xs font-bold mb-1.5">
-                        <span className="text-slate-700">Guru menjelaskan dengan jernih</span>
+                        <span className="text-slate-700">Kejelasan Materi</span>
                         <span className="text-emerald-700">{c1Avg.toFixed(1)} / 4.0</span>
                       </div>
                       <div className="h-1.5 w-full bg-slate-100 rounded-full"><div className="h-full bg-emerald-500 rounded-full" style={{width: `${(c1Avg/4)*100}%`}} /></div>
                     </div>
                     <div>
                       <div className="flex justify-between text-xs font-bold mb-1.5">
-                        <span className="text-slate-700">Guru adil dalam memberi nilai</span>
-                        <span className="text-emerald-700">{c2Avg.toFixed(1)} / 4.0</span>
+                        <span className="text-slate-700">Interaktivitas & Suasana Kelas</span>
+                        <span className="text-emerald-700">{engagingAvg.toFixed(1)} / 4.0</span>
                       </div>
-                      <div className="h-1.5 w-full bg-slate-100 rounded-full"><div className="h-full bg-emerald-500 rounded-full" style={{width: `${(c2Avg/4)*100}%`}} /></div>
+                      <div className="h-1.5 w-full bg-slate-100 rounded-full"><div className="h-full bg-emerald-500 rounded-full" style={{width: `${(engagingAvg/4)*100}%`}} /></div>
                     </div>
                     <div>
                       <div className="flex justify-between text-xs font-bold mb-1.5">
-                        <span className="text-slate-700">Tugas yang diberikan relevan</span>
-                        <span className="text-emerald-700">{c3Avg.toFixed(1)} / 4.0</span>
+                        <span className="text-slate-700">Kepedulian & Bantuan pada Siswa</span>
+                        <span className="text-emerald-700">{c4Avg.toFixed(1)} / 4.0</span>
                       </div>
-                      <div className="h-1.5 w-full bg-slate-100 rounded-full"><div className="h-full bg-emerald-500 rounded-full" style={{width: `${(c3Avg/4)*100}%`}} /></div>
+                      <div className="h-1.5 w-full bg-slate-100 rounded-full"><div className="h-full bg-emerald-500 rounded-full" style={{width: `${(c4Avg/4)*100}%`}} /></div>
+                    </div>
+                    <div>
+                      <div className="flex justify-between text-xs font-bold mb-1.5">
+                        <span className="text-slate-700">Kemampuan Memotivasi</span>
+                        <span className="text-emerald-700">{c8Avg.toFixed(1)} / 4.0</span>
+                      </div>
+                      <div className="h-1.5 w-full bg-slate-100 rounded-full"><div className="h-full bg-emerald-500 rounded-full" style={{width: `${(c8Avg/4)*100}%`}} /></div>
                     </div>
                   </div>
                 )}
