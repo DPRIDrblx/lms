@@ -67,6 +67,10 @@ export default function HoDSupervisi() {
     try {
       await supabase.from('ace_performances').update({ 
         hod_score: finalScore,
+        hod_score_1: scores.aspect1,
+        hod_score_2: scores.aspect2,
+        hod_score_3: scores.aspect3,
+        hod_score_4: scores.aspect4,
         hod_notes: notes,
         phase: 'penilaian' // Move to next phase for Principal to see
       }).eq('id', id);

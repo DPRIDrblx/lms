@@ -17,6 +17,7 @@ export default function ACEKinerja() {
   // Kinerja Data
   const [feedbacks, setFeedbacks] = useState<any[]>([]);
   const [alerts, setAlerts] = useState<any[]>([]);
+  const [performance, setPerformance] = useState<any>(null);
   const [loading, setLoading] = useState(true);
 
   // RPP State
@@ -34,12 +35,17 @@ export default function ACEKinerja() {
         supabase.from('ace_student_feedbacks').select('*').eq('teacher_id', profile.id),
         supabase.from('ace_workload_alerts').select('*').eq('teacher_id', profile.id),
         supabase.from('ace_lesson_plans').select('*').eq('teacher_id', profile.id).eq('subject', 'Observasi Kelas').order('created_at', { ascending: false }).limit(1),
-        supabase.from('ace_feedback_sessions').select('*').eq('teacher_id', profile.id).eq('is_active', true).limit(1)
-      ]).then(([fRes, aRes, rRes, sRes]) => {
+        supabase.from('ace_feedback_sessions').select('*').eq('teacher_id', profile.id).eq('is_active', true).limit(1),
+        supabase.from('ace_performances').select('*').eq('teacher_id', profile.id).order('created_at', { ascending: false }).limit(1)
+      ]).then(([fRes, aRes, rRes, sRes, pRes]) => {
         if (fRes.data) setFeedbacks(fRes.data);
         if (aRes.data) setAlerts(aRes.data);
         if (rRes.data && rRes.data.length > 0) setRppData(rRes.data[0]);
         if (sRes.data && sRes.data.length > 0) setHasActiveSession(true);
+        if (pRes.data && pRes.data.length > 0) {
+          setPerformance(pRes.data[0]);
+          setIsSigned(pRes.data[0].phase === 'selesai');
+        }
         setLoading(false);
       });
     }
@@ -134,11 +140,18 @@ export default function ACEKinerja() {
     }
   };
 
-  const handleSign = (e: React.FormEvent) => {
+  const handleSign = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (!profile || !performance) return;
     if (password.length >= 6) {
-      setIsSigned(true);
-      alert("Dokumen berhasil disahkan secara digital.");
+      try {
+        await supabase.from('ace_performances').update({ phase: 'selesai' }).eq('id', performance.id);
+        setIsSigned(true);
+        setPerformance({ ...performance, phase: 'selesai' });
+        alert("BAP berhasil disahkan secara digital.");
+      } catch (err: any) {
+        alert("Gagal mengesahkan: " + err.message);
+      }
     } else {
       alert("Password salah atau terlalu pendek.");
     }
@@ -255,21 +268,44 @@ export default function ACEKinerja() {
               </div>
 
               <div className="border-t border-slate-100 pt-6">
-                <h3 className="font-bold text-slate-800 text-sm mb-4">Rubrik Penilaian Digital (Preview)</h3>
-                <div className="space-y-2">
-                  {["Kesiapan Materi & Media", "Interaksi dengan Siswa", "Penguasaan Kelas", "Ketepatan Waktu"].map(kriteria => (
-                    <div key={kriteria} className="flex flex-col sm:flex-row sm:justify-between sm:items-center p-3 bg-white border border-slate-200 rounded-md gap-2">
-                      <span className="font-semibold text-slate-700 text-xs">{kriteria}</span>
-                      <div className="flex gap-1">
-                        {[1,2,3,4,5].map(skor => (
-                          <div key={skor} className="w-6 h-6 rounded bg-slate-50 border border-slate-200 flex items-center justify-center text-[10px] font-bold text-slate-400">
-                            {skor}
+                <h3 className="font-bold text-slate-800 text-sm mb-4">
+                  {performance && (performance.phase === 'penilaian' || performance.phase === 'selesai') 
+                    ? "Hasil Penilaian Supervisi" 
+                    : "Rubrik Penilaian Digital (Menunggu)"}
+                </h3>
+                {performance && (performance.phase === 'penilaian' || performance.phase === 'selesai') ? (
+                  <div className="space-y-4">
+                    <div className="space-y-2">
+                      {[
+                        { label: "Penguasaan Materi", score: performance.hod_score_1 || 0 }, 
+                        { label: "Manajemen Kelas", score: performance.hod_score_2 || 0 }, 
+                        { label: "Keterlibatan Siswa", score: performance.hod_score_3 || 0 }, 
+                        { label: "Penggunaan Teknologi", score: performance.hod_score_4 || 0 }
+                      ].map((item, idx) => (
+                        <div key={idx} className="flex flex-col sm:flex-row sm:justify-between sm:items-center p-3 bg-white border border-slate-200 rounded-md gap-2">
+                          <span className="font-semibold text-slate-700 text-xs">{item.label}</span>
+                          <div className="flex gap-1">
+                            {[1,2,3,4,5].map(skor => (
+                              <div key={skor} className={`w-6 h-6 rounded flex items-center justify-center text-[10px] font-bold ${skor <= item.score ? 'bg-indigo-600 text-white' : 'bg-slate-50 border border-slate-200 text-slate-400'}`}>
+                                {skor}
+                              </div>
+                            ))}
                           </div>
-                        ))}
-                      </div>
+                        </div>
+                      ))}
                     </div>
-                  ))}
-                </div>
+                    {performance.hod_notes && (
+                      <div className="p-4 bg-indigo-50 border border-indigo-100 rounded-md">
+                        <p className="text-xs font-bold text-indigo-700 mb-1">Catatan Kepala Departemen:</p>
+                        <p className="text-sm text-slate-700">{performance.hod_notes}</p>
+                      </div>
+                    )}
+                  </div>
+                ) : (
+                  <div className="p-6 bg-slate-50 border border-dashed border-slate-300 rounded-lg text-center">
+                    <p className="text-sm font-medium text-slate-500">Menunggu Penilaian Supervisi dari Kepala Departemen</p>
+                  </div>
+                )}
               </div>
             </Card>
           </div>
@@ -303,11 +339,15 @@ export default function ACEKinerja() {
                     value={password}
                     onChange={e => setPassword(e.target.value)}
                     placeholder="Password Akun Anda" 
-                    className="w-full p-2.5 rounded-md border border-indigo-200 bg-white text-sm focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500" 
+                    className="w-full p-2.5 rounded-md border border-indigo-200 bg-white text-sm focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 disabled:opacity-50 disabled:bg-slate-100" 
                     required
+                    disabled={!performance || performance.phase === 'pelaksanaan'}
                   />
-                  <button className="w-full py-2.5 bg-indigo-600 text-white font-semibold text-xs rounded-md shadow-sm hover:bg-indigo-700 transition-colors">
-                    Sahkan Dokumen
+                  <button 
+                    disabled={!performance || performance.phase === 'pelaksanaan'}
+                    className="w-full py-2.5 bg-indigo-600 text-white font-semibold text-xs rounded-md shadow-sm hover:bg-indigo-700 transition-colors disabled:opacity-50 disabled:bg-slate-400"
+                  >
+                    {(!performance || performance.phase === 'pelaksanaan') ? 'Menunggu Penilaian' : 'Sahkan Dokumen'}
                   </button>
                 </form>
               )}
