@@ -4,10 +4,11 @@ import { useAuth } from "@/lib/auth-context";
 import { useRouter, usePathname } from "next/navigation";
 import { useEffect, useState } from "react";
 import Link from "next/link";
-import { LogOut, UserCircle2, Briefcase, CalendarCheck, ShieldCheck, FileSignature, BookOpen, GraduationCap, CalendarClock, Receipt, Scale, TrendingUp, Wallet, Activity, LayoutGrid, X, Users, AlertCircle, MonitorCheck, MapPin, Book, Search, Bell } from "lucide-react";
+import { LogOut, UserCircle2, Briefcase, CalendarCheck, ShieldCheck, FileSignature, BookOpen, GraduationCap, CalendarClock, Receipt, Scale, TrendingUp, Wallet, Activity, LayoutGrid, X, Users, AlertCircle, MonitorCheck, MapPin, Book, Search, Bell, CheckCheck } from "lucide-react";
 import { Loader2 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { AnimatePresence, motion } from "framer-motion";
+import { createClient } from "@/lib/supabase";
 
 export default function ACELayout({ children }: { children: React.ReactNode }) {
   const { profile, loading, signOut } = useAuth();
@@ -16,6 +17,13 @@ export default function ACELayout({ children }: { children: React.ReactNode }) {
   const [hodMode, setHodMode] = useState(false);
   const [assessmentMode, setAssessmentMode] = useState(false);
   const [isMenuOpen, setIsMenuOpen] = useState(false);
+  
+  // Notification and Search state
+  const [notifications, setNotifications] = useState<any[]>([]);
+  const [isNotifOpen, setIsNotifOpen] = useState(false);
+  const [isSearchOpen, setIsSearchOpen] = useState(false);
+  const [searchQuery, setSearchQuery] = useState("");
+  const supabase = createClient();
 
   useEffect(() => {
     if (!loading && !profile) {
@@ -36,7 +44,27 @@ export default function ACELayout({ children }: { children: React.ReactNode }) {
     }
     // Close menu on navigation
     setIsMenuOpen(false);
+    setIsNotifOpen(false);
+    setIsSearchOpen(false);
   }, [pathname]);
+
+  // Fetch notifications
+  useEffect(() => {
+    if (!profile) return;
+    const fetchNotifs = async () => {
+      const { data } = await supabase.from('ace_notifications').select('*').eq('user_id', profile.id).order('created_at', { ascending: false });
+      if (data) setNotifications(data);
+    };
+    fetchNotifs();
+  }, [profile, supabase]);
+
+  const unreadCount = notifications.filter(n => !n.is_read).length;
+
+  const markAllRead = async () => {
+    if (!profile) return;
+    await supabase.from('ace_notifications').update({ is_read: true }).eq('user_id', profile.id);
+    setNotifications(notifications.map(n => ({ ...n, is_read: true })));
+  };
 
   if (loading) {
     return (
@@ -109,13 +137,47 @@ export default function ACELayout({ children }: { children: React.ReactNode }) {
             </div>
             
             <div className="flex items-center gap-3">
-              <button className="w-9 h-9 flex items-center justify-center rounded-full bg-slate-100 text-slate-600 hover:bg-slate-200 transition-colors">
+              <button 
+                onClick={() => setIsSearchOpen(true)}
+                className="w-9 h-9 flex items-center justify-center rounded-full bg-slate-100 text-slate-600 hover:bg-slate-200 transition-colors"
+              >
                 <Search className="w-4 h-4" />
               </button>
-              <button className="w-9 h-9 flex items-center justify-center rounded-full bg-slate-100 text-slate-600 hover:bg-slate-200 transition-colors relative">
-                <Bell className="w-4 h-4" />
-                <span className="absolute top-2 right-2 w-2 h-2 bg-rose-500 rounded-full border border-white"></span>
-              </button>
+              
+              <div className="relative">
+                <button 
+                  onClick={() => setIsNotifOpen(!isNotifOpen)}
+                  className="w-9 h-9 flex items-center justify-center rounded-full bg-slate-100 text-slate-600 hover:bg-slate-200 transition-colors relative"
+                >
+                  <Bell className="w-4 h-4" />
+                  {unreadCount > 0 && (
+                    <span className="absolute top-2 right-2 w-2 h-2 bg-rose-500 rounded-full border border-white"></span>
+                  )}
+                </button>
+                {isNotifOpen && (
+                  <div className="absolute top-12 right-0 w-80 bg-white rounded-2xl shadow-xl border border-slate-100 overflow-hidden z-50 animate-in slide-in-from-top-2">
+                    <div className="p-4 border-b border-slate-100 flex items-center justify-between bg-slate-50">
+                      <h3 className="font-bold text-slate-800">Notifikasi ({unreadCount})</h3>
+                      <button onClick={markAllRead} className="text-[10px] font-bold text-blue-600 hover:text-blue-700 flex items-center gap-1">
+                        <CheckCheck className="w-3 h-3" /> Tandai Dibaca
+                      </button>
+                    </div>
+                    <div className="max-h-[300px] overflow-y-auto">
+                      {notifications.length === 0 ? (
+                        <div className="p-6 text-center text-slate-500 text-xs font-medium">Tidak ada notifikasi</div>
+                      ) : (
+                        notifications.map((n) => (
+                          <div key={n.id} className={cn("p-4 border-b border-slate-50 hover:bg-slate-50 cursor-pointer transition-colors", !n.is_read ? "bg-blue-50/30" : "")}>
+                            <h4 className="text-xs font-bold text-slate-800 mb-1">{n.title}</h4>
+                            <p className="text-[10px] text-slate-500 leading-relaxed">{n.message}</p>
+                          </div>
+                        ))
+                      )}
+                    </div>
+                  </div>
+                )}
+              </div>
+              
               <div className="h-6 w-px bg-slate-200 mx-1"></div>
               <div className="flex items-center gap-2 pl-1 cursor-pointer">
                 <div className="hidden sm:block text-right">
@@ -218,6 +280,64 @@ export default function ACELayout({ children }: { children: React.ReactNode }) {
           </div>
         </div>
       )}
+
+      {/* Search Overlay */}
+      <AnimatePresence>
+        {isSearchOpen && (
+          <div className="fixed inset-0 z-[60] flex items-start justify-center pt-20 px-4">
+            <motion.div 
+              initial={{ opacity: 0 }} 
+              animate={{ opacity: 1 }} 
+              exit={{ opacity: 0 }} 
+              className="absolute inset-0 bg-slate-900/40 backdrop-blur-sm"
+              onClick={() => setIsSearchOpen(false)}
+            />
+            <motion.div 
+              initial={{ opacity: 0, scale: 0.95, y: -20 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.95, y: -20 }}
+              className="w-full max-w-xl bg-white rounded-2xl shadow-2xl relative z-10 overflow-hidden border border-slate-100"
+            >
+              <div className="flex items-center px-4 py-3 border-b border-slate-100 bg-slate-50">
+                <Search className="w-5 h-5 text-slate-400 mr-3 shrink-0" />
+                <input 
+                  autoFocus
+                  type="text" 
+                  placeholder="Cari ruang atau layanan (contoh: Kinerja, Jadwal)..." 
+                  className="flex-1 bg-transparent border-none outline-none text-sm font-medium text-slate-800 placeholder:text-slate-400"
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                />
+                <button onClick={() => setIsSearchOpen(false)} className="p-1.5 rounded-full hover:bg-slate-200 text-slate-500 transition-colors">
+                  <X className="w-4 h-4" />
+                </button>
+              </div>
+              <div className="p-2 max-h-[60vh] overflow-y-auto">
+                {services.filter(s => s.label.toLowerCase().includes(searchQuery.toLowerCase())).length === 0 ? (
+                  <div className="p-8 text-center text-slate-500 text-sm font-medium">Layanan tidak ditemukan.</div>
+                ) : (
+                  services.filter(s => s.label.toLowerCase().includes(searchQuery.toLowerCase())).map((service, idx) => (
+                    <Link 
+                      key={idx} 
+                      href={service.href} 
+                      onClick={() => setIsSearchOpen(false)}
+                      className="flex items-center gap-4 p-3 hover:bg-slate-50 rounded-xl transition-colors group"
+                    >
+                      <div className={cn("w-10 h-10 rounded-xl flex items-center justify-center shrink-0 shadow-sm", service.bg)}>
+                        <service.icon className="w-5 h-5 text-white" />
+                      </div>
+                      <div className="flex-1 font-bold text-slate-700 group-hover:text-blue-600 transition-colors text-sm">
+                        {service.label}
+                      </div>
+                    </Link>
+                  ))
+                )}
+              </div>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
+
     </div>
   );
 }
