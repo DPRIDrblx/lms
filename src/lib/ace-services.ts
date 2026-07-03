@@ -18,25 +18,24 @@ export function getACEServices(profile: any) {
     ];
   } else if (role === 'principal') {
     services = [
-      { href: "/ace/principal", label: "Dashboard Kepsek", icon: LayoutGrid, bg: "bg-emerald-600", text: "text-white" },
+      { href: "/ace/principal/akuntabilitas", label: "Akuntabilitas", icon: LayoutGrid, bg: "bg-emerald-600", text: "text-white" },
       { href: "/ace/principal/izin", label: "Persetujuan Cuti", icon: CheckSquare, bg: "bg-teal-500", text: "text-white" },
-      { href: "/ace/principal/evaluasi", label: "Evaluasi Guru", icon: BarChart3, bg: "bg-blue-600", text: "text-white" },
+      { href: "/ace/principal/mutu", label: "Mutu Pendidikan", icon: BarChart3, bg: "bg-blue-600", text: "text-white" },
       { href: "/ace/principal/keuangan", label: "Laporan Keuangan", icon: Wallet, bg: "bg-amber-600", text: "text-white" },
     ];
   } else if (role === 'tu') {
     services = [
-      { href: "/ace/tu", label: "Dashboard TU", icon: LayoutGrid, bg: "bg-slate-800", text: "text-white" },
       { href: "/ace/tu/kepegawaian", label: "Kepegawaian", icon: Briefcase, bg: "bg-blue-700", text: "text-white" },
       { href: "/ace/tu/keuangan", label: "Keuangan", icon: Wallet, bg: "bg-emerald-500", text: "text-white" },
-      { href: "/ace/tu/persuratan", label: "Surat Menyurat", icon: Mail, bg: "bg-orange-500", text: "text-white" },
-      { href: "/ace/tu/inventaris", label: "Inventaris", icon: ClipboardList, bg: "bg-purple-600", text: "text-white" },
+      { href: "/ace/tu/kehadiran", label: "Kehadiran", icon: MapPin, bg: "bg-orange-500", text: "text-white" },
+      { href: "/ace/tu/kinerja", label: "Kinerja", icon: FileSignature, bg: "bg-purple-600", text: "text-white" },
     ];
   }
 
   // If the user is also a HoD (usually teachers)
   if (isHod) {
     services.push(
-      { href: "/ace/hod", label: "Dashboard HoD", icon: LayoutGrid, bg: "bg-indigo-600", text: "text-white" },
+      { href: "/ace/hod/akademik", label: "Akademik HoD", icon: LayoutGrid, bg: "bg-indigo-600", text: "text-white" },
       { href: "/ace/hod/kurikulum", label: "Manajemen Kurikulum", icon: TrendingUp, bg: "bg-indigo-500", text: "text-white" },
       { href: "/ace/hod/supervisi", label: "Supervisi Akademik", icon: FileText, bg: "bg-blue-600", text: "text-white" }
     );
