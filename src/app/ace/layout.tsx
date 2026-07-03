@@ -4,9 +4,10 @@ import { useAuth } from "@/lib/auth-context";
 import { useRouter, usePathname } from "next/navigation";
 import { useEffect, useState } from "react";
 import Link from "next/link";
-import { LogOut, UserCircle2, Briefcase, CalendarCheck, ShieldCheck, FileSignature, BookOpen, GraduationCap, CalendarClock, Receipt, Scale, TrendingUp, Wallet, Activity, LayoutGrid, X, Users, AlertCircle, MonitorCheck, MapPin, Book } from "lucide-react";
+import { LogOut, UserCircle2, Briefcase, CalendarCheck, ShieldCheck, FileSignature, BookOpen, GraduationCap, CalendarClock, Receipt, Scale, TrendingUp, Wallet, Activity, LayoutGrid, X, Users, AlertCircle, MonitorCheck, MapPin, Book, Search, Bell } from "lucide-react";
 import { Loader2 } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { AnimatePresence, motion } from "framer-motion";
 
 export default function ACELayout({ children }: { children: React.ReactNode }) {
   const { profile, loading, signOut } = useAuth();
@@ -93,10 +94,58 @@ export default function ACELayout({ children }: { children: React.ReactNode }) {
 
   return (
     <div className="min-h-screen w-full bg-[#f8f9fa] relative font-sans overflow-x-hidden">
+      {/* Top Header/Navbar */}
+      {pathname !== "/ace/auth" && (
+        <header className="sticky top-0 z-30 bg-white/80 backdrop-blur-md border-b border-slate-200 shadow-sm">
+          <div className="max-w-7xl mx-auto px-4 md:px-8 h-16 flex items-center justify-between">
+            <div className="flex items-center gap-3">
+              <div className="w-9 h-9 bg-gradient-to-br from-blue-600 to-indigo-700 rounded-xl flex items-center justify-center text-white font-black shadow-sm">
+                A
+              </div>
+              <div>
+                <h1 className="font-bold text-slate-800 tracking-tight leading-tight">Ruang ACE</h1>
+                <p className="text-[10px] text-slate-500 font-medium">Academic & Educator Center</p>
+              </div>
+            </div>
+            
+            <div className="flex items-center gap-3">
+              <button className="w-9 h-9 flex items-center justify-center rounded-full bg-slate-100 text-slate-600 hover:bg-slate-200 transition-colors">
+                <Search className="w-4 h-4" />
+              </button>
+              <button className="w-9 h-9 flex items-center justify-center rounded-full bg-slate-100 text-slate-600 hover:bg-slate-200 transition-colors relative">
+                <Bell className="w-4 h-4" />
+                <span className="absolute top-2 right-2 w-2 h-2 bg-rose-500 rounded-full border border-white"></span>
+              </button>
+              <div className="h-6 w-px bg-slate-200 mx-1"></div>
+              <div className="flex items-center gap-2 pl-1 cursor-pointer">
+                <div className="hidden sm:block text-right">
+                  <p className="text-xs font-bold text-slate-700 leading-tight">{profile.full_name?.split(' ')[0]}</p>
+                  <p className="text-[10px] text-slate-500 capitalize">{profile.role}</p>
+                </div>
+                <div className="w-9 h-9 bg-slate-200 rounded-full flex items-center justify-center border-2 border-white shadow-sm overflow-hidden">
+                  <UserCircle2 className="w-5 h-5 text-slate-500" />
+                </div>
+              </div>
+            </div>
+          </div>
+        </header>
+      )}
+
       {/* Main Content Area */}
       <div className={cn("w-full min-h-screen", pathname === "/ace/auth" ? "bg-slate-900" : "")}>
-        <main className={cn("mx-auto h-full", pathname === "/ace/auth" ? "p-0" : "p-0 pb-24")}>
-          {children}
+        <main className={cn("mx-auto h-full max-w-7xl", pathname === "/ace/auth" ? "p-0" : "p-4 md:p-6 lg:p-8 pb-28")}>
+          <AnimatePresence mode="wait">
+            <motion.div
+              key={pathname}
+              initial={{ opacity: 0, y: 15 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -15 }}
+              transition={{ duration: 0.3, ease: "easeOut" }}
+              className="h-full"
+            >
+              {children}
+            </motion.div>
+          </AnimatePresence>
         </main>
       </div>
 
