@@ -32,6 +32,8 @@ export default function ExamPage({ params }: { params: Promise<{ id: string }> }
   const [confirmModal, setConfirmModal] = useState<{show: boolean, title: string, message: string, onConfirm: () => void, isAlert?: boolean}>({show: false, title: '', message: '', onConfirm: () => {}});
   const isAlertOpen = useRef(false);
 
+  const [reportModal, setReportModal] = useState<{ show: boolean, description: string }>({ show: false, description: '' });
+
   // Drag and drop state for matching
   const [draggedItem, setDraggedItem] = useState<string | null>(null);
 
@@ -345,6 +347,35 @@ export default function ExamPage({ params }: { params: Promise<{ id: string }> }
     }
   };
 
+  const submitReport = async () => {
+    if (!reportModal.description.trim()) return;
+    try {
+      await supabase.from('question_reports').insert({
+        question_id: currentQ.id,
+        student_id: profile?.id,
+        description: reportModal.description
+      });
+      setReportModal({ show: false, description: '' });
+      playSound('correct');
+      setConfirmModal({ 
+        show: true, 
+        isAlert: true, 
+        title: 'Laporan Terkirim', 
+        message: 'Terima kasih atas laporan Anda. Guru akan segera meninjaunya.', 
+        onConfirm: () => setConfirmModal(prev => ({...prev, show: false})) 
+      });
+    } catch (e) {
+      console.error(e);
+      setConfirmModal({ 
+        show: true, 
+        isAlert: true, 
+        title: 'Gagal', 
+        message: 'Laporan gagal dikirim.', 
+        onConfirm: () => setConfirmModal(prev => ({...prev, show: false})) 
+      });
+    }
+  };
+
   const formatTime = (s: number) => {
     const h = Math.floor(s / 3600);
     const m = Math.floor((s % 3600) / 60);
@@ -526,6 +557,53 @@ export default function ExamPage({ params }: { params: Promise<{ id: string }> }
         )}
       </AnimatePresence>
 
+      {/* REPORT QUESTION MODAL */}
+      <AnimatePresence>
+        {reportModal.show && (
+          <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-slate-900/40 backdrop-blur-sm">
+            <motion.div 
+              initial={{ scale: 0.9, opacity: 0 }} 
+              animate={{ scale: 1, opacity: 1 }} 
+              exit={{ scale: 0.9, opacity: 0 }}
+              className="bg-white max-w-md w-full rounded-3xl p-8 shadow-2xl border-2 border-slate-200 relative overflow-hidden"
+            >
+              <div className="w-16 h-16 bg-red-100 text-red-500 rounded-2xl flex items-center justify-center mb-6">
+                <Flag className="w-8 h-8" />
+              </div>
+              <h2 className="text-2xl font-black text-slate-800 mb-2">
+                Laporkan Soal
+              </h2>
+              <p className="text-sm text-slate-500 mb-6 font-medium">
+                Apakah ada masalah dengan soal ini (misal: gambar tidak muncul, jawaban salah semua, atau soal ambigu)? Jelaskan kendalanya.
+              </p>
+              
+              <textarea
+                value={reportModal.description}
+                onChange={(e) => setReportModal(prev => ({...prev, description: e.target.value}))}
+                className="w-full h-32 p-4 rounded-xl border-2 border-slate-200 focus:border-red-500 focus:ring-4 focus:ring-red-500/20 outline-none transition-all resize-none mb-6 text-sm"
+                placeholder="Ketikkan laporan Anda di sini..."
+              />
+              
+              <div className="flex flex-col gap-3">
+                <button 
+                  onClick={submitReport}
+                  disabled={!reportModal.description.trim()}
+                  className="w-full py-4 bg-red-500 hover:bg-red-400 active:bg-red-600 disabled:opacity-50 disabled:cursor-not-allowed text-white font-bold rounded-2xl border-b-4 border-red-700 transition-all text-sm"
+                >
+                  KIRIM LAPORAN
+                </button>
+                <button 
+                  onClick={() => setReportModal({ show: false, description: '' })}
+                  className="w-full py-4 bg-white hover:bg-slate-50 active:bg-slate-100 text-slate-500 font-bold rounded-2xl border-2 border-slate-200 border-b-4 transition-all text-sm"
+                >
+                  BATAL
+                </button>
+              </div>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
+
       {/* HEADER PROGRESS (Duolingo Style) */}
       <header className="sticky top-0 z-50 bg-white border-b-2 border-slate-100 px-4 py-4 md:px-8 flex items-center gap-4 md:gap-8 shadow-sm">
         <button 
@@ -578,9 +656,18 @@ export default function ExamPage({ params }: { params: Promise<{ id: string }> }
           <div className="text-lg md:text-xl font-medium text-slate-700 leading-relaxed mb-8 relative">
             <div dangerouslySetInnerHTML={{ __html: currentQ?.question_text }} />
             {currentQ?.id && (
-              <div className="mt-6 text-[10px] font-mono text-slate-400 opacity-60 flex items-center justify-end gap-1">
-                <span>ID Soal:</span>
-                <span className="bg-slate-100 px-1.5 py-0.5 rounded">{currentQ.id}</span>
+              <div className="mt-6 flex items-center justify-between text-[10px] font-mono text-slate-400">
+                <button 
+                  onClick={() => setReportModal({ show: true, description: '' })}
+                  className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-red-50 text-red-500 hover:bg-red-100 transition-colors opacity-80 hover:opacity-100 font-sans font-bold"
+                >
+                  <Flag className="w-3.5 h-3.5" />
+                  Laporkan Soal
+                </button>
+                <div className="flex items-center gap-1 opacity-60">
+                  <span>ID Soal:</span>
+                  <span className="bg-slate-100 px-1.5 py-0.5 rounded">{currentQ.id}</span>
+                </div>
               </div>
             )}
           </div>
@@ -876,7 +963,35 @@ export default function ExamPage({ params }: { params: Promise<{ id: string }> }
 
             {currentIndex === questions.length - 1 ? (
               <button 
-                onClick={() => submitExam()} 
+                onClick={() => {
+                  const answeredCount = questions.filter(q => {
+                    const ans = responses[q.id];
+                    if (q.question_type === 'mcq' || q.question_type === 'essay') return !!ans && ans.length > 0;
+                    if (q.question_type === 'complex_mcq') return Array.isArray(ans) && ans.length > 0;
+                    if (q.question_type === 'matching') return ans && Object.keys(ans).length > 0;
+                    return false;
+                  }).length;
+
+                  if (answeredCount < questions.length) {
+                    setConfirmModal({
+                      show: true,
+                      isAlert: true,
+                      title: 'Belum Selesai!',
+                      message: `Ada ${questions.length - answeredCount} soal yang belum dijawab. Harap jawab semua soal sebelum mengumpulkan.`,
+                      onConfirm: () => setConfirmModal(prev => ({...prev, show: false}))
+                    });
+                  } else {
+                    setConfirmModal({
+                      show: true,
+                      title: 'Kumpulkan Ujian?',
+                      message: 'Anda yakin ingin mengumpulkan ujian ini? Anda tidak dapat mengubah jawaban lagi.',
+                      onConfirm: () => {
+                        setConfirmModal(prev => ({...prev, show: false}));
+                        submitExam();
+                      }
+                    });
+                  }
+                }} 
                 className="px-8 py-4 rounded-2xl font-bold text-white bg-green-500 border-b-4 border-green-700 hover:bg-green-400 active:translate-y-1 active:border-b-0 transition-all flex items-center gap-2 text-lg shadow-lg shadow-green-500/30"
               >
                 <span>SELESAI</span>

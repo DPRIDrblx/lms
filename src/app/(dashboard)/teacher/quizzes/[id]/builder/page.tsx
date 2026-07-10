@@ -22,7 +22,8 @@ import {
   Link as LinkIcon,
   Settings,
   Clock,
-  Award
+  Award,
+  Flag
 } from "lucide-react";
 import Link from "next/link";
 import { useParams, useRouter } from "next/navigation";
@@ -48,6 +49,7 @@ export default function CBTBuilderPage() {
 
   const [quiz, setQuiz] = useState<any>(null);
   const [questions, setQuestions] = useState<Question[]>([]);
+  const [reports, setReports] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
 
@@ -67,7 +69,14 @@ export default function CBTBuilderPage() {
           shuffle_questions: quizData.shuffle_questions ?? false
         });
       }
-      if (qData) setQuestions(qData as Question[]);
+      if (qData) {
+        setQuestions(qData as Question[]);
+        const { data: rData } = await supabase
+          .from("question_reports")
+          .select("*, profiles(full_name)")
+          .in("question_id", qData.map((q: any) => q.id));
+        if (rData) setReports(rData);
+      }
       setLoading(false);
     };
     fetchData();
@@ -279,6 +288,12 @@ export default function CBTBuilderPage() {
                         {q.question_type === "essay" && <Type className="h-3 w-3" />}
                         {q.question_type.toUpperCase().replace("_", " ")}
                       </Badge>
+                      {reports.filter(r => r.question_id === q.id).length > 0 && (
+                        <Badge variant="error" className="bg-[var(--error)] text-white border-[var(--error)] flex items-center gap-1 font-normal ml-2">
+                          <Flag className="h-3 w-3" />
+                          {reports.filter(r => r.question_id === q.id).length} Laporan
+                        </Badge>
+                      )}
                     </div>
                     <div className="flex items-center gap-4">
                       <div className="flex items-center gap-2">
@@ -304,6 +319,22 @@ export default function CBTBuilderPage() {
                         onChange={(val) => updateQuestion(q.id, { question_text: val })} 
                       />
                     </div>
+
+                    {reports.filter(r => r.question_id === q.id).length > 0 && (
+                      <div className="bg-red-50 border border-red-200 p-4 rounded-md space-y-3">
+                        <h4 className="text-sm font-bold text-red-700 flex items-center gap-2">
+                          <Flag className="h-4 w-4" /> Laporan dari Siswa
+                        </h4>
+                        <div className="space-y-2">
+                          {reports.filter(r => r.question_id === q.id).map(r => (
+                            <div key={r.id} className="bg-white p-3 rounded border border-red-100 text-sm">
+                              <p className="font-semibold text-slate-700 mb-1">{r.profiles?.full_name || 'Siswa'}</p>
+                              <p className="text-slate-600">{r.description}</p>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    )}
 
                     {/* Multiple Choice & Complex MCQ */}
                     {(q.question_type === "mcq" || q.question_type === "complex_mcq") && q.options && (
