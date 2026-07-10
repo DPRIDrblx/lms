@@ -36,8 +36,9 @@ export default function BankSoalPage() {
     const ws = XLSX.utils.aoa_to_sheet([
       ["Tipe Soal", "Pertanyaan", "Opsi A", "Opsi B", "Opsi C", "Opsi D", "Opsi E", "Kunci Jawaban", "Poin"],
       ["mcq", "Siapa penemu lampu pijar?", "Thomas Edison", "Nikola Tesla", "Albert Einstein", "Isaac Newton", "Galileo Galilei", "A", 10],
-      ["essay", "Jelaskan proses terjadinya hujan!", "", "", "", "", "", "", 20],
-      ["mcq", "Berapa hasil dari 5 + 7?", "10", "11", "12", "13", "14", "C", 5]
+      ["complex_mcq", "Manakah yang merupakan mamalia?", "Kucing", "Ayam", "Paus", "Hiu", "Kelelawar", "A,C,E", 15],
+      ["matching", "Jodohkan istilah biologi berikut!", "Mitokondria|Pusat Energi", "Nukleus|Inti Sel", "Ribosom|Pembuat Protein", "", "", "", 20],
+      ["essay", "Jelaskan proses terjadinya hujan!", "", "", "", "", "", "", 20]
     ]);
     const wb = XLSX.utils.book_new();
     XLSX.utils.book_append_sheet(wb, ws, "Template_Bank_Soal");
@@ -77,19 +78,39 @@ export default function BankSoalPage() {
 
       // Parse questions
       const itemsToInsert = jsonData.map((row) => {
-        // Expected columns: Tipe Soal, Pertanyaan, Opsi A, Opsi B, Opsi C, Opsi D, Opsi E, Kunci Jawaban, Poin
         const options = [];
-        const answer = String(row['Kunci Jawaban'] || '').toUpperCase().trim();
+        const rawType = String(row['Tipe Soal'] || 'mcq').toLowerCase().trim();
+        let qType = 'mcq';
+        if (rawType.includes('essay')) qType = 'essay';
+        else if (rawType.includes('matching') || rawType.includes('menjodohkan')) qType = 'matching';
+        else if (rawType.includes('complex') || rawType.includes('kompleks') || rawType.includes('pgk')) qType = 'complex_mcq';
         
-        if (row['Opsi A']) options.push({ text: String(row['Opsi A']), is_correct: answer === 'A' });
-        if (row['Opsi B']) options.push({ text: String(row['Opsi B']), is_correct: answer === 'B' });
-        if (row['Opsi C']) options.push({ text: String(row['Opsi C']), is_correct: answer === 'C' });
-        if (row['Opsi D']) options.push({ text: String(row['Opsi D']), is_correct: answer === 'D' });
-        if (row['Opsi E']) options.push({ text: String(row['Opsi E']), is_correct: answer === 'E' });
+        const answerRaw = String(row['Kunci Jawaban'] || '').toUpperCase().trim();
+        const answers = answerRaw.split(/[,;|]/).map(s => s.trim());
+        
+        if (qType === 'matching') {
+          // For matching, options are formatted as "Premise | Match"
+          ['A', 'B', 'C', 'D', 'E'].forEach(letter => {
+             const val = row[`Opsi ${letter}`];
+             if (val) {
+                const parts = String(val).split('|');
+                options.push({ 
+                   text: parts[0]?.trim() || '', 
+                   match_pair: parts[1]?.trim() || '' 
+                });
+             }
+          });
+        } else {
+          if (row['Opsi A']) options.push({ text: String(row['Opsi A']), is_correct: answers.includes('A') });
+          if (row['Opsi B']) options.push({ text: String(row['Opsi B']), is_correct: answers.includes('B') });
+          if (row['Opsi C']) options.push({ text: String(row['Opsi C']), is_correct: answers.includes('C') });
+          if (row['Opsi D']) options.push({ text: String(row['Opsi D']), is_correct: answers.includes('D') });
+          if (row['Opsi E']) options.push({ text: String(row['Opsi E']), is_correct: answers.includes('E') });
+        }
 
         return {
           bank_id: bankData.id,
-          question_type: String(row['Tipe Soal'] || 'mcq').toLowerCase() === 'essay' ? 'essay' : 'mcq',
+          question_type: qType,
           question_text: String(row['Pertanyaan'] || ''),
           options: options,
           points: parseInt(row['Poin']) || 10
