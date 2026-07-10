@@ -5,8 +5,8 @@ import { createClient } from "@/lib/supabase";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { ChevronLeft, Search, ShieldAlert, CheckCircle2, User, Activity, WifiOff } from "lucide-react";
-import { useEffect, useState, use } from "react";
+import { ChevronLeft, Search, ShieldAlert, CheckCircle2, User, Activity, WifiOff, Pause, Play } from "lucide-react";
+import { useEffect, useState, use, useRef } from "react";
 import Link from "next/link";
 import { motion } from "framer-motion";
 
@@ -19,6 +19,8 @@ export default function ProctoringPage({ params }: { params: Promise<{ id: strin
   const [activeStudentsMap, setActiveStudentsMap] = useState<Record<string, any>>({});
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
+  const [isPaused, setIsPaused] = useState(false);
+  const channelRef = useRef<any>(null);
 
   useEffect(() => {
     const fetchQuiz = async () => {
@@ -32,6 +34,7 @@ export default function ProctoringPage({ params }: { params: Promise<{ id: strin
   useEffect(() => {
     if (!profile) return;
     const channel = supabase.channel(`room:exam_${id}`);
+    channelRef.current = channel;
 
     channel
       .on('presence', { event: 'sync' }, () => {
@@ -70,6 +73,18 @@ export default function ProctoringPage({ params }: { params: Promise<{ id: strin
   const activeStudents = Object.values(activeStudentsMap);
   const filteredStudents = activeStudents.filter(s => s.student_name?.toLowerCase().includes(search.toLowerCase()));
 
+  const togglePause = async () => {
+    const newState = !isPaused;
+    setIsPaused(newState);
+    if (channelRef.current) {
+      await channelRef.current.send({
+        type: 'broadcast',
+        event: 'exam_pause',
+        payload: { isPaused: newState }
+      });
+    }
+  };
+
   if (loading) return <div className="h-[80vh] flex items-center justify-center animate-pulse text-[var(--accent)] font-bold">Memuat Data Ujian...</div>;
 
   return (
@@ -86,15 +101,25 @@ export default function ProctoringPage({ params }: { params: Promise<{ id: strin
             </h1>
             <p className="text-[var(--text-secondary)] font-medium mt-1">Quiz: <span className="font-bold text-[var(--accent)]">{quiz?.title}</span></p>
          </div>
-         <div className="relative w-full sm:w-72">
-            <Search className="absolute left-3 top-2.5 h-4 w-4 text-[var(--text-tertiary)]" />
-            <input 
-              type="text" 
-              placeholder="Cari siswa..." 
-              value={search}
-              onChange={(e) => setSearch(e.target.value)}
-              className="w-full pl-10 pr-4 py-2 rounded-xl bg-[var(--bg-secondary)] border border-[var(--border)] text-sm focus:ring-2 focus:ring-[var(--accent)] transition-all"
-            />
+         <div className="flex items-center gap-4 w-full sm:w-auto">
+            <Button
+              onClick={togglePause}
+              variant={isPaused ? "primary" : "danger"}
+              className={`flex-1 sm:flex-none ${isPaused ? 'bg-green-500 hover:bg-green-600 text-white' : ''}`}
+            >
+              {isPaused ? <Play className="h-4 w-4 mr-2" /> : <Pause className="h-4 w-4 mr-2" />}
+              {isPaused ? "Lanjutkan Ujian" : "Pause Seluruh Sesi"}
+            </Button>
+            <div className="relative w-full sm:w-72">
+               <Search className="absolute left-3 top-2.5 h-4 w-4 text-[var(--text-tertiary)]" />
+               <input 
+                 type="text" 
+                 placeholder="Cari siswa..." 
+                 value={search}
+                 onChange={(e) => setSearch(e.target.value)}
+                 className="w-full pl-10 pr-4 py-2 rounded-xl bg-[var(--bg-secondary)] border border-[var(--border)] text-sm focus:ring-2 focus:ring-[var(--accent)] transition-all"
+               />
+            </div>
          </div>
       </header>
 

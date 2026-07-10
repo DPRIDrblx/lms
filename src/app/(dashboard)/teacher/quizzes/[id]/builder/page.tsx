@@ -130,20 +130,34 @@ export default function CBTBuilderPage() {
       return;
     }
 
-    await supabase.from("questions").delete().eq("quiz_id", id);
+    // Filter ids to keep
+    const questionIdsToKeep = questions.map(q => q.id).filter(id => !id.startsWith('temp-'));
     
-    const questionsToSave = questions.map((q, idx) => ({
-      quiz_id: id,
-      question_text: q.question_text,
-      question_type: q.question_type,
-      options: q.options,
-      points: q.points,
-      order_index: idx,
-      criteria: q.criteria || {}
-    }));
+    // Delete removed questions
+    if (questionIdsToKeep.length > 0) {
+      await supabase.from("questions").delete().eq("quiz_id", id).not('id', 'in', `(${questionIdsToKeep.join(',')})`);
+    } else {
+      await supabase.from("questions").delete().eq("quiz_id", id);
+    }
+    
+    const questionsToSave = questions.map((q, idx) => {
+      const payload: any = {
+        quiz_id: id,
+        question_text: q.question_text,
+        question_type: q.question_type,
+        options: q.options,
+        points: q.points,
+        order_index: idx,
+        criteria: q.criteria || {}
+      };
+      if (!q.id.startsWith('temp-')) {
+        payload.id = q.id; // Preserve existing UUID
+      }
+      return payload;
+    });
 
     if (questionsToSave.length > 0) {
-      const { error } = await supabase.from("questions").insert(questionsToSave);
+      const { error } = await supabase.from("questions").upsert(questionsToSave);
       if (error) alert(error.message);
       else router.push("/teacher/quizzes");
     } else {

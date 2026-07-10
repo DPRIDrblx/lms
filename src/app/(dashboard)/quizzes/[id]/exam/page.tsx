@@ -4,7 +4,7 @@ import { useAuth } from "@/lib/auth-context";
 import { createClient } from "@/lib/supabase";
 import { useRouter } from "next/navigation";
 import { useEffect, useState, use, useCallback, useRef } from "react";
-import { Clock, Flag, ChevronLeft, ChevronRight, CheckCircle2, AlertTriangle, AlertCircle, PlayCircle, Star, Target } from "lucide-react";
+import { Clock, Flag, ChevronLeft, ChevronRight, CheckCircle2, AlertTriangle, AlertCircle, PlayCircle, Star, Target, RefreshCcw } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { playSound } from "@/lib/audio";
 import { updateQuestProgress } from "@/lib/gamification";
@@ -23,6 +23,7 @@ export default function ExamPage({ params }: { params: Promise<{ id: string }> }
   const [timeLeft, setTimeLeft] = useState<number>(0);
   const [loading, setLoading] = useState(true);
   const [isFinished, setIsFinished] = useState(false);
+  const [isPaused, setIsPaused] = useState(false);
   const [session, setSession] = useState<any>(null);
   const [finalScore, setFinalScore] = useState<number | null>(null);
   const [needsManualGrading, setNeedsManualGrading] = useState(false);
@@ -145,6 +146,10 @@ export default function ExamPage({ params }: { params: Promise<{ id: string }> }
 
     channel.on('presence', { event: 'sync' }, () => {});
 
+    channel.on('broadcast', { event: 'exam_pause' }, (payload: any) => {
+      setIsPaused(payload.payload.isPaused);
+    });
+
     channel.subscribe(async (status: string) => {
       if (status === 'SUBSCRIBED') {
         await channel.track({
@@ -162,7 +167,7 @@ export default function ExamPage({ params }: { params: Promise<{ id: string }> }
   }, [profile, id, supabase]);
 
   useEffect(() => {
-    if (timeLeft <= 0 || loading || isFinished) return;
+    if (timeLeft <= 0 || loading || isFinished || isPaused) return;
     const t = setInterval(() => {
       setTimeLeft(prev => {
         if (prev <= 1) { clearInterval(t); submitExam(true); return 0; }
@@ -171,6 +176,32 @@ export default function ExamPage({ params }: { params: Promise<{ id: string }> }
     }, 1000);
     return () => clearInterval(t);
   }, [timeLeft, loading, isFinished]);
+
+  useEffect(() => {
+    const handleBeforeUnload = (e: BeforeUnloadEvent) => {
+      if (!isFinished && !loading) {
+        e.preventDefault();
+        e.returnValue = '';
+        
+        setCheatWarnings(prev => {
+          const newWarnings = prev + 1;
+          if (presenceChannel && profile) {
+             presenceChannel.track({
+               student_id: profile.id,
+               student_name: profile.full_name,
+               status: 'Warning: Page Refresh Attempted',
+               warnings: newWarnings,
+               last_ping: new Date().toISOString()
+             });
+          }
+          return newWarnings;
+        });
+      }
+    };
+    
+    window.addEventListener("beforeunload", handleBeforeUnload);
+    return () => window.removeEventListener("beforeunload", handleBeforeUnload);
+  }, [isFinished, loading, presenceChannel, profile]);
 
   useEffect(() => {
     const handleBlur = () => {
@@ -376,6 +407,18 @@ export default function ExamPage({ params }: { params: Promise<{ id: string }> }
     }
   };
 
+  const refreshQuestion = async (qId: string) => {
+    try {
+      const { data } = await supabase.from('questions').select('*').eq('id', qId).single();
+      if (data) {
+        setQuestions(prev => prev.map(q => q.id === qId ? data : q));
+        playSound('click');
+      }
+    } catch (e) {
+      console.error(e);
+    }
+  };
+
   const formatTime = (s: number) => {
     const h = Math.floor(s / 3600);
     const m = Math.floor((s % 3600) / 60);
@@ -465,13 +508,37 @@ export default function ExamPage({ params }: { params: Promise<{ id: string }> }
       
       {/* BACKGROUND WATERMARK (REPEATING TILE ON TOP) */}
       <div 
-        className="fixed inset-0 z-[60] pointer-events-none select-none opacity-[0.04]"
+        className="fixed inset-0 z-[60] pointer-events-none select-none opacity-[0.08]"
         style={{
-          backgroundImage: `url("data:image/svg+xml,%3Csvg width='300' height='300' xmlns='http://www.w3.org/2000/svg'%3E%3Ctext x='50%25' y='50%25' font-size='20' font-family='sans-serif' font-weight='900' fill='%23000' text-anchor='middle' dominant-baseline='middle' transform='rotate(-45 150 150)'%3EIGNITE - ${encodeURIComponent(profile?.full_name || 'STUDENT')}%3C/text%3E%3C/svg%3E")`,
+          backgroundImage: `url("data:image/svg+xml,%3Csvg width='400' height='400' xmlns='http://www.w3.org/2000/svg'%3E%3Ctext x='50%25' y='50%25' font-size='32' font-family='sans-serif' font-weight='900' fill='%23000' text-anchor='middle' dominant-baseline='middle' transform='rotate(-45 200 200)'%3EIGNITE - ${encodeURIComponent(profile?.full_name || 'STUDENT')}%3C/text%3E%3C/svg%3E")`,
           backgroundRepeat: 'repeat',
-          backgroundSize: '300px 300px'
+          backgroundSize: '400px 400px'
         }}
       />
+
+      {/* PAUSE MODAL */}
+      <AnimatePresence>
+        {isPaused && (
+          <div className="fixed inset-0 z-[200] flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-md">
+            <motion.div 
+              initial={{ scale: 0.9, opacity: 0 }} 
+              animate={{ scale: 1, opacity: 1 }} 
+              exit={{ scale: 0.9, opacity: 0 }}
+              className="bg-white max-w-sm w-full rounded-3xl p-8 shadow-2xl border-2 border-slate-200 text-center relative overflow-hidden"
+            >
+              <div className="w-20 h-20 bg-yellow-100 text-yellow-500 rounded-2xl flex items-center justify-center mx-auto mb-6">
+                <Clock className="w-10 h-10" />
+              </div>
+              <h2 className="text-2xl font-black text-slate-800 mb-2">
+                Ujian Di-Pause
+              </h2>
+              <p className="text-slate-600 font-medium leading-relaxed">
+                Guru sedang menjeda ujian ini. Waktu Anda juga terhenti sementara. Harap tunggu instruksi selanjutnya.
+              </p>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
 
       {/* CHEAT WARNING MODAL */}
       <AnimatePresence>
@@ -657,13 +724,22 @@ export default function ExamPage({ params }: { params: Promise<{ id: string }> }
             <div dangerouslySetInnerHTML={{ __html: currentQ?.question_text }} />
             {currentQ?.id && (
               <div className="mt-6 flex items-center justify-between text-[10px] font-mono text-slate-400">
-                <button 
-                  onClick={() => setReportModal({ show: true, description: '' })}
-                  className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-red-50 text-red-500 hover:bg-red-100 transition-colors opacity-80 hover:opacity-100 font-sans font-bold"
-                >
-                  <Flag className="w-3.5 h-3.5" />
-                  Laporkan Soal
-                </button>
+                <div className="flex items-center gap-2">
+                  <button 
+                    onClick={() => refreshQuestion(currentQ.id)}
+                    className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-blue-50 text-blue-500 hover:bg-blue-100 transition-colors opacity-80 hover:opacity-100 font-sans font-bold"
+                  >
+                    <RefreshCcw className="w-3.5 h-3.5" />
+                    Refresh
+                  </button>
+                  <button 
+                    onClick={() => setReportModal({ show: true, description: '' })}
+                    className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-red-50 text-red-500 hover:bg-red-100 transition-colors opacity-80 hover:opacity-100 font-sans font-bold"
+                  >
+                    <Flag className="w-3.5 h-3.5" />
+                    Laporkan Soal
+                  </button>
+                </div>
                 <div className="flex items-center gap-1 opacity-60">
                   <span>ID Soal:</span>
                   <span className="bg-slate-100 px-1.5 py-0.5 rounded">{currentQ.id}</span>
