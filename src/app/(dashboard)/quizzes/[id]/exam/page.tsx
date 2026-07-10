@@ -436,9 +436,9 @@ export default function ExamPage({ params }: { params: Promise<{ id: string }> }
       <div 
         className="fixed inset-0 z-[60] pointer-events-none select-none opacity-[0.04]"
         style={{
-          backgroundImage: `url("data:image/svg+xml,%3Csvg width='200' height='200' xmlns='http://www.w3.org/2000/svg'%3E%3Ctext x='50%25' y='50%25' font-size='24' font-family='sans-serif' font-weight='900' fill='%23000' text-anchor='middle' dominant-baseline='middle' transform='rotate(-45 100 100)'%3EIGNITE%3C/text%3E%3C/svg%3E")`,
+          backgroundImage: `url("data:image/svg+xml,%3Csvg width='300' height='300' xmlns='http://www.w3.org/2000/svg'%3E%3Ctext x='50%25' y='50%25' font-size='20' font-family='sans-serif' font-weight='900' fill='%23000' text-anchor='middle' dominant-baseline='middle' transform='rotate(-45 150 150)'%3EIGNITE - ${encodeURIComponent(profile?.full_name || 'STUDENT')}%3C/text%3E%3C/svg%3E")`,
           backgroundRepeat: 'repeat',
-          backgroundSize: '200px 200px'
+          backgroundSize: '300px 300px'
         }}
       />
 
@@ -575,8 +575,14 @@ export default function ExamPage({ params }: { params: Promise<{ id: string }> }
             </div>
           </div>
 
-          <div className="text-lg md:text-xl font-medium text-slate-700 leading-relaxed mb-8">
+          <div className="text-lg md:text-xl font-medium text-slate-700 leading-relaxed mb-8 relative">
             <div dangerouslySetInnerHTML={{ __html: currentQ?.question_text }} />
+            {currentQ?.id && (
+              <div className="mt-6 text-[10px] font-mono text-slate-400 opacity-60 flex items-center justify-end gap-1">
+                <span>ID Soal:</span>
+                <span className="bg-slate-100 px-1.5 py-0.5 rounded">{currentQ.id}</span>
+              </div>
+            )}
           </div>
 
           {/* RENDER QUESTION BY TYPE */}
