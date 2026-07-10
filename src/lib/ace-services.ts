@@ -19,9 +19,12 @@ export function getACEServices(profile: any) {
   } else if (role === 'principal') {
     services = [
       { href: "/ace/principal", label: "Dashboard Kepsek", icon: LayoutGrid, bg: "bg-emerald-600", text: "text-white" },
+      { href: "/ace/principal/akuntabilitas", label: "Akuntabilitas", icon: ShieldCheck, bg: "bg-teal-700", text: "text-white" },
       { href: "/ace/principal/izin", label: "Persetujuan Cuti", icon: CheckSquare, bg: "bg-teal-500", text: "text-white" },
       { href: "/ace/principal/evaluasi", label: "Evaluasi Guru", icon: BarChart3, bg: "bg-blue-600", text: "text-white" },
+      { href: "/ace/principal/mutu", label: "Mutu Pendidikan", icon: TrendingUp, bg: "bg-indigo-500", text: "text-white" },
       { href: "/ace/principal/keuangan", label: "Laporan Keuangan", icon: Wallet, bg: "bg-amber-600", text: "text-white" },
+      { href: "/ace/principal/otorisasi", label: "Otorisasi", icon: FileSignature, bg: "bg-rose-600", text: "text-white" },
     ];
   } else if (role === 'tu') {
     services = [
@@ -30,6 +33,8 @@ export function getACEServices(profile: any) {
       { href: "/ace/tu/keuangan", label: "Keuangan", icon: Wallet, bg: "bg-emerald-500", text: "text-white" },
       { href: "/ace/tu/persuratan", label: "Surat Menyurat", icon: Mail, bg: "bg-orange-500", text: "text-white" },
       { href: "/ace/tu/inventaris", label: "Inventaris", icon: ClipboardList, bg: "bg-purple-600", text: "text-white" },
+      { href: "/ace/tu/kehadiran", label: "Kehadiran", icon: MapPin, bg: "bg-cyan-600", text: "text-white" },
+      { href: "/ace/tu/kinerja", label: "Kinerja", icon: BarChart3, bg: "bg-indigo-600", text: "text-white" },
     ];
   }
 
@@ -39,6 +44,14 @@ export function getACEServices(profile: any) {
       { href: "/ace/hod", label: "Dashboard HoD", icon: LayoutGrid, bg: "bg-indigo-600", text: "text-white" },
       { href: "/ace/hod/kurikulum", label: "Manajemen Kurikulum", icon: TrendingUp, bg: "bg-indigo-500", text: "text-white" },
       { href: "/ace/hod/supervisi", label: "Supervisi Akademik", icon: FileText, bg: "bg-blue-600", text: "text-white" }
+    );
+  }
+
+  // If the user is an Assessment Head
+  if (profile.is_assessment_head) {
+    services.push(
+      { href: "/ace/assessment/bank-soal", label: "Bank Soal Pusat", icon: BookOpen, bg: "bg-fuchsia-600", text: "text-white" },
+      { href: "/ace/assessment/brankas", label: "Brankas Ujian", icon: ShieldCheck, bg: "bg-emerald-600", text: "text-white" }
     );
   }
   
