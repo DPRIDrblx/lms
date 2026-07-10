@@ -258,6 +258,19 @@ export default function LessonViewerPage({ params }: { params: Promise<{ id: str
     return `https://www.youtube.com/watch?v=${url}`;
   };
 
+  const formatPdfUrl = (url: string) => {
+    if (!url) return "";
+    url = url.trim();
+    // Convert Google Drive view links to preview links for embedding
+    if (url.includes("drive.google.com/file/d/")) {
+      const match = url.match(/\/file\/d\/([a-zA-Z0-9_-]+)/);
+      if (match && match[1]) {
+        return `https://drive.google.com/file/d/${match[1]}/preview`;
+      }
+    }
+    return url;
+  };
+
   return (
     <div className="max-w-4xl mx-auto space-y-6 pb-32">
       <header className="flex items-center justify-between pb-6">
@@ -478,7 +491,7 @@ export default function LessonViewerPage({ params }: { params: Promise<{ id: str
               {lesson.pdf_url ? (
                 <iframe 
                   className="w-full h-full border-none"
-                  src={lesson.pdf_url} 
+                  src={formatPdfUrl(lesson.pdf_url)} 
                   title="PDF Viewer" 
                 ></iframe>
               ) : (
