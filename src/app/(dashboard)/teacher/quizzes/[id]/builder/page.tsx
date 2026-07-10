@@ -23,7 +23,9 @@ import {
   Settings,
   Clock,
   Award,
-  Flag
+  Flag,
+  Library,
+  Download
 } from "lucide-react";
 import Link from "next/link";
 import { useParams, useRouter } from "next/navigation";
@@ -52,6 +54,31 @@ export default function CBTBuilderPage() {
   const [reports, setReports] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
+  const [showBankModal, setShowBankModal] = useState(false);
+  const [banks, setBanks] = useState<any[]>([]);
+  const [loadingBanks, setLoadingBanks] = useState(false);
+
+  const openBankModal = async () => {
+    setShowBankModal(true);
+    setLoadingBanks(true);
+    const { data } = await supabase.from('ace_question_banks').select('*, items:ace_question_bank_items(*)').order('created_at', { ascending: false });
+    if (data) setBanks(data);
+    setLoadingBanks(false);
+  };
+
+  const importFromBank = (bank: any) => {
+    const importedQuestions = bank.items.map((item: any, i: number) => ({
+      id: `temp-${Date.now()}-${i}`,
+      question_text: item.question_text,
+      question_type: item.question_type,
+      options: item.options,
+      points: item.points,
+      order_index: questions.length + i,
+      criteria: item.criteria
+    }));
+    setQuestions([...questions, ...importedQuestions]);
+    setShowBankModal(false);
+  };
 
   useEffect(() => {
     const fetchData = async () => {
@@ -112,12 +139,14 @@ export default function CBTBuilderPage() {
   const handleSave = async () => {
     setSaving(true);
     
+    const calculatedMaxScore = questions.reduce((sum, q) => sum + (q.points || 0), 0);
+
     // Save quiz settings
     const { error: quizError } = await supabase
       .from("quizzes")
       .update({ 
         time_limit: quiz.time_limit || null, 
-        max_score: quiz.max_score || 100,
+        max_score: calculatedMaxScore,
         allow_leave_exam: quiz.allow_leave_exam,
         min_time_to_submit: quiz.min_time_to_submit,
         shuffle_questions: quiz.shuffle_questions
@@ -212,18 +241,14 @@ export default function CBTBuilderPage() {
                 <p className="text-xs text-[var(--text-tertiary)]">Leave 0 for no time limit.</p>
               </div>
 
-              <div className="space-y-2">
+              <div className="space-y-2 border-t border-[var(--border)] pt-4 mt-2">
                 <label className="flex items-center gap-2 text-sm font-medium text-[var(--text-secondary)]">
                   <Award className="h-4 w-4 text-[var(--text-tertiary)]" />
-                  Maximum Score
+                  Total Poin Soal (Otomatis)
                 </label>
-                <input
-                  type="number"
-                  className="w-full text-sm bg-white dark:bg-[var(--bg-secondary)] border border-[var(--border)] rounded px-3 py-2 focus:ring-1 focus:ring-[var(--accent)] focus:outline-none"
-                  value={quiz.max_score}
-                  onChange={(e) => setQuiz({ ...quiz, max_score: parseInt(e.target.value) || 0 })}
-                />
-                <p className="text-xs text-[var(--text-tertiary)]">Grades will be scaled to this max score.</p>
+                <div className="text-2xl font-black text-[var(--accent)]">
+                  {questions.reduce((sum, q) => sum + (q.points || 0), 0)}
+                </div>
               </div>
 
               <div className="space-y-2 border-t border-[var(--border)] pt-4 mt-2">
@@ -278,6 +303,10 @@ export default function CBTBuilderPage() {
               <Button variant="secondary" className="justify-start border-[var(--border)] bg-white dark:bg-[var(--bg-secondary)] shadow-sm" onClick={() => addQuestion("essay")}>
                 <Plus className="h-4 w-4 mr-2 text-[var(--accent)]" />
                 Essay
+              </Button>
+              <Button variant="secondary" className="justify-start border-blue-200 bg-blue-50 text-blue-700 hover:bg-blue-100 hover:text-blue-800 mt-4 shadow-sm" onClick={openBankModal}>
+                <Download className="h-4 w-4 mr-2" />
+                Impor dari Bank Soal
               </Button>
             </div>
           </Card>
@@ -517,6 +546,51 @@ export default function CBTBuilderPage() {
           </AnimatePresence>
         </div>
       </div>
+
+      <AnimatePresence>
+        {showBankModal && (
+          <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-slate-900/40 backdrop-blur-sm">
+            <motion.div 
+              initial={{ scale: 0.9, opacity: 0 }} 
+              animate={{ scale: 1, opacity: 1 }} 
+              exit={{ scale: 0.9, opacity: 0 }}
+              className="bg-white max-w-2xl w-full rounded-2xl shadow-xl flex flex-col max-h-[80vh] overflow-hidden"
+            >
+              <div className="p-4 border-b border-slate-100 flex items-center justify-between bg-slate-50">
+                <h2 className="font-bold text-lg text-slate-800 flex items-center gap-2">
+                  <Library className="w-5 h-5 text-blue-600" /> Impor dari Bank Soal Pusat
+                </h2>
+                <button onClick={() => setShowBankModal(false)} className="text-slate-400 hover:text-red-500">
+                  <X className="w-5 h-5" />
+                </button>
+              </div>
+              
+              <div className="p-4 overflow-y-auto flex-1 bg-slate-50/50">
+                {loadingBanks ? (
+                  <div className="py-12 flex justify-center"><Loader2 className="w-8 h-8 animate-spin text-blue-500" /></div>
+                ) : banks.length === 0 ? (
+                  <div className="py-12 text-center text-slate-500 text-sm">Tidak ada bank soal yang tersedia. Hubungi Kepala Departemen Asesmen (ACE).</div>
+                ) : (
+                  <div className="grid gap-4">
+                    {banks.map(bank => (
+                      <div key={bank.id} className="bg-white p-4 rounded-xl border border-slate-200 shadow-sm flex items-center justify-between hover:border-blue-300 transition-colors">
+                        <div>
+                          <h3 className="font-bold text-slate-800">{bank.title}</h3>
+                          <p className="text-xs text-slate-500 line-clamp-1">{bank.description}</p>
+                          <p className="text-[10px] font-bold text-blue-500 mt-2">{bank.items?.length || 0} SOAL TERSEDIA</p>
+                        </div>
+                        <Button onClick={() => importFromBank(bank)} variant="primary" className="bg-blue-600 hover:bg-blue-700">
+                          Impor Soal
+                        </Button>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
     </div>
   );
 }

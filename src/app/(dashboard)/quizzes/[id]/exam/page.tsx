@@ -345,13 +345,11 @@ export default function ExamPage({ params }: { params: Promise<{ id: string }> }
       }
     });
 
-    const finalPercentage = Math.round((totalScore / maxScore) * 100);
-
     await supabase.from("student_scores").insert({
       student_id: profile?.id,
       target_id: id,
       target_type: "quiz",
-      score: finalPercentage,
+      score: totalScore,
       is_graded: !hasEssay,
       metadata: { responses }, 
       graded_at: hasEssay ? null : new Date().toISOString()
@@ -367,7 +365,7 @@ export default function ExamPage({ params }: { params: Promise<{ id: string }> }
        }, { onConflict: "student_id,lesson_id" });
     }
 
-    setFinalScore(finalPercentage);
+    setFinalScore(totalScore);
     setNeedsManualGrading(hasEssay);
     setIsFinished(true);
     playSound('finish');
@@ -474,7 +472,7 @@ export default function ExamPage({ params }: { params: Promise<{ id: string }> }
                {needsManualGrading ? (
                   <div>
                     <div className="text-5xl font-black text-yellow-500">
-                      {finalScore !== null ? finalScore : "?"} <span className="text-2xl text-slate-300">/ 100</span>
+                      {finalScore !== null ? finalScore : "?"} <span className="text-2xl text-slate-300">/ {quiz?.max_score}</span>
                     </div>
                     <p className="text-sm text-yellow-600 mt-4 font-bold bg-yellow-100/50 p-2 rounded-xl inline-block">
                       Menunggu Penilaian Guru (Ada Soal Essay)
@@ -483,7 +481,7 @@ export default function ExamPage({ params }: { params: Promise<{ id: string }> }
                ) : (
                   <div>
                     <div className={`text-6xl font-black ${isPassed ? 'text-green-500' : 'text-red-500'}`}>
-                      {finalScore} <span className="text-2xl text-slate-300">/ 100</span>
+                      {finalScore} <span className="text-2xl text-slate-300">/ {quiz?.max_score}</span>
                     </div>
                   </div>
                )}
