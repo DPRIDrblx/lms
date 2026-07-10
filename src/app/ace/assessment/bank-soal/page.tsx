@@ -4,7 +4,7 @@ import { useAuth } from "@/lib/auth-context";
 import { createClient } from "@/lib/supabase";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Upload, FileSpreadsheet, Plus, Trash2, Library } from "lucide-react";
+import { Upload, FileSpreadsheet, Plus, Trash2, Library, Download } from "lucide-react";
 import { useEffect, useState } from "react";
 import * as XLSX from "xlsx";
 import { toast } from "react-hot-toast";
@@ -31,6 +31,18 @@ export default function BankSoalPage() {
   useEffect(() => {
     fetchBanks();
   }, [profile]);
+
+  const downloadTemplate = () => {
+    const ws = XLSX.utils.aoa_to_sheet([
+      ["Tipe Soal", "Pertanyaan", "Opsi A", "Opsi B", "Opsi C", "Opsi D", "Opsi E", "Kunci Jawaban", "Poin"],
+      ["mcq", "Siapa penemu lampu pijar?", "Thomas Edison", "Nikola Tesla", "Albert Einstein", "Isaac Newton", "Galileo Galilei", "A", 10],
+      ["essay", "Jelaskan proses terjadinya hujan!", "", "", "", "", "", "", 20],
+      ["mcq", "Berapa hasil dari 5 + 7?", "10", "11", "12", "13", "14", "C", 5]
+    ]);
+    const wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, ws, "Template_Bank_Soal");
+    XLSX.writeFile(wb, "Template_Bank_Soal_IGNITE.xlsx");
+  };
 
   const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -126,18 +138,24 @@ export default function BankSoalPage() {
           <p className="text-slate-500 font-medium mt-1 text-sm">Kelola dan unggah paket soal terstandarisasi untuk digunakan oleh guru.</p>
         </div>
         
-        <div className="relative">
-          <input
-            type="file"
-            accept=".xlsx, .xls"
-            onChange={handleFileUpload}
-            className="absolute inset-0 w-full h-full opacity-0 cursor-pointer disabled:cursor-not-allowed"
-            disabled={uploading}
-          />
-          <Button disabled={uploading} className="bg-blue-600 hover:bg-blue-700 w-full md:w-auto">
-            <FileSpreadsheet className="w-4 h-4 mr-2" />
-            {uploading ? "Mengimpor..." : "Upload Excel"}
+        <div className="flex items-center gap-3">
+          <Button variant="secondary" onClick={downloadTemplate} className="border-blue-200 text-blue-700 hover:bg-blue-50">
+            <Download className="w-4 h-4 mr-2" />
+            Download Template
           </Button>
+          <div className="relative">
+            <input
+              type="file"
+              accept=".xlsx, .xls"
+              onChange={handleFileUpload}
+              className="absolute inset-0 w-full h-full opacity-0 cursor-pointer disabled:cursor-not-allowed"
+              disabled={uploading}
+            />
+            <Button disabled={uploading} className="bg-blue-600 hover:bg-blue-700 w-full md:w-auto">
+              <FileSpreadsheet className="w-4 h-4 mr-2" />
+              {uploading ? "Mengimpor..." : "Upload Excel"}
+            </Button>
+          </div>
         </div>
       </div>
 
