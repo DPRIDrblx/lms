@@ -473,6 +473,23 @@ export default function LessonViewerPage({ params }: { params: Promise<{ id: str
             </div>
           )}
 
+          {lesson.content_type === "pdf" && (
+            <div className="w-full h-[600px] md:h-[800px] bg-[var(--bg-secondary)] relative">
+              {lesson.video_url ? (
+                <iframe 
+                  className="w-full h-full border-none"
+                  src={lesson.video_url} 
+                  title="PDF Viewer" 
+                ></iframe>
+              ) : (
+                <div className="absolute inset-0 flex flex-col items-center justify-center text-[var(--text-tertiary)]">
+                  <FileText className="h-16 w-16 opacity-20 mb-4" />
+                  <p className="font-bold text-lg">Dokumen PDF tidak tersedia</p>
+                </div>
+              )}
+            </div>
+          )}
+
           {lesson.content_type === "canva" && (
             <div className="aspect-video w-full bg-black/5 rounded-2xl overflow-hidden relative">
               {lesson.video_url ? (

@@ -67,7 +67,6 @@ export default function GameViewerPage({ params }: { params: Promise<{ id: strin
       refreshProfile();
       toast.success(`Selamat! Kamu mendapatkan +${lesson.xp_reward} XP`);
       
-      // Redirect back to lesson page after showing the win screen for a bit
       setTimeout(() => {
         router.push(`/courses/${id}/lessons/${lessonId}`);
       }, 3000);
