@@ -475,10 +475,10 @@ export default function LessonViewerPage({ params }: { params: Promise<{ id: str
 
           {lesson.content_type === "pdf" && (
             <div className="w-full h-[600px] md:h-[800px] bg-[var(--bg-secondary)] relative">
-              {lesson.video_url ? (
+              {lesson.pdf_url ? (
                 <iframe 
                   className="w-full h-full border-none"
-                  src={lesson.video_url} 
+                  src={lesson.pdf_url} 
                   title="PDF Viewer" 
                 ></iframe>
               ) : (
