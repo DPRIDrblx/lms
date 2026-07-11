@@ -1,6 +1,6 @@
 "use client";
 
-import { motion } from "framer-motion";
+import { motion, Variants } from "framer-motion";
 import { useEffect, useState } from "react";
 
 interface MascotProps {
@@ -21,19 +21,19 @@ export function Mascot({ state, className = "" }: MascotProps) {
     return () => clearInterval(blinkInterval);
   }, []);
 
-  const variants = {
+  const variants: Variants = {
     idle: { y: [0, -5, 0], transition: { duration: 2, repeat: Infinity, ease: "easeInOut" } },
     correct: { y: [0, -15, 0], transition: { duration: 0.6, ease: "easeOut" } },
     incorrect: { x: [-5, 5, -5, 5, 0], transition: { duration: 0.4 } }
   };
 
-  const armVariants = {
+  const armVariants: Variants = {
     idle: { rotate: 0, y: 0 },
     correct: { rotate: -130, y: -20, transition: { type: "spring", stiffness: 200 } }, // Arms up cheering
     incorrect: { rotate: 45, y: 10, x: -10, transition: { type: "spring", stiffness: 200 } } // Arms crossed
   };
 
-  const armRightVariants = {
+  const armRightVariants: Variants = {
     idle: { rotate: 0, y: 0 },
     correct: { rotate: 130, y: -20, transition: { type: "spring", stiffness: 200 } }, // Arms up cheering
     incorrect: { rotate: -45, y: 10, x: 10, transition: { type: "spring", stiffness: 200 } } // Arms crossed
@@ -55,7 +55,7 @@ export function Mascot({ state, className = "" }: MascotProps) {
         <circle cx="50" cy="85" r="3" fill="#F59E0B" /> {/* Tie/Badge */}
 
         {/* Left Arm */}
-        <motion.g animate={state} variants={armVariants} transformOrigin="30px 70px">
+        <motion.g animate={state} variants={armVariants} style={{ transformOrigin: "30px 70px" }}>
           <rect x="15" y="65" width="15" height="40" rx="7.5" fill="#2563EB" />
           <circle cx="22.5" cy="100" r="7.5" fill="#FCD34D" /> {/* Hand */}
           {state === 'correct' && (
@@ -64,7 +64,7 @@ export function Mascot({ state, className = "" }: MascotProps) {
         </motion.g>
 
         {/* Right Arm */}
-        <motion.g animate={state} variants={armRightVariants} transformOrigin="70px 70px">
+        <motion.g animate={state} variants={armRightVariants} style={{ transformOrigin: "70px 70px" }}>
           <rect x="70" y="65" width="15" height="40" rx="7.5" fill="#2563EB" />
           <circle cx="77.5" cy="100" r="7.5" fill="#FCD34D" /> {/* Hand */}
           {state === 'correct' && (
