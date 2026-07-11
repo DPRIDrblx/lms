@@ -494,10 +494,8 @@ export default function ExamPage({ params }: { params: Promise<{ id: string }> }
     if (isPracticeMode && quiz?.save_practice_scores === false) {
        // Do not save to student_scores if save_practice_scores is false
     } else {
-       await supabase.from("student_scores").upsert(payload, { onConflict: "student_id,target_id,target_type" });
+       await supabase.from("student_scores").upsert(payload, { onConflict: "student_id,target_id" });
     }
-
-
     if (quiz?.course_id) {
        await supabase.from("course_progress").upsert({
           student_id: profile?.id,
