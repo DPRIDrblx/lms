@@ -494,7 +494,7 @@ export default function ExamPage({ params }: { params: Promise<{ id: string }> }
         },
         isAlert: false
       });
-    }, 15000); // Popup every 15 seconds
+    }, 30000); // Popup every 30 seconds
 
     try {
       const res = await fetch('/api/ai/grade-exam', {
