@@ -60,7 +60,9 @@ Berikut adalah data soal dan jawaban siswa:
 
     promptText += `
 Tugas Anda:
-1. Analisis Kinerja Keseluruhan: Berikan analisis singkat untuk siswa bernama ${studentName || 'Siswa'}. Sebutkan kekuatan dan kelemahannya berdasarkan jawabannya. Kalimatkan seperti laporan guru ke orang tua atau siswa secara langsung (misal: "Ananda sudah memahami materi A, namun kurang di bidang B dan perlu untuk mempelajari topik C").
+1. Analisis Kinerja Keseluruhan: Berikan analisis singkat untuk siswa. Anda WAJIB menyertakan struktur berikut di dalam teks Anda:
+   - "🌟 Topik yang Sudah Dikuasai:" (sebutkan materi/topik yang dijawab dengan baik)
+   - "📚 Materi yang Perlu Dipelajari Lagi:" (sebutkan kelemahan jika ada, atau "Semua sudah baik" jika sempurna)
 2. ${hasEssay ? "Koreksi Soal Essay: Berikan nilai (0 sampai Poin Maksimal) dan *feedback* spesifik untuk setiap jawaban essay siswa." : ""}
 
 Berikan jawaban HANYA dalam format JSON dengan struktur berikut (jangan tambahkan markdown \`\`\`json):

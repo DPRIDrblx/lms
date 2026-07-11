@@ -36,7 +36,7 @@ export default function QuizReviewPage({ params }: { params: Promise<{ id: strin
   useEffect(() => {
     const fetchData = async () => {
       const [scoreRes, quizRes, questionsRes, responsesRes, sessionRes] = await Promise.all([
-        supabase.from("student_scores").select("*").eq("student_id", profile?.id).eq("target_id", id).maybeSingle(),
+        supabase.from("student_scores").select("*").eq("student_id", profile?.id).eq("target_id", id).order("created_at", { ascending: false }).limit(1),
         supabase.from("quizzes").select("*").eq("id", id).single(),
         supabase.from("questions").select("*").eq("quiz_id", id).order("order_index", { ascending: true }),
         supabase.from("quiz_responses").select("*").eq("student_id", profile?.id).eq("quiz_id", id),
@@ -53,7 +53,7 @@ export default function QuizReviewPage({ params }: { params: Promise<{ id: strin
       }
       setIsPractice(practiceFlag);
 
-      if (scoreRes.data) setScore(scoreRes.data);
+      if (scoreRes.data && scoreRes.data.length > 0) setScore(scoreRes.data[0]);
       if (quizRes.data) setQuiz(quizRes.data);
       
       if (questionsRes.data) {

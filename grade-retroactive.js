@@ -8,7 +8,7 @@ async function run() {
   const model = genAI.getGenerativeModel({ model: 'gemini-3.5-flash' });
 
   // Get the specific score
-  const { data: score } = await supabase.from('student_scores').select('*').eq('id', '47aeb232-50cf-4eb9-a373-c57ac5c3c884').single();
+  const { data: score } = await supabase.from('student_scores').select('*').eq('id', 'd963d1b1-6c36-4c74-95a7-895c61300e04').single();
   if (!score) return console.log('Score not found');
 
   // Get questions
@@ -55,7 +55,9 @@ Berikut adalah data soal dan jawaban siswa:
 
   promptText += `
 Tugas Anda:
-1. Analisis Kinerja Keseluruhan: Berikan analisis singkat untuk siswa.
+1. Analisis Kinerja Keseluruhan: Berikan analisis singkat untuk siswa. Anda WAJIB menyertakan struktur berikut di dalam teks Anda:
+   - "🌟 Topik yang Sudah Dikuasai:" (sebutkan materi/topik yang dijawab dengan baik)
+   - "📚 Materi yang Perlu Dipelajari Lagi:" (sebutkan kelemahan jika ada, atau "Semua sudah baik" jika sempurna)
 2. Koreksi Soal Essay: Berikan nilai (0 sampai Poin Maksimal) dan *feedback* spesifik untuk setiap jawaban essay siswa.
 
 Berikan jawaban HANYA dalam format JSON (tanpa markdown blok):
