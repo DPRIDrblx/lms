@@ -472,68 +472,66 @@ export default function ExamPage({ params }: { params: Promise<{ id: string }> }
     });
 
     // finalizeSubmission is defined below and will be called appropriately.
-    if (hasEssay) {
-      setIsSubmittingToAI(true);
-      let isFinalizedLocally = false;
-      
-      const intervalId = setInterval(() => {
-        if (isFinalizedLocally) {
+    setIsSubmittingToAI(true);
+    let isFinalizedLocally = false;
+    
+    const intervalId = setInterval(() => {
+      if (isFinalizedLocally) {
+        clearInterval(intervalId);
+        return;
+      }
+      setConfirmModal({
+        show: true,
+        title: 'Analisis AI Butuh Waktu',
+        message: hasEssay 
+          ? 'AI masih sibuk mengoreksi jawaban essay Anda. Klik BATAL untuk tetap menunggu, atau klik YA, LANJUTKAN untuk kumpulkan tanpa koreksi AI (guru akan mengoreksi manual).' 
+          : 'AI masih memproses analisis performa ujian Anda. Klik BATAL untuk tetap menunggu, atau klik YA, LANJUTKAN untuk melewati proses analisis ini.',
+        onConfirm: () => {
+          isFinalizedLocally = true;
           clearInterval(intervalId);
-          return;
-        }
-        setConfirmModal({
-          show: true,
-          title: 'Koreksi AI Butuh Waktu',
-          message: 'AI masih sibuk mengoreksi jawaban essay Anda. Klik BATAL untuk tetap menunggu, atau klik YA, LANJUTKAN untuk kumpulkan tanpa koreksi AI (guru akan mengoreksi manual).',
-          onConfirm: () => {
-            isFinalizedLocally = true;
-            clearInterval(intervalId);
-            setConfirmModal(prev => ({...prev, show: false}));
-            finalizeSubmission(totalScore, hasEssay, null);
-          },
-          isAlert: false
-        });
-      }, 15000); // Popup every 15 seconds
+          setConfirmModal(prev => ({...prev, show: false}));
+          finalizeSubmission(totalScore, hasEssay, null);
+        },
+        isAlert: false
+      });
+    }, 15000); // Popup every 15 seconds
 
-      try {
-        const res = await fetch('/api/ai/grade-exam', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            quizTitle: quiz?.title,
-            questions,
-            responses,
-            studentName: profile?.full_name
-          })
-        });
+    try {
+      const res = await fetch('/api/ai/grade-exam', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          quizTitle: quiz?.title,
+          questions,
+          responses,
+          studentName: profile?.full_name
+        })
+      });
 
-        clearInterval(intervalId);
+      clearInterval(intervalId);
 
-        if (!isFinalizedLocally) {
-          isFinalizedLocally = true;
-          setConfirmModal(prev => ({...prev, show: false})); // close modal if it was currently open
-          if (res.ok) {
-            const aiData = await res.json();
-            if (aiData.essayScores) {
-              Object.values(aiData.essayScores).forEach((score: any) => {
-                totalScore += Number(score) || 0;
-              });
-            }
-            finalizeSubmission(totalScore, hasEssay, aiData);
-          } else {
-            finalizeSubmission(totalScore, hasEssay, null);
+      if (!isFinalizedLocally) {
+        isFinalizedLocally = true;
+        setConfirmModal(prev => ({...prev, show: false})); // close modal if it was currently open
+        if (res.ok) {
+          const aiData = await res.json();
+          if (aiData.essayScores) {
+            Object.values(aiData.essayScores).forEach((score: any) => {
+              totalScore += Number(score) || 0;
+            });
           }
-        }
-      } catch (error) {
-        clearInterval(intervalId);
-        if (!isFinalizedLocally) {
-          isFinalizedLocally = true;
-          console.error("AI grading failed", error);
+          finalizeSubmission(totalScore, hasEssay, aiData);
+        } else {
           finalizeSubmission(totalScore, hasEssay, null);
         }
       }
-    } else {
-      finalizeSubmission(totalScore, false, null);
+    } catch (error) {
+      clearInterval(intervalId);
+      if (!isFinalizedLocally) {
+        isFinalizedLocally = true;
+        console.error("AI grading failed", error);
+        finalizeSubmission(totalScore, hasEssay, null);
+      }
     }
   };
 
