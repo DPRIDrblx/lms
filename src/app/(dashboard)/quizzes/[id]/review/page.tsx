@@ -30,20 +30,39 @@ export default function QuizReviewPage({ params }: { params: Promise<{ id: strin
   const [quiz, setQuiz] = useState<any>(null);
   const [questions, setQuestions] = useState<any[]>([]);
   const [responses, setResponses] = useState<any[]>([]);
+  const [isPractice, setIsPractice] = useState(false);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     const fetchData = async () => {
-      const [scoreRes, quizRes, questionsRes, responsesRes] = await Promise.all([
-        supabase.from("student_scores").select("*").eq("student_id", profile?.id).eq("target_id", id).single(),
+      const [scoreRes, quizRes, questionsRes, responsesRes, sessionRes] = await Promise.all([
+        supabase.from("student_scores").select("*").eq("student_id", profile?.id).eq("target_id", id).maybeSingle(),
         supabase.from("quizzes").select("*").eq("id", id).single(),
         supabase.from("questions").select("*").eq("quiz_id", id).order("order_index", { ascending: true }),
-        supabase.from("quiz_responses").select("*").eq("student_id", profile?.id).eq("quiz_id", id)
+        supabase.from("quiz_responses").select("*").eq("student_id", profile?.id).eq("quiz_id", id),
+        supabase.from("exam_sessions").select("*").eq("student_id", profile?.id).eq("quiz_id", id).order("created_at", { ascending: false }).limit(1)
       ]);
       
+      let practiceFlag = false;
+      if (scoreRes.data?.target_type === 'quiz_practice') {
+        practiceFlag = true;
+      } else if (sessionRes.data && sessionRes.data.length > 0) {
+        if (sessionRes.data[0].metadata?.is_practice) {
+          practiceFlag = true;
+        }
+      }
+      setIsPractice(practiceFlag);
+
       if (scoreRes.data) setScore(scoreRes.data);
       if (quizRes.data) setQuiz(quizRes.data);
-      if (questionsRes.data) setQuestions(questionsRes.data);
+      
+      if (questionsRes.data) {
+        let qs = questionsRes.data;
+        if (practiceFlag) {
+          qs = qs.filter((q: any) => q.question_type !== 'essay');
+        }
+        setQuestions(qs);
+      }
       if (responsesRes.data) setResponses(responsesRes.data);
       
       setLoading(false);
@@ -61,8 +80,14 @@ export default function QuizReviewPage({ params }: { params: Promise<{ id: strin
   let syntheticScore = 0;
 
   questions.forEach(q => {
+    let studentAnswer = null;
     const resp = responses.find(r => r.question_id === q.id);
-    const studentAnswer = resp?.metadata?.answer;
+    if (resp?.metadata?.answer !== undefined) {
+      studentAnswer = resp.metadata.answer;
+    } else if (score?.metadata?.responses?.[q.id] !== undefined) {
+      const metaResp = score.metadata.responses[q.id];
+      studentAnswer = (metaResp && typeof metaResp === 'object' && metaResp.answer !== undefined) ? metaResp.answer : metaResp;
+    }
 
     if (!studentAnswer || (Array.isArray(studentAnswer) && studentAnswer.length === 0) || (typeof studentAnswer === 'object' && Object.keys(studentAnswer).length === 0)) {
       unansweredCount++;
@@ -103,7 +128,8 @@ export default function QuizReviewPage({ params }: { params: Promise<{ id: strin
   });
 
   const finalScoreData = score || { score: Math.round(syntheticScore), is_graded: true, metadata: {} };
-  const percentage = Math.round((finalScoreData.score / (quiz?.total_points || quiz?.max_score || 100)) * 100);
+  const actualMaxScore = questions.reduce((sum, q) => sum + (q.points || 0), 0) || quiz?.max_score || 100;
+  const percentage = Math.round((finalScoreData.score / actualMaxScore) * 100);
   const aiAnalysis = finalScoreData?.metadata?.ai_analysis;
 
   return (
@@ -144,7 +170,7 @@ export default function QuizReviewPage({ params }: { params: Promise<{ id: strin
              <div className="grid grid-cols-2 gap-4 w-full">
                 <div className="p-6 rounded-2xl bg-[var(--bg-primary)] border border-[var(--border)]">
                    <p className="text-[10px] font-black uppercase text-[var(--text-tertiary)] mb-1">Total Poin</p>
-                   <p className="text-xl font-bold text-[var(--text-primary)]">{finalScoreData.score} / {quiz?.max_score || 100}</p>
+                   <p className="text-xl font-bold text-[var(--text-primary)]">{finalScoreData.score} / {actualMaxScore}</p>
                 </div>
                 <div className="p-6 rounded-2xl bg-[var(--bg-primary)] border border-[var(--border)]">
                    <p className="text-[10px] font-black uppercase text-[var(--text-tertiary)] mb-1">Status</p>
@@ -227,17 +253,22 @@ export default function QuizReviewPage({ params }: { params: Promise<{ id: strin
 
           <div className="space-y-6">
             {questions.map((q, idx) => {
+              let studentAnswer = null;
               const resp = responses.find(r => r.question_id === q.id);
-              let studentAnswer = resp?.metadata?.answer;
+              if (resp?.metadata?.answer !== undefined) {
+                studentAnswer = resp.metadata.answer;
+              }
               
-              // Handle AI feedback if it was saved directly in metadata or under score's metadata
-              // In our implementation, we saved it in score.metadata.responses[qId].ai_feedback
+              // Handle AI feedback and reliable fallback to score's metadata
               const scoreMetaResp = finalScoreData?.metadata?.responses?.[q.id];
               let aiFeedback = null;
-              if (scoreMetaResp && typeof scoreMetaResp === 'object' && scoreMetaResp.ai_feedback) {
-                aiFeedback = scoreMetaResp.ai_feedback;
-                if (!studentAnswer && scoreMetaResp.answer) {
-                   studentAnswer = scoreMetaResp.answer;
+              
+              if (scoreMetaResp !== undefined) {
+                if (scoreMetaResp && typeof scoreMetaResp === 'object' && scoreMetaResp.ai_feedback !== undefined) {
+                  aiFeedback = scoreMetaResp.ai_feedback;
+                  if (studentAnswer === null) studentAnswer = scoreMetaResp.answer;
+                } else if (studentAnswer === null) {
+                  studentAnswer = scoreMetaResp;
                 }
               }
 

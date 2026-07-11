@@ -1155,6 +1155,32 @@ export default function ExamPage({ params }: { params: Promise<{ id: string }> }
                 </div>
               </div>
             )}
+
+            {/* PRACTICE MODE: Check Answer & Explanation */}
+            {isPracticeMode && currentQ && (
+              <div className="mt-8 space-y-4">
+                {(currentQ.question_type === 'complex_mcq' || currentQ.question_type === 'matching') && !isAnswerRevealed[currentQ.id] && (
+                  <button
+                    onClick={() => setIsAnswerRevealed(prev => ({ ...prev, [currentQ.id]: true }))}
+                    className="px-6 py-3 bg-indigo-500 text-white font-bold rounded-xl border-b-4 border-indigo-700 hover:bg-indigo-400 active:translate-y-1 active:border-b-0 transition-all flex items-center gap-2"
+                  >
+                    <CheckCircle2 className="w-5 h-5" />
+                    Cek Jawaban
+                  </button>
+                )}
+
+                {isAnswerRevealed[currentQ.id] && currentQ.explanation && (
+                  <div className="p-5 bg-blue-50 border-2 border-blue-200 rounded-2xl relative overflow-hidden">
+                    <div className="absolute top-0 left-0 w-2 h-full bg-blue-500" />
+                    <h4 className="font-black text-blue-800 flex items-center gap-2 mb-3">
+                      <AlertCircle className="w-5 h-5" />
+                      Pembahasan
+                    </h4>
+                    <div className="prose prose-sm max-w-none text-blue-900" dangerouslySetInnerHTML={{ __html: currentQ.explanation }} />
+                  </div>
+                )}
+              </div>
+            )}
           </div>
         </div>
 
