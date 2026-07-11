@@ -22,21 +22,21 @@ export function Mascot({ state, className = "" }: MascotProps) {
   }, []);
 
   const variants: Variants = {
-    idle: { y: [0, -5, 0], transition: { duration: 2, repeat: Infinity, ease: "easeInOut" } },
-    correct: { y: [0, -15, 0], transition: { duration: 0.6, ease: "easeOut" } },
-    incorrect: { x: [-5, 5, -5, 5, 0], transition: { duration: 0.4 } }
+    idle: { y: [0, -4, 0], transition: { duration: 2.5, repeat: Infinity, ease: "easeInOut" } },
+    correct: { y: [0, -15, 0], transition: { duration: 0.5, ease: "easeOut" } },
+    incorrect: { x: [-4, 4, -4, 4, 0], transition: { duration: 0.4 } }
   };
 
-  const armVariants: Variants = {
+  const leftArmVariants: Variants = {
     idle: { rotate: 0, y: 0 },
-    correct: { rotate: -130, y: -20, transition: { type: "spring", stiffness: 200 } }, // Arms up cheering
-    incorrect: { rotate: 45, y: 10, x: -10, transition: { type: "spring", stiffness: 200 } } // Arms crossed
+    correct: { rotate: -150, y: -15, transition: { type: "spring", stiffness: 300 } }, // Cheer
+    incorrect: { rotate: 45, y: 5, x: 5, transition: { type: "spring", stiffness: 300 } } // Cross
   };
 
-  const armRightVariants: Variants = {
+  const rightArmVariants: Variants = {
     idle: { rotate: 0, y: 0 },
-    correct: { rotate: 130, y: -20, transition: { type: "spring", stiffness: 200 } }, // Arms up cheering
-    incorrect: { rotate: -45, y: 10, x: 10, transition: { type: "spring", stiffness: 200 } } // Arms crossed
+    correct: { rotate: 150, y: -15, transition: { type: "spring", stiffness: 300 } }, // Cheer
+    incorrect: { rotate: -45, y: 5, x: -5, transition: { type: "spring", stiffness: 300 } } // Cross
   };
 
   return (
@@ -47,83 +47,95 @@ export function Mascot({ state, className = "" }: MascotProps) {
         xmlns="http://www.w3.org/2000/svg"
         animate={state}
         variants={variants}
-        className="w-full h-full drop-shadow-md"
+        className="w-full h-full drop-shadow-lg"
       >
-        {/* Body (Student Uniform) */}
-        <path d="M 20 100 C 20 60, 80 60, 80 100" fill="#3B82F6" />
-        <path d="M 40 100 L 50 80 L 60 100" fill="#F8FAFC" /> {/* Collar */}
-        <circle cx="50" cy="85" r="3" fill="#F59E0B" /> {/* Tie/Badge */}
+        <defs>
+          <linearGradient id="skinGrad" x1="0" y1="0" x2="0" y2="1">
+            <stop offset="0%" stopColor="#ffdfc4" />
+            <stop offset="100%" stopColor="#f0c6a5" />
+          </linearGradient>
+          <linearGradient id="hairGrad" x1="0" y1="0" x2="0" y2="1">
+            <stop offset="0%" stopColor="#4A3B32" />
+            <stop offset="100%" stopColor="#2D231E" />
+          </linearGradient>
+          <linearGradient id="shirtGrad" x1="0" y1="0" x2="0" y2="1">
+            <stop offset="0%" stopColor="#FFFFFF" />
+            <stop offset="100%" stopColor="#E2E8F0" />
+          </linearGradient>
+          <linearGradient id="jacketGrad" x1="0" y1="0" x2="0" y2="1">
+            <stop offset="0%" stopColor="#1E3A8A" />
+            <stop offset="100%" stopColor="#172554" />
+          </linearGradient>
+        </defs>
+
+        {/* Back Hair */}
+        <circle cx="50" cy="40" r="32" fill="url(#hairGrad)" />
+
+        {/* Body (Jacket) */}
+        <path d="M 25 100 C 25 70, 75 70, 75 100" fill="url(#jacketGrad)" />
+        {/* Inner Shirt */}
+        <path d="M 35 100 L 45 75 L 55 75 L 65 100" fill="url(#shirtGrad)" />
+        {/* Red Tie */}
+        <path d="M 47 75 L 53 75 L 55 95 L 50 100 L 45 95 Z" fill="#EF4444" />
 
         {/* Left Arm */}
-        <motion.g animate={state} variants={armVariants} style={{ transformOrigin: "30px 70px" }}>
-          <rect x="15" y="65" width="15" height="40" rx="7.5" fill="#2563EB" />
-          <circle cx="22.5" cy="100" r="7.5" fill="#FCD34D" /> {/* Hand */}
-          {state === 'correct' && (
-             <path d="M 18 95 L 18 85 C 18 80, 25 80, 25 85 L 25 95" fill="#FCD34D" /> /* Thumbs up */
-          )}
+        <motion.g animate={state} variants={leftArmVariants} style={{ transformOrigin: "35px 75px" }}>
+          <rect x="20" y="70" width="12" height="28" rx="6" fill="url(#jacketGrad)" />
+          <circle cx="26" cy="98" r="6" fill="url(#skinGrad)" />
         </motion.g>
 
         {/* Right Arm */}
-        <motion.g animate={state} variants={armRightVariants} style={{ transformOrigin: "70px 70px" }}>
-          <rect x="70" y="65" width="15" height="40" rx="7.5" fill="#2563EB" />
-          <circle cx="77.5" cy="100" r="7.5" fill="#FCD34D" /> {/* Hand */}
-          {state === 'correct' && (
-             <path d="M 72 95 L 72 85 C 72 80, 79 80, 79 85 L 79 95" fill="#FCD34D" /> /* Thumbs up */
-          )}
+        <motion.g animate={state} variants={rightArmVariants} style={{ transformOrigin: "65px 75px" }}>
+          <rect x="68" y="70" width="12" height="28" rx="6" fill="url(#jacketGrad)" />
+          <circle cx="74" cy="98" r="6" fill="url(#skinGrad)" />
         </motion.g>
 
-        {/* Head */}
-        <circle cx="50" cy="40" r="25" fill="#FCD34D" />
+        {/* Face */}
+        <circle cx="50" cy="45" r="28" fill="url(#skinGrad)" />
 
-        {/* Hair */}
-        <path d="M 25 40 C 25 10, 75 10, 75 40 C 70 20, 30 20, 25 40 Z" fill="#1E293B" />
-        <path d="M 25 40 C 20 50, 20 60, 25 65 C 30 65, 30 50, 25 40 Z" fill="#1E293B" />
-        <path d="M 75 40 C 80 50, 80 60, 75 65 C 70 65, 70 50, 75 40 Z" fill="#1E293B" />
+        {/* Front Hair Bangs */}
+        <path d="M 22 40 C 25 15, 75 15, 78 40 C 70 20, 60 25, 50 20 C 40 25, 30 20, 22 40 Z" fill="url(#hairGrad)" />
+        <path d="M 78 40 C 75 25, 65 30, 50 25 C 60 30, 70 35, 78 40 Z" fill="url(#hairGrad)" />
+        <path d="M 22 40 C 25 25, 35 30, 50 25 C 40 30, 30 35, 22 40 Z" fill="url(#hairGrad)" />
 
-        {/* Eyes */}
-        <motion.g animate={{ scaleY: isBlinking ? 0.1 : 1 }} transition={{ duration: 0.1 }}>
+        {/* Glasses */}
+        <circle cx="38" cy="48" r="10" fill="none" stroke="#0F172A" strokeWidth="2.5" />
+        <circle cx="62" cy="48" r="10" fill="none" stroke="#0F172A" strokeWidth="2.5" />
+        <line x1="48" y1="48" x2="52" y2="48" stroke="#0F172A" strokeWidth="2.5" />
+
+        {/* Eyes & Blinking */}
+        <motion.g animate={{ scaleY: isBlinking ? 0.1 : 1 }} style={{ transformOrigin: "50px 48px" }}>
           {state === 'incorrect' ? (
             <>
-              {/* X eyes for incorrect */}
-              <path d="M 35 32 L 43 40 M 43 32 L 35 40" stroke="#1E293B" strokeWidth="3" strokeLinecap="round" />
-              <path d="M 57 32 L 65 40 M 65 32 L 57 40" stroke="#1E293B" strokeWidth="3" strokeLinecap="round" />
+              {/* Sad/Dizzy Eyes inside glasses */}
+              <path d="M 34 45 L 42 51 M 42 45 L 34 51" stroke="#0F172A" strokeWidth="2.5" strokeLinecap="round" />
+              <path d="M 58 45 L 66 51 M 66 45 L 58 51" stroke="#0F172A" strokeWidth="2.5" strokeLinecap="round" />
             </>
           ) : state === 'correct' ? (
             <>
               {/* Happy eyes ^ ^ */}
-              <path d="M 35 38 Q 39 32 43 38" stroke="#1E293B" strokeWidth="3" strokeLinecap="round" fill="none" />
-              <path d="M 57 38 Q 61 32 65 38" stroke="#1E293B" strokeWidth="3" strokeLinecap="round" fill="none" />
+              <path d="M 34 50 Q 38 44 42 50" stroke="#0F172A" strokeWidth="2.5" strokeLinecap="round" fill="none" />
+              <path d="M 58 50 Q 62 44 66 50" stroke="#0F172A" strokeWidth="2.5" strokeLinecap="round" fill="none" />
             </>
           ) : (
             <>
               {/* Normal eyes */}
-              <circle cx="39" cy="36" r="4" fill="#1E293B" />
-              <circle cx="61" cy="36" r="4" fill="#1E293B" />
+              <circle cx="38" cy="48" r="4" fill="#0F172A" />
+              <circle cx="62" cy="48" r="4" fill="#0F172A" />
+              {/* Eye highlights */}
+              <circle cx="39.5" cy="46.5" r="1.5" fill="#FFFFFF" />
+              <circle cx="63.5" cy="46.5" r="1.5" fill="#FFFFFF" />
             </>
           )}
         </motion.g>
 
         {/* Mouth */}
-        {state === 'idle' && (
-          <path d="M 45 50 Q 50 55 55 50" stroke="#1E293B" strokeWidth="2.5" strokeLinecap="round" fill="none" />
-        )}
-        {state === 'correct' && (
-          <path d="M 42 48 Q 50 60 58 48 Z" fill="#EF4444" stroke="#1E293B" strokeWidth="2" strokeLinejoin="round" />
-        )}
-        {state === 'incorrect' && (
-          <path d="M 45 52 Q 50 47 55 52" stroke="#1E293B" strokeWidth="2.5" strokeLinecap="round" fill="none" />
-        )}
-        
-        {/* Sparkles for correct */}
-        {state === 'correct' && (
-          <motion.g
-            initial={{ opacity: 0, scale: 0 }}
-            animate={{ opacity: [0, 1, 0], scale: [0, 1.5, 0], rotate: [0, 90] }}
-            transition={{ duration: 1, repeat: Infinity, repeatDelay: 1 }}
-          >
-            <path d="M 10 20 L 15 15 L 20 20 L 15 25 Z" fill="#FBBF24" />
-            <path d="M 80 15 L 85 10 L 90 15 L 85 20 Z" fill="#FBBF24" />
-          </motion.g>
+        {state === 'incorrect' ? (
+          <path d="M 45 62 Q 50 58 55 62" stroke="#0F172A" strokeWidth="2.5" strokeLinecap="round" fill="none" />
+        ) : state === 'correct' ? (
+          <path d="M 42 58 Q 50 68 58 58 Z" stroke="#0F172A" strokeWidth="2" strokeLinejoin="round" fill="#EF4444" />
+        ) : (
+          <path d="M 45 60 Q 50 64 55 60" stroke="#0F172A" strokeWidth="2.5" strokeLinecap="round" fill="none" />
         )}
       </motion.svg>
     </div>

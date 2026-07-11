@@ -330,11 +330,11 @@ export default function ExamPage({ params }: { params: Promise<{ id: string }> }
     let correct = false;
     if (currentQ.question_type === 'mcq') {
       const correctOpt = currentQ.options?.find((o: any) => o.is_correct);
-      if (correctOpt && correctOpt.id === answer) correct = true;
+      if (correctOpt && correctOpt.text === answer) correct = true;
     } else if (currentQ.question_type === 'complex_mcq') {
-      const correctIds = currentQ.options?.filter((o: any) => o.is_correct).map((o: any) => o.id).sort().join(',');
-      const answerIds = [...answer].sort().join(',');
-      if (correctIds === answerIds) correct = true;
+      const correctTexts = currentQ.options?.filter((o: any) => o.is_correct).map((o: any) => o.text).sort().join(',');
+      const answerTexts = [...answer].sort().join(',');
+      if (correctTexts === answerTexts) correct = true;
     } else if (currentQ.question_type === 'matching') {
       const answersMap = answer || {};
       const defs = currentQ.options?.map((o: any) => o.match_pair);
@@ -1394,44 +1394,73 @@ export default function ExamPage({ params }: { params: Promise<{ id: string }> }
 
       {/* BOTTOM ACTION BAR (PRACTICE MODE) */}
       {isPracticeMode && currentQ && (
-        <div className={`fixed bottom-0 left-0 right-0 z-50 transition-colors duration-300 ${
-          hasChecked ? (isCorrect ? 'bg-green-100 border-t-2 border-green-300' : 'bg-red-100 border-t-2 border-red-300') : 'bg-white border-t-2 border-slate-200'
-        } shadow-[0_-4px_6px_-1px_rgba(0,0,0,0.05)]`}>
-          <div className="max-w-4xl mx-auto flex flex-col md:flex-row md:items-center justify-between gap-4 p-4 md:px-8">
-            {hasChecked ? (
-              <div className="flex items-start gap-4">
-                <Mascot state={isCorrect ? 'correct' : 'incorrect'} className="hidden md:block w-20 h-20 shrink-0 -mt-8" />
-                <div className="flex flex-col gap-1">
-                  <div className={`font-black text-2xl ${isCorrect ? 'text-green-700' : 'text-red-700'} flex items-center gap-2`}>
-                    {isCorrect ? <><CheckCircle2 className="w-7 h-7" /> Luar Biasa!</> : <><AlertTriangle className="w-7 h-7" /> Yah, Kurang Tepat!</>}
-                  </div>
-                  <div className={`text-sm font-medium ${isCorrect ? 'text-green-800' : 'text-red-800'}`}>
-                    {currentQ.explanation ? (
-                      <span dangerouslySetInnerHTML={{ __html: currentQ.explanation }} />
-                    ) : (
-                      <span>{isCorrect ? 'Kerja bagus, kamu paham konsepnya.' : 'Jawabanmu belum sesuai dengan kunci.'}</span>
-                    )}
-                  </div>
-                </div>
-              </div>
-            ) : (
-              <div className="flex-1" />
+        <div className="fixed bottom-0 left-0 right-0 z-40 bg-white border-t-2 border-slate-200 shadow-[0_-4px_6px_-1px_rgba(0,0,0,0.05)]">
+          <div className="max-w-4xl mx-auto flex items-center justify-between p-4 md:px-8">
+            <button 
+              disabled={currentIndex === 0 || hasChecked} 
+              onClick={() => setCurrentIndex(prev => prev - 1)}
+              className={`p-3 md:px-6 md:py-4 rounded-2xl font-bold border-b-4 transition-all flex items-center gap-2 ${
+                currentIndex === 0 || hasChecked
+                  ? 'bg-slate-100 text-slate-400 border-slate-200 cursor-not-allowed' 
+                  : 'bg-white text-slate-600 border-slate-300 hover:bg-slate-50 active:translate-y-1 active:border-b-0'
+              }`}
+            >
+              <ChevronLeft className="w-6 h-6" />
+              <span className="hidden md:inline">SEBELUMNYA</span>
+            </button>
+
+            {!hasChecked && (
+              <button
+                disabled={!responses[currentQ.id] || (Array.isArray(responses[currentQ.id]) && responses[currentQ.id].length === 0)}
+                onClick={handleCheckAnswer}
+                className="px-8 py-4 rounded-2xl font-bold text-white bg-indigo-500 border-b-4 border-indigo-700 hover:bg-indigo-400 active:translate-y-1 active:border-b-0 transition-all flex items-center gap-2 text-lg disabled:opacity-50 disabled:cursor-not-allowed shadow-lg shadow-indigo-500/30"
+              >
+                CEK JAWABAN
+              </button>
             )}
-            
-            <div className="flex items-center gap-3 self-end md:self-auto shrink-0 mt-4 md:mt-0">
-              {!hasChecked ? (
-                <button
-                  disabled={!responses[currentQ.id] || (Array.isArray(responses[currentQ.id]) && responses[currentQ.id].length === 0)}
-                  onClick={handleCheckAnswer}
-                  className="px-8 py-4 rounded-2xl font-bold text-white bg-green-500 border-b-4 border-green-700 hover:bg-green-400 active:translate-y-1 active:border-b-0 transition-all flex items-center gap-2 text-lg disabled:opacity-50 disabled:cursor-not-allowed"
-                >
-                  CEK JAWABAN
-                </button>
-              ) : (
-                <>
+          </div>
+        </div>
+      )}
+
+      {/* FEEDBACK POPUP MODAL (PRACTICE MODE) */}
+      <AnimatePresence>
+        {isPracticeMode && hasChecked && currentQ && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/40 backdrop-blur-sm"
+          >
+            <motion.div
+              initial={{ scale: 0.9, opacity: 0, y: 20 }}
+              animate={{ scale: 1, opacity: 1, y: 0 }}
+              exit={{ scale: 0.9, opacity: 0, y: 20 }}
+              className={`bg-white rounded-3xl shadow-2xl w-full max-w-lg overflow-hidden border-4 ${
+                isCorrect ? 'border-green-400' : 'border-red-400'
+              }`}
+            >
+              <div className={`p-6 md:p-8 flex flex-col items-center text-center ${
+                isCorrect ? 'bg-green-50' : 'bg-red-50'
+              }`}>
+                <Mascot state={isCorrect ? 'correct' : 'incorrect'} className="w-32 h-32 mb-4 drop-shadow-xl" />
+                <h3 className={`font-black text-3xl mb-2 flex items-center gap-2 ${
+                  isCorrect ? 'text-green-600' : 'text-red-600'
+                }`}>
+                  {isCorrect ? <><CheckCircle2 className="w-8 h-8" /> Luar Biasa!</> : <><AlertTriangle className="w-8 h-8" /> Yah, Kurang Tepat!</>}
+                </h3>
+                
+                <div className={`text-base font-medium mb-6 ${isCorrect ? 'text-green-800' : 'text-red-800'}`}>
+                  {currentQ.explanation ? (
+                    <span dangerouslySetInnerHTML={{ __html: currentQ.explanation }} />
+                  ) : (
+                    <span>{isCorrect ? 'Kerja bagus, kamu paham konsepnya.' : 'Jawabanmu belum sesuai dengan kunci.'}</span>
+                  )}
+                </div>
+
+                <div className="flex w-full gap-3">
                   <button
                     onClick={() => setIsChatOpen(true)}
-                    className="px-6 py-4 rounded-2xl font-bold text-slate-700 bg-white border-2 border-slate-300 hover:bg-slate-50 transition-all flex items-center gap-2 shadow-sm"
+                    className="flex-1 py-4 rounded-2xl font-bold text-slate-700 bg-white border-2 border-slate-300 hover:bg-slate-50 transition-all flex justify-center items-center gap-2 shadow-sm"
                   >
                     <Star className="w-5 h-5 text-yellow-500 fill-yellow-500" />
                     Tanya AI
@@ -1439,24 +1468,28 @@ export default function ExamPage({ params }: { params: Promise<{ id: string }> }
                   {currentIndex === questions.length - 1 ? (
                     <button
                       onClick={() => submitExam()}
-                      className={`px-8 py-4 rounded-2xl font-bold text-white ${isCorrect ? 'bg-green-500 border-b-4 border-green-700 hover:bg-green-400' : 'bg-red-500 border-b-4 border-red-700 hover:bg-red-400'} active:translate-y-1 active:border-b-0 transition-all flex items-center gap-2 text-lg`}
+                      className={`flex-1 py-4 rounded-2xl font-bold text-white border-b-4 transition-all flex justify-center items-center gap-2 text-lg ${
+                        isCorrect ? 'bg-green-500 border-green-700 hover:bg-green-400' : 'bg-red-500 border-red-700 hover:bg-red-400'
+                      } active:translate-y-1 active:border-b-0`}
                     >
                       SELESAI
                     </button>
                   ) : (
                     <button
                       onClick={handleNextQuestion}
-                      className={`px-8 py-4 rounded-2xl font-bold text-white ${isCorrect ? 'bg-green-500 border-b-4 border-green-700 hover:bg-green-400' : 'bg-red-500 border-b-4 border-red-700 hover:bg-red-400'} active:translate-y-1 active:border-b-0 transition-all flex items-center gap-2 text-lg`}
+                      className={`flex-1 py-4 rounded-2xl font-bold text-white border-b-4 transition-all flex justify-center items-center gap-2 text-lg ${
+                        isCorrect ? 'bg-green-500 border-green-700 hover:bg-green-400' : 'bg-red-500 border-red-700 hover:bg-red-400'
+                      } active:translate-y-1 active:border-b-0`}
                     >
                       LANJUT
                     </button>
                   )}
-                </>
-              )}
-            </div>
-          </div>
-        </div>
-      )}
+                </div>
+              </div>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
 
       {/* AI CHAT MODAL */}
       <AnimatePresence>
