@@ -34,11 +34,11 @@ export default function BankSoalPage() {
 
   const downloadTemplate = () => {
     const ws = XLSX.utils.aoa_to_sheet([
-      ["Tipe Soal", "Pertanyaan", "Opsi A", "Opsi B", "Opsi C", "Opsi D", "Opsi E", "Kunci Jawaban", "Poin"],
-      ["mcq", "Siapa penemu lampu pijar?", "Thomas Edison", "Nikola Tesla", "Albert Einstein", "Isaac Newton", "Galileo Galilei", "A", 10],
-      ["complex_mcq", "Manakah yang merupakan mamalia?", "Kucing", "Ayam", "Paus", "Hiu", "Kelelawar", "A,C,E", 15],
-      ["matching", "Jodohkan istilah biologi berikut!", "Mitokondria|Pusat Energi", "Nukleus|Inti Sel", "Ribosom|Pembuat Protein", "", "", "", 20],
-      ["essay", "Jelaskan proses terjadinya hujan!", "", "", "", "", "", "", 20]
+      ["Tipe Soal", "Pertanyaan", "Opsi A", "Opsi B", "Opsi C", "Opsi D", "Opsi E", "Kunci Jawaban", "Poin", "Pembahasan"],
+      ["mcq", "Siapa penemu lampu pijar?", "Thomas Edison", "Nikola Tesla", "Albert Einstein", "Isaac Newton", "Galileo Galilei", "A", 10, "Thomas Edison adalah penemu lampu pijar praktis pertama."],
+      ["complex_mcq", "Manakah yang merupakan mamalia?", "Kucing", "Ayam", "Paus", "Hiu", "Kelelawar", "A,C,E", 15, "Kucing, paus, dan kelelawar bernapas dengan paru-paru dan menyusui anaknya."],
+      ["matching", "Jodohkan istilah biologi berikut!", "Mitokondria|Pusat Energi", "Nukleus|Inti Sel", "Ribosom|Pembuat Protein", "", "", "", 20, "Masing-masing organel memiliki fungsi spesifik di dalam sel."],
+      ["essay", "Jelaskan proses terjadinya hujan!", "", "", "", "", "", "", 20, "Air menguap (evaporasi), mengembun (kondensasi), lalu jatuh (presipitasi)."]
     ]);
     const wb = XLSX.utils.book_new();
     XLSX.utils.book_append_sheet(wb, ws, "Template_Bank_Soal");
@@ -113,7 +113,8 @@ export default function BankSoalPage() {
           question_type: qType,
           question_text: String(row['Pertanyaan'] || ''),
           options: options,
-          points: parseInt(row['Poin']) || 10
+          points: parseInt(row['Poin']) || 10,
+          explanation: row['Pembahasan'] ? String(row['Pembahasan']) : null
         };
       }).filter(item => item.question_text);
 

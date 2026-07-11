@@ -41,6 +41,7 @@ interface Question {
   points: number;
   order_index: number;
   criteria?: { minLength?: number; maxLength?: number } | null;
+  explanation?: string | null;
 }
 
 export default function CBTBuilderPage() {
@@ -74,7 +75,8 @@ export default function CBTBuilderPage() {
       options: item.options,
       points: item.points,
       order_index: questions.length + i,
-      criteria: item.criteria
+      criteria: item.criteria,
+      explanation: item.explanation
     }));
     setQuestions([...questions, ...importedQuestions]);
     setShowBankModal(false);
@@ -93,7 +95,10 @@ export default function CBTBuilderPage() {
           max_score: quizData.max_score || 100,
           allow_leave_exam: quizData.allow_leave_exam ?? true,
           min_time_to_submit: quizData.min_time_to_submit || 0,
-          shuffle_questions: quizData.shuffle_questions ?? false
+          shuffle_questions: quizData.shuffle_questions ?? false,
+          show_score: quizData.show_score ?? true,
+          show_answers: quizData.show_answers ?? true,
+          show_explanation: quizData.show_explanation ?? false
         });
       }
       if (qData) {
@@ -149,7 +154,10 @@ export default function CBTBuilderPage() {
         max_score: calculatedMaxScore,
         allow_leave_exam: quiz.allow_leave_exam,
         min_time_to_submit: quiz.min_time_to_submit,
-        shuffle_questions: quiz.shuffle_questions
+        shuffle_questions: quiz.shuffle_questions,
+        show_score: quiz.show_score,
+        show_answers: quiz.show_answers,
+        show_explanation: quiz.show_explanation
       })
       .eq("id", id);
 
@@ -177,7 +185,8 @@ export default function CBTBuilderPage() {
         options: q.options,
         points: q.points,
         order_index: idx,
-        criteria: q.criteria || {}
+        criteria: q.criteria || {},
+        explanation: q.explanation || null
       };
       if (!q.id.startsWith('temp-')) {
         payload.id = q.id; // Preserve existing UUID
@@ -279,6 +288,36 @@ export default function CBTBuilderPage() {
                   type="checkbox" 
                   checked={quiz.shuffle_questions} 
                   onChange={(e) => setQuiz({ ...quiz, shuffle_questions: e.target.checked })}
+                  className="h-4 w-4 text-[var(--accent)]"
+                />
+              </div>
+
+              <div className="flex items-center justify-between">
+                <label className="text-sm font-medium text-[var(--text-secondary)]" title="Siswa dapat melihat nilai akhir setelah ujian">Tampilkan Nilai Akhir</label>
+                <input 
+                  type="checkbox" 
+                  checked={quiz.show_score} 
+                  onChange={(e) => setQuiz({ ...quiz, show_score: e.target.checked })}
+                  className="h-4 w-4 text-[var(--accent)]"
+                />
+              </div>
+
+              <div className="flex items-center justify-between">
+                <label className="text-sm font-medium text-[var(--text-secondary)]" title="Siswa dapat melihat kunci jawaban yang benar setelah ujian">Tampilkan Kunci Jawaban</label>
+                <input 
+                  type="checkbox" 
+                  checked={quiz.show_answers} 
+                  onChange={(e) => setQuiz({ ...quiz, show_answers: e.target.checked })}
+                  className="h-4 w-4 text-[var(--accent)]"
+                />
+              </div>
+
+              <div className="flex items-center justify-between">
+                <label className="text-sm font-medium text-[var(--text-secondary)]" title="Siswa dapat melihat pembahasan soal setelah ujian">Tampilkan Pembahasan</label>
+                <input 
+                  type="checkbox" 
+                  checked={quiz.show_explanation} 
+                  onChange={(e) => setQuiz({ ...quiz, show_explanation: e.target.checked })}
                   className="h-4 w-4 text-[var(--accent)]"
                 />
               </div>
@@ -531,6 +570,14 @@ export default function CBTBuilderPage() {
                         </div>
                       </div>
                     )}
+
+                    <div className="space-y-2 pt-2 border-t border-[var(--border)]">
+                      <label className="text-sm font-semibold text-[var(--text-primary)]">Pembahasan (Opsional)</label>
+                      <RichTextEditor 
+                        value={q.explanation || ""} 
+                        onChange={(val) => updateQuestion(q.id, { explanation: val })} 
+                      />
+                    </div>
                   </div>
                 </Card>
               </motion.div>

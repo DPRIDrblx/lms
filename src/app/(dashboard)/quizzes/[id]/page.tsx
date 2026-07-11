@@ -35,6 +35,7 @@ interface Quiz {
   time_limit_minutes: number | null;
   passing_score: number;
   questions: Question[];
+  show_score?: boolean;
 }
 
 export default function TakeQuizPage({ params }: { params: Promise<{ id: string }> }) {
@@ -117,7 +118,11 @@ export default function TakeQuizPage({ params }: { params: Promise<{ id: string 
           {scoreRecord ? (
             <div className="mb-10 p-6 bg-slate-50 border border-slate-200 rounded-xl">
                <p className="text-sm font-bold text-slate-500 uppercase tracking-wider mb-2">Nilai Ujian Anda</p>
-               {!scoreRecord.is_graded ? (
+               {quiz.show_score === false ? (
+                 <div className="text-2xl font-black text-slate-500 py-4">
+                   Nilai Anda disembunyikan oleh Guru.
+                 </div>
+               ) : !scoreRecord.is_graded ? (
                   <div>
                     <div className="text-4xl font-black text-amber-500">{scoreRecord.score !== null ? scoreRecord.score : "?"} <span className="text-xl text-slate-400">/ 100</span></div>
                     <p className="text-xs font-bold text-amber-700 mt-2">Menunggu Penilaian Guru (Ada Soal Essay)</p>

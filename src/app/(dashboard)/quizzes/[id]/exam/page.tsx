@@ -469,7 +469,11 @@ export default function ExamPage({ params }: { params: Promise<{ id: string }> }
             
             <div className="bg-slate-50 p-6 rounded-2xl border-2 border-slate-100 mb-8">
                <p className="text-sm font-bold text-slate-400 uppercase tracking-widest mb-2">Nilai Akhir</p>
-               {needsManualGrading ? (
+               {quiz?.show_score === false ? (
+                 <div className="text-2xl font-black text-slate-500 py-4">
+                   Nilai Anda disembunyikan oleh Guru.
+                 </div>
+               ) : needsManualGrading ? (
                   <div>
                     <div className="text-5xl font-black text-yellow-500">
                       {finalScore !== null ? finalScore : "?"} <span className="text-2xl text-slate-300">/ {quiz?.max_score}</span>
@@ -487,12 +491,22 @@ export default function ExamPage({ params }: { params: Promise<{ id: string }> }
                )}
             </div>
 
-            <button 
-              onClick={() => router.push(quiz?.course_id ? `/courses/${quiz.course_id}` : '/dashboard')}
-              className="w-full py-4 bg-blue-500 hover:bg-blue-400 active:bg-blue-600 active:translate-y-1 text-white font-bold rounded-2xl border-b-4 border-blue-700 transition-all text-lg"
-            >
-              LANJUTKAN
-            </button>
+            <div className="flex gap-4">
+              <button 
+                onClick={() => router.push(quiz?.course_id ? `/courses/${quiz.course_id}` : '/dashboard')}
+                className="flex-1 py-4 bg-slate-200 hover:bg-slate-300 active:bg-slate-400 active:translate-y-1 text-slate-700 font-bold rounded-2xl border-b-4 border-slate-400 transition-all text-lg"
+              >
+                KEMBALI
+              </button>
+              {(quiz?.show_answers || quiz?.show_explanation) && (
+                <button 
+                  onClick={() => router.push(`/quizzes/${id}/review`)}
+                  className="flex-1 py-4 bg-blue-500 hover:bg-blue-400 active:bg-blue-600 active:translate-y-1 text-white font-bold rounded-2xl border-b-4 border-blue-700 transition-all text-lg"
+                >
+                  LIHAT PEMBAHASAN
+                </button>
+              )}
+            </div>
          </motion.div>
       </div>
     );
