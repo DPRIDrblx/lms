@@ -350,65 +350,63 @@ export default function ExamPage({ params }: { params: Promise<{ id: string }> }
 
     if (hasEssay) {
       setIsSubmittingToAI(true);
-      let isTimeout = false;
+      let isFinalizedLocally = false;
       
-      const timeoutPromise = new Promise((resolve) => {
-        aiTimeoutRef.current = setTimeout(() => {
-          isTimeout = true;
-          resolve('timeout');
-        }, 15000); // 15 seconds wait for AI
-      });
-
-      const fetchPromise = fetch('/api/ai/grade-exam', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          quizTitle: quiz?.title,
-          questions,
-          responses,
-          studentName: profile?.full_name
-        })
-      });
-
-      try {
-        const result: any = await Promise.race([fetchPromise, timeoutPromise]);
-        
-        if (result === 'timeout') {
-          // It timed out. We ask the user if they want to wait more or proceed without AI grading.
-          setConfirmModal({
-            show: true,
-            title: 'Koreksi AI Butuh Waktu',
-            message: 'AI sedang sibuk mengoreksi jawaban essay Anda. Apakah Anda ingin tetap menunggu, atau kumpulkan tanpa koreksi AI (guru akan mengoreksi manual)?',
-            onConfirm: () => {
-              // Submit without AI
-              setConfirmModal(prev => ({...prev, show: false}));
-              finalizeSubmission(totalScore, hasEssay, null);
-            },
-            isAlert: true // Re-using isAlert style for "Proceed without AI"
-          });
+      const intervalId = setInterval(() => {
+        if (isFinalizedLocally) {
+          clearInterval(intervalId);
           return;
         }
+        setConfirmModal({
+          show: true,
+          title: 'Koreksi AI Butuh Waktu',
+          message: 'AI masih sibuk mengoreksi jawaban essay Anda. Klik BATAL untuk tetap menunggu, atau klik YA, LANJUTKAN untuk kumpulkan tanpa koreksi AI (guru akan mengoreksi manual).',
+          onConfirm: () => {
+            isFinalizedLocally = true;
+            clearInterval(intervalId);
+            setConfirmModal(prev => ({...prev, show: false}));
+            finalizeSubmission(totalScore, hasEssay, null);
+          },
+          isAlert: false
+        });
+      }, 15000); // Popup every 15 seconds
 
-        if (aiTimeoutRef.current) clearTimeout(aiTimeoutRef.current);
-        const res = result as Response;
-        
-        if (res.ok) {
-          const aiData = await res.json();
-          // aiData has essayScores, essayFeedback, generalAnalysis
-          if (aiData.essayScores) {
-            Object.values(aiData.essayScores).forEach((score: any) => {
-              totalScore += Number(score) || 0;
-            });
+      try {
+        const res = await fetch('/api/ai/grade-exam', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            quizTitle: quiz?.title,
+            questions,
+            responses,
+            studentName: profile?.full_name
+          })
+        });
+
+        clearInterval(intervalId);
+
+        if (!isFinalizedLocally) {
+          isFinalizedLocally = true;
+          setConfirmModal(prev => ({...prev, show: false})); // close modal if it was currently open
+          if (res.ok) {
+            const aiData = await res.json();
+            if (aiData.essayScores) {
+              Object.values(aiData.essayScores).forEach((score: any) => {
+                totalScore += Number(score) || 0;
+              });
+            }
+            finalizeSubmission(totalScore, hasEssay, aiData);
+          } else {
+            finalizeSubmission(totalScore, hasEssay, null);
           }
-          
-          finalizeSubmission(totalScore, hasEssay, aiData);
-        } else {
-          // API failed
-          finalizeSubmission(totalScore, hasEssay, null);
         }
       } catch (error) {
-        console.error("AI grading failed", error);
-        finalizeSubmission(totalScore, hasEssay, null);
+        clearInterval(intervalId);
+        if (!isFinalizedLocally) {
+          isFinalizedLocally = true;
+          console.error("AI grading failed", error);
+          finalizeSubmission(totalScore, hasEssay, null);
+        }
       }
     } else {
       finalizeSubmission(totalScore, false, null);
