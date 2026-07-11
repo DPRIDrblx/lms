@@ -348,7 +348,7 @@ export default function ExamPage({ params }: { params: Promise<{ id: string }> }
     setIsCorrect(correct);
     setHasChecked(true);
     setIsAnswerRevealed(prev => ({ ...prev, [currentQ.id]: true }));
-    playSound(correct ? 'success' : 'error');
+    playSound(correct ? 'correct' : 'incorrect');
   };
 
   const handleNextQuestion = () => {
@@ -397,14 +397,6 @@ export default function ExamPage({ params }: { params: Promise<{ id: string }> }
     }
   };
 
-  const setFlag = async (qId: string) => {
-    playSound('click');
-    const val = !flags[qId];
-    const newFlags = { ...flags, [qId]: val };
-    setFlags(newFlags);
-    
-    await supabase.from("quiz_responses").update({ is_flagged: val }).eq("student_id", profile?.id).eq("question_id", qId);
-  };
 
   const submitExam = async (skipConfirm = false) => {
     if (!skipConfirm && timeLeft > 0) {
