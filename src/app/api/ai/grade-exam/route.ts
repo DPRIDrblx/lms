@@ -15,7 +15,7 @@ export async function POST(req: NextRequest) {
 
     const { quizTitle, questions, responses, studentName } = await req.json();
 
-    const model = genAI.getGenerativeModel({ model: 'gemini-2.5-pro' });
+    const model = genAI.getGenerativeModel({ model: 'gemini-3.5-flash' });
 
     // Format the questions and answers for Gemini
     let promptText = `Anda adalah asisten AI guru yang ahli. Anda bertugas mengoreksi jawaban essay dan memberikan analisis hasil belajar siswa.
