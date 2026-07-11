@@ -52,15 +52,13 @@ export default function QuizReviewPage({ params }: { params: Promise<{ id: strin
   }, [id, profile, supabase]);
 
   if (loading) return <div className="h-[80vh] flex items-center justify-center animate-pulse">Calculating Final Results...</div>;
-  if (!score) return <div className="text-center py-20">Score record not found. Please complete the quiz first.</div>;
+  if (!score && responses.length === 0) return <div className="text-center py-20">Score record not found. Please complete the quiz first.</div>;
 
-  const percentage = Math.round((score.score / (quiz?.total_points || 100)) * 100);
-  const aiAnalysis = score?.metadata?.ai_analysis;
-
-  // Calculate stats
+  // Calculate stats and synthetic score
   let correctCount = 0;
   let incorrectCount = 0;
   let unansweredCount = 0;
+  let syntheticScore = 0;
 
   questions.forEach(q => {
     const resp = responses.find(r => r.question_id === q.id);
@@ -73,26 +71,40 @@ export default function QuizReviewPage({ params }: { params: Promise<{ id: strin
 
     if (q.question_type === 'mcq') {
        const correctOpt = q.options?.find((o: any) => o.is_correct);
-       if (studentAnswer === correctOpt?.text) correctCount++;
-       else incorrectCount++;
+       if (studentAnswer === correctOpt?.text) {
+         correctCount++;
+         syntheticScore += (q.points || 0);
+       } else incorrectCount++;
     } else if (q.question_type === 'complex_mcq') {
        const correctOpts = q.options?.filter((o: any) => o.is_correct).map((o: any) => o.text) || [];
        const isCorrect = Array.isArray(studentAnswer) && studentAnswer.length === correctOpts.length && studentAnswer.every((a: any) => correctOpts.includes(a));
-       if (isCorrect) correctCount++;
-       else incorrectCount++;
+       if (isCorrect) {
+         correctCount++;
+         syntheticScore += (q.points || 0);
+       } else incorrectCount++;
     } else if (q.question_type === 'matching') {
        let matches = 0;
        let totalPairs = q.options?.length || 1;
        q.options?.forEach((opt: any) => {
          if (studentAnswer[opt.text] === opt.match_pair) matches++;
        });
-       if (matches === totalPairs) correctCount++;
-       else incorrectCount++;
+       if (matches === totalPairs) {
+         correctCount++;
+       } else if (matches > 0 && matches < totalPairs) {
+         // partial
+       } else {
+         incorrectCount++;
+       }
+       syntheticScore += (matches / totalPairs) * (q.points || 0);
     } else if (q.question_type === 'essay') {
        // Essay is counted separately or just as "answered" since correctness is subjective
        correctCount++; 
     }
   });
+
+  const finalScoreData = score || { score: Math.round(syntheticScore), is_graded: true, metadata: {} };
+  const percentage = Math.round((finalScoreData.score / (quiz?.total_points || quiz?.max_score || 100)) * 100);
+  const aiAnalysis = finalScoreData?.metadata?.ai_analysis;
 
   return (
     <div className="max-w-4xl mx-auto space-y-8 pb-20 p-6">
@@ -132,12 +144,12 @@ export default function QuizReviewPage({ params }: { params: Promise<{ id: strin
              <div className="grid grid-cols-2 gap-4 w-full">
                 <div className="p-6 rounded-2xl bg-[var(--bg-primary)] border border-[var(--border)]">
                    <p className="text-[10px] font-black uppercase text-[var(--text-tertiary)] mb-1">Total Poin</p>
-                   <p className="text-xl font-bold text-[var(--text-primary)]">{score.score} / {quiz?.max_score || 100}</p>
+                   <p className="text-xl font-bold text-[var(--text-primary)]">{finalScoreData.score} / {quiz?.max_score || 100}</p>
                 </div>
                 <div className="p-6 rounded-2xl bg-[var(--bg-primary)] border border-[var(--border)]">
                    <p className="text-[10px] font-black uppercase text-[var(--text-tertiary)] mb-1">Status</p>
-                   <Badge variant={score.is_graded ? "success" : "warning"} className="font-bold bg-blue-100 text-blue-700">
-                      {score.is_graded ? "Selesai" : "Menunggu Review"}
+                   <Badge variant={finalScoreData.is_graded ? "success" : "warning"} className="font-bold bg-blue-100 text-blue-700">
+                      {!score ? "Latihan (Tidak Disimpan)" : finalScoreData.is_graded ? "Selesai" : "Menunggu Review"}
                    </Badge>
                 </div>
              </div>
@@ -220,7 +232,7 @@ export default function QuizReviewPage({ params }: { params: Promise<{ id: strin
               
               // Handle AI feedback if it was saved directly in metadata or under score's metadata
               // In our implementation, we saved it in score.metadata.responses[qId].ai_feedback
-              const scoreMetaResp = score?.metadata?.responses?.[q.id];
+              const scoreMetaResp = finalScoreData?.metadata?.responses?.[q.id];
               let aiFeedback = null;
               if (scoreMetaResp && typeof scoreMetaResp === 'object' && scoreMetaResp.ai_feedback) {
                 aiFeedback = scoreMetaResp.ai_feedback;
