@@ -8,6 +8,7 @@ import { Clock, Flag, ChevronLeft, ChevronRight, CheckCircle2, AlertTriangle, Al
 import { motion, AnimatePresence } from "framer-motion";
 import { playSound } from "@/lib/audio";
 import { updateQuestProgress } from "@/lib/gamification";
+import { Mascot } from "@/components/ui/mascot";
 
 export default function ExamPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = use(params);
@@ -43,6 +44,14 @@ export default function ExamPage({ params }: { params: Promise<{ id: string }> }
 
   const [isPracticeMode, setIsPracticeMode] = useState(false);
   const [isAnswerRevealed, setIsAnswerRevealed] = useState<Record<string, boolean>>({});
+  
+  // New Practice Mode states
+  const [hasChecked, setHasChecked] = useState(false);
+  const [isCorrect, setIsCorrect] = useState<boolean | null>(null);
+  const [isChatOpen, setIsChatOpen] = useState(false);
+  const [chatMessages, setChatMessages] = useState<any[]>([]);
+  const [aiChatLoading, setAiChatLoading] = useState(false);
+  const [chatInput, setChatInput] = useState("");
 
   const initExam = useCallback(async () => {
     if (!profile) return;
@@ -292,12 +301,7 @@ export default function ExamPage({ params }: { params: Promise<{ id: string }> }
     const newResponses = { ...responses, [qId]: answer };
     setResponses(newResponses);
     
-    if (isPracticeMode) {
-      const q = questions.find(q => q.id === qId);
-      if (q && q.question_type === 'mcq') {
-        setIsAnswerRevealed(prev => ({ ...prev, [qId]: true }));
-      }
-    }
+    // Practice Mode auto-reveal removed for linear mode
     
     await supabase.from("quiz_responses").upsert({
       student_id: profile?.id,
@@ -306,6 +310,91 @@ export default function ExamPage({ params }: { params: Promise<{ id: string }> }
       metadata: { answer },
       is_flagged: flags[qId] || false
     }, { onConflict: 'student_id,question_id' });
+  };
+
+  const setFlag = async (qId: string) => {
+    playSound('click');
+    const val = !flags[qId];
+    const newFlags = { ...flags, [qId]: val };
+    setFlags(newFlags);
+    
+    await supabase.from("quiz_responses").update({ is_flagged: val }).eq("student_id", profile?.id).eq("question_id", qId);
+  };
+
+  const handleCheckAnswer = () => {
+    if (questions.length === 0) return;
+    const currentQ = questions[currentIndex];
+    const answer = responses[currentQ.id];
+    if (!answer) return;
+
+    let correct = false;
+    if (currentQ.question_type === 'mcq') {
+      const correctOpt = currentQ.options?.find((o: any) => o.is_correct);
+      if (correctOpt && correctOpt.id === answer) correct = true;
+    } else if (currentQ.question_type === 'complex_mcq') {
+      const correctIds = currentQ.options?.filter((o: any) => o.is_correct).map((o: any) => o.id).sort().join(',');
+      const answerIds = [...answer].sort().join(',');
+      if (correctIds === answerIds) correct = true;
+    } else if (currentQ.question_type === 'matching') {
+      const answersMap = answer || {};
+      const defs = currentQ.options?.map((o: any) => o.match_pair);
+      let allCorrect = true;
+      currentQ.options?.forEach((o: any) => {
+        if (answersMap[o.text] !== o.match_pair) allCorrect = false;
+      });
+      if (allCorrect) correct = true;
+    }
+
+    setIsCorrect(correct);
+    setHasChecked(true);
+    setIsAnswerRevealed(prev => ({ ...prev, [currentQ.id]: true }));
+    playSound(correct ? 'success' : 'error');
+  };
+
+  const handleNextQuestion = () => {
+    if (currentIndex < questions.length - 1) {
+      setCurrentIndex(prev => prev + 1);
+      setHasChecked(false);
+      setIsCorrect(null);
+      setIsChatOpen(false);
+      setChatMessages([]);
+    }
+  };
+
+  const sendChatMessage = async (e?: React.FormEvent) => {
+    if (e) e.preventDefault();
+    if (!chatInput.trim() || aiChatLoading) return;
+
+    const currentQ = questions[currentIndex];
+    const newMessages = [...chatMessages, { role: 'user', content: chatInput }];
+    setChatMessages(newMessages);
+    setChatInput("");
+    setAiChatLoading(true);
+
+    try {
+      const res = await fetch('/api/ai/chat', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          questionContext: {
+            text: currentQ.text,
+            options: JSON.stringify(currentQ.options),
+            studentAnswer: JSON.stringify(responses[currentQ.id]),
+            correctAnswer: currentQ.question_type === 'mcq' ? currentQ.options?.find((o: any) => o.is_correct)?.text : 'Lihat opsi benar',
+            explanation: currentQ.explanation
+          },
+          messages: newMessages
+        })
+      });
+      const data = await res.json();
+      if (data.message) {
+        setChatMessages([...newMessages, { role: 'model', content: data.message }]);
+      }
+    } catch (err) {
+      console.error(err);
+    } finally {
+      setAiChatLoading(false);
+    }
   };
 
   const setFlag = async (qId: string) => {
@@ -1156,35 +1245,11 @@ export default function ExamPage({ params }: { params: Promise<{ id: string }> }
               </div>
             )}
 
-            {/* PRACTICE MODE: Check Answer & Explanation */}
-            {isPracticeMode && currentQ && (
-              <div className="mt-8 space-y-4">
-                {(currentQ.question_type === 'complex_mcq' || currentQ.question_type === 'matching') && !isAnswerRevealed[currentQ.id] && (
-                  <button
-                    onClick={() => setIsAnswerRevealed(prev => ({ ...prev, [currentQ.id]: true }))}
-                    className="px-6 py-3 bg-indigo-500 text-white font-bold rounded-xl border-b-4 border-indigo-700 hover:bg-indigo-400 active:translate-y-1 active:border-b-0 transition-all flex items-center gap-2"
-                  >
-                    <CheckCircle2 className="w-5 h-5" />
-                    Cek Jawaban
-                  </button>
-                )}
-
-                {isAnswerRevealed[currentQ.id] && currentQ.explanation && (
-                  <div className="p-5 bg-blue-50 border-2 border-blue-200 rounded-2xl relative overflow-hidden">
-                    <div className="absolute top-0 left-0 w-2 h-full bg-blue-500" />
-                    <h4 className="font-black text-blue-800 flex items-center gap-2 mb-3">
-                      <AlertCircle className="w-5 h-5" />
-                      Pembahasan
-                    </h4>
-                    <div className="prose prose-sm max-w-none text-blue-900" dangerouslySetInnerHTML={{ __html: currentQ.explanation }} />
-                  </div>
-                )}
-              </div>
-            )}
           </div>
         </div>
 
         {/* RIGHT PANEL: NUMBER GRID (Mobile & Desktop) */}
+        {!isPracticeMode && (
         <div className="flex flex-col w-full lg:w-80 shrink-0">
           <div className="bg-white rounded-3xl border-2 border-slate-200 p-6 shadow-sm sticky top-28">
             <h3 className="font-black text-slate-700 mb-6 uppercase tracking-widest text-sm flex items-center justify-between">
@@ -1245,94 +1310,253 @@ export default function ExamPage({ params }: { params: Promise<{ id: string }> }
             </div>
           </div>
         </div>
+        )}
 
       </main>
 
-      {/* BOTTOM ACTION BAR */}
-      <div className="fixed bottom-0 left-0 right-0 z-50 bg-white border-t-2 border-slate-200 p-4 md:px-8 shadow-[0_-4px_6px_-1px_rgba(0,0,0,0.05)]">
-        <div className="max-w-7xl mx-auto flex items-center justify-between gap-4">
-          <div className="flex items-center gap-2 md:gap-4">
-            <button 
-              disabled={currentIndex === 0} 
-              onClick={() => setCurrentIndex(prev => prev - 1)}
-              className={`p-3 md:px-6 md:py-4 rounded-2xl font-bold border-b-4 transition-all flex items-center gap-2 ${
-                currentIndex === 0 
-                  ? 'bg-slate-100 text-slate-400 border-slate-200 cursor-not-allowed' 
-                  : 'bg-white text-slate-600 border-slate-300 hover:bg-slate-50 active:translate-y-1 active:border-b-0'
-              }`}
-            >
-              <ChevronLeft className="w-6 h-6" />
-              <span className="hidden md:inline">SEBELUMNYA</span>
-            </button>
-            
-            <button 
-              onClick={() => setFlag(currentQ.id)}
-              className={`p-3 md:px-6 md:py-4 rounded-2xl font-bold border-b-4 transition-all flex items-center gap-2 ${
-                flags[currentQ.id]
-                  ? 'bg-yellow-400 text-yellow-900 border-yellow-600 active:translate-y-1 active:border-b-0'
-                  : 'bg-white text-slate-600 border-slate-300 hover:bg-slate-50 active:translate-y-1 active:border-b-0'
-              }`}
-            >
-              <Flag className={`w-6 h-6 ${flags[currentQ.id] ? 'fill-current' : ''}`} />
-              <span className="hidden md:inline">RAGU-RAGU</span>
-            </button>
-          </div>
-
-          <div className="flex items-center gap-4">
-            {/* Mobile indicator */}
-            <div className="lg:hidden text-sm font-bold text-slate-400">
-              {currentIndex + 1} / {questions.length}
+      {/* BOTTOM ACTION BAR (CBT MODE) */}
+      {!isPracticeMode && (
+        <div className="fixed bottom-0 left-0 right-0 z-50 bg-white border-t-2 border-slate-200 p-4 md:px-8 shadow-[0_-4px_6px_-1px_rgba(0,0,0,0.05)]">
+          <div className="max-w-7xl mx-auto flex items-center justify-between gap-4">
+            <div className="flex items-center gap-2 md:gap-4">
+              <button 
+                disabled={currentIndex === 0} 
+                onClick={() => setCurrentIndex(prev => prev - 1)}
+                className={`p-3 md:px-6 md:py-4 rounded-2xl font-bold border-b-4 transition-all flex items-center gap-2 ${
+                  currentIndex === 0 
+                    ? 'bg-slate-100 text-slate-400 border-slate-200 cursor-not-allowed' 
+                    : 'bg-white text-slate-600 border-slate-300 hover:bg-slate-50 active:translate-y-1 active:border-b-0'
+                }`}
+              >
+                <ChevronLeft className="w-6 h-6" />
+                <span className="hidden md:inline">SEBELUMNYA</span>
+              </button>
+              
+              <button 
+                onClick={() => setFlag(currentQ.id)}
+                className={`p-3 md:px-6 md:py-4 rounded-2xl font-bold border-b-4 transition-all flex items-center gap-2 ${
+                  flags[currentQ.id]
+                    ? 'bg-yellow-400 text-yellow-900 border-yellow-600 active:translate-y-1 active:border-b-0'
+                    : 'bg-white text-slate-600 border-slate-300 hover:bg-slate-50 active:translate-y-1 active:border-b-0'
+                }`}
+              >
+                <Flag className={`w-6 h-6 ${flags[currentQ.id] ? 'fill-current' : ''}`} />
+                <span className="hidden md:inline">RAGU-RAGU</span>
+              </button>
             </div>
 
-            {currentIndex === questions.length - 1 ? (
-              <button 
-                onClick={() => {
-                  const answeredCount = questions.filter(q => {
-                    const ans = responses[q.id];
-                    if (q.question_type === 'mcq' || q.question_type === 'essay') return !!ans && ans.length > 0;
-                    if (q.question_type === 'complex_mcq') return Array.isArray(ans) && ans.length > 0;
-                    if (q.question_type === 'matching') return ans && Object.keys(ans).length > 0;
-                    return false;
-                  }).length;
+            <div className="flex items-center gap-4">
+              <div className="lg:hidden text-sm font-bold text-slate-400">
+                {currentIndex + 1} / {questions.length}
+              </div>
 
-                  if (answeredCount < questions.length) {
-                    setConfirmModal({
-                      show: true,
-                      isAlert: true,
-                      title: 'Belum Selesai!',
-                      message: `Ada ${questions.length - answeredCount} soal yang belum dijawab. Harap jawab semua soal sebelum mengumpulkan.`,
-                      onConfirm: () => setConfirmModal(prev => ({...prev, show: false}))
-                    });
-                  } else {
-                    setConfirmModal({
-                      show: true,
-                      title: 'Kumpulkan Ujian?',
-                      message: 'Anda yakin ingin mengumpulkan ujian ini? Anda tidak dapat mengubah jawaban lagi.',
-                      onConfirm: () => {
-                        setConfirmModal(prev => ({...prev, show: false}));
-                        submitExam();
-                      }
-                    });
-                  }
-                }} 
-                className="px-8 py-4 rounded-2xl font-bold text-white bg-green-500 border-b-4 border-green-700 hover:bg-green-400 active:translate-y-1 active:border-b-0 transition-all flex items-center gap-2 text-lg shadow-lg shadow-green-500/30"
-              >
-                <span>SELESAI</span>
-                <CheckCircle2 className="w-6 h-6" />
-              </button>
-            ) : (
-              <button 
-                onClick={() => setCurrentIndex(i => i + 1)}
-                className="px-8 py-4 rounded-2xl font-bold text-white bg-blue-500 border-b-4 border-blue-700 hover:bg-blue-400 active:translate-y-1 active:border-b-0 transition-all flex items-center gap-2 text-lg shadow-lg shadow-blue-500/30"
-              >
-                <span>LANJUT</span>
-                <ChevronRight className="w-6 h-6" />
-              </button>
-            )}
+              {currentIndex === questions.length - 1 ? (
+                <button 
+                  onClick={() => {
+                    const answeredCount = questions.filter(q => {
+                      const ans = responses[q.id];
+                      if (q.question_type === 'mcq' || q.question_type === 'essay') return !!ans && ans.length > 0;
+                      if (q.question_type === 'complex_mcq') return Array.isArray(ans) && ans.length > 0;
+                      if (q.question_type === 'matching') return ans && Object.keys(ans).length > 0;
+                      return false;
+                    }).length;
+
+                    if (answeredCount < questions.length) {
+                      setConfirmModal({
+                        show: true,
+                        isAlert: true,
+                        title: 'Belum Selesai!',
+                        message: `Ada ${questions.length - answeredCount} soal yang belum dijawab. Harap jawab semua soal sebelum mengumpulkan.`,
+                        onConfirm: () => setConfirmModal(prev => ({...prev, show: false}))
+                      });
+                    } else {
+                      setConfirmModal({
+                        show: true,
+                        title: 'Kumpulkan Ujian?',
+                        message: 'Anda yakin ingin mengumpulkan ujian ini? Anda tidak dapat mengubah jawaban lagi.',
+                        onConfirm: () => {
+                          setConfirmModal(prev => ({...prev, show: false}));
+                          submitExam();
+                        }
+                      });
+                    }
+                  }} 
+                  className="px-8 py-4 rounded-2xl font-bold text-white bg-green-500 border-b-4 border-green-700 hover:bg-green-400 active:translate-y-1 active:border-b-0 transition-all flex items-center gap-2 text-lg shadow-lg shadow-green-500/30"
+                >
+                  <span>SELESAI</span>
+                  <CheckCircle2 className="w-6 h-6" />
+                </button>
+              ) : (
+                <button 
+                  onClick={() => setCurrentIndex(i => i + 1)}
+                  className="px-8 py-4 rounded-2xl font-bold text-white bg-blue-500 border-b-4 border-blue-700 hover:bg-blue-400 active:translate-y-1 active:border-b-0 transition-all flex items-center gap-2 text-lg shadow-lg shadow-blue-500/30"
+                >
+                  <span>LANJUT</span>
+                  <ChevronRight className="w-6 h-6" />
+                </button>
+              )}
+            </div>
           </div>
         </div>
-      </div>
+      )}
 
+      {/* BOTTOM ACTION BAR (PRACTICE MODE) */}
+      {isPracticeMode && currentQ && (
+        <div className={`fixed bottom-0 left-0 right-0 z-50 transition-colors duration-300 ${
+          hasChecked ? (isCorrect ? 'bg-green-100 border-t-2 border-green-300' : 'bg-red-100 border-t-2 border-red-300') : 'bg-white border-t-2 border-slate-200'
+        } shadow-[0_-4px_6px_-1px_rgba(0,0,0,0.05)]`}>
+          <div className="max-w-4xl mx-auto flex flex-col md:flex-row md:items-center justify-between gap-4 p-4 md:px-8">
+            {hasChecked ? (
+              <div className="flex items-start gap-4">
+                <Mascot state={isCorrect ? 'correct' : 'incorrect'} className="hidden md:block w-20 h-20 shrink-0 -mt-8" />
+                <div className="flex flex-col gap-1">
+                  <div className={`font-black text-2xl ${isCorrect ? 'text-green-700' : 'text-red-700'} flex items-center gap-2`}>
+                    {isCorrect ? <><CheckCircle2 className="w-7 h-7" /> Luar Biasa!</> : <><AlertTriangle className="w-7 h-7" /> Yah, Kurang Tepat!</>}
+                  </div>
+                  <div className={`text-sm font-medium ${isCorrect ? 'text-green-800' : 'text-red-800'}`}>
+                    {currentQ.explanation ? (
+                      <span dangerouslySetInnerHTML={{ __html: currentQ.explanation }} />
+                    ) : (
+                      <span>{isCorrect ? 'Kerja bagus, kamu paham konsepnya.' : 'Jawabanmu belum sesuai dengan kunci.'}</span>
+                    )}
+                  </div>
+                </div>
+              </div>
+            ) : (
+              <div className="flex-1" />
+            )}
+            
+            <div className="flex items-center gap-3 self-end md:self-auto shrink-0 mt-4 md:mt-0">
+              {!hasChecked ? (
+                <button
+                  disabled={!responses[currentQ.id] || (Array.isArray(responses[currentQ.id]) && responses[currentQ.id].length === 0)}
+                  onClick={handleCheckAnswer}
+                  className="px-8 py-4 rounded-2xl font-bold text-white bg-green-500 border-b-4 border-green-700 hover:bg-green-400 active:translate-y-1 active:border-b-0 transition-all flex items-center gap-2 text-lg disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  CEK JAWABAN
+                </button>
+              ) : (
+                <>
+                  <button
+                    onClick={() => setIsChatOpen(true)}
+                    className="px-6 py-4 rounded-2xl font-bold text-slate-700 bg-white border-2 border-slate-300 hover:bg-slate-50 transition-all flex items-center gap-2 shadow-sm"
+                  >
+                    <Star className="w-5 h-5 text-yellow-500 fill-yellow-500" />
+                    Tanya AI
+                  </button>
+                  {currentIndex === questions.length - 1 ? (
+                    <button
+                      onClick={() => submitExam()}
+                      className={`px-8 py-4 rounded-2xl font-bold text-white ${isCorrect ? 'bg-green-500 border-b-4 border-green-700 hover:bg-green-400' : 'bg-red-500 border-b-4 border-red-700 hover:bg-red-400'} active:translate-y-1 active:border-b-0 transition-all flex items-center gap-2 text-lg`}
+                    >
+                      SELESAI
+                    </button>
+                  ) : (
+                    <button
+                      onClick={handleNextQuestion}
+                      className={`px-8 py-4 rounded-2xl font-bold text-white ${isCorrect ? 'bg-green-500 border-b-4 border-green-700 hover:bg-green-400' : 'bg-red-500 border-b-4 border-red-700 hover:bg-red-400'} active:translate-y-1 active:border-b-0 transition-all flex items-center gap-2 text-lg`}
+                    >
+                      LANJUT
+                    </button>
+                  )}
+                </>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* AI CHAT MODAL */}
+      <AnimatePresence>
+        {isChatOpen && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 z-[60] bg-black/40 backdrop-blur-sm flex items-center justify-center p-4 md:p-8"
+          >
+            <motion.div
+              initial={{ y: 50, opacity: 0 }}
+              animate={{ y: 0, opacity: 1 }}
+              exit={{ y: 50, opacity: 0 }}
+              className="bg-white rounded-3xl shadow-2xl w-full max-w-2xl max-h-[85vh] flex flex-col overflow-hidden border-4 border-indigo-100"
+            >
+              {/* Header */}
+              <div className="bg-indigo-500 p-4 md:p-6 flex items-center justify-between text-white shrink-0">
+                <div className="flex items-center gap-3">
+                  <div className="bg-white/20 p-2 rounded-xl">
+                    <Star className="w-6 h-6 fill-yellow-300 text-yellow-300" />
+                  </div>
+                  <div>
+                    <h3 className="font-black text-xl">Tutor AI</h3>
+                    <p className="text-indigo-100 text-sm font-medium">Bahas soal ini bersama AI</p>
+                  </div>
+                </div>
+                <button
+                  onClick={() => setIsChatOpen(false)}
+                  className="bg-indigo-600/50 hover:bg-indigo-600 p-2 rounded-xl transition-colors"
+                >
+                  <AlertCircle className="w-6 h-6 rotate-45" /> {/* Use as close icon */}
+                </button>
+              </div>
+
+              {/* Chat Messages */}
+              <div className="flex-1 overflow-y-auto p-4 md:p-6 bg-slate-50 space-y-4">
+                {chatMessages.length === 0 && (
+                  <div className="flex flex-col items-center justify-center h-full text-center space-y-4 opacity-70">
+                    <Mascot state="idle" className="w-24 h-24" />
+                    <div>
+                      <p className="font-bold text-slate-500">Ada yang bingung dari penjelasan tadi?</p>
+                      <p className="text-sm text-slate-400">Tanyakan saja padaku!</p>
+                    </div>
+                  </div>
+                )}
+                {chatMessages.map((msg, i) => (
+                  <div key={i} className={`flex ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}>
+                    <div className={`max-w-[85%] rounded-2xl p-4 ${
+                      msg.role === 'user'
+                        ? 'bg-indigo-500 text-white rounded-br-sm'
+                        : 'bg-white border-2 border-slate-200 text-slate-700 rounded-bl-sm'
+                    }`}>
+                      <div className="prose prose-sm max-w-none prose-p:leading-relaxed" dangerouslySetInnerHTML={{ __html: msg.content.replace(/\n/g, '<br/>') }} />
+                    </div>
+                  </div>
+                ))}
+                {aiChatLoading && (
+                  <div className="flex justify-start">
+                    <div className="bg-white border-2 border-slate-200 text-slate-700 rounded-2xl rounded-bl-sm p-4 flex items-center gap-2">
+                      <div className="w-2 h-2 bg-indigo-400 rounded-full animate-bounce" />
+                      <div className="w-2 h-2 bg-indigo-400 rounded-full animate-bounce delay-100" />
+                      <div className="w-2 h-2 bg-indigo-400 rounded-full animate-bounce delay-200" />
+                    </div>
+                  </div>
+                )}
+              </div>
+
+              {/* Input Area */}
+              <form onSubmit={sendChatMessage} className="p-4 bg-white border-t-2 border-slate-100 shrink-0">
+                <div className="flex items-center gap-2 bg-slate-100 p-2 rounded-2xl border-2 border-slate-200 focus-within:border-indigo-400 focus-within:ring-4 focus-within:ring-indigo-500/10 transition-all">
+                  <input
+                    type="text"
+                    value={chatInput}
+                    onChange={(e) => setChatInput(e.target.value)}
+                    placeholder="Tanya soal ini..."
+                    className="flex-1 bg-transparent px-4 py-2 outline-none text-slate-700 font-medium"
+                    disabled={aiChatLoading}
+                  />
+                  <button
+                    type="submit"
+                    disabled={!chatInput.trim() || aiChatLoading}
+                    className="bg-indigo-500 text-white p-3 rounded-xl hover:bg-indigo-600 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                  >
+                    <ChevronRight className="w-5 h-5" />
+                  </button>
+                </div>
+              </form>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </div>
   );
 }
