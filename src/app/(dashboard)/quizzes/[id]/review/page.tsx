@@ -11,11 +11,11 @@ import {
   XCircle, 
   AlertCircle, 
   ChevronLeft,
-  LayoutDashboard,
   Trophy,
   BarChart3,
-  Search,
-  BookOpen
+  BookOpen,
+  BrainCircuit,
+  MinusCircle
 } from "lucide-react";
 import { useEffect, useState, use } from "react";
 import Link from "next/link";
@@ -55,6 +55,44 @@ export default function QuizReviewPage({ params }: { params: Promise<{ id: strin
   if (!score) return <div className="text-center py-20">Score record not found. Please complete the quiz first.</div>;
 
   const percentage = Math.round((score.score / (quiz?.total_points || 100)) * 100);
+  const aiAnalysis = score?.metadata?.ai_analysis;
+
+  // Calculate stats
+  let correctCount = 0;
+  let incorrectCount = 0;
+  let unansweredCount = 0;
+
+  questions.forEach(q => {
+    const resp = responses.find(r => r.question_id === q.id);
+    const studentAnswer = resp?.metadata?.answer;
+
+    if (!studentAnswer || (Array.isArray(studentAnswer) && studentAnswer.length === 0) || (typeof studentAnswer === 'object' && Object.keys(studentAnswer).length === 0)) {
+      unansweredCount++;
+      return;
+    }
+
+    if (q.question_type === 'mcq') {
+       const correctOpt = q.options?.find((o: any) => o.is_correct);
+       if (studentAnswer === correctOpt?.text) correctCount++;
+       else incorrectCount++;
+    } else if (q.question_type === 'complex_mcq') {
+       const correctOpts = q.options?.filter((o: any) => o.is_correct).map((o: any) => o.text) || [];
+       const isCorrect = Array.isArray(studentAnswer) && studentAnswer.length === correctOpts.length && studentAnswer.every((a: any) => correctOpts.includes(a));
+       if (isCorrect) correctCount++;
+       else incorrectCount++;
+    } else if (q.question_type === 'matching') {
+       let matches = 0;
+       let totalPairs = q.options?.length || 1;
+       q.options?.forEach((opt: any) => {
+         if (studentAnswer[opt.text] === opt.match_pair) matches++;
+       });
+       if (matches === totalPairs) correctCount++;
+       else incorrectCount++;
+    } else if (q.question_type === 'essay') {
+       // Essay is counted separately or just as "answered" since correctness is subjective
+       correctCount++; 
+    }
+  });
 
   return (
     <div className="max-w-4xl mx-auto space-y-8 pb-20 p-6">
@@ -87,7 +125,7 @@ export default function QuizReviewPage({ params }: { params: Promise<{ id: strin
            <p className="text-[var(--text-secondary)] max-w-md mx-auto mb-8">
               {quiz?.show_score === false 
                 ? "Nilai akhir Anda disembunyikan oleh pengajar." 
-                : "Ujian Anda telah disubmit. Nilai essay (jika ada) akan diperbarui setelah dinilai oleh guru."}
+                : "Ujian Anda telah disubmit. Nilai essay (jika ada) telah dievaluasi oleh AI dan dapat disesuaikan kembali oleh guru."}
            </p>
 
            {quiz?.show_score !== false && (
@@ -108,6 +146,32 @@ export default function QuizReviewPage({ params }: { params: Promise<{ id: strin
 
         {/* Sidebar Info */}
         <div className="space-y-6">
+           <Card className="p-6 bg-white border border-[var(--border)] shadow-sm">
+              <h3 className="font-bold text-[var(--text-primary)] mb-4 flex items-center gap-2">
+                <BarChart3 className="w-5 h-5 text-[var(--accent)]" /> Statistik Ujian
+              </h3>
+              <div className="space-y-4">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2 text-green-600 font-medium">
+                    <CheckCircle2 className="w-4 h-4" /> Benar
+                  </div>
+                  <span className="font-bold">{correctCount}</span>
+                </div>
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2 text-red-500 font-medium">
+                    <XCircle className="w-4 h-4" /> Salah
+                  </div>
+                  <span className="font-bold">{incorrectCount}</span>
+                </div>
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2 text-slate-500 font-medium">
+                    <MinusCircle className="w-4 h-4" /> Kosong
+                  </div>
+                  <span className="font-bold">{unansweredCount}</span>
+                </div>
+              </div>
+           </Card>
+
            <Card className="p-6 bg-[var(--accent)] text-white border-none shadow-xl shadow-[var(--accent)]/30">
               <div className="flex items-center gap-3 mb-4">
                  <div className="w-10 h-10 rounded-xl bg-white/20 flex items-center justify-center"><Award /></div>
@@ -120,6 +184,28 @@ export default function QuizReviewPage({ params }: { params: Promise<{ id: strin
         </div>
       </div>
 
+      {/* AI Analysis Section */}
+      {aiAnalysis && (
+        <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.2 }}>
+          <Card className="p-8 border-none bg-gradient-to-br from-indigo-50 to-purple-50 overflow-hidden relative shadow-md">
+            <div className="absolute -top-10 -right-10 opacity-10">
+              <BrainCircuit className="w-64 h-64 text-indigo-500" />
+            </div>
+            <div className="relative z-10">
+              <div className="flex items-center gap-3 mb-4">
+                <div className="p-3 bg-white rounded-xl shadow-sm text-indigo-600">
+                  <BrainCircuit className="w-6 h-6" />
+                </div>
+                <h3 className="text-2xl font-black text-indigo-900">Analisis Performa AI</h3>
+              </div>
+              <p className="text-indigo-900/80 leading-relaxed whitespace-pre-wrap font-medium">
+                {aiAnalysis}
+              </p>
+            </div>
+          </Card>
+        </motion.div>
+      )}
+
       {/* Review Section */}
       {(quiz?.show_answers || quiz?.show_explanation) && (
         <div className="mt-12 space-y-8">
@@ -130,7 +216,18 @@ export default function QuizReviewPage({ params }: { params: Promise<{ id: strin
           <div className="space-y-6">
             {questions.map((q, idx) => {
               const resp = responses.find(r => r.question_id === q.id);
-              const studentAnswer = resp?.metadata?.answer;
+              let studentAnswer = resp?.metadata?.answer;
+              
+              // Handle AI feedback if it was saved directly in metadata or under score's metadata
+              // In our implementation, we saved it in score.metadata.responses[qId].ai_feedback
+              const scoreMetaResp = score?.metadata?.responses?.[q.id];
+              let aiFeedback = null;
+              if (scoreMetaResp && typeof scoreMetaResp === 'object' && scoreMetaResp.ai_feedback) {
+                aiFeedback = scoreMetaResp.ai_feedback;
+                if (!studentAnswer && scoreMetaResp.answer) {
+                   studentAnswer = scoreMetaResp.answer;
+                }
+              }
 
               return (
                 <Card key={q.id} className="p-6 border-[var(--border)] shadow-sm">
@@ -197,6 +294,18 @@ export default function QuizReviewPage({ params }: { params: Promise<{ id: strin
                         )}
                       </div>
 
+                      {/* AI Feedback for Essay */}
+                      {aiFeedback && (
+                        <div className="mt-4 p-4 bg-indigo-50 border border-indigo-100 rounded-xl relative overflow-hidden">
+                          <div className="absolute top-0 left-0 w-1 h-full bg-indigo-500" />
+                          <p className="text-sm font-bold text-indigo-800 mb-2 flex items-center gap-2">
+                            <BrainCircuit className="h-4 w-4" /> Evaluasi AI
+                          </p>
+                          <p className="text-indigo-900 text-sm leading-relaxed">{aiFeedback}</p>
+                        </div>
+                      )}
+
+                      {/* Teacher's Explanation */}
                       {quiz?.show_explanation && q.explanation && (
                         <div className="mt-6 p-4 bg-blue-50 border border-blue-100 rounded-xl relative overflow-hidden">
                           <div className="absolute top-0 left-0 w-1 h-full bg-blue-500" />

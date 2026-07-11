@@ -38,6 +38,9 @@ export default function ExamPage({ params }: { params: Promise<{ id: string }> }
   // Drag and drop state for matching
   const [draggedItem, setDraggedItem] = useState<string | null>(null);
 
+  const [isSubmittingToAI, setIsSubmittingToAI] = useState(false);
+  const aiTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+
   const initExam = useCallback(async () => {
     if (!profile) return;
     
@@ -345,14 +348,102 @@ export default function ExamPage({ params }: { params: Promise<{ id: string }> }
       }
     });
 
+    if (hasEssay) {
+      setIsSubmittingToAI(true);
+      let isTimeout = false;
+      
+      const timeoutPromise = new Promise((resolve) => {
+        aiTimeoutRef.current = setTimeout(() => {
+          isTimeout = true;
+          resolve('timeout');
+        }, 15000); // 15 seconds wait for AI
+      });
+
+      const fetchPromise = fetch('/api/ai/grade-exam', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          quizTitle: quiz?.title,
+          questions,
+          responses,
+          studentName: profile?.full_name
+        })
+      });
+
+      try {
+        const result: any = await Promise.race([fetchPromise, timeoutPromise]);
+        
+        if (result === 'timeout') {
+          // It timed out. We ask the user if they want to wait more or proceed without AI grading.
+          setConfirmModal({
+            show: true,
+            title: 'Koreksi AI Butuh Waktu',
+            message: 'AI sedang sibuk mengoreksi jawaban essay Anda. Apakah Anda ingin tetap menunggu, atau kumpulkan tanpa koreksi AI (guru akan mengoreksi manual)?',
+            onConfirm: () => {
+              // Submit without AI
+              setConfirmModal(prev => ({...prev, show: false}));
+              finalizeSubmission(totalScore, hasEssay, null);
+            },
+            isAlert: true // Re-using isAlert style for "Proceed without AI"
+          });
+          return;
+        }
+
+        if (aiTimeoutRef.current) clearTimeout(aiTimeoutRef.current);
+        const res = result as Response;
+        
+        if (res.ok) {
+          const aiData = await res.json();
+          // aiData has essayScores, essayFeedback, generalAnalysis
+          if (aiData.essayScores) {
+            Object.values(aiData.essayScores).forEach((score: any) => {
+              totalScore += Number(score) || 0;
+            });
+          }
+          
+          finalizeSubmission(totalScore, hasEssay, aiData);
+        } else {
+          // API failed
+          finalizeSubmission(totalScore, hasEssay, null);
+        }
+      } catch (error) {
+        console.error("AI grading failed", error);
+        finalizeSubmission(totalScore, hasEssay, null);
+      }
+    } else {
+      finalizeSubmission(totalScore, false, null);
+    }
+  };
+
+  const finalizeSubmission = async (totalScore: number, hasEssay: boolean, aiData: any) => {
+    setIsSubmittingToAI(false);
+
+    let finalResponses = { ...responses };
+    if (aiData?.essayFeedback) {
+      // Append feedback to responses metadata
+      Object.keys(aiData.essayFeedback).forEach(qId => {
+        if (!finalResponses[qId]) finalResponses[qId] = {};
+        if (typeof finalResponses[qId] === 'string') {
+          finalResponses[qId] = { answer: finalResponses[qId], ai_feedback: aiData.essayFeedback[qId] };
+        } else {
+          finalResponses[qId].ai_feedback = aiData.essayFeedback[qId];
+        }
+      });
+    }
+
+    const isGraded = aiData ? true : !hasEssay;
+
     await supabase.from("student_scores").insert({
       student_id: profile?.id,
       target_id: id,
       target_type: "quiz",
       score: totalScore,
-      is_graded: !hasEssay,
-      metadata: { responses }, 
-      graded_at: hasEssay ? null : new Date().toISOString()
+      is_graded: isGraded,
+      metadata: { 
+        responses: finalResponses,
+        ai_analysis: aiData?.generalAnalysis || null 
+      }, 
+      graded_at: isGraded ? new Date().toISOString() : null
     });
 
     if (quiz?.course_id) {
@@ -366,11 +457,11 @@ export default function ExamPage({ params }: { params: Promise<{ id: string }> }
     }
 
     setFinalScore(totalScore);
-    setNeedsManualGrading(hasEssay);
+    // User requested: "Selesai tapi guru masih bisa edit nilai essay". So needsManualGrading is false since it's "Selesai"
+    setNeedsManualGrading(!isGraded);
     setIsFinished(true);
     playSound('finish');
     
-    // Update daily quest for attempting a quiz
     if (profile?.id) {
       updateQuestProgress(supabase, profile.id, 'score_cbt', 1).catch(console.error);
     }
@@ -425,14 +516,20 @@ export default function ExamPage({ params }: { params: Promise<{ id: string }> }
     return `${m.toString().padStart(2,'0')}:${sec.toString().padStart(2,'0')}`;
   };
 
-  if (loading) {
+  if (loading || isSubmittingToAI) {
     return (
-      <div className="min-h-screen bg-slate-50 flex items-center justify-center">
+      <div className="min-h-screen bg-slate-50 flex flex-col items-center justify-center gap-6 p-4 text-center">
         <motion.div 
           animate={{ rotate: 360 }} 
           transition={{ repeat: Infinity, duration: 1, ease: "linear" }}
-          className="w-12 h-12 border-4 border-blue-500 border-t-transparent rounded-full"
+          className="w-16 h-16 border-4 border-blue-500 border-t-transparent rounded-full"
         />
+        {isSubmittingToAI && (
+          <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="max-w-xs">
+            <h3 className="font-bold text-slate-800 text-lg mb-2">AI Sedang Mengoreksi...</h3>
+            <p className="text-sm text-slate-500">Gemini AI sedang membaca dan memberikan penilaian pada jawaban essay Anda. Mohon tunggu sebentar.</p>
+          </motion.div>
+        )}
       </div>
     );
   }
