@@ -563,6 +563,7 @@ export default function ExamPage({ params }: { params: Promise<{ id: string }> }
       metadata: { 
         responses: finalResponses,
         ai_analysis: aiData?.generalAnalysis || null,
+        ai_suggestions: aiData?.aiSuggestions || null,
         flags,
         cheatWarnings,
         submitted_at: new Date().toISOString()

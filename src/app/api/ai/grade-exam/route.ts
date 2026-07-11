@@ -64,10 +64,15 @@ Tugas Anda:
    - "🌟 Topik yang Sudah Dikuasai:" (sebutkan materi/topik yang dijawab dengan baik)
    - "📚 Materi yang Perlu Dipelajari Lagi:" (sebutkan kelemahan jika ada, atau "Semua sudah baik" jika sempurna)
 2. ${hasEssay ? "Koreksi Soal Essay: Berikan nilai (0 sampai Poin Maksimal) dan *feedback* spesifik untuk setiap jawaban essay siswa." : ""}
+3. Saran Belajar: Berikan saran 1-2 pertanyaan yang bisa siswa tanyakan ke tutor AI (Mascot) untuk mendalami materi yang mereka kurang. Hasilkan dalam format array of string.
 
 Berikan jawaban HANYA dalam format JSON dengan struktur berikut (jangan tambahkan markdown \`\`\`json):
 {
   "generalAnalysis": "Teks analisis kinerja...",
+  "aiSuggestions": [
+    "Jelaskan lebih lanjut tentang konsep X dengan perumpamaan sederhana",
+    "Berikan saya 1 contoh soal tentang Y beserta pembahasannya"
+  ],
   "essayScores": {
     "question_id_disini": nilai_dalam_angka
   },
