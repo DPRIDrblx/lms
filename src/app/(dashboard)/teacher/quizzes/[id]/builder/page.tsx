@@ -98,7 +98,10 @@ export default function CBTBuilderPage() {
           shuffle_questions: quizData.shuffle_questions ?? false,
           show_score: quizData.show_score ?? true,
           show_answers: quizData.show_answers ?? true,
-          show_explanation: quizData.show_explanation ?? false
+          show_explanation: quizData.show_explanation ?? false,
+          allow_practice_mode: quizData.allow_practice_mode ?? false,
+          practice_time_limit_minutes: quizData.practice_time_limit_minutes ?? 0,
+          save_practice_scores: quizData.save_practice_scores ?? false
         });
       }
       if (qData) {
@@ -157,7 +160,10 @@ export default function CBTBuilderPage() {
         shuffle_questions: quiz.shuffle_questions,
         show_score: quiz.show_score,
         show_answers: quiz.show_answers,
-        show_explanation: quiz.show_explanation
+        show_explanation: quiz.show_explanation,
+        allow_practice_mode: quiz.allow_practice_mode,
+        practice_time_limit_minutes: quiz.practice_time_limit_minutes,
+        save_practice_scores: quiz.save_practice_scores
       })
       .eq("id", id);
 
@@ -321,6 +327,44 @@ export default function CBTBuilderPage() {
                   className="h-4 w-4 text-[var(--accent)]"
                 />
               </div>
+
+              <div className="flex items-center justify-between border-t border-[var(--border)] pt-4 mt-2">
+                <label className="text-sm font-medium text-[var(--text-secondary)]">Sediakan Mode Latihan</label>
+                <input 
+                  type="checkbox" 
+                  checked={quiz.allow_practice_mode} 
+                  onChange={(e) => setQuiz({ ...quiz, allow_practice_mode: e.target.checked })}
+                  className="h-4 w-4 text-[var(--accent)]"
+                />
+              </div>
+
+              {quiz.allow_practice_mode && (
+                <div className="space-y-4 bg-slate-50 dark:bg-slate-900 p-3 rounded border border-slate-200 dark:border-slate-800">
+                  <div className="space-y-2">
+                    <label className="flex items-center gap-2 text-sm font-medium text-[var(--text-secondary)]">
+                      <Clock className="h-4 w-4 text-[var(--text-tertiary)]" />
+                      Waktu Latihan (menit)
+                    </label>
+                    <input
+                      type="number"
+                      placeholder="0 for unlimited"
+                      className="w-full text-sm bg-white dark:bg-[var(--bg-secondary)] border border-[var(--border)] rounded px-3 py-2 focus:ring-1 focus:ring-[var(--accent)] focus:outline-none"
+                      value={quiz.practice_time_limit_minutes || ""}
+                      onChange={(e) => setQuiz({ ...quiz, practice_time_limit_minutes: parseInt(e.target.value) || 0 })}
+                    />
+                    <p className="text-xs text-[var(--text-tertiary)]">Isi 0 jika tanpa batas waktu.</p>
+                  </div>
+                  <div className="flex items-center justify-between">
+                    <label className="text-sm font-medium text-[var(--text-secondary)]" title="Jika aktif, nilai saat latihan akan menggantikan nilai utama siswa">Simpan Nilai Latihan</label>
+                    <input 
+                      type="checkbox" 
+                      checked={quiz.save_practice_scores} 
+                      onChange={(e) => setQuiz({ ...quiz, save_practice_scores: e.target.checked })}
+                      className="h-4 w-4 text-emerald-500"
+                    />
+                  </div>
+                </div>
+              )}
             </div>
           </Card>
 

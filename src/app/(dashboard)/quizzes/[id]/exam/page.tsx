@@ -41,6 +41,9 @@ export default function ExamPage({ params }: { params: Promise<{ id: string }> }
   const [isSubmittingToAI, setIsSubmittingToAI] = useState(false);
   const aiTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
+  const [isPracticeMode, setIsPracticeMode] = useState(false);
+  const [isAnswerRevealed, setIsAnswerRevealed] = useState<Record<string, boolean>>({});
+
   const initExam = useCallback(async () => {
     if (!profile) return;
     
@@ -78,10 +81,24 @@ export default function ExamPage({ params }: { params: Promise<{ id: string }> }
       }
       setSession(existing);
       
-      const totalSeconds = (qData.data?.time_limit || qData.data?.time_limit_minutes || 60) * 60;
+      const mode = typeof window !== 'undefined' ? new URLSearchParams(window.location.search).get('mode') : null;
+      const isPractice = mode === 'practice';
+      setIsPracticeMode(isPractice);
+
+      let totalSeconds;
+      if (isPractice) {
+         totalSeconds = qData.data?.practice_time_limit_minutes > 0 ? qData.data.practice_time_limit_minutes * 60 : -1;
+      } else {
+         totalSeconds = qData.data?.time_limit_minutes > 0 ? qData.data.time_limit_minutes * 60 : (qData.data?.time_limit > 0 ? qData.data.time_limit * 60 : -1);
+      }
+
+      if (isPractice) {
+         qList = qList.filter(q => q.question_type !== 'essay');
+      }
+
       const startedAt = existing.metadata?.started_at ? new Date(existing.metadata.started_at).getTime() : Date.now();
       const elapsedSeconds = Math.floor((Date.now() - startedAt) / 1000);
-      setTimeLeft(Math.max(0, totalSeconds - elapsedSeconds));
+      setTimeLeft(totalSeconds === -1 ? -1 : Math.max(0, totalSeconds - elapsedSeconds));
       
       if (qData.data?.shuffle_questions) {
         const savedOrder = existing.metadata?.question_order;
@@ -114,6 +131,21 @@ export default function ExamPage({ params }: { params: Promise<{ id: string }> }
         setFlags(initialFlags);
       }
     } else {
+      const mode = typeof window !== 'undefined' ? new URLSearchParams(window.location.search).get('mode') : null;
+      const isPractice = mode === 'practice';
+      setIsPracticeMode(isPractice);
+
+      let totalSeconds;
+      if (isPractice) {
+         totalSeconds = qData.data?.practice_time_limit_minutes > 0 ? qData.data.practice_time_limit_minutes * 60 : -1;
+      } else {
+         totalSeconds = qData.data?.time_limit_minutes > 0 ? qData.data.time_limit_minutes * 60 : (qData.data?.time_limit > 0 ? qData.data.time_limit * 60 : -1);
+      }
+
+      if (isPractice) {
+         qList = qList.filter(q => q.question_type !== 'essay');
+      }
+
       if (qData.data?.shuffle_questions) {
         qList = [...qList].sort(() => Math.random() - 0.5);
       }
@@ -124,14 +156,14 @@ export default function ExamPage({ params }: { params: Promise<{ id: string }> }
       const { data: newSession } = await supabase.from("exam_sessions").insert({
         student_id: profile.id,
         quiz_id: id,
-        time_left_seconds: (qData.data?.time_limit || qData.data?.time_limit_minutes || 60) * 60,
+        time_left_seconds: totalSeconds === -1 ? 999999 : totalSeconds,
         status: 'in_progress',
-        metadata: { started_at: new Date().toISOString(), question_order: questionOrder }
+        metadata: { started_at: new Date().toISOString(), question_order: questionOrder, is_practice: isPractice }
       }).select().single();
       
       if (newSession) {
         setSession(newSession);
-        setTimeLeft(newSession.time_left_seconds);
+        setTimeLeft(totalSeconds);
       }
     }
     
@@ -170,7 +202,7 @@ export default function ExamPage({ params }: { params: Promise<{ id: string }> }
   }, [profile, id, supabase]);
 
   useEffect(() => {
-    if (timeLeft <= 0 || loading || isFinished || isPaused) return;
+    if (timeLeft < 0 || loading || isFinished || isPaused) return; // -1 means unlimited
     const t = setInterval(() => {
       setTimeLeft(prev => {
         if (prev <= 1) { clearInterval(t); submitExam(true); return 0; }
@@ -178,7 +210,7 @@ export default function ExamPage({ params }: { params: Promise<{ id: string }> }
       });
     }, 1000);
     return () => clearInterval(t);
-  }, [timeLeft, loading, isFinished]);
+  }, [timeLeft, loading, isFinished, isPaused]);
 
   useEffect(() => {
     const handleBeforeUnload = (e: BeforeUnloadEvent) => {
@@ -208,7 +240,7 @@ export default function ExamPage({ params }: { params: Promise<{ id: string }> }
 
   useEffect(() => {
     const handleBlur = () => {
-      if (!isFinished && !loading && !isAlertOpen.current) {
+      if (!isFinished && !loading && !isAlertOpen.current && !isPracticeMode) {
         isAlertOpen.current = true;
         setCheatWarnings(prev => {
           const newWarnings = prev + 1;
@@ -259,6 +291,13 @@ export default function ExamPage({ params }: { params: Promise<{ id: string }> }
     playSound('click');
     const newResponses = { ...responses, [qId]: answer };
     setResponses(newResponses);
+    
+    if (isPracticeMode) {
+      const q = questions.find(q => q.id === qId);
+      if (q && q.question_type === 'mcq') {
+        setIsAnswerRevealed(prev => ({ ...prev, [qId]: true }));
+      }
+    }
     
     await supabase.from("quiz_responses").upsert({
       student_id: profile?.id,
@@ -331,16 +370,19 @@ export default function ExamPage({ params }: { params: Promise<{ id: string }> }
 
       if (q.question_type === "mcq") {
         const correctOpt = q.options?.find((o: any) => o.is_correct);
-        if (ans === correctOpt?.text) totalScore += q.points;
+        if (responses[q.id] === correctOpt?.text) totalScore += q.points;
       } else if (q.question_type === "complex_mcq") {
         const correctOpts = q.options?.filter((o: any) => o.is_correct).map((o: any) => o.text) || [];
-        const isCorrect = Array.isArray(ans) && ans.length === correctOpts.length && ans.every(a => correctOpts.includes(a));
-        if (isCorrect) totalScore += q.points;
+        const userOpts = responses[q.id] || [];
+        if (correctOpts.length > 0 && correctOpts.every((c: any) => userOpts.includes(c)) && userOpts.every((u: string) => correctOpts.includes(u))) {
+          totalScore += q.points;
+        }
       } else if (q.question_type === "matching") {
+        const userMatches = responses[q.id] || {};
+        const totalPairs = q.options?.length || 1;
         let matches = 0;
-        let totalPairs = q.options?.length || 1;
-        q.options?.forEach((opt: any) => {
-          if (ans[opt.text] === opt.match_pair) matches++;
+        q.options?.forEach((o: any) => {
+          if (userMatches[o.text] === o.match_pair) matches++;
         });
         totalScore += (matches / totalPairs) * q.points;
       } else if (q.question_type === "essay") {
@@ -348,6 +390,7 @@ export default function ExamPage({ params }: { params: Promise<{ id: string }> }
       }
     });
 
+    // finalizeSubmission is defined below and will be called appropriately.
     if (hasEssay) {
       setIsSubmittingToAI(true);
       let isFinalizedLocally = false;
@@ -422,27 +465,38 @@ export default function ExamPage({ params }: { params: Promise<{ id: string }> }
       Object.keys(aiData.essayFeedback).forEach(qId => {
         if (!finalResponses[qId]) finalResponses[qId] = {};
         if (typeof finalResponses[qId] === 'string') {
-          finalResponses[qId] = { answer: finalResponses[qId], ai_feedback: aiData.essayFeedback[qId] };
+          finalResponses[qId] = { answer: finalResponses[qId], ai_feedback: aiData.essayFeedback[qId], ai_score: aiData.essayScores?.[qId] };
         } else {
           finalResponses[qId].ai_feedback = aiData.essayFeedback[qId];
+          if (aiData.essayScores?.[qId] !== undefined) finalResponses[qId].ai_score = aiData.essayScores[qId];
         }
       });
     }
 
     const isGraded = aiData ? true : !hasEssay;
 
-    await supabase.from("student_scores").insert({
+    const payload: any = {
       student_id: profile?.id,
       target_id: id,
-      target_type: "quiz",
+      target_type: isPracticeMode ? "quiz_practice" : "quiz",
       score: totalScore,
       is_graded: isGraded,
       metadata: { 
         responses: finalResponses,
-        ai_analysis: aiData?.generalAnalysis || null 
+        ai_analysis: aiData?.generalAnalysis || null,
+        flags,
+        cheatWarnings,
+        submitted_at: new Date().toISOString()
       }, 
       graded_at: isGraded ? new Date().toISOString() : null
-    });
+    };
+
+    if (isPracticeMode && quiz?.save_practice_scores === false) {
+       // Do not save to student_scores if save_practice_scores is false
+    } else {
+       await supabase.from("student_scores").upsert(payload, { onConflict: "student_id,target_id,target_type" });
+    }
+
 
     if (quiz?.course_id) {
        await supabase.from("course_progress").upsert({
@@ -862,28 +916,46 @@ export default function ExamPage({ params }: { params: Promise<{ id: string }> }
               <div className="grid gap-3">
                 {currentQ.options?.map((opt: any, i: number) => {
                   const isSelected = responses[currentQ.id] === opt.text;
+                  const isRevealed = isPracticeMode && isAnswerRevealed[currentQ.id];
+                  
+                  let btnColorClass = isSelected ? 'border-blue-500 bg-blue-50' : 'border-slate-200 hover:border-slate-300 hover:bg-slate-50';
+                  let letterColorClass = isSelected ? 'border-blue-500 text-blue-600 bg-white' : 'border-slate-300 text-slate-500';
+                  let textColorClass = isSelected ? 'text-blue-900' : 'text-slate-700';
+
+                  if (isRevealed) {
+                    if (opt.is_correct) {
+                      btnColorClass = 'border-green-500 bg-green-50';
+                      letterColorClass = 'border-green-500 text-green-600 bg-white';
+                      textColorClass = 'text-green-900 font-bold';
+                    } else if (isSelected) {
+                      btnColorClass = 'border-red-500 bg-red-50';
+                      letterColorClass = 'border-red-500 text-red-600 bg-white';
+                      textColorClass = 'text-red-900 line-through opacity-70';
+                    } else {
+                      btnColorClass = 'border-slate-200 bg-slate-50 opacity-50';
+                      letterColorClass = 'border-slate-300 text-slate-400';
+                      textColorClass = 'text-slate-400';
+                    }
+                  }
+
                   return (
                     <button
                       key={i}
+                      disabled={isRevealed}
                       onClick={() => saveAnswer(currentQ.id, opt.text)}
-                      className={`text-left w-full p-4 md:p-5 rounded-2xl border-2 transition-all flex items-center gap-4 ${
-                        isSelected 
-                          ? 'border-blue-500 bg-blue-50' 
-                          : 'border-slate-200 hover:border-slate-300 hover:bg-slate-50'
-                      }`}
+                      className={`text-left w-full p-4 md:p-5 rounded-2xl border-2 transition-all flex items-center gap-4 ${btnColorClass}`}
                       style={{
-                        borderBottomWidth: isSelected ? '2px' : '4px',
-                        transform: isSelected ? 'translateY(2px)' : 'none'
+                        borderBottomWidth: isSelected && !isRevealed ? '2px' : '4px',
+                        transform: isSelected && !isRevealed ? 'translateY(2px)' : 'none'
                       }}
                     >
-                      <div className={`w-8 h-8 rounded-xl flex items-center justify-center font-bold text-sm shrink-0 border-2 ${
-                        isSelected ? 'border-blue-500 text-blue-600 bg-white' : 'border-slate-300 text-slate-500'
-                      }`}>
+                      <div className={`w-8 h-8 rounded-xl flex items-center justify-center font-bold text-sm shrink-0 border-2 ${letterColorClass}`}>
                         {String.fromCharCode(65 + i)}
                       </div>
-                      <span className={`text-lg font-medium ${isSelected ? 'text-blue-900' : 'text-slate-700'}`}>
+                      <span className={`text-lg font-medium flex-1 ${textColorClass}`}>
                         {opt.text}
                       </span>
+                      {isRevealed && opt.is_correct && <CheckCircle2 className="w-6 h-6 text-green-500" />}
                     </button>
                   );
                 })}
@@ -899,6 +971,7 @@ export default function ExamPage({ params }: { params: Promise<{ id: string }> }
                 {currentQ.options?.map((opt: any, i: number) => {
                   const selectedArr = responses[currentQ.id] || [];
                   const isSelected = selectedArr.includes(opt.text);
+                  const isRevealed = isPracticeMode && isAnswerRevealed[currentQ.id];
                   
                   const toggleSelect = () => {
                     let newArr = [...selectedArr];
@@ -907,26 +980,41 @@ export default function ExamPage({ params }: { params: Promise<{ id: string }> }
                     saveAnswer(currentQ.id, newArr);
                   };
 
+                  let btnColorClass = isSelected ? 'border-blue-500 bg-blue-50' : 'border-slate-200 hover:border-slate-300 hover:bg-slate-50';
+                  let iconClass = isSelected ? 'border-blue-500 bg-blue-500 text-white' : 'border-slate-300 bg-white';
+                  let textColorClass = isSelected ? 'text-blue-900' : 'text-slate-700';
+
+                  if (isRevealed) {
+                    if (opt.is_correct) {
+                       btnColorClass = 'border-green-500 bg-green-50';
+                       iconClass = 'border-green-500 bg-green-500 text-white';
+                       textColorClass = 'text-green-900 font-bold';
+                    } else if (isSelected) {
+                       btnColorClass = 'border-red-500 bg-red-50';
+                       iconClass = 'border-red-500 bg-red-500 text-white';
+                       textColorClass = 'text-red-900 line-through opacity-70';
+                    } else {
+                       btnColorClass = 'border-slate-200 bg-slate-50 opacity-50';
+                       iconClass = 'border-slate-300 bg-white';
+                       textColorClass = 'text-slate-400';
+                    }
+                  }
+
                   return (
                     <button
                       key={i}
+                      disabled={isRevealed}
                       onClick={toggleSelect}
-                      className={`text-left w-full p-4 md:p-5 rounded-2xl border-2 transition-all flex items-center gap-4 ${
-                        isSelected 
-                          ? 'border-green-500 bg-green-50' 
-                          : 'border-slate-200 hover:border-slate-300 hover:bg-slate-50'
-                      }`}
+                      className={`text-left w-full p-4 md:p-5 rounded-2xl border-2 transition-all flex items-center gap-4 ${btnColorClass}`}
                       style={{
-                        borderBottomWidth: isSelected ? '2px' : '4px',
-                        transform: isSelected ? 'translateY(2px)' : 'none'
+                        borderBottomWidth: isSelected && !isRevealed ? '2px' : '4px',
+                        transform: isSelected && !isRevealed ? 'translateY(2px)' : 'none'
                       }}
                     >
-                      <div className={`w-6 h-6 rounded-md flex items-center justify-center shrink-0 border-2 ${
-                        isSelected ? 'border-green-500 bg-green-500 text-white' : 'border-slate-300 bg-white'
-                      }`}>
-                        {isSelected && <CheckCircle2 className="w-4 h-4" />}
+                      <div className={`w-6 h-6 rounded-md flex items-center justify-center shrink-0 border-2 ${iconClass}`}>
+                        {(isSelected || (isRevealed && opt.is_correct)) && <CheckCircle2 className="w-4 h-4" />}
                       </div>
-                      <span className={`text-lg font-medium ${isSelected ? 'text-green-900' : 'text-slate-700'}`}>
+                      <span className={`text-lg font-medium flex-1 ${textColorClass}`}>
                         {opt.text}
                       </span>
                     </button>
@@ -976,6 +1064,23 @@ export default function ExamPage({ params }: { params: Promise<{ id: string }> }
                   <div className="grid gap-4">
                     {terms.map((term: string, i: number) => {
                       const matchedDef = answersMap[term];
+                      const correctDef = currentQ.options?.find((o: any) => o.text === term)?.match_pair;
+                      const isCorrect = matchedDef === correctDef;
+                      const isRevealed = isPracticeMode && isAnswerRevealed[currentQ.id];
+
+                      let boxClass = matchedDef ? 'border-blue-400 bg-blue-50 cursor-pointer' : 'border-slate-300 bg-slate-50';
+                      let textClass = 'text-blue-700';
+
+                      if (isRevealed) {
+                        if (isCorrect) {
+                           boxClass = 'border-green-500 bg-green-50';
+                           textClass = 'text-green-700 font-bold';
+                        } else if (matchedDef) {
+                           boxClass = 'border-red-500 bg-red-50';
+                           textClass = 'text-red-700 line-through opacity-80';
+                        }
+                      }
+
                       return (
                         <div key={i} className="flex flex-col md:flex-row md:items-center gap-2 md:gap-4 p-4 border-2 border-slate-200 rounded-2xl bg-white">
                           <div className="md:w-5/12 font-bold text-slate-700 text-lg">
@@ -984,32 +1089,43 @@ export default function ExamPage({ params }: { params: Promise<{ id: string }> }
                           <div className="hidden md:block text-slate-300">
                             <ChevronRight className="w-6 h-6" />
                           </div>
-                          <div 
-                            onDragOver={(e) => e.preventDefault()}
-                            onDrop={(e) => {
-                              if (draggedItem) {
-                                const newAnswers = { ...answersMap, [term]: draggedItem };
-                                saveAnswer(currentQ.id, newAnswers);
-                                setDraggedItem(null);
-                              }
-                            }}
-                            className={`flex-1 min-h-[60px] p-3 rounded-xl border-2 border-dashed transition-colors flex items-center justify-center ${
-                              matchedDef 
-                                ? 'border-blue-400 bg-blue-50 cursor-pointer' 
-                                : 'border-slate-300 bg-slate-50'
-                            }`}
-                            onClick={() => {
-                              if (matchedDef) {
-                                const newAnswers = { ...answersMap };
-                                delete newAnswers[term];
-                                saveAnswer(currentQ.id, newAnswers);
-                              }
-                            }}
-                          >
-                            {matchedDef ? (
-                              <div className="font-bold text-blue-700 text-center">{matchedDef}</div>
-                            ) : (
-                              <span className="text-slate-400 font-bold text-sm">Tarik jawaban ke sini</span>
+                          <div className="flex-1 flex flex-col gap-2">
+                            <div 
+                              onDragOver={(e) => !isRevealed && e.preventDefault()}
+                              onDrop={(e) => {
+                                if (draggedItem && !isRevealed) {
+                                  const newAnswers = { ...answersMap, [term]: draggedItem };
+                                  saveAnswer(currentQ.id, newAnswers);
+                                  setDraggedItem(null);
+                                }
+                              }}
+                              className={`min-h-[60px] p-3 rounded-xl border-2 border-dashed transition-colors flex items-center justify-center ${boxClass}`}
+                            >
+                              {matchedDef ? (
+                                <div className="flex items-center justify-between w-full">
+                                  <span className={`font-bold ${textClass}`}>{matchedDef}</span>
+                                  {!isRevealed && (
+                                    <button 
+                                      onClick={(e) => {
+                                        e.stopPropagation();
+                                        const newAnswers = { ...answersMap };
+                                        delete newAnswers[term];
+                                        saveAnswer(currentQ.id, newAnswers);
+                                      }}
+                                      className="text-blue-400 hover:text-red-500 p-1 bg-white rounded-full shadow-sm ml-2"
+                                    >
+                                      X
+                                    </button>
+                                  )}
+                                </div>
+                              ) : (
+                                <span className="text-slate-400 font-medium text-sm">Tarik ke sini</span>
+                              )}
+                            </div>
+                            {isRevealed && !isCorrect && (
+                              <div className="text-sm font-bold text-green-600 bg-green-50 p-2 rounded-lg border border-green-200 flex items-center gap-2">
+                                <CheckCircle2 className="w-4 h-4" /> Benar: {correctDef}
+                              </div>
                             )}
                           </div>
                         </div>

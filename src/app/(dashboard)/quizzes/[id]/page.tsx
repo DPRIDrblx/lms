@@ -36,6 +36,8 @@ interface Quiz {
   passing_score: number;
   questions: Question[];
   show_score?: boolean;
+  allow_practice_mode?: boolean;
+  practice_time_limit_minutes?: number;
 }
 
 export default function TakeQuizPage({ params }: { params: Promise<{ id: string }> }) {
@@ -137,11 +139,28 @@ export default function TakeQuizPage({ params }: { params: Promise<{ id: string 
             </div>
           ) : null}
 
-          <Link href={`/quizzes/${quizId}/exam`}>
-            <Button size="lg" className="w-full text-lg h-14 uppercase tracking-widest font-black" icon={<ArrowRight className="h-5 w-5" />}>
-              {scoreRecord ? "LIHAT RUANG CBT" : "MASUK KE RUANG UJIAN (CBT)"}
-            </Button>
-          </Link>
+          {scoreRecord ? (
+            <Link href={`/quizzes/${quizId}/exam`}>
+              <Button size="lg" className="w-full text-lg h-14 uppercase tracking-widest font-black" icon={<ArrowRight className="h-5 w-5" />}>
+                LIHAT RUANG CBT
+              </Button>
+            </Link>
+          ) : (
+            <div className="flex flex-col gap-4">
+              <Link href={`/quizzes/${quizId}/exam`}>
+                <Button size="lg" className="w-full text-lg h-14 uppercase tracking-widest font-black" icon={<ArrowRight className="h-5 w-5" />}>
+                  MASUK KE RUANG UJIAN (CBT)
+                </Button>
+              </Link>
+              {quiz.allow_practice_mode && (
+                <Link href={`/quizzes/${quizId}/exam?mode=practice`}>
+                  <Button variant="secondary" size="lg" className="w-full text-lg h-14 uppercase tracking-widest font-black border-2 border-[var(--accent)] text-[var(--accent)] hover:bg-[var(--accent)] hover:text-white" icon={<ArrowRight className="h-5 w-5" />}>
+                    MULAI LATIHAN (PRACTICE)
+                  </Button>
+                </Link>
+              )}
+            </div>
+          )}
         </Card>
       </motion.div>
     </div>
