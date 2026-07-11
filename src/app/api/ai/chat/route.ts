@@ -4,6 +4,8 @@ import { GoogleGenerativeAI } from "@google/generative-ai";
 const apiKey = process.env.GEMINI_API_KEY;
 const genAI = apiKey ? new GoogleGenerativeAI(apiKey) : null;
 
+export const maxDuration = 60; // Set max duration for AI Chat
+
 export async function POST(req: Request) {
   try {
     if (!genAI) {
@@ -11,21 +13,29 @@ export async function POST(req: Request) {
     }
 
     const body = await req.json();
-    const { questionContext, messages } = body;
+    const { questionContext, context, messages } = body;
     
     const model = genAI.getGenerativeModel({ model: "gemini-3.5-flash" });
 
-    const systemPrompt = `Anda adalah seorang tutor cerdas, ramah, dan empatik yang membantu siswa memahami soal latihan mereka.
-    
-Informasi Soal:
-- Pertanyaan: ${questionContext.text}
+    let promptInfo = '';
+    if (questionContext) {
+      promptInfo = `Informasi Soal:
+- Pertanyaan: ${questionContext.text || 'Tidak tersedia'}
 - Jawaban Siswa: ${questionContext.studentAnswer || 'Kosong'}
 - Kunci Jawaban: ${questionContext.correctAnswer || 'Tidak ada'}
-- Pembahasan Asli: ${questionContext.explanation || 'Tidak ada pembahasan'}
+- Pembahasan Asli: ${questionContext.explanation || 'Tidak ada pembahasan'}`;
+    } else if (context) {
+      promptInfo = `Informasi Konteks:
+${context}`;
+    }
+
+    const systemPrompt = `Anda adalah seorang tutor cerdas, ramah, dan empatik yang membantu siswa memahami materi pelajaran mereka.
+    
+${promptInfo}
 
 Tugas Anda:
 1. Jawablah pertanyaan siswa dengan bahasa yang santai, memotivasi, dan mudah dipahami.
-2. Jelaskan konsepnya, bukan sekadar memberikan jawaban. Jika siswa salah, jelaskan MENGAPA pilihan mereka salah dan pancing mereka untuk berpikir.
+2. Jelaskan konsepnya, bukan sekadar memberikan jawaban. Jika siswa salah, jelaskan MENGAPA mereka salah dan pancing mereka untuk berpikir.
 3. Jangan pernah merendahkan siswa. Gunakan emoji yang mendukung.
 4. Jawablah secara ringkas (maksimal 2-3 paragraf pendek) agar siswa tidak malas membaca.
 `;
