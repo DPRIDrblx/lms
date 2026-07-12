@@ -660,8 +660,8 @@ export default function ExamPage({ params }: { params: Promise<{ id: string }> }
         />
         {isSubmittingToAI && (
           <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="max-w-xs">
-            <h3 className="font-bold text-slate-800 text-lg mb-2">AI Sedang Mengoreksi...</h3>
-            <p className="text-sm text-slate-500">Gemini AI sedang membaca dan memberikan penilaian pada jawaban essay Anda. Mohon tunggu sebentar.</p>
+            <h3 className="font-bold text-slate-800 text-lg mb-2">AI Sedang Menganalisis...</h3>
+            <p className="text-sm text-slate-500">Tutor AI sedang membaca dan menganalisis performa ujian Anda. Mohon tunggu sebentar.</p>
           </motion.div>
         )}
       </div>
