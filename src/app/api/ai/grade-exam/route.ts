@@ -63,17 +63,16 @@ Berikut adalah data soal dan jawaban siswa:
 
     promptText += `
 Tugas Anda:
-1. Analisis Kinerja Keseluruhan: Berikan analisis singkat untuk siswa. Anda WAJIB menyertakan struktur berikut di dalam teks Anda:
-   - "🌟 Topik yang Sudah Dikuasai:" (sebutkan materi/topik yang dijawab dengan baik)
-   - "📚 Materi yang Perlu Dipelajari Lagi:" (sebutkan kelemahan jika ada, atau "Semua sudah baik" jika sempurna)
-2. ${hasEssay ? "Koreksi Soal Essay: Berikan nilai (0 sampai Poin Maksimal) dan *feedback* spesifik untuk setiap jawaban essay siswa." : ""}
-3. Saran Belajar: Berikan saran 1-2 pertanyaan yang bisa siswa tanyakan ke tutor AI (Mascot) untuk mendalami materi yang mereka kurang. Hasilkan dalam format array of string.
+1. Analisis Kinerja Keseluruhan: Berikan analisis SANGAT SINGKAT (Maksimal 2 kalimat) untuk siswa. Anda WAJIB menyertakan struktur berikut di dalam teks Anda:
+   - "🌟 Topik yang Sudah Dikuasai:" (Sebutkan 1 topik utama saja)
+   - "📚 Materi yang Perlu Dipelajari Lagi:" (Sebutkan 1 kelemahan utama saja)
+2. ${hasEssay ? "Koreksi Soal Essay: Berikan nilai (0 sampai Poin Maksimal) dan *feedback* 1 kalimat pendek untuk setiap essay." : ""}
+3. Saran Belajar: Berikan HANYA 1 pertanyaan saran yang bisa ditanyakan ke AI. Hasilkan dalam format array of string (1 elemen).
 
 Berikan jawaban HANYA dalam format JSON dengan struktur berikut (jangan tambahkan markdown \`\`\`json):
 {
   "generalAnalysis": "Teks analisis kinerja...",
   "aiSuggestions": [
-    "Jelaskan lebih lanjut tentang konsep X dengan perumpamaan sederhana",
     "Berikan saya 1 contoh soal tentang Y beserta pembahasannya"
   ],
   "essayScores": {
