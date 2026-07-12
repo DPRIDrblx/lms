@@ -260,7 +260,7 @@ export default function QuizReviewPage({ params }: { params: Promise<{ id: strin
               </div>
            </Card>
 
-           <Card className="p-6 bg-[var(--accent)] text-white border-none shadow-xl shadow-[var(--accent)]/30">
+           <Card className="p-6 bg-blue-600 text-white border-none shadow-xl shadow-[var(--accent)]/30">
               <div className="flex items-center gap-3 mb-4">
                  <div className="w-10 h-10 rounded-xl bg-white/20 flex items-center justify-center"><Award /></div>
                  <h3 className="font-bold">Sertifikasi</h3>
