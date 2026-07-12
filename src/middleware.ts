@@ -31,6 +31,7 @@ export async function middleware(request: NextRequest) {
 
   const isPublicRoute = 
     request.nextUrl.pathname.startsWith("/bayarnia") || 
+    request.nextUrl.pathname.startsWith("/api/ai/") || 
     request.nextUrl.pathname === "/";
 
   // Bypass for static assets and public routes

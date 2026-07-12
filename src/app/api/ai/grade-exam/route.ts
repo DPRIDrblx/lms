@@ -4,8 +4,7 @@ import { GoogleGenerativeAI } from '@google/generative-ai';
 // Initialize Gemini
 const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY || '');
 
-export const maxDuration = 60; // Allow up to 60 seconds for AI processing
-export const runtime = 'edge'; // Use Edge Runtime to bypass 10s serverless timeout
+export const maxDuration = 60; // Set max duration for AI Chat
 
 export async function POST(req: NextRequest) {
   try {
@@ -18,7 +17,7 @@ export async function POST(req: NextRequest) {
 
     const { quizTitle, questions, responses, studentName } = await req.json();
 
-    const model = genAI.getGenerativeModel({ model: 'gemini-3.5-flash' });
+    const model = genAI.getGenerativeModel({ model: 'gemini-1.5-flash' });
 
     // Format the questions and answers for Gemini
     let promptText = `Anda adalah asisten AI guru yang ahli. Anda bertugas mengoreksi jawaban essay dan memberikan analisis hasil belajar siswa.

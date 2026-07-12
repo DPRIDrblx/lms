@@ -471,6 +471,9 @@ export default function ExamPage({ params }: { params: Promise<{ id: string }> }
       }
     });
 
+    // Bulatkan totalScore menjadi maksimal 1 angka desimal
+    totalScore = Math.round(totalScore * 10) / 10;
+
     // finalizeSubmission is defined below and will be called appropriately.
     setIsSubmittingToAI(true);
     let isFinalizedLocally = false;
@@ -519,6 +522,7 @@ export default function ExamPage({ params }: { params: Promise<{ id: string }> }
             Object.values(aiData.essayScores).forEach((score: any) => {
               totalScore += Number(score) || 0;
             });
+            totalScore = Math.round(totalScore * 10) / 10;
           }
           finalizeSubmission(totalScore, hasEssay, aiData);
         } else {
@@ -712,7 +716,7 @@ export default function ExamPage({ params }: { params: Promise<{ id: string }> }
                ) : (
                   <div>
                     <div className={`text-6xl font-black ${isPassed ? 'text-green-500' : 'text-red-500'}`}>
-                      {finalScore} <span className="text-2xl text-slate-300">/ {quiz?.max_score}</span>
+                      {Number.isInteger(finalScore) ? finalScore : finalScore?.toString().replace('.', ',')} <span className="text-2xl text-slate-300">/ {quiz?.max_score}</span>
                     </div>
                   </div>
                )}
