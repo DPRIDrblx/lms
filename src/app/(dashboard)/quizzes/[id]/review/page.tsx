@@ -73,9 +73,17 @@ export default function QuizReviewPage({ params }: { params: Promise<{ id: strin
       if (res.ok) {
         const data = await res.json();
         setChatMessages([...newMessages, { role: 'model', content: data.message }]);
+      } else {
+        const errData = await res.json().catch(() => ({}));
+        let errMsg = "Maaf, sistem AI sedang sibuk atau kuota API habis. Silakan coba beberapa saat lagi.";
+        if (errData.error?.includes("429") || errData.error?.includes("Quota") || errData.error?.includes("Too Many Requests")) {
+           errMsg = "Maaf, kuota API Gemini Anda sudah habis atau limit terlampaui. Silakan tunggu beberapa saat atau ganti API Key Anda.";
+        }
+        setChatMessages([...newMessages, { role: 'model', content: errMsg }]);
       }
     } catch (e) {
       console.error(e);
+      setChatMessages([...newMessages, { role: 'model', content: "Maaf, terjadi kesalahan koneksi jaringan. Silakan periksa koneksi internet Anda." }]);
     } finally {
       setAiChatLoading(false);
     }
@@ -312,22 +320,24 @@ export default function QuizReviewPage({ params }: { params: Promise<{ id: strin
                         {aiSuggestions.map((suggestion: string, idx: number) => (
                           <button
                             key={idx}
+                            disabled={aiChatLoading}
                             onClick={() => {
                               setIsChatOpen(true);
                               handleSendChat(suggestion);
                             }}
-                            className="text-left bg-white/50 hover:bg-white text-indigo-700 px-4 py-3 rounded-xl text-sm font-medium transition-all shadow-sm border border-indigo-100 hover:border-indigo-300 flex items-center justify-between group"
+                            className={`text-left bg-white/50 text-indigo-700 px-4 py-3 rounded-xl text-sm font-medium transition-all shadow-sm border border-indigo-100 flex items-center justify-between group ${aiChatLoading ? 'opacity-50 cursor-not-allowed' : 'hover:bg-white hover:border-indigo-300'}`}
                           >
                             <span>&quot;{suggestion}&quot;</span>
                             <MessageSquare className="w-4 h-4 opacity-50 group-hover:opacity-100 group-hover:scale-110 transition-all" />
                           </button>
                         ))}
                         <button
+                          disabled={aiChatLoading}
                           onClick={() => {
                             setIsChatOpen(true);
                             handleSendChat("Berikan saya topik atau saran pertanyaan lain untuk evaluasi ujian ini.");
                           }}
-                          className="text-left bg-indigo-100/50 hover:bg-indigo-100 text-indigo-700 px-4 py-3 rounded-xl text-sm font-bold transition-all shadow-sm border border-indigo-200 hover:border-indigo-300 flex items-center justify-between group mt-2"
+                          className={`text-left bg-indigo-100/50 text-indigo-700 px-4 py-3 rounded-xl text-sm font-bold transition-all shadow-sm border border-indigo-200 flex items-center justify-between group mt-2 ${aiChatLoading ? 'opacity-50 cursor-not-allowed' : 'hover:bg-indigo-100 hover:border-indigo-300'}`}
                         >
                           <span className="italic">💡 Ingin eksplorasi lebih? Minta saran pertanyaan lain...</span>
                           <MessageSquare className="w-4 h-4 opacity-50 group-hover:opacity-100 group-hover:scale-110 transition-all" />
@@ -551,10 +561,11 @@ export default function QuizReviewPage({ params }: { params: Promise<{ id: strin
                   <input
                     type="text"
                     value={aiChatInput}
+                    disabled={aiChatLoading}
                     onChange={(e) => setAiChatInput(e.target.value)}
                     onKeyDown={(e) => e.key === 'Enter' && handleSendChat()}
                     placeholder="Tanya soal ini ke AI..."
-                    className="w-full bg-slate-100 rounded-2xl py-3 pl-4 pr-12 outline-none focus:ring-2 focus:ring-indigo-500 transition-all font-medium text-slate-700 placeholder:text-slate-400"
+                    className="w-full bg-slate-100 rounded-2xl py-3 pl-4 pr-12 outline-none focus:ring-2 focus:ring-indigo-500 transition-all font-medium text-slate-700 placeholder:text-slate-400 disabled:opacity-50 disabled:cursor-not-allowed"
                   />
                   <button
                     onClick={() => handleSendChat()}
