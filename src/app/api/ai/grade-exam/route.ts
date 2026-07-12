@@ -5,6 +5,7 @@ import { GoogleGenerativeAI } from '@google/generative-ai';
 const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY || '');
 
 export const maxDuration = 60; // Allow up to 60 seconds for AI processing
+export const runtime = 'edge'; // Use Edge Runtime to bypass 10s serverless timeout
 
 export async function POST(req: NextRequest) {
   try {

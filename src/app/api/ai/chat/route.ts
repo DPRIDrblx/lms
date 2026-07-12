@@ -5,6 +5,7 @@ const apiKey = process.env.GEMINI_API_KEY;
 const genAI = apiKey ? new GoogleGenerativeAI(apiKey) : null;
 
 export const maxDuration = 60; // Set max duration for AI Chat
+export const runtime = 'edge'; // Use Edge Runtime to bypass 10s serverless timeout
 
 export async function POST(req: Request) {
   try {
