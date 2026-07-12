@@ -19,6 +19,7 @@ import {
   MessageSquare,
   Send,
   Star,
+  RefreshCw,
   Sparkles,
   Loader2,
   X
@@ -183,7 +184,17 @@ export default function QuizReviewPage({ params }: { params: Promise<{ id: strin
 
   return (
     <>
-    <div className="max-w-4xl mx-auto space-y-8 pb-20 p-6">
+      {/* BACKGROUND WATERMARK */}
+      <div 
+        className="fixed inset-0 z-[-1] pointer-events-none select-none opacity-[0.02]"
+        style={{
+          backgroundImage: `url("data:image/svg+xml,%3Csvg width='400' height='400' xmlns='http://www.w3.org/2000/svg'%3E%3Ctext x='50%25' y='50%25' font-size='32' font-family='sans-serif' font-weight='900' fill='%23000' text-anchor='middle' dominant-baseline='middle' transform='rotate(-45 200 200)'%3EIGNITE - ${encodeURIComponent(profile?.full_name || 'STUDENT')}%3C/text%3E%3C/svg%3E")`,
+          backgroundRepeat: 'repeat',
+          backgroundPosition: 'center center'
+        }}
+      />
+      
+    <div className="max-w-4xl mx-auto space-y-8 pb-20 p-6 relative z-10">
       <header className="flex items-center justify-between">
          <Link href={quiz?.course_id ? `/courses/${quiz.course_id}` : "/courses"}>
             <Button variant="ghost" className="flex items-center gap-2"><ChevronLeft className="h-4 w-4" /> Kembali</Button>
@@ -273,49 +284,75 @@ export default function QuizReviewPage({ params }: { params: Promise<{ id: strin
       </div>
 
       {/* AI Analysis Section */}
-      {aiAnalysis && (
-        <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.2 }}>
-          <Card className="p-8 border-none bg-gradient-to-br from-indigo-50 to-purple-50 overflow-hidden relative shadow-md">
-            <div className="absolute -top-10 -right-10 opacity-10">
-              <BrainCircuit className="w-64 h-64 text-indigo-500" />
-            </div>
-            <div className="relative z-10">
+      <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.2 }}>
+        <Card className="p-8 border-none bg-gradient-to-br from-indigo-50 to-purple-50 overflow-hidden relative shadow-md">
+          <div className="absolute -top-10 -right-10 opacity-10">
+            <BrainCircuit className="w-64 h-64 text-indigo-500" />
+          </div>
+          <div className="relative z-10">
               <div className="flex items-center gap-3 mb-4">
                 <div className="p-3 bg-white rounded-xl shadow-sm text-indigo-600">
                   <BrainCircuit className="w-6 h-6" />
                 </div>
                 <h3 className="text-2xl font-black text-indigo-900">Analisis Performa AI</h3>
               </div>
-              <p className="text-indigo-900/80 leading-relaxed whitespace-pre-wrap font-medium">
-                {aiAnalysis}
-              </p>
               
-              {aiSuggestions && aiSuggestions.length > 0 && (
-                <div className="mt-6 border-t border-indigo-200/50 pt-6">
-                  <p className="text-sm font-bold text-indigo-800 mb-3 flex items-center gap-2">
-                    <Sparkles className="w-4 h-4" /> Saran Pertanyaan untuk Tutor AI:
+              {aiAnalysis ? (
+                <>
+                  <p className="text-indigo-900/80 leading-relaxed whitespace-pre-wrap font-medium">
+                    {aiAnalysis}
                   </p>
-                  <div className="flex flex-col gap-2">
-                    {aiSuggestions.map((suggestion: string, idx: number) => (
-                      <button
-                        key={idx}
-                        onClick={() => {
-                          setIsChatOpen(true);
-                          handleSendChat(suggestion);
-                        }}
-                        className="text-left bg-white/50 hover:bg-white text-indigo-700 px-4 py-3 rounded-xl text-sm font-medium transition-all shadow-sm border border-indigo-100 hover:border-indigo-300 flex items-center justify-between group"
-                      >
-                        <span>&quot;{suggestion}&quot;</span>
-                        <MessageSquare className="w-4 h-4 opacity-50 group-hover:opacity-100 group-hover:scale-110 transition-all" />
-                      </button>
-                    ))}
-                  </div>
+                  
+                  {aiSuggestions && aiSuggestions.length > 0 && (
+                    <div className="mt-6 border-t border-indigo-200/50 pt-6">
+                      <p className="text-sm font-bold text-indigo-800 mb-3 flex items-center gap-2">
+                        <Sparkles className="w-4 h-4" /> Saran Pertanyaan untuk Tutor AI:
+                      </p>
+                      <div className="flex flex-col gap-2">
+                        {aiSuggestions.map((suggestion: string, idx: number) => (
+                          <button
+                            key={idx}
+                            onClick={() => {
+                              setIsChatOpen(true);
+                              handleSendChat(suggestion);
+                            }}
+                            className="text-left bg-white/50 hover:bg-white text-indigo-700 px-4 py-3 rounded-xl text-sm font-medium transition-all shadow-sm border border-indigo-100 hover:border-indigo-300 flex items-center justify-between group"
+                          >
+                            <span>&quot;{suggestion}&quot;</span>
+                            <MessageSquare className="w-4 h-4 opacity-50 group-hover:opacity-100 group-hover:scale-110 transition-all" />
+                          </button>
+                        ))}
+                        <button
+                          onClick={() => {
+                            setIsChatOpen(true);
+                            handleSendChat("Berikan saya topik atau saran pertanyaan lain untuk evaluasi ujian ini.");
+                          }}
+                          className="text-left bg-indigo-100/50 hover:bg-indigo-100 text-indigo-700 px-4 py-3 rounded-xl text-sm font-bold transition-all shadow-sm border border-indigo-200 hover:border-indigo-300 flex items-center justify-between group mt-2"
+                        >
+                          <span className="italic">💡 Ingin eksplorasi lebih? Minta saran pertanyaan lain...</span>
+                          <MessageSquare className="w-4 h-4 opacity-50 group-hover:opacity-100 group-hover:scale-110 transition-all" />
+                        </button>
+                      </div>
+                    </div>
+                  )}
+                </>
+              ) : (
+                <div className="flex flex-col items-start gap-4 mt-2">
+                  <p className="text-indigo-900/80 leading-relaxed font-medium">
+                    ⏳ Tunggu sebentar, analisis Anda sedang disiapkan oleh Tutor AI...
+                  </p>
+                  <button 
+                    onClick={() => window.location.reload()}
+                    className="flex items-center gap-2 bg-indigo-600 text-white px-4 py-2 rounded-xl text-sm font-bold shadow-md hover:bg-indigo-700 transition-colors"
+                  >
+                    <RefreshCw className="w-4 h-4" /> Muat Ulang Halaman
+                  </button>
                 </div>
               )}
             </div>
           </Card>
         </motion.div>
-      )}
+
 
       {/* Review Section */}
       {(quiz?.show_answers || quiz?.show_explanation) && (
