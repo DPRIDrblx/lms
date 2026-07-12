@@ -3,8 +3,8 @@ import { GoogleGenerativeAI } from "@google/generative-ai";
 
 const apiKey = process.env.GEMINI_API_KEY;
 const genAI = apiKey ? new GoogleGenerativeAI(apiKey) : null;
-
 export const maxDuration = 60; // Set max duration for AI Chat
+export const runtime = 'edge';
 
 export async function POST(req: Request) {
   try {
