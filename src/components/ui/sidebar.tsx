@@ -70,6 +70,8 @@ const tuNav = [
   { href: "/tu/account-generator", label: "Account Generator", icon: Users },
   { href: "/tu/cards", label: "Card Inventory", icon: CreditCard },
   { href: "/tu/classes", label: "Classroom", icon: Building },
+  { href: "/tu/center-schedules", label: "Jadwal Les (Center)", icon: Calendar },
+  { href: "/tu/e-modules", label: "E-Modul (Center)", icon: BookOpen },
   { href: "/tu/verifications", label: "Verifikasi Akun", icon: ShieldAlert },
   { href: "/settings", label: "Settings", icon: Settings },
 ];
