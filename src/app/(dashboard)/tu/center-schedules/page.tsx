@@ -22,8 +22,8 @@ export default function CenterSchedulesManager() {
 
   const fetchData = async () => {
     setLoading(true);
-    // Fetch classes (filter for center classes if needed, or get all)
-    const { data: clsData } = await supabase.from("classes").select("*").order("name");
+    // Fetch classes (filter for center classes only)
+    const { data: clsData } = await supabase.from("classes").select("*").in("name", ["7E", "8E", "9E"]).order("name");
     if (clsData) setClasses(clsData);
 
     // Fetch schedules
