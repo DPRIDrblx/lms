@@ -5,6 +5,7 @@ import { createClient } from "@/lib/supabase";
 import { useEffect, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Plus, Trash2, Folder, Search, Loader2 } from "lucide-react";
+import { CenterLoader } from "@/components/ui/center-loader";
 import toast from "react-hot-toast";
 import { useRouter } from "next/navigation";
 
@@ -56,7 +57,7 @@ export default function SmartNotesPage() {
   const filteredNotes = notes.filter(n => n.title.toLowerCase().includes(search.toLowerCase()) || n.folder.toLowerCase().includes(search.toLowerCase()));
 
   if (loading) {
-    return <div className="h-[80vh] flex items-center justify-center"><Loader2 className="w-8 h-8 animate-spin text-emerald-500" /></div>;
+    return <div className="h-[80vh] flex items-center justify-center"><CenterLoader size="md" /></div>;
   }
 
   return (

@@ -5,6 +5,7 @@ import { createClient } from "@/lib/supabase";
 import { useEffect, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Heart, Loader2, Sparkles, Utensils, ShieldAlert, Coins } from "lucide-react";
+import { CenterLoader } from "@/components/ui/center-loader";
 import toast from "react-hot-toast";
 
 const PET_STAGES = {
@@ -108,7 +109,7 @@ export default function DigitalPetPage() {
     }
   };
 
-  if (loading) return <div className="h-[80vh] flex items-center justify-center"><Loader2 className="w-8 h-8 animate-spin text-emerald-500" /></div>;
+  if (loading) return <div className="h-[80vh] flex items-center justify-center"><CenterLoader size="md" /></div>;
   if (!pet) return null;
 
   const stageData = PET_STAGES[pet.stage as keyof typeof PET_STAGES] || PET_STAGES[1];

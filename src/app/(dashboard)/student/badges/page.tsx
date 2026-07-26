@@ -4,6 +4,7 @@ import { useAuth } from "@/lib/auth-context";
 import { createClient } from "@/lib/supabase";
 import { useEffect, useState } from "react";
 import { Loader2, Medal, Trophy, Star, Zap, Flame, Crown, CheckCircle2, Lock } from "lucide-react";
+import { CenterLoader } from "@/components/ui/center-loader";
 import toast from "react-hot-toast";
 import { cn } from "@/lib/utils";
 
@@ -66,7 +67,7 @@ export default function BadgesPage() {
     }
   };
 
-  if (loading) return <div className="h-[80vh] flex items-center justify-center"><Loader2 className="w-8 h-8 animate-spin text-emerald-500" /></div>;
+  if (loading) return <div className="h-[80vh] flex items-center justify-center"><CenterLoader size="md" /></div>;
 
   return (
     <div className="max-w-5xl mx-auto space-y-8 pb-10">

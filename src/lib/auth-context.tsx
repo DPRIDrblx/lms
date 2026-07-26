@@ -11,8 +11,10 @@ export interface Profile {
   xp: number;
   rank: string;
   avatar_url: string | null;
-  class_id: string | null;
-  face_descriptor: number[] | null;
+  class_id?: string | null;
+  class_name?: string | null;
+  face_descriptor?: any | null;
+  has_seen_center_update?: boolean;
   force_password_change?: boolean;
   status?: "pending" | "approved" | "rejected";
   faction?: string;
@@ -32,6 +34,8 @@ interface AuthContextType {
   signInWithGoogle: () => Promise<void>;
   signOut: () => Promise<void>;
   refreshProfile: () => Promise<void>;
+  updateProfile: (updates: Partial<Profile>) => Promise<void>;
+  isCenterStudent: boolean;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -60,7 +64,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     console.time('profile-hydration');
     const { data, error } = await supabase
       .from("profiles")
-      .select("*")
+      .select("*, classes!profiles_class_id_fkey(name)")
       .eq("id", userId)
       .single();
     
@@ -82,7 +86,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
 
     if (data.id === userId) {
-      setProfile(data as Profile);
+      // Extract class_name from the joined classes object
+      const profileData = {
+        ...data,
+        class_name: data.classes?.name || null
+      };
+      delete profileData.classes; // remove the joined object
+      setProfile(profileData as Profile);
     }
     console.timeEnd('profile-hydration');
   }, [supabase]);
@@ -90,6 +100,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const refreshProfile = useCallback(async () => {
     if (user) await fetchProfile(user.id);
   }, [user, fetchProfile]);
+
+  const updateProfile = useCallback(async (updates: Partial<Profile>) => {
+    if (!user) return;
+    const { error } = await supabase.from("profiles").update(updates).eq("id", user.id);
+    if (!error) {
+      setProfile(prev => prev ? { ...prev, ...updates } : null);
+    }
+  }, [user, supabase]);
 
   useEffect(() => {
     console.time('login-flow');
@@ -172,20 +190,22 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     await clearSessionAndLogout();
   };
 
+  const isCenterStudent = profile?.role === "student" && (profile?.class_name === "7E" || profile?.class_name === "8E" || profile?.class_name === "9E");
+
   return (
-    <AuthContext.Provider
-      value={{
-        user,
-        profile,
-        session,
-        loading,
-        signInWithEmail,
-        signUpWithEmail,
-        signInWithGoogle,
-        signOut,
-        refreshProfile,
-      }}
-    >
+    <AuthContext.Provider value={{ 
+      user, 
+      profile, 
+      session, 
+      loading, 
+      signInWithEmail, 
+      signUpWithEmail, 
+      signInWithGoogle, 
+      signOut: clearSessionAndLogout,
+      refreshProfile,
+      updateProfile,
+      isCenterStudent
+    }}>
       {children}
     </AuthContext.Provider>
   );

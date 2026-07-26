@@ -5,6 +5,7 @@ import { createClient } from "@/lib/supabase";
 import { useEffect, useState } from "react";
 import { motion } from "framer-motion";
 import { Shield, Users, Trophy, ChevronRight, Loader2, Target, Sword } from "lucide-react";
+import { CenterLoader } from "@/components/ui/center-loader";
 import toast from "react-hot-toast";
 
 const FACTIONS = [
@@ -76,7 +77,7 @@ export default function FactionPage() {
   };
 
   if (loading) {
-    return <div className="h-[80vh] flex items-center justify-center"><Loader2 className="w-8 h-8 animate-spin text-indigo-500" /></div>;
+    return <div className="h-[80vh] flex items-center justify-center"><CenterLoader size="md" /></div>;
   }
 
   // CHOOSING FACTION SCREEN

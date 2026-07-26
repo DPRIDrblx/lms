@@ -4,6 +4,7 @@ import { useAuth } from "@/lib/auth-context";
 import { createClient } from "@/lib/supabase";
 import { useState, useEffect, useRef } from "react";
 import { X, Check, ArrowRight, Loader2, Trophy, Heart, Flame, Clock, BookOpen } from "lucide-react";
+import { CenterLoader } from "@/components/ui/center-loader";
 import { useParams, useRouter } from "next/navigation";
 import toast from "react-hot-toast";
 
@@ -129,7 +130,7 @@ export default function StudentDrillExecutionPage() {
     setSubmitting(false);
   };
 
-  if (loading) return <div className="h-screen flex items-center justify-center bg-white"><Loader2 className="w-10 h-10 animate-spin text-teal-500" /></div>;
+  if (loading) return <div className="h-screen flex items-center justify-center bg-white"><CenterLoader size="md" /></div>;
   if (!drill || questions.length === 0) return null;
 
   if (isFinished) {

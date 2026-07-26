@@ -2,6 +2,7 @@
 
 import { useAuth } from "@/lib/auth-context";
 import { Flame, Diamond, MessageCircle, UserPlus, UserCheck, Loader2, X, Lock } from "lucide-react";
+import { CenterLoader } from "@/components/ui/center-loader";
 import { AchievementShowcase } from "@/components/profile/achievement-showcase";
 import { PostCard } from "@/components/social/post-card";
 import Link from "next/link";
@@ -132,7 +133,7 @@ export default function PublicProfilePage() {
     </div>
   );
 
-  if (!profile) return <div className="h-screen flex items-center justify-center"><Loader2 className="animate-spin h-8 w-8 text-indigo-500" /></div>;
+  if (!profile) return <div className="h-screen flex items-center justify-center"><CenterLoader size="md" /></div>;
 
   return (
     <div className="max-w-3xl mx-auto py-12 px-4 pb-24">

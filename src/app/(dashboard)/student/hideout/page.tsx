@@ -4,6 +4,7 @@ import { useAuth } from "@/lib/auth-context";
 import { createClient } from "@/lib/supabase";
 import { useState, useEffect } from "react";
 import { Shield, Gem, Users, Loader2, Flag, Sofa, Trophy, Target } from "lucide-react";
+import { CenterLoader } from "@/components/ui/center-loader";
 import { toast } from "react-hot-toast";
 
 const ICON_MAP: any = { Sofa, Trophy, Flag };
@@ -120,7 +121,7 @@ export default function HideoutPage() {
     }
   };
 
-  if (loading) return <div className="min-h-screen flex items-center justify-center"><Loader2 className="w-12 h-12 text-indigo-500 animate-spin" /></div>;
+  if (loading) return <div className="min-h-screen flex items-center justify-center"><CenterLoader size="md" /></div>;
 
   if (!profile?.class_id) {
      return (

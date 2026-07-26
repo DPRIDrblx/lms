@@ -4,6 +4,7 @@ import { useAuth } from "@/lib/auth-context";
 import { createClient } from "@/lib/supabase";
 import { useState, useEffect } from "react";
 import { Gem, PlusCircle, CheckCircle2, User, Loader2, MessageSquare } from "lucide-react";
+import { CenterLoader } from "@/components/ui/center-loader";
 import toast from "react-hot-toast";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
@@ -173,7 +174,7 @@ export default function BountyBoardPage() {
 
       <div className="space-y-4">
         {loading ? (
-          <div className="flex justify-center py-12"><Loader2 className="w-8 h-8 animate-spin text-indigo-500" /></div>
+          <div className="flex justify-center py-12"><CenterLoader size="md" /></div>
         ) : bounties.length === 0 ? (
           <div className="text-center py-12 border-2 border-dashed border-slate-200 rounded-3xl">
             <p className="font-bold text-slate-400">Belum ada sayembara yang aktif.</p>

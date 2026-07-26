@@ -4,6 +4,7 @@ import { useAuth } from "@/lib/auth-context";
 import { createClient } from "@/lib/supabase";
 import { useState, useEffect, useRef, Suspense } from "react";
 import { Send, ArrowLeft, Loader2, MessageCircle, Sparkles, Smile } from "lucide-react";
+import { CenterLoader } from "@/components/ui/center-loader";
 import EmojiPicker, { Theme } from "emoji-picker-react";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
@@ -285,7 +286,7 @@ function MessagesContent() {
 
 export default function MessagesPage() {
   return (
-    <Suspense fallback={<div className="h-screen flex items-center justify-center bg-slate-50"><Loader2 className="w-12 h-12 animate-spin text-indigo-500" /></div>}>
+    <Suspense fallback={<div className="h-screen flex items-center justify-center bg-slate-50"><CenterLoader size="md" /></div>}>
       <MessagesContent />
     </Suspense>
   );

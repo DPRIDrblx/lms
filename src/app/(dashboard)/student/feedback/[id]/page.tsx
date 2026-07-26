@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button";
 import { useState, useEffect } from "react";
 import { useRouter, useParams } from "next/navigation";
 import { Star, CheckCircle2, ArrowLeft, Loader2, Info } from "lucide-react";
+import { CenterLoader } from "@/components/ui/center-loader";
 import Link from "next/link";
 import { motion, AnimatePresence } from "framer-motion";
 
@@ -124,7 +125,7 @@ export default function StudentFeedbackForm() {
     </div>
   );
 
-  if (loading) return <div className="min-h-screen flex items-center justify-center bg-[#FAFAFA]"><Loader2 className="w-8 h-8 animate-spin text-slate-400" /></div>;
+  if (loading) return <div className="min-h-screen flex items-center justify-center bg-[#FAFAFA]"><CenterLoader size="md" /></div>;
   if (!session || !session.is_active) return <div className="min-h-screen flex items-center justify-center bg-[#FAFAFA]"><div className="text-center font-medium text-slate-500">Sesi evaluasi tidak ditemukan atau telah ditutup.</div></div>;
   if (alreadySubmitted) {
     return (

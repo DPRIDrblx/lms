@@ -2,6 +2,7 @@
 
 import { useAuth } from "@/lib/auth-context";
 import { Flame, Diamond, LogOut, CheckCircle2, Lock, Edit2, Fingerprint, Gem, Loader2, Image as ImageIcon, Send, Trash2, X, Copy } from "lucide-react";
+import { CenterLoader } from "@/components/ui/center-loader";
 import { PostCard } from "@/components/social/post-card";
 import { AchievementShowcase } from "@/components/profile/achievement-showcase";
 import Link from "next/link";

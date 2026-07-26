@@ -27,7 +27,8 @@ export async function middleware(request: NextRequest) {
 
   const isAuthPage =
     request.nextUrl.pathname.startsWith("/login") ||
-    request.nextUrl.pathname.startsWith("/auth");
+    request.nextUrl.pathname.startsWith("/auth") ||
+    request.nextUrl.pathname.startsWith("/app");
 
   const isPublicRoute = 
     request.nextUrl.pathname.startsWith("/bayarnia") || 

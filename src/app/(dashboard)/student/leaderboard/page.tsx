@@ -2,13 +2,14 @@
 
 import { useAuth } from "@/lib/auth-context";
 import { createClient } from "@/lib/supabase";
-import { Shield, Trophy, Medal, Loader2 } from "lucide-react";
+import { Shield, Trophy, Medal } from "lucide-react";
+import { CenterLoader } from "@/components/ui/center-loader";
 import { useState, useEffect } from "react";
-import { getRank } from "@/lib/utils";
+import { getRank, cn } from "@/lib/utils";
 import Link from "next/link";
 
 export default function LeaderboardPage() {
-  const { profile } = useAuth();
+  const { profile, isCenterStudent } = useAuth();
   const supabase = createClient();
   
   const [users, setUsers] = useState<any[]>([]);
@@ -21,17 +22,23 @@ export default function LeaderboardPage() {
   const fetchLeaderboard = async () => {
     setLoading(true);
     // Fetch all students ordered by XP
-    const { data } = await supabase
+    let query = supabase
       .from("profiles")
-      .select("id, full_name, xp, avatar_url, role")
+      .select("id, full_name, xp, avatar_url, role, class_id")
       .eq("role", "student")
       .order("xp", { ascending: false })
       .limit(50);
       
+    if (isCenterStudent && profile?.class_id) {
+      query = query.eq("class_id", profile.class_id);
+    }
+    
+    const { data } = await query;
+      
     if (data) {
       setUsers(data);
     }
-    setLoading(false);
+    setTimeout(() => setLoading(false), 1500);
   };
   
   return (
@@ -41,18 +48,18 @@ export default function LeaderboardPage() {
         <p className="text-slate-500 font-bold">Terus belajar dan jadilah yang terbaik di IGNITE!</p>
       </div>
 
-      <div className="bg-white rounded-[2.5rem] border-2 border-slate-200 shadow-[0_8px_0_rgb(226,232,240)] overflow-hidden">
-        <div className="bg-amber-400 p-8 flex flex-col items-center justify-center text-white border-b-4 border-amber-500 relative overflow-hidden">
-          <Shield className="w-48 h-48 text-amber-300 absolute -right-12 -bottom-12 opacity-40 rotate-12" />
-          <Trophy className="w-20 h-20 text-amber-100 mb-4 drop-shadow-lg" />
-          <h2 className="text-3xl font-black drop-shadow-md">Global League</h2>
-          <p className="font-bold text-amber-900 mt-2 bg-amber-300/50 px-4 py-1 rounded-full">Top 50 Students</p>
+      <div className={cn("bg-white rounded-[2.5rem] border-2 border-slate-200 overflow-hidden", isCenterStudent ? "shadow-[0_8px_0_rgb(254,226,226)]" : "shadow-[0_8px_0_rgb(226,232,240)]")}>
+        <div className={cn("p-8 flex flex-col items-center justify-center text-white border-b-4 relative overflow-hidden", isCenterStudent ? "bg-red-500 border-red-600" : "bg-amber-400 border-amber-500")}>
+          <Shield className={cn("w-48 h-48 absolute -right-12 -bottom-12 opacity-40 rotate-12", isCenterStudent ? "text-red-400" : "text-amber-300")} />
+          <Trophy className={cn("w-20 h-20 mb-4 drop-shadow-lg", isCenterStudent ? "text-red-100" : "text-amber-100")} />
+          <h2 className="text-3xl font-black drop-shadow-md">{isCenterStudent ? `${profile?.class_name} League` : "Global League"}</h2>
+          <p className={cn("font-bold mt-2 px-4 py-1 rounded-full", isCenterStudent ? "text-red-900 bg-red-300/50" : "text-amber-900 bg-amber-300/50")}>Top 50 Students</p>
         </div>
         
         <div className="p-4 sm:p-6 space-y-2">
           {loading ? (
-            <div className="flex justify-center items-center py-12">
-               <Loader2 className="w-10 h-10 animate-spin text-amber-500" />
+            <div className="flex flex-col justify-center items-center py-12">
+               <CenterLoader size="md" />
             </div>
           ) : users.length === 0 ? (
             <div className="text-center py-12 text-slate-400 font-bold">

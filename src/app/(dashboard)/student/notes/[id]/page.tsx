@@ -4,6 +4,7 @@ import { useAuth } from "@/lib/auth-context";
 import { createClient } from "@/lib/supabase";
 import { useEffect, useState, useRef, use } from "react";
 import { ArrowLeft, Loader2, Save, Folder } from "lucide-react";
+import { CenterLoader } from "@/components/ui/center-loader";
 import toast from "react-hot-toast";
 import { useRouter } from "next/navigation";
 import { SmartEditor } from "@/components/ui/smart-editor";
@@ -66,7 +67,7 @@ export default function SmartNoteEditorPage({ params }: { params: Promise<{ id: 
   };
 
   if (loading) {
-    return <div className="h-screen flex items-center justify-center"><Loader2 className="w-8 h-8 animate-spin text-emerald-500" /></div>;
+    return <div className="h-screen flex items-center justify-center"><CenterLoader size="md" /></div>;
   }
 
   if (!note) return null;

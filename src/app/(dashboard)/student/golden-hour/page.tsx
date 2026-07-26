@@ -5,6 +5,7 @@ import { createClient } from "@/lib/supabase";
 import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Sparkles, XCircle, CheckCircle, Gem, ArrowLeft, Loader2 } from "lucide-react";
+import { CenterLoader } from "@/components/ui/center-loader";
 import confetti from "canvas-confetti";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
@@ -94,7 +95,7 @@ export default function GoldenHourPage() {
       }
   };
 
-  if (loading) return <div className="min-h-[80vh] flex items-center justify-center"><Loader2 className="w-12 h-12 animate-spin text-amber-500" /></div>;
+  if (loading) return <div className="min-h-[80vh] flex items-center justify-center"><CenterLoader size="md" /></div>;
 
   if (!active) {
       return (

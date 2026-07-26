@@ -9,7 +9,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { GraduationCap, Glasses } from "lucide-react";
 
 export function StudentTopBar() {
-  const { profile, signOut } = useAuth();
+  const { profile, signOut, isCenterStudent } = useAuth();
   const supabase = createClient();
   const [streak, setStreak] = useState(0);
   const [xp, setXp] = useState(0);
@@ -141,12 +141,12 @@ export function StudentTopBar() {
                 ) : profile.avatar_url.startsWith("http") ? (
                   <img src={profile.avatar_url} alt="" className={cn("w-9 h-9 rounded-full object-cover", equippedBorder)} />
                 ) : (
-                  <div className={cn("w-9 h-9 rounded-full bg-emerald-100 flex items-center justify-center text-xl shadow-inner", equippedBorder)}>
+                  <div className={cn("w-9 h-9 rounded-full flex items-center justify-center text-xl shadow-inner", equippedBorder, isCenterStudent ? "bg-red-100" : "bg-emerald-100")}>
                     {profile.avatar_url}
                   </div>
                 )
               ) : (
-                <div className={cn("w-9 h-9 rounded-full bg-emerald-100 flex items-center justify-center text-sm font-black text-emerald-600", equippedBorder)}>
+                <div className={cn("w-9 h-9 rounded-full flex items-center justify-center text-sm font-black", equippedBorder, isCenterStudent ? "bg-red-100 text-red-600" : "bg-emerald-100 text-emerald-600")}>
                   {getInitials(profile?.full_name || "U")}
                 </div>
               )}

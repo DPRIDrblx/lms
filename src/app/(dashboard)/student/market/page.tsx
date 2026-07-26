@@ -4,6 +4,7 @@ import { useAuth } from "@/lib/auth-context";
 import { createClient } from "@/lib/supabase";
 import { useState, useEffect } from "react";
 import { ShoppingCart, Gem, PlusCircle, Tag, Loader2, Package } from "lucide-react";
+import { CenterLoader } from "@/components/ui/center-loader";
 import { toast } from "react-hot-toast";
 
 export default function DynamicMarketPage() {
@@ -179,7 +180,7 @@ export default function DynamicMarketPage() {
       )}
 
       {loading ? (
-        <div className="flex justify-center py-12"><Loader2 className="w-12 h-12 text-indigo-500 animate-spin" /></div>
+        <div className="flex justify-center py-12"><CenterLoader size="md" /></div>
       ) : listings.length === 0 ? (
         <div className="text-center py-16 border-2 border-dashed border-slate-200 rounded-[3rem]">
            <Package className="w-16 h-16 text-slate-300 mx-auto mb-4" />

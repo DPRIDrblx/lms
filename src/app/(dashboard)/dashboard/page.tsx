@@ -8,6 +8,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { AnnouncementBoard } from "@/components/dashboard/announcement-board";
 import { ProgressBar } from "@/components/ui/progress-bar";
+import { CenterLoader } from "@/components/ui/center-loader";
 import { getRank, getNextRank } from "@/lib/utils";
 import { checkAndUpdateStreak, generateDailyQuests } from "@/lib/gamification";
 import { motion, AnimatePresence } from "framer-motion";
@@ -48,13 +49,14 @@ interface SchoolEvent {
 }
 
 export default function DashboardPage() {
-  const { profile } = useAuth();
+  const { profile, isCenterStudent } = useAuth();
   const supabase = createClient();
   const router = useRouter();
   
   const [courses, setCourses] = useState<CourseRecord[]>([]);
   const [progressData, setProgressData] = useState<any[]>([]);
   const [events, setEvents] = useState<SchoolEvent[]>([]);
+  const [centerSchedules, setCenterSchedules] = useState<any[]>([]);
   const [leadership, setLeadership] = useState<any>(null);
   const [streak, setStreak] = useState(0);
   const [quests, setQuests] = useState<any[]>([]);
@@ -142,17 +144,25 @@ export default function DashboardPage() {
        }
     }
 
-    // 6. Fetch Active Feedbacks
-    const { data: sessions } = await supabase
-      .from('ace_feedback_sessions')
-      .select('*, profiles!teacher_id(full_name, id), ace_student_feedbacks(id, student_id)')
-      .eq('is_active', true);
-      
-    if (sessions) {
-      const pending = sessions.filter((s: any) => 
-        !s.ace_student_feedbacks?.some((fb: any) => fb.student_id === profile.id)
-      );
-      setActiveFeedbacks(pending);
+    if (isCenterStudent) {
+      const { data: schedData } = await supabase
+        .from("center_schedules")
+        .select("*")
+        .order("schedule_time", { ascending: true })
+        .limit(3);
+      if (schedData) setCenterSchedules(schedData);
+    } else {
+      const { data: sessions } = await supabase
+        .from('ace_feedback_sessions')
+        .select('*, profiles!teacher_id(full_name, id), ace_student_feedbacks(id, student_id)')
+        .eq('is_active', true);
+        
+      if (sessions) {
+        const pending = sessions.filter((s: any) => 
+          !s.ace_student_feedbacks?.some((fb: any) => fb.student_id === profile.id)
+        );
+        setActiveFeedbacks(pending);
+      }
     }
 
     if (courseData) setCourses(courseData.map((c: any) => ({ ...c, lessons_count: c.lessons[0]?.count || 0 })));
@@ -160,7 +170,7 @@ export default function DashboardPage() {
     if (eventData) setEvents(eventData as SchoolEvent[]);
     if (leadershipData) setLeadership(leadershipData);
     
-    setLoading(false);
+    setTimeout(() => setLoading(false), 1500);
   }, [profile, supabase, router]);
 
   useEffect(() => {
@@ -193,10 +203,10 @@ export default function DashboardPage() {
             </div>
           </>
         ) : (
-          <>
-            <Loader2 className="h-10 w-10 animate-spin text-[var(--accent)]" />
-            <p className="text-sm text-[var(--text-secondary)] animate-pulse">Hydrating your Academy Profile...</p>
-          </>
+          <div className="flex flex-col items-center justify-center space-y-4">
+            <CenterLoader size="lg" />
+            <p className="text-sm font-bold text-slate-400 animate-pulse mt-4">Memuat Profil Center...</p>
+          </div>
         )}
       </div>
     );
@@ -211,29 +221,96 @@ export default function DashboardPage() {
   const completedCount = progressData.filter(p => p.completed).length;
 
   return (
-    <div className="max-w-6xl mx-auto space-y-8 font-sans pb-20">
-      <div className="w-full">
-        <AnnouncementBoard />
-      </div>
+    <div className="max-w-6xl mx-auto space-y-8 font-sans pb-20 relative">
+      {/* Decorative Background for Center Students */}
+      {isCenterStudent && (
+        <div className="absolute top-[-100px] left-1/2 -translate-x-1/2 w-[100vw] max-w-[1400px] h-[600px] overflow-hidden -z-10 pointer-events-none opacity-60">
+          <div className="absolute -top-32 -left-20 w-[500px] h-[500px] rounded-full border-[80px] border-red-500/10 mix-blend-multiply blur-lg" />
+          <div className="absolute top-20 right-[-10%] w-[600px] h-[600px] rounded-full border-[100px] border-yellow-400/10 mix-blend-multiply blur-2xl" />
+          <div className="absolute -top-10 left-1/2 -translate-x-1/2 w-[400px] h-[400px] rounded-full bg-blue-500/10 mix-blend-multiply blur-[80px]" />
+        </div>
+      )}
 
-      {activeFeedbacks.length > 0 && (
-        <div className="w-full space-y-4">
-          {activeFeedbacks.map(fb => (
-            <div key={fb.id} className="w-full bg-gradient-to-r from-indigo-500 to-purple-600 rounded-3xl p-6 md:p-8 shadow-xl text-white flex flex-col md:flex-row items-center justify-between gap-6 transform hover:scale-[1.01] transition-transform">
-              <div className="flex items-center gap-6">
-                <div className="w-16 h-16 bg-white/20 rounded-2xl flex items-center justify-center shrink-0 backdrop-blur-sm border border-white/30">
-                  <Star className="w-8 h-8 text-yellow-300 fill-yellow-300" />
+      {!isCenterStudent ? (
+        <>
+          <div className="w-full">
+            <AnnouncementBoard />
+          </div>
+
+          {activeFeedbacks.length > 0 && (
+            <div className="w-full space-y-4">
+              {activeFeedbacks.map(fb => (
+                <div key={fb.id} className="w-full bg-gradient-to-r from-indigo-500 to-purple-600 rounded-3xl p-6 md:p-8 shadow-xl text-white flex flex-col md:flex-row items-center justify-between gap-6 transform hover:scale-[1.01] transition-transform">
+                  <div className="flex items-center gap-6">
+                    <div className="w-16 h-16 bg-white/20 rounded-2xl flex items-center justify-center shrink-0 backdrop-blur-sm border border-white/30">
+                      <Star className="w-8 h-8 text-yellow-300 fill-yellow-300" />
+                    </div>
+                    <div>
+                      <h3 className="text-xl md:text-2xl font-black mb-2 tracking-tight">Yuk, isi kuisioner feedback siswa dari {fb.profiles?.full_name}!</h3>
+                      <p className="text-indigo-100 font-medium">Bantu sekolah kita menjadi lebih baik. Waktumu hanya 2 menit dan semua jawaban dijamin 100% anonim.</p>
+                    </div>
+                  </div>
+                  <Link href={`/student/feedback/${fb.id}`} className="w-full md:w-auto px-8 py-3 bg-white text-indigo-600 rounded-xl font-bold text-lg text-center shadow-lg hover:bg-indigo-50 hover:shadow-indigo-500/20 active:scale-95 transition-all">
+                    Mulai Isi 🚀
+                  </Link>
+                </div>
+              ))}
+            </div>
+          )}
+        </>
+      ) : (
+        <div className="bg-red-600 rounded-[2.5rem] p-8 md:p-10 text-white shadow-2xl relative overflow-hidden border-b-8 border-red-800 transform hover:-translate-y-1 transition-transform duration-300">
+          {/* Abstract SVG Backgrounds inside the Card */}
+          <div className="absolute inset-0 z-0 pointer-events-none opacity-80">
+            <div className="absolute -right-20 -top-20 w-[300px] h-[300px] rounded-full bg-orange-500 blur-3xl mix-blend-screen" />
+            <div className="absolute -left-20 -bottom-20 w-[400px] h-[400px] rounded-full border-[60px] border-red-400 opacity-30" />
+            <div className="absolute right-20 bottom-[-50px] w-[200px] h-[200px] rounded-full border-[40px] border-yellow-400 opacity-20" />
+          </div>
+
+          <div className="relative z-10">
+            <div className="flex items-center justify-between mb-8">
+              <div className="flex items-center gap-4">
+                <div className="w-14 h-14 bg-white/20 backdrop-blur-md rounded-2xl flex items-center justify-center border border-white/30 shadow-lg">
+                  <Calendar className="w-7 h-7 text-white" />
                 </div>
                 <div>
-                  <h3 className="text-xl md:text-2xl font-black mb-2 tracking-tight">Yuk, isi kuisioner feedback siswa dari {fb.profiles?.full_name}!</h3>
-                  <p className="text-indigo-100 font-medium">Bantu sekolah kita menjadi lebih baik. Waktumu hanya 2 menit dan semua jawaban dijamin 100% anonim.</p>
+                  <h3 className="font-black text-2xl tracking-tight drop-shadow-md">Jadwal Les Terdekat</h3>
+                  <p className="text-red-100 font-bold text-sm">Persiapkan dirimu untuk sesi belajar berikutnya!</p>
                 </div>
               </div>
-              <Link href={`/student/feedback/${fb.id}`} className="w-full md:w-auto px-8 py-3 bg-white text-indigo-600 rounded-xl font-bold text-lg text-center shadow-lg hover:bg-indigo-50 hover:shadow-indigo-500/20 active:scale-95 transition-all">
-                Mulai Isi 🚀
+              <Link href="/student/jadwal-les" className="hidden md:flex px-6 py-2.5 bg-white text-red-600 font-black rounded-xl hover:bg-red-50 hover:shadow-lg hover:-translate-y-0.5 active:scale-95 transition-all shadow-md items-center gap-2">
+                Lihat Semua <ArrowRight className="w-4 h-4" />
               </Link>
             </div>
-          ))}
+            
+            {centerSchedules.length > 0 ? (
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
+                {centerSchedules.map((schedule) => (
+                  <div key={schedule.id} className="p-5 bg-white/10 backdrop-blur-md rounded-2xl border border-white/20 flex gap-4 hover:bg-white/20 transition-colors group cursor-pointer shadow-lg">
+                    <div className="w-16 h-16 bg-white rounded-xl flex flex-col items-center justify-center shrink-0 shadow-inner group-hover:scale-105 transition-transform">
+                      <span className="text-[11px] font-black uppercase text-slate-400 tracking-wider">{new Date(schedule.schedule_time).toLocaleDateString('id-ID', { month: 'short' })}</span>
+                      <span className="text-2xl font-black leading-none text-red-600">{new Date(schedule.schedule_time).getDate()}</span>
+                    </div>
+                    <div className="flex flex-col justify-center">
+                      <h4 className="font-bold text-white text-lg line-clamp-1 group-hover:text-yellow-200 transition-colors drop-shadow-sm">{schedule.title}</h4>
+                      <div className="flex items-center gap-1.5 mt-1">
+                        <Clock className="w-3.5 h-3.5 text-red-200" />
+                        <p className="text-sm font-medium text-red-100">{new Date(schedule.schedule_time).toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' })} WIB</p>
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <div className="text-center py-10 bg-white/10 backdrop-blur-sm rounded-2xl border-2 border-dashed border-white/30">
+                <p className="font-bold text-red-100 text-lg">Belum ada jadwal les dalam waktu dekat.</p>
+              </div>
+            )}
+            
+            <Link href="/student/jadwal-les" className="md:hidden mt-6 w-full flex px-6 py-3 bg-white text-red-600 font-black rounded-xl justify-center items-center gap-2 shadow-lg active:scale-95 transition-all">
+              Lihat Semua <ArrowRight className="w-4 h-4" />
+            </Link>
+          </div>
         </div>
       )}
 
