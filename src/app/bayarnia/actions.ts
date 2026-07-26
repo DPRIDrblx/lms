@@ -18,9 +18,13 @@ export async function registerSobatNiaAction(formData: {
   email: string;
   password: string;
   packageId: string;
+  phone?: string;
+  schoolName?: string;
+  parentName?: string;
+  parentPhone?: string;
 }) {
   try {
-    const { name, email, password, packageId } = formData;
+    const { name, email, password, packageId, phone, schoolName, parentName, parentPhone } = formData;
 
     // 1. Create user using admin API (bypasses rate limits and auto-confirms email)
     const { data: authData, error: authError } = await supabaseAdmin.auth.admin.createUser({
@@ -34,8 +38,6 @@ export async function registerSobatNiaAction(formData: {
     });
 
     if (authError) {
-      // If user already exists, we could just assign the subscription
-      // but let's throw for now to keep it simple, unless it's just a rate limit.
       throw authError;
     }
 
@@ -45,10 +47,14 @@ export async function registerSobatNiaAction(formData: {
 
     const userId = authData.user.id;
 
-    // 2. Ensure role in profiles table
+    // 2. Ensure role and new fields in profiles table
     await supabaseAdmin.from("profiles").update({
       full_name: name,
-      role: "sobat_nia"
+      role: "sobat_nia",
+      phone: phone || null,
+      school_name: schoolName || null,
+      parent_name: parentName || null,
+      parent_phone: parentPhone || null
     }).eq("id", userId);
 
     // 3. Add subscription

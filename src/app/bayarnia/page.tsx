@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Search, BookOpen, Target, Sparkles, CheckCircle2, ChevronRight, GraduationCap, Calculator, Globe, X, Loader2 } from "lucide-react";
+import { Search, BookOpen, Target, Sparkles, CheckCircle2, ChevronRight, GraduationCap, Calculator, Globe, X, Loader2, Phone, Building, User, Mail, Key, Ticket, Users } from "lucide-react";
 import { XenditPaymentModal } from "@/components/finance/XenditPaymentModal";
 import { createClient } from "@/lib/supabase";
 import toast from "react-hot-toast";
@@ -18,7 +18,7 @@ export default function BayarNiaPage() {
   const [isProcessingSignup, setIsProcessingSignup] = useState(false);
 
   // Form State
-  const [form, setForm] = useState({ name: "", email: "", password: "", voucher: "" });
+  const [form, setForm] = useState({ name: "", email: "", password: "", voucher: "", phone: "", schoolName: "", parentName: "", parentPhone: "" });
   const [checkoutStep, setCheckoutStep] = useState(1); // 1: Form, 2: Xendit Mock, 3: Success
   const [appliedPromo, setAppliedPromo] = useState<any>(null);
 
@@ -73,13 +73,13 @@ export default function BayarNiaPage() {
     setSelectedPackage(pkg);
     setShowCheckout(true);
     setCheckoutStep(1);
-    setForm({ name: "", email: "", password: "", voucher: "" });
+    setForm({ name: "", email: "", password: "", voucher: "", phone: "", schoolName: "", parentName: "", parentPhone: "" });
     setAppliedPromo(null);
   };
 
   const processPayment = () => {
-    if (!form.name || !form.email || !form.password) {
-      toast.error("Mohon lengkapi Nama, Email, dan Password");
+    if (!form.name || !form.email || !form.password || !form.phone || !form.schoolName) {
+      toast.error("Mohon lengkapi form wajib (Nama, Email, Password, No WA, Asal Sekolah)");
       return;
     }
     if (form.password.length < 6) {
@@ -98,7 +98,11 @@ export default function BayarNiaPage() {
         name: form.name,
         email: form.email,
         password: form.password,
-        packageId: selectedPackage.id
+        packageId: selectedPackage.id,
+        phone: form.phone,
+        schoolName: form.schoolName,
+        parentName: form.parentName,
+        parentPhone: form.parentPhone
       });
 
       if (!result.success) {
@@ -334,23 +338,76 @@ export default function BayarNiaPage() {
                     </div>
 
                     <div className="space-y-4">
-                      <div>
-                        <label className="block text-sm font-bold text-slate-700 mb-1.5">Nama Lengkap</label>
-                        <input type="text" value={form.name} onChange={e => setForm({...form, name: e.target.value})} className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-orange-500 focus:border-orange-500 outline-none transition-all" placeholder="John Doe" />
+                      {/* Grid for 2 columns */}
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div className="relative group">
+                          <label className="block text-sm font-bold text-slate-700 mb-1.5 group-focus-within:text-orange-600 transition-colors">Nama Lengkap *</label>
+                          <div className="relative">
+                            <User className="absolute left-3.5 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400 group-focus-within:text-orange-500 transition-colors" />
+                            <input type="text" value={form.name} onChange={e => setForm({...form, name: e.target.value})} className="w-full pl-11 pr-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-orange-500 focus:border-orange-500 outline-none transition-all focus:bg-white" placeholder="Budi Santoso" />
+                          </div>
+                        </div>
+                        <div className="relative group">
+                          <label className="block text-sm font-bold text-slate-700 mb-1.5 group-focus-within:text-orange-600 transition-colors">Nomor WA Siswa *</label>
+                          <div className="relative">
+                            <Phone className="absolute left-3.5 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400 group-focus-within:text-orange-500 transition-colors" />
+                            <input type="tel" value={form.phone} onChange={e => setForm({...form, phone: e.target.value})} className="w-full pl-11 pr-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-orange-500 focus:border-orange-500 outline-none transition-all focus:bg-white" placeholder="081234567890" />
+                          </div>
+                        </div>
+                        <div className="relative group">
+                          <label className="block text-sm font-bold text-slate-700 mb-1.5 group-focus-within:text-orange-600 transition-colors">Email *</label>
+                          <div className="relative">
+                            <Mail className="absolute left-3.5 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400 group-focus-within:text-orange-500 transition-colors" />
+                            <input type="email" value={form.email} onChange={e => setForm({...form, email: e.target.value})} className="w-full pl-11 pr-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-orange-500 focus:border-orange-500 outline-none transition-all focus:bg-white" placeholder="budi@example.com" />
+                          </div>
+                        </div>
+                        <div className="relative group">
+                          <label className="block text-sm font-bold text-slate-700 mb-1.5 group-focus-within:text-orange-600 transition-colors">Password (Min. 6 Karakter) *</label>
+                          <div className="relative">
+                            <Key className="absolute left-3.5 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400 group-focus-within:text-orange-500 transition-colors" />
+                            <input type="password" value={form.password} onChange={e => setForm({...form, password: e.target.value})} className="w-full pl-11 pr-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-orange-500 focus:border-orange-500 outline-none transition-all focus:bg-white" placeholder="••••••••" />
+                          </div>
+                        </div>
+                        <div className="relative group md:col-span-2">
+                          <label className="block text-sm font-bold text-slate-700 mb-1.5 group-focus-within:text-orange-600 transition-colors">Asal Sekolah *</label>
+                          <div className="relative">
+                            <Building className="absolute left-3.5 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400 group-focus-within:text-orange-500 transition-colors" />
+                            <input type="text" value={form.schoolName} onChange={e => setForm({...form, schoolName: e.target.value})} className="w-full pl-11 pr-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-orange-500 focus:border-orange-500 outline-none transition-all focus:bg-white" placeholder="SMA Negeri 1 Jakarta" />
+                          </div>
+                        </div>
                       </div>
-                      <div>
-                        <label className="block text-sm font-bold text-slate-700 mb-1.5">Email</label>
-                        <input type="email" value={form.email} onChange={e => setForm({...form, email: e.target.value})} className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-orange-500 focus:border-orange-500 outline-none transition-all" placeholder="john@example.com" />
+
+                      <hr className="border-slate-100 my-6" />
+                      
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div className="relative group">
+                          <label className="block text-sm font-bold text-slate-700 mb-1.5 group-focus-within:text-orange-600 transition-colors">Nama Orang Tua (Opsional)</label>
+                          <div className="relative">
+                            <Users className="absolute left-3.5 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400 group-focus-within:text-orange-500 transition-colors" />
+                            <input type="text" value={form.parentName} onChange={e => setForm({...form, parentName: e.target.value})} className="w-full pl-11 pr-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-orange-500 focus:border-orange-500 outline-none transition-all focus:bg-white" placeholder="Nama Orang Tua/Wali" />
+                          </div>
+                        </div>
+                        <div className="relative group">
+                          <label className="block text-sm font-bold text-slate-700 mb-1.5 group-focus-within:text-orange-600 transition-colors">Nomor WA Orang Tua (Opsional)</label>
+                          <div className="relative">
+                            <Phone className="absolute left-3.5 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400 group-focus-within:text-orange-500 transition-colors" />
+                            <input type="tel" value={form.parentPhone} onChange={e => setForm({...form, parentPhone: e.target.value})} className="w-full pl-11 pr-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-orange-500 focus:border-orange-500 outline-none transition-all focus:bg-white" placeholder="081234567891" />
+                          </div>
+                        </div>
                       </div>
-                      <div>
-                        <label className="block text-sm font-bold text-slate-700 mb-1.5">Password</label>
-                        <input type="password" value={form.password} onChange={e => setForm({...form, password: e.target.value})} className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-orange-500 focus:border-orange-500 outline-none transition-all" placeholder="Minimal 8 karakter" />
-                      </div>
-                      <div>
-                        <label className="block text-sm font-bold text-slate-700 mb-1.5">Kode Voucher (Opsional)</label>
+
+                      <hr className="border-slate-100 my-6" />
+
+                      <div className="relative group">
+                        <label className="block text-sm font-bold text-slate-700 mb-1.5 group-focus-within:text-orange-600 transition-colors">Kode Voucher (Opsional)</label>
                         <div className="flex gap-2">
-                          <input type="text" value={form.voucher} onChange={e => setForm({...form, voucher: e.target.value.toUpperCase()})} className="flex-1 px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-orange-500 focus:border-orange-500 outline-none transition-all uppercase" placeholder="KODEPROMO" />
-                          <button onClick={handleApplyVoucher} className="px-6 font-bold bg-slate-900 text-white rounded-xl hover:bg-slate-800 transition-colors">Gunakan</button>
+                          <div className="relative flex-1">
+                            <Ticket className="absolute left-3.5 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400 group-focus-within:text-orange-500 transition-colors" />
+                            <input type="text" value={form.voucher} onChange={e => setForm({...form, voucher: e.target.value.toUpperCase()})} className="w-full pl-11 pr-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-orange-500 focus:border-orange-500 outline-none transition-all focus:bg-white uppercase placeholder:normal-case" placeholder="Punya kode diskon?" />
+                          </div>
+                          <button onClick={handleApplyVoucher} disabled={!form.voucher} className="px-6 py-3 bg-slate-900 text-white font-bold rounded-xl hover:bg-slate-800 disabled:opacity-50 disabled:cursor-not-allowed transition-colors shrink-0">
+                            Gunakan
+                          </button>
                         </div>
                       </div>
                     </div>
