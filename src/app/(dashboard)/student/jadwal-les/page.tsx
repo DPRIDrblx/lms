@@ -31,7 +31,7 @@ export default function JadwalLesPage() {
         const today = new Date();
         today.setHours(0, 0, 0, 0);
         
-        const filtered = data.filter(s => new Date(s.schedule_time) >= today);
+        const filtered = data.filter((s: any) => new Date(s.schedule_time) >= today);
         setSchedules(filtered);
       }
       setTimeout(() => setLoading(false), 1500);
