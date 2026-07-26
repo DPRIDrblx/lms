@@ -6,7 +6,7 @@ import { useRouter } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
 import { User, Mail, Lock, Eye, EyeOff, ArrowRight, ArrowLeft, Check, GraduationCap, Globe } from "lucide-react";
 import Link from "next/link";
-import { PwaInstallButton } from "@/components/ui/pwa-install-button";
+import { NiaPwaInstallButton } from "@/components/ui/nia-pwa-install-button";
 
 export default function AppLoginPage() {
   const { user, profile, signInWithEmail, signUpWithEmail, signInWithGoogle } = useAuth();
@@ -219,8 +219,8 @@ export default function AppLoginPage() {
               </button>
             </div>
             
-            <div className="mt-2 text-center">
-              <PwaInstallButton />
+            <div className="mt-6 w-full">
+              <NiaPwaInstallButton />
             </div>
           </form>
         </div>
