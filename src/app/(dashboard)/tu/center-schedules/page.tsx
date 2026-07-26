@@ -319,7 +319,7 @@ export default function CenterSchedulesManager() {
           />
           
           <div className="flex justify-end gap-3 pt-2">
-            <Button variant="outline" onClick={() => setIsSummaryModalOpen(false)}>
+            <Button variant="secondary" onClick={() => setIsSummaryModalOpen(false)}>
               Batal
             </Button>
             <Button 

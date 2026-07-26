@@ -45,7 +45,7 @@ export default function JadwalLesPage() {
       setSchedules(filtered);
 
       // Fetch Attendances
-      const scheduleIds = filtered.map(s => s.id);
+      const scheduleIds = filtered.map((s: any) => s.id);
       if (scheduleIds.length > 0) {
         const { data: attData } = await supabase
           .from("center_schedule_attendances")
@@ -55,7 +55,7 @@ export default function JadwalLesPage() {
           
         if (attData) {
           const attMap: Record<string, any> = {};
-          attData.forEach(a => {
+          attData.forEach((a: any) => {
             attMap[a.schedule_id] = a;
           });
           setAttendances(attMap);
@@ -92,7 +92,7 @@ export default function JadwalLesPage() {
       .from("center_schedule_attendances")
       .insert({
         schedule_id: selectedSchedule.id,
-        student_id: profile.id
+        student_id: profile?.id
       })
       .select()
       .single();
