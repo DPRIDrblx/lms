@@ -8,6 +8,7 @@ import { Loader2, ArrowRight, ArrowLeft, CheckCircle, Upload, Star, Search } fro
 
 function SchoolAutocomplete({ value, onChange }: { value: any, onChange: (val: any) => void }) {
   const [query, setQuery] = useState(value?.data?.name || value?.text || "");
+  const [selectedSchool, setSelectedSchool] = useState<any>(value?.data?.npsn ? value.data : null);
   const [results, setResults] = useState<any[]>([]);
   const [loading, setLoading] = useState(false);
   const [isOpen, setIsOpen] = useState(false);
@@ -37,6 +38,31 @@ function SchoolAutocomplete({ value, onChange }: { value: any, onChange: (val: a
 
     return () => clearTimeout(delayDebounce);
   }, [query]);
+
+  if (selectedSchool) {
+    return (
+      <div className="bg-indigo-50 border border-indigo-100 rounded-xl p-4 flex items-start justify-between gap-4">
+        <div>
+          <div className="font-bold text-indigo-900 text-lg">{selectedSchool.name}</div>
+          <div className="flex gap-2 items-center text-xs text-indigo-600 mt-1">
+            <span className="px-2 py-0.5 bg-indigo-100 rounded font-semibold">{selectedSchool.bentuk}</span>
+            <span>NPSN: {selectedSchool.npsn}</span>
+          </div>
+          <div className="text-sm text-indigo-700 mt-2">{selectedSchool.alamat}</div>
+        </div>
+        <button 
+          onClick={() => {
+             setSelectedSchool(null);
+             setQuery("");
+             onChange({ text: "", data: null });
+          }}
+          className="text-xs font-bold text-indigo-500 hover:text-indigo-700 bg-white px-3 py-1.5 rounded-lg border border-indigo-200 shadow-sm transition-colors"
+        >
+          Ganti Sekolah
+        </button>
+      </div>
+    );
+  }
 
   return (
     <div className="relative">
@@ -70,7 +96,9 @@ function SchoolAutocomplete({ value, onChange }: { value: any, onChange: (val: a
                 onClick={() => {
                   setQuery(school.sekolah);
                   setIsOpen(false);
-                  onChange({ text: school.sekolah, data: { name: school.sekolah, npsn: school.npsn, bentuk: school.bentuk, alamat: school.alamat_jalan } });
+                  const schoolData = { name: school.sekolah, npsn: school.npsn, bentuk: school.bentuk, alamat: school.alamat_jalan };
+                  setSelectedSchool(schoolData);
+                  onChange({ text: school.sekolah, data: schoolData });
                 }}
                 className="p-3 hover:bg-indigo-50 cursor-pointer border-b border-gray-100 last:border-0"
               >
