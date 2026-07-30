@@ -180,7 +180,7 @@ export default function FormBuilderPage() {
                     newPages[pIdx].title = e.target.value;
                     setPages(newPages);
                   }}
-                  onBlur={(e) => supabase.from("form_pages").update({ title: e.target.value }).eq("id", page.id)}
+                  onBlur={async (e) => await supabase.from("form_pages").update({ title: e.target.value }).eq("id", page.id)}
                   className="text-lg font-bold text-gray-900 bg-transparent border-none focus:ring-0 w-full p-0"
                   placeholder="Judul Halaman"
                 />
@@ -192,7 +192,7 @@ export default function FormBuilderPage() {
                     newPages[pIdx].description = e.target.value;
                     setPages(newPages);
                   }}
-                  onBlur={(e) => supabase.from("form_pages").update({ description: e.target.value }).eq("id", page.id)}
+                  onBlur={async (e) => await supabase.from("form_pages").update({ description: e.target.value }).eq("id", page.id)}
                   className="text-sm text-gray-500 bg-transparent border-none focus:ring-0 w-full p-0 mt-1"
                   placeholder="Deskripsi halaman (opsional)"
                 />
