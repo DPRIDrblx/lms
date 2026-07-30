@@ -45,8 +45,8 @@ export default function PublicFormPage() {
     }
 
     if (formData.require_sso && !userData?.user) {
-      // Redirect to login if SSO required
-      router.push(`/login?redirect=/f/${id}`);
+      // Redirect to custom SSO login if SSO required
+      router.push(`/f/${id}/login`);
       return;
     }
 
