@@ -324,8 +324,32 @@ export default function PublicFormPage() {
       {/* Header Form */}
       <div className="bg-indigo-900 text-white pt-12 pb-20 px-6">
         <div className="max-w-3xl mx-auto text-center space-y-4">
-          <div className="inline-block px-4 py-1.5 bg-white/10 rounded-full text-xs font-bold uppercase tracking-wider mb-2">
-            {form.logo_type}
+          <div className="flex justify-center mb-6">
+            {form.logo_type === 'IGNITE' && (
+              <div className="flex items-center gap-2 bg-white/10 px-4 py-2 rounded-2xl">
+                <div className="w-8 h-8 rounded-lg bg-blue-600 flex items-center justify-center shadow-lg">
+                  <span className="text-white font-bold text-sm">IG</span>
+                </div>
+                <span className="text-2xl font-black tracking-tight text-white">IGNITE</span>
+              </div>
+            )}
+            {form.logo_type === 'IGNITE Center' && (
+              <div className="flex items-center gap-2 bg-white/10 px-4 py-2 rounded-2xl">
+                 <span className="text-3xl font-black tracking-tight text-white">
+                   IGNITE <span className="text-blue-300">Center</span>
+                 </span>
+              </div>
+            )}
+            {form.logo_type === 'NIA Center' && (
+              <div className="flex items-center gap-2 bg-white/10 px-4 py-2 rounded-2xl">
+                 <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-amber-400 to-orange-600 flex items-center justify-center shadow-lg">
+                   <span className="text-white font-bold text-[10px]">NIA</span>
+                 </div>
+                 <span className="text-3xl font-black tracking-tight text-white">
+                   NIA <span className="text-orange-300">Center</span>
+                 </span>
+              </div>
+            )}
           </div>
           <h1 className="text-3xl md:text-4xl font-bold">{form.title}</h1>
           {form.description && <p className="text-indigo-200 text-lg max-w-2xl mx-auto">{form.description}</p>}
