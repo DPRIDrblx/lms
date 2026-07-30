@@ -65,6 +65,7 @@ const tuNav = [
   { href: "/tu/dashboard", label: "Staff Portal", icon: LayoutDashboard },
   { href: "/tu/classroom-manager", label: "Classroom Manager", icon: Users },
   { href: "/chat", label: "Communications", icon: MessageSquare },
+  { href: "/tu/attendance", label: "Attendance Control", icon: UserCheck },
   { href: "/tu/finance", label: "Financial Hub", icon: CreditCard },
   { href: "/tu/reports", label: "Report Cards", icon: FileText },
   { href: "/tu/account-generator", label: "Account Generator", icon: Users },
@@ -73,6 +74,7 @@ const tuNav = [
   { href: "/tu/center-schedules", label: "Jadwal Les (Center)", icon: Calendar },
   { href: "/tu/e-modules", label: "E-Modul (Center)", icon: BookOpen },
   { href: "/tu/verifications", label: "Verifikasi Akun", icon: ShieldAlert },
+  { href: "/tu/forms", label: "Form Builder", icon: FileText },
   { href: "/settings", label: "Settings", icon: Settings },
 ];
 
