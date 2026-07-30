@@ -4,7 +4,7 @@ import { useAuth } from "@/lib/auth-context";
 import { createClient } from "@/lib/supabase";
 import { useRouter } from "next/navigation";
 import { useEffect, useState, use, useCallback, useRef } from "react";
-import { Clock, Flag, ChevronLeft, ChevronRight, CheckCircle2, AlertTriangle, AlertCircle, PlayCircle, Star, Target, RefreshCcw } from "lucide-react";
+import { Clock, Flag, ChevronLeft, ChevronRight, CheckCircle2, AlertTriangle, AlertCircle, PlayCircle, Star, Target, RefreshCcw, LayoutGrid, X } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { playSound } from "@/lib/audio";
 import { updateQuestProgress } from "@/lib/gamification";
@@ -52,6 +52,7 @@ export default function ExamPage({ params }: { params: Promise<{ id: string }> }
   const [chatMessages, setChatMessages] = useState<any[]>([]);
   const [aiChatLoading, setAiChatLoading] = useState(false);
   const [chatInput, setChatInput] = useState("");
+  const [showMobileGrid, setShowMobileGrid] = useState(false);
 
   const initExam = useCallback(async () => {
     if (!profile) return;
@@ -914,8 +915,74 @@ export default function ExamPage({ params }: { params: Promise<{ id: string }> }
         )}
       </AnimatePresence>
 
+      {/* MOBILE NUMBER GRID MODAL */}
+      <AnimatePresence>
+        {showMobileGrid && (
+          <div className="fixed inset-0 z-[200] bg-white flex flex-col lg:hidden">
+            <div className="p-4 border-b flex items-center justify-between bg-slate-50">
+              <h3 className="font-black text-slate-700 uppercase tracking-widest text-sm flex items-center gap-2">
+                <LayoutGrid className="w-5 h-5" /> Navigasi Soal
+              </h3>
+              <button onClick={() => setShowMobileGrid(false)} className="p-2 text-slate-400 hover:text-slate-600 bg-white rounded-full shadow-sm">
+                <X className="w-6 h-6" />
+              </button>
+            </div>
+            <div className="p-4 flex-1 overflow-y-auto pb-8">
+              <div className="grid grid-cols-5 gap-3">
+                {questions.map((q, i) => {
+                  const ans = responses[q.id];
+                  let isAnswered = false;
+                  if (q.question_type === 'mcq' || q.question_type === 'essay') {
+                    isAnswered = !!ans && ans.length > 0;
+                  } else if (q.question_type === 'complex_mcq') {
+                    isAnswered = Array.isArray(ans) && ans.length > 0;
+                  } else if (q.question_type === 'matching') {
+                    isAnswered = ans && Object.keys(ans).length > 0;
+                  }
+                  const isFlagged = flags[q.id];
+                  
+                  let btnStyle = "border-slate-200 text-slate-500 hover:border-slate-300 bg-white";
+                  if (isFlagged) {
+                    btnStyle = "border-yellow-500 bg-yellow-400 text-yellow-900 border-b-4";
+                  } else if (isAnswered) {
+                    btnStyle = "border-blue-500 bg-blue-400 text-white border-b-4";
+                  }
+                  if (currentIndex === i) {
+                    btnStyle += " ring-4 ring-slate-200 scale-110 z-10";
+                  }
+
+                  return (
+                    <button
+                      key={q.id}
+                      onClick={() => {
+                        setCurrentIndex(i);
+                        setShowMobileGrid(false);
+                      }}
+                      className={`aspect-square rounded-xl font-black text-sm flex items-center justify-center border-2 transition-all ${btnStyle}`}
+                    >
+                      {i + 1}
+                    </button>
+                  );
+                })}
+              </div>
+              <div className="mt-8 space-y-3 text-sm font-bold text-slate-500 bg-slate-50 p-4 rounded-xl border border-slate-100">
+                <div className="flex items-center gap-3">
+                  <div className="w-5 h-5 rounded-md bg-blue-400 border-2 border-blue-500" /> Sudah Dijawab
+                </div>
+                <div className="flex items-center gap-3">
+                  <div className="w-5 h-5 rounded-md bg-yellow-400 border-2 border-yellow-500" /> Ragu-ragu
+                </div>
+                <div className="flex items-center gap-3">
+                  <div className="w-5 h-5 rounded-md bg-white border-2 border-slate-200" /> Belum Dijawab
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
+      </AnimatePresence>
+
       {/* HEADER PROGRESS (Duolingo Style) */}
-      <header className="sticky top-0 z-50 bg-white border-b-2 border-slate-100 px-4 py-4 md:px-8 flex items-center gap-4 md:gap-8 shadow-sm">
+      <header className="sticky top-0 z-50 bg-white border-b-2 border-slate-100 px-3 py-2 md:py-4 md:px-8 flex items-center gap-3 md:gap-8 shadow-sm landscape:py-2">
         <button 
           onClick={() => setConfirmModal({
             show: true, 
@@ -923,9 +990,9 @@ export default function ExamPage({ params }: { params: Promise<{ id: string }> }
             message: 'Kembali ke dashboard? Ujian akan tetap berjalan dan waktu terus berjalan.', 
             onConfirm: () => router.push('/dashboard')
           })}
-          className="text-slate-400 hover:text-slate-600 transition-colors"
+          className="text-slate-400 hover:text-slate-600 transition-colors shrink-0"
         >
-          <ChevronLeft className="w-8 h-8" strokeWidth={3} />
+          <ChevronLeft className="w-6 h-6 md:w-8 md:h-8" strokeWidth={3} />
         </button>
         
         {/* Progress Bar */}
@@ -950,10 +1017,10 @@ export default function ExamPage({ params }: { params: Promise<{ id: string }> }
         </div>
       </header>
 
-      <main className="flex-1 flex flex-col lg:flex-row max-w-7xl mx-auto w-full p-4 md:p-8 gap-8 relative z-10">
+      <main className="flex-1 flex flex-col lg:flex-row max-w-7xl mx-auto w-full p-4 md:p-8 gap-4 md:gap-8 relative z-10 pb-32 lg:pb-8 landscape:pb-32">
         
         {/* LEFT PANEL: QUESTION CONTENT */}
-        <div className="flex-1 flex flex-col max-w-3xl mx-auto w-full pb-32 lg:pb-0">
+        <div className="flex-1 flex flex-col max-w-3xl mx-auto w-full">
           <div className="mb-6 flex items-center justify-between">
             <h2 className="text-2xl md:text-3xl font-black text-slate-800">
               Soal {currentIndex + 1}
@@ -1245,7 +1312,7 @@ export default function ExamPage({ params }: { params: Promise<{ id: string }> }
 
         {/* RIGHT PANEL: NUMBER GRID (Mobile & Desktop) */}
         {!isPracticeMode && (
-        <div className="flex flex-col w-full lg:w-80 shrink-0">
+        <div className="hidden lg:flex flex-col w-full lg:w-80 shrink-0">
           <div className="bg-white rounded-3xl border-2 border-slate-200 p-6 shadow-sm sticky top-28">
             <h3 className="font-black text-slate-700 mb-6 uppercase tracking-widest text-sm flex items-center justify-between">
               Navigasi Soal
@@ -1311,39 +1378,43 @@ export default function ExamPage({ params }: { params: Promise<{ id: string }> }
 
       {/* BOTTOM ACTION BAR (CBT MODE) */}
       {!isPracticeMode && (
-        <div className="fixed bottom-0 left-0 right-0 z-50 bg-white border-t-2 border-slate-200 p-4 md:px-8 shadow-[0_-4px_6px_-1px_rgba(0,0,0,0.05)]">
-          <div className="max-w-7xl mx-auto flex items-center justify-between gap-4">
-            <div className="flex items-center gap-2 md:gap-4">
+        <div className="fixed bottom-0 left-0 right-0 z-50 bg-white border-t-2 border-slate-200 p-2 md:px-8 shadow-[0_-4px_6px_-1px_rgba(0,0,0,0.05)] landscape:p-2">
+          <div className="max-w-7xl mx-auto flex items-center justify-between gap-2 md:gap-4">
+            <div className="flex items-center gap-1 md:gap-4">
               <button 
                 disabled={currentIndex === 0} 
                 onClick={() => setCurrentIndex(prev => prev - 1)}
-                className={`p-3 md:px-6 md:py-4 rounded-2xl font-bold border-b-4 transition-all flex items-center gap-2 ${
+                className={`p-2 md:px-6 md:py-4 rounded-xl md:rounded-2xl font-bold border-b-4 transition-all flex items-center gap-1 md:gap-2 ${
                   currentIndex === 0 
                     ? 'bg-slate-100 text-slate-400 border-slate-200 cursor-not-allowed' 
                     : 'bg-white text-slate-600 border-slate-300 hover:bg-slate-50 active:translate-y-1 active:border-b-0'
                 }`}
               >
-                <ChevronLeft className="w-6 h-6" />
+                <ChevronLeft className="w-5 h-5 md:w-6 md:h-6" />
                 <span className="hidden md:inline">SEBELUMNYA</span>
               </button>
               
               <button 
                 onClick={() => setFlag(currentQ.id)}
-                className={`p-3 md:px-6 md:py-4 rounded-2xl font-bold border-b-4 transition-all flex items-center gap-2 ${
+                className={`p-2 md:px-6 md:py-4 rounded-xl md:rounded-2xl font-bold border-b-4 transition-all flex items-center gap-1 md:gap-2 ${
                   flags[currentQ.id]
                     ? 'bg-yellow-400 text-yellow-900 border-yellow-600 active:translate-y-1 active:border-b-0'
                     : 'bg-white text-slate-600 border-slate-300 hover:bg-slate-50 active:translate-y-1 active:border-b-0'
                 }`}
               >
-                <Flag className={`w-6 h-6 ${flags[currentQ.id] ? 'fill-current' : ''}`} />
+                <Flag className={`w-5 h-5 md:w-6 md:h-6 ${flags[currentQ.id] ? 'fill-current' : ''}`} />
                 <span className="hidden md:inline">RAGU-RAGU</span>
               </button>
             </div>
 
-            <div className="flex items-center gap-4">
-              <div className="lg:hidden text-sm font-bold text-slate-400">
+            <div className="flex items-center gap-2 md:gap-4">
+              <button 
+                onClick={() => setShowMobileGrid(true)}
+                className="lg:hidden flex items-center gap-1.5 px-3 py-2 bg-slate-100 rounded-xl text-sm font-bold text-slate-600 active:bg-slate-200 border-2 border-slate-200 shrink-0"
+              >
+                <LayoutGrid className="w-4 h-4" />
                 {currentIndex + 1} / {questions.length}
-              </div>
+              </button>
 
               {currentIndex === questions.length - 1 ? (
                 <button 
@@ -1376,18 +1447,18 @@ export default function ExamPage({ params }: { params: Promise<{ id: string }> }
                       });
                     }
                   }} 
-                  className="px-8 py-4 rounded-2xl font-bold text-white bg-green-500 border-b-4 border-green-700 hover:bg-green-400 active:translate-y-1 active:border-b-0 transition-all flex items-center gap-2 text-lg shadow-lg shadow-green-500/30"
+                  className="px-4 py-2 md:px-8 md:py-4 rounded-xl md:rounded-2xl font-bold text-white bg-green-500 border-b-4 border-green-700 hover:bg-green-400 active:translate-y-1 active:border-b-0 transition-all flex items-center gap-1 md:gap-2 text-sm md:text-lg shadow-lg shadow-green-500/30"
                 >
-                  <span>SELESAI</span>
-                  <CheckCircle2 className="w-6 h-6" />
+                  <span className="hidden md:inline">SELESAI</span>
+                  <CheckCircle2 className="w-5 h-5 md:w-6 md:h-6" />
                 </button>
               ) : (
                 <button 
                   onClick={() => setCurrentIndex(i => i + 1)}
-                  className="px-8 py-4 rounded-2xl font-bold text-white bg-blue-500 border-b-4 border-blue-700 hover:bg-blue-400 active:translate-y-1 active:border-b-0 transition-all flex items-center gap-2 text-lg shadow-lg shadow-blue-500/30"
+                  className="px-4 py-2 md:px-8 md:py-4 rounded-xl md:rounded-2xl font-bold text-white bg-blue-500 border-b-4 border-blue-700 hover:bg-blue-400 active:translate-y-1 active:border-b-0 transition-all flex items-center gap-1 md:gap-2 text-sm md:text-lg shadow-lg shadow-blue-500/30"
                 >
-                  <span>LANJUT</span>
-                  <ChevronRight className="w-6 h-6" />
+                  <span className="hidden md:inline">LANJUT</span>
+                  <ChevronRight className="w-5 h-5 md:w-6 md:h-6" />
                 </button>
               )}
             </div>
@@ -1398,17 +1469,17 @@ export default function ExamPage({ params }: { params: Promise<{ id: string }> }
       {/* BOTTOM ACTION BAR (PRACTICE MODE) */}
       {isPracticeMode && currentQ && (
         <div className="fixed bottom-0 left-0 right-0 z-40 bg-white border-t-2 border-slate-200 shadow-[0_-4px_6px_-1px_rgba(0,0,0,0.05)]">
-          <div className="max-w-4xl mx-auto flex items-center justify-between p-4 md:px-8">
+          <div className="max-w-4xl mx-auto flex items-center justify-between p-2 md:p-4 md:px-8">
             <button 
               disabled={currentIndex === 0 || hasChecked} 
               onClick={() => setCurrentIndex(prev => prev - 1)}
-              className={`p-3 md:px-6 md:py-4 rounded-2xl font-bold border-b-4 transition-all flex items-center gap-2 ${
+              className={`p-2 md:px-6 md:py-4 rounded-xl md:rounded-2xl font-bold border-b-4 transition-all flex items-center gap-1 md:gap-2 ${
                 currentIndex === 0 || hasChecked
                   ? 'bg-slate-100 text-slate-400 border-slate-200 cursor-not-allowed' 
                   : 'bg-white text-slate-600 border-slate-300 hover:bg-slate-50 active:translate-y-1 active:border-b-0'
               }`}
             >
-              <ChevronLeft className="w-6 h-6" />
+              <ChevronLeft className="w-5 h-5 md:w-6 md:h-6" />
               <span className="hidden md:inline">SEBELUMNYA</span>
             </button>
 
@@ -1416,7 +1487,7 @@ export default function ExamPage({ params }: { params: Promise<{ id: string }> }
               <button
                 disabled={!responses[currentQ.id] || (Array.isArray(responses[currentQ.id]) && responses[currentQ.id].length === 0)}
                 onClick={handleCheckAnswer}
-                className="px-8 py-4 rounded-2xl font-bold text-white bg-indigo-500 border-b-4 border-indigo-700 hover:bg-indigo-400 active:translate-y-1 active:border-b-0 transition-all flex items-center gap-2 text-lg disabled:opacity-50 disabled:cursor-not-allowed shadow-lg shadow-indigo-500/30"
+                className="px-4 py-2 md:px-8 md:py-4 rounded-xl md:rounded-2xl font-bold text-white bg-indigo-500 border-b-4 border-indigo-700 hover:bg-indigo-400 active:translate-y-1 active:border-b-0 transition-all flex items-center gap-2 text-sm md:text-lg disabled:opacity-50 disabled:cursor-not-allowed shadow-lg shadow-indigo-500/30"
               >
                 CEK JAWABAN
               </button>
