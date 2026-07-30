@@ -89,6 +89,43 @@ export default function QuizReviewPage({ params }: { params: Promise<{ id: strin
     }
   };
 
+  const [retryLoading, setRetryLoading] = useState(false);
+
+  const handleRetryAnalysis = async () => {
+    if (!score || !quiz) return;
+    setRetryLoading(true);
+
+    const formattedResponses: Record<string, any> = {};
+    responses.forEach(r => {
+      formattedResponses[r.question_id] = r.metadata?.answer;
+    });
+
+    try {
+      const res = await fetch('/api/ai/retry-analysis', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          scoreId: score.id,
+          quizTitle: quiz.title,
+          questions,
+          responses: score.metadata?.responses || formattedResponses,
+          studentName: profile?.full_name,
+          currentMetadata: score.metadata || {}
+        })
+      });
+
+      if (res.ok) {
+        window.location.reload();
+      } else {
+        alert("Gagal menghubungi AI. Silakan coba lagi.");
+      }
+    } catch (e) {
+      alert("Terjadi kesalahan jaringan.");
+    } finally {
+      setRetryLoading(false);
+    }
+  };
+
 
   useEffect(() => {
     const fetchData = async () => {
@@ -352,10 +389,12 @@ export default function QuizReviewPage({ params }: { params: Promise<{ id: strin
                     ⏳ Tunggu sebentar, analisis Anda sedang disiapkan oleh Tutor AI...
                   </p>
                   <button 
-                    onClick={() => window.location.reload()}
-                    className="flex items-center gap-2 bg-indigo-600 text-white px-4 py-2 rounded-xl text-sm font-bold shadow-md hover:bg-indigo-700 transition-colors"
+                    disabled={retryLoading}
+                    onClick={handleRetryAnalysis}
+                    className="flex items-center gap-2 bg-indigo-600 text-white px-4 py-2 rounded-xl text-sm font-bold shadow-md hover:bg-indigo-700 transition-colors disabled:opacity-50"
                   >
-                    <RefreshCw className="w-4 h-4" /> Muat Ulang Halaman
+                    {retryLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : <RefreshCw className="w-4 h-4" />}
+                    Coba Ulang Analisis AI
                   </button>
                 </div>
               )}
