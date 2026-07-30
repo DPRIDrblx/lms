@@ -24,7 +24,8 @@ import {
   MessageSquare,
   LogOut,
   ShieldAlert,
-  Building
+  Building,
+  UserCheck
 } from "lucide-react";
 import { useState, useEffect } from "react";
 

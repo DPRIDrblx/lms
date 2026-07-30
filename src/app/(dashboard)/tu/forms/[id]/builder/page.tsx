@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { createClientComponentClient } from "@supabase/auth-helpers-nextjs";
+import { createClient } from "@/lib/supabase";
 import { useRouter, useParams } from "next/navigation";
 import { 
   ArrowLeft, Plus, Settings, Trash2, GripVertical, 
@@ -28,7 +28,7 @@ export default function FormBuilderPage() {
   const params = useParams();
   const id = params.id as string;
   const router = useRouter();
-  const supabase = createClientComponentClient();
+  const supabase = createClient();
   
   const [form, setForm] = useState<any>(null);
   const [pages, setPages] = useState<any[]>([]);
@@ -52,7 +52,7 @@ export default function FormBuilderPage() {
 
     if (pagesData) {
       // Sort questions inside pages
-      const sortedPages = pagesData.map(p => ({
+      const sortedPages = pagesData.map((p: any) => ({
         ...p,
         form_questions: p.form_questions.sort((a: any, b: any) => a.order_index - b.order_index)
       }));

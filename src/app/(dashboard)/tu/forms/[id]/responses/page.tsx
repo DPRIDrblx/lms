@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { createClientComponentClient } from "@supabase/auth-helpers-nextjs";
+import { createClient } from "@/lib/supabase";
 import { useRouter, useParams } from "next/navigation";
 import { ArrowLeft, ChevronLeft, ChevronRight, Download, FileText, User } from "lucide-react";
 import { format } from "date-fns";
@@ -11,7 +11,7 @@ export default function FormResponsesPage() {
   const params = useParams();
   const id = params.id as string;
   const router = useRouter();
-  const supabase = createClientComponentClient();
+  const supabase = createClient();
   
   const [form, setForm] = useState<any>(null);
   const [questions, setQuestions] = useState<any[]>([]);
@@ -37,7 +37,7 @@ export default function FormResponsesPage() {
 
     let allQuestions: any[] = [];
     if (pagesData) {
-      pagesData.forEach(p => {
+      pagesData.forEach((p: any) => {
         const sortedQ = p.form_questions.sort((a: any, b: any) => a.order_index - b.order_index);
         allQuestions = [...allQuestions, ...sortedQ];
       });

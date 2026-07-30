@@ -1,16 +1,16 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { createClientComponentClient } from "@supabase/auth-helpers-nextjs";
+import { createClient } from "@/lib/supabase";
 import { useRouter, useParams } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
-import { Loader2, ArrowRight, ArrowLeft, CheckCircle, Upload } from "lucide-react";
+import { Loader2, ArrowRight, ArrowLeft, CheckCircle, Upload, Star } from "lucide-react";
 
 export default function PublicFormPage() {
   const params = useParams();
   const id = params.id as string;
   const router = useRouter();
-  const supabase = createClientComponentClient();
+  const supabase = createClient();
   
   const [form, setForm] = useState<any>(null);
   const [pages, setPages] = useState<any[]>([]);
@@ -59,7 +59,7 @@ export default function PublicFormPage() {
       .order("order_index");
 
     if (pagesData) {
-      const sortedPages = pagesData.map(p => ({
+      const sortedPages = pagesData.map((p: any) => ({
         ...p,
         form_questions: p.form_questions.sort((a: any, b: any) => a.order_index - b.order_index)
       }));
@@ -68,7 +68,7 @@ export default function PublicFormPage() {
       // Pre-fill name and email if SSO
       if (userData?.user) {
         const initialAnswers: Record<string, any> = {};
-        sortedPages.forEach(p => {
+        sortedPages.forEach((p: any) => {
           p.form_questions.forEach((q: any) => {
             if (q.type === 'name' && userData.user.user_metadata?.full_name) {
               initialAnswers[q.id] = { text: userData.user.user_metadata.full_name };
