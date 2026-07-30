@@ -82,7 +82,7 @@ export default function PublicFormPage() {
     }
     
     // Fetch provinces
-    fetch('https://emsifa.github.io/api-wilayah-indonesia/api/provinces.json')
+    fetch('https://www.emsifa.com/api-wilayah-indonesia/api/provinces.json')
       .then(res => res.json())
       .then(data => setProvinces(data))
       .catch(e => console.error(e));
@@ -96,14 +96,14 @@ export default function PublicFormPage() {
 
     if (level === 'province') {
       newData = { province: valueName, provinceId: valueId, regency: '', district: '' };
-      fetch(`https://emsifa.github.io/api-wilayah-indonesia/api/regencies/${valueId}.json`)
+      fetch(`https://www.emsifa.com/api-wilayah-indonesia/api/regencies/${valueId}.json`)
         .then(res => res.json()).then(data => setRegencies(data));
       setDistricts([]);
     } else if (level === 'regency') {
       newData.regency = valueName;
       newData.regencyId = valueId;
       newData.district = '';
-      fetch(`https://emsifa.github.io/api-wilayah-indonesia/api/districts/${valueId}.json`)
+      fetch(`https://www.emsifa.com/api-wilayah-indonesia/api/districts/${valueId}.json`)
         .then(res => res.json()).then(data => setDistricts(data));
     } else if (level === 'district') {
       newData.district = valueName;
