@@ -4,7 +4,93 @@ import { useEffect, useState } from "react";
 import { createClient } from "@/lib/supabase";
 import { useRouter, useParams } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
-import { Loader2, ArrowRight, ArrowLeft, CheckCircle, Upload, Star } from "lucide-react";
+import { Loader2, ArrowRight, ArrowLeft, CheckCircle, Upload, Star, Search } from "lucide-react";
+
+function SchoolAutocomplete({ value, onChange }: { value: any, onChange: (val: any) => void }) {
+  const [query, setQuery] = useState(value?.data?.name || value?.text || "");
+  const [results, setResults] = useState<any[]>([]);
+  const [loading, setLoading] = useState(false);
+  const [isOpen, setIsOpen] = useState(false);
+
+  useEffect(() => {
+    if (query.length < 3) {
+      setResults([]);
+      return;
+    }
+    const delayDebounce = setTimeout(() => {
+      setLoading(true);
+      fetch(`https://api-sekolah-indonesia.vercel.app/sekolah/s?sekolah=${encodeURIComponent(query)}`)
+        .then(res => res.json())
+        .then(data => {
+          if (data && data.dataSekolah) {
+            setResults(data.dataSekolah);
+          } else {
+            setResults([]);
+          }
+          setLoading(false);
+        })
+        .catch(() => {
+          setResults([]);
+          setLoading(false);
+        });
+    }, 500);
+
+    return () => clearTimeout(delayDebounce);
+  }, [query]);
+
+  return (
+    <div className="relative">
+      <div className="relative">
+        <input 
+          type="text"
+          value={query}
+          onChange={e => {
+            setQuery(e.target.value);
+            setIsOpen(true);
+            onChange({ text: e.target.value, data: { name: e.target.value } });
+          }}
+          onFocus={() => setIsOpen(true)}
+          onBlur={() => setTimeout(() => setIsOpen(false), 200)}
+          className="w-full pl-10 pr-4 py-3 rounded-xl border border-gray-300 focus:border-indigo-500 focus:ring-2 focus:ring-indigo-200 outline-none transition-all"
+          placeholder="Ketik nama sekolah (min. 3 huruf)..."
+        />
+        <Search className="w-5 h-5 text-gray-400 absolute left-3 top-3.5" />
+      </div>
+      
+      {isOpen && (query.length >= 3) && (
+        <div className="absolute z-10 w-full mt-1 bg-white border border-gray-200 rounded-xl shadow-lg max-h-64 overflow-auto">
+          {loading ? (
+            <div className="p-4 text-sm text-gray-500 text-center flex items-center justify-center gap-2">
+              <Loader2 className="w-4 h-4 animate-spin" /> Mencari data sekolah...
+            </div>
+          ) : results.length > 0 ? (
+            results.map((school: any) => (
+              <div 
+                key={school.id}
+                onClick={() => {
+                  setQuery(school.sekolah);
+                  setIsOpen(false);
+                  onChange({ text: school.sekolah, data: { name: school.sekolah, npsn: school.npsn, bentuk: school.bentuk, alamat: school.alamat_jalan } });
+                }}
+                className="p-3 hover:bg-indigo-50 cursor-pointer border-b border-gray-100 last:border-0"
+              >
+                <div className="font-bold text-gray-900 text-sm">{school.sekolah}</div>
+                <div className="flex gap-2 items-center text-xs text-gray-500 mt-1">
+                  <span className="px-2 py-0.5 bg-gray-100 rounded font-semibold">{school.bentuk}</span>
+                  <span>NPSN: {school.npsn}</span>
+                </div>
+                <div className="text-xs text-gray-400 mt-1 line-clamp-1">{school.alamat_jalan}, {school.kecamatan}, {school.kabupaten_kota}, {school.propinsi}</div>
+              </div>
+            ))
+          ) : (
+            <div className="p-4 text-sm text-gray-500 text-center">Data sekolah tidak ditemukan</div>
+          )}
+        </div>
+      )}
+    </div>
+  );
+}
+
 
 export default function PublicFormPage() {
   const params = useParams();
@@ -362,21 +448,12 @@ export default function PublicFormPage() {
                     </div>
                   )}
                   
-                  {/* SCHOOL DATA (Dummy Search) */}
+                  {/* SCHOOL DATA (Live Search) */}
                   {q.type === 'school' && (
-                    <div className="relative">
-                      <input 
-                        type="text"
-                        value={answers[q.id]?.data?.name || answers[q.id]?.text || ''}
-                        onChange={e => {
-                          const val = e.target.value;
-                          setAnswers({ ...answers, [q.id]: { text: val, data: { name: val, npsn: Math.floor(Math.random() * 90000000 + 10000000).toString() } } });
-                        }}
-                        className="w-full px-4 py-3 rounded-xl border border-gray-300 focus:border-indigo-500 focus:ring-2 focus:ring-indigo-200 outline-none transition-all"
-                        placeholder="Ketik nama sekolah..."
-                      />
-                      <p className="text-xs text-gray-400 mt-1">Cari dan pilih nama sekolah. (Auto-generate NPSN untuk contoh)</p>
-                    </div>
+                    <SchoolAutocomplete 
+                      value={answers[q.id] || {}}
+                      onChange={(val) => setAnswers({ ...answers, [q.id]: val })}
+                    />
                   )}
 
                   {/* RATING */}
