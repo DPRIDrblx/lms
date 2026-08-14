@@ -40,6 +40,7 @@ export default function LessonWorkspacePage() {
   const [meetingSummary, setMeetingSummary] = useState("");
   const [photoStartUrl, setPhotoStartUrl] = useState("");
   const [photoEndUrl, setPhotoEndUrl] = useState("");
+  const [uploadingPhoto, setUploadingPhoto] = useState(false);
 
   const fetchData = async () => {
     setLoading(true);
@@ -103,13 +104,33 @@ export default function LessonWorkspacePage() {
     setAttendances(prev => ({ ...prev, [studentId]: status }));
   };
 
-  const handlePhotoUpload = (e: React.ChangeEvent<HTMLInputElement>, type: 'start' | 'end') => {
+  const handlePhotoUpload = async (e: React.ChangeEvent<HTMLInputElement>, type: 'start' | 'end') => {
     const file = e.target.files?.[0];
     if (file) {
-      // Simulate file upload by creating an object URL (In production, upload to Supabase Storage)
-      const url = URL.createObjectURL(file);
-      if (type === 'start') setPhotoStartUrl(url);
-      else setPhotoEndUrl(url);
+      setUploadingPhoto(true);
+      const toastId = toast.loading("Mengunggah foto...");
+      try {
+        const fileExt = file.name.split('.').pop();
+        const fileName = `${schedule.id}_${type}_${Math.random()}.${fileExt}`;
+        const filePath = `${fileName}`;
+
+        const { error: uploadError } = await supabase.storage
+          .from('class_documentation')
+          .upload(filePath, file);
+
+        if (uploadError) throw uploadError;
+
+        const { data } = supabase.storage.from('class_documentation').getPublicUrl(filePath);
+        
+        if (type === 'start') setPhotoStartUrl(data.publicUrl);
+        else setPhotoEndUrl(data.publicUrl);
+        
+        toast.success("Foto berhasil diunggah!", { id: toastId });
+      } catch (error: any) {
+        toast.error(`Gagal mengunggah foto: ${error.message}`, { id: toastId });
+      } finally {
+        setUploadingPhoto(false);
+      }
     }
   };
 
@@ -606,14 +627,14 @@ export default function LessonWorkspacePage() {
             <div className="space-y-3">
               <Button 
                 onClick={saveWorkspace}
-                disabled={saving}
+                disabled={saving || uploadingPhoto}
                 className="w-full bg-teal-500 hover:bg-teal-600 text-white"
               >
                 <Save className="w-4 h-4 mr-2" /> {saving ? 'Menyimpan...' : 'Simpan Sementara'}
               </Button>
               <Button 
                 onClick={finishClass}
-                disabled={saving}
+                disabled={saving || isCompleted || uploadingPhoto}
                 className="w-full bg-slate-900 hover:bg-slate-800 text-white"
               >
                 <CheckCircle2 className="w-4 h-4 mr-2" /> Selesaikan Kelas
