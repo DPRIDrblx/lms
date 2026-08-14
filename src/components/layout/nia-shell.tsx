@@ -26,6 +26,7 @@ export function NiaShell({ children }: { children: React.ReactNode }) {
       { name: "Manajemen Materi", href: "/pengurus-nia/courses", icon: BookOpen },
     ] : []),
     ...(profile?.role === "operator_les" ? [
+      { name: "Laporan Kelas", href: "/operator-les/reports", icon: BookOpen },
       { name: "Manajemen Paket", href: "/operator-les/packages", icon: BookOpen },
       { name: "Persetujuan Pembayaran", href: "/operator-les/payments", icon: CreditCard },
       { name: "Cabang Center", href: "/operator-les/branches", icon: MapPin },
