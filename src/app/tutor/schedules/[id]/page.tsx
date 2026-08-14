@@ -30,7 +30,9 @@ export default function LessonWorkspacePage() {
   const [selectedLevel, setSelectedLevel] = useState<string>("");
   const [selectedSubject, setSelectedSubject] = useState<string>("");
   const [selectedTopic, setSelectedTopic] = useState<string>("");
-  const [selectedSubtopic, setSelectedSubtopic] = useState<string>("");
+  const [selectedSubtopics, setSelectedSubtopics] = useState<string[]>([]);
+  const [learningObjectives, setLearningObjectives] = useState<string>("");
+  const [learningMethods, setLearningMethods] = useState<string>("");
   const [customTopic, setCustomTopic] = useState<string>(""); // for Lainnya
   const [isGeneratingAi, setIsGeneratingAi] = useState(false);
 
@@ -50,7 +52,13 @@ export default function LessonWorkspacePage() {
     if (sched) {
       setSchedule(sched);
       setSelectedTopic(sched.topic || "");
-      setSelectedSubtopic(sched.subtopic || "");
+      if (sched.subtopic) {
+        setSelectedSubtopics(sched.subtopic.split(", "));
+      } else {
+        setSelectedSubtopics([]);
+      }
+      setLearningObjectives(sched.learning_objectives || "");
+      setLearningMethods(sched.learning_methods || "");
       setMeetingSummary(sched.meeting_summary || "");
       setPhotoStartUrl(sched.photo_start_url || "");
       setPhotoEndUrl(sched.photo_end_url || "");
@@ -122,8 +130,10 @@ export default function LessonWorkspacePage() {
           jenjang: selectedLevel,
           mapel: selectedSubject,
           topik: selectedTopic || schedule.topic,
-          subtopik: selectedSubtopic || schedule.subtopic,
-          materiLainnya: customTopic
+          subtopik: selectedSubtopics.length > 0 ? selectedSubtopics : (schedule.subtopic || ''),
+          materiLainnya: customTopic,
+          tujuanPembelajaran: learningObjectives,
+          metodePembelajaran: learningMethods
         })
       });
 
@@ -183,7 +193,9 @@ export default function LessonWorkspacePage() {
         .from("center_schedules")
         .update({
           topic: selectedTopic,
-          subtopic: selectedSubtopic,
+          subtopic: selectedSubtopics.join(", "),
+          learning_objectives: learningObjectives,
+          learning_methods: learningMethods,
           meeting_summary: meetingSummary,
           photo_start_url: photoStartUrl,
           photo_end_url: photoEndUrl,
@@ -277,12 +289,12 @@ export default function LessonWorkspacePage() {
             <h2 className="text-lg font-bold text-slate-900 mb-4 flex items-center gap-2">
               <BookOpen className="w-5 h-5 text-indigo-500" /> Rencana Pembelajaran
             </h2>
-            <div className="grid grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
                 <label className="text-xs font-bold text-slate-500 mb-1 block">Jenjang Pendidikan</label>
                 <select 
                   className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-lg text-sm"
-                  value={selectedLevel} onChange={e => { setSelectedLevel(e.target.value); setSelectedSubject(""); setSelectedTopic(""); setSelectedSubtopic(""); setCustomTopic(""); }}
+                  value={selectedLevel} onChange={e => { setSelectedLevel(e.target.value); setSelectedSubject(""); setSelectedTopic(""); setSelectedSubtopics([]); setCustomTopic(""); }}
                   disabled={isCompleted}
                 >
                   <option value="">-- Pilih Jenjang --</option>
@@ -293,18 +305,18 @@ export default function LessonWorkspacePage() {
                 <label className="text-xs font-bold text-slate-500 mb-1 block">Mata Pelajaran</label>
                 <select 
                   className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-lg text-sm"
-                  value={selectedSubject} onChange={e => { setSelectedSubject(e.target.value); setSelectedTopic(""); setSelectedSubtopic(""); setCustomTopic(""); }}
+                  value={selectedSubject} onChange={e => { setSelectedSubject(e.target.value); setSelectedTopic(""); setSelectedSubtopics([]); setCustomTopic(""); }}
                   disabled={!selectedLevel || isCompleted}
                 >
                   <option value="">-- Pilih Mapel --</option>
                   {selectedLevelData?.subjects.map(s => <option key={s.name} value={s.name}>{s.name}</option>)}
                 </select>
               </div>
-              <div>
+              <div className="md:col-span-2">
                 <label className="text-xs font-bold text-slate-500 mb-1 block">Topik Pokok</label>
                 <select 
                   className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-lg text-sm"
-                  value={selectedTopic} onChange={e => { setSelectedTopic(e.target.value); setSelectedSubtopic(""); setCustomTopic(""); }}
+                  value={selectedTopic} onChange={e => { setSelectedTopic(e.target.value); setSelectedSubtopics([]); setCustomTopic(""); }}
                   disabled={!selectedSubject || isCompleted}
                 >
                   <option value="">-- Pilih Topik --</option>
@@ -312,35 +324,100 @@ export default function LessonWorkspacePage() {
                   <option value="Lainnya">Lainnya...</option>
                 </select>
               </div>
-              <div>
-                <label className="text-xs font-bold text-slate-500 mb-1 block">Subtopik</label>
-                <select 
-                  className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-lg text-sm"
-                  value={selectedSubtopic} onChange={e => { setSelectedSubtopic(e.target.value); setCustomTopic(""); }}
-                  disabled={!selectedTopic || isCompleted}
-                >
-                  <option value="">-- Pilih Subtopik --</option>
-                  {selectedTopicData?.subtopics.map(s => <option key={s} value={s}>{s}</option>)}
-                  <option value="Lainnya">Lainnya...</option>
-                </select>
-              </div>
+              
+              {/* Dynamic Subtopics */}
+              {selectedTopic && selectedTopic !== 'Lainnya' && (
+                <div className="md:col-span-2 p-4 bg-slate-50 rounded-xl border border-slate-200 space-y-3">
+                  <label className="text-xs font-bold text-slate-500 block">Subtopik yang Akan Diajarkan</label>
+                  {/* Render existing selected subtopics plus one empty slot at the end */}
+                  {[...selectedSubtopics, ""].map((subVal, index) => {
+                    // Only show empty slot if the previous slot is filled (or if it's the very first slot)
+                    if (index > 0 && selectedSubtopics[index - 1] === "") return null;
+                    
+                    return (
+                      <select 
+                        key={index}
+                        className="w-full px-3 py-2 bg-white border border-slate-200 rounded-lg text-sm shadow-sm"
+                        value={subVal} 
+                        onChange={e => { 
+                          const newVal = e.target.value;
+                          const newArr = [...selectedSubtopics];
+                          if (newVal === "") {
+                            // Remove this and everything after it
+                            newArr.splice(index);
+                          } else {
+                            if (index < newArr.length) {
+                              newArr[index] = newVal;
+                            } else {
+                              newArr.push(newVal);
+                            }
+                          }
+                          setSelectedSubtopics(newArr);
+                        }}
+                        disabled={isCompleted}
+                      >
+                        <option value="">{index === 0 ? '-- Pilih Subtopik 1 --' : `-- Pilih Subtopik ${index + 1} (Opsional) --`}</option>
+                        {selectedTopicData?.subtopics
+                          .filter(s => !selectedSubtopics.includes(s) || s === subVal)
+                          .map(s => <option key={s} value={s}>{s}</option>)}
+                        <option value="Lainnya">Lainnya...</option>
+                      </select>
+                    );
+                  })}
+                </div>
+              )}
             </div>
 
-            {(selectedTopic === 'Lainnya' || selectedSubtopic === 'Lainnya') && (
+            {/* Custom Topic Input */}
+            {(selectedTopic === 'Lainnya' || selectedSubtopics.includes('Lainnya')) && (
               <div className="mt-4">
                 <label className="text-xs font-bold text-slate-500 mb-1 block flex items-center gap-1">
-                  <Sparkles className="w-3 h-3 text-orange-500" /> Topik Khusus (AI akan membantu menyusun materinya)
+                  <Sparkles className="w-3 h-3 text-orange-500" /> Deskripsi Materi Khusus (AI akan membantu menyusun materinya)
                 </label>
                 <input 
                   type="text" 
                   value={customTopic}
                   onChange={e => setCustomTopic(e.target.value)}
-                  placeholder="Ketik topik spesifik yang ingin diajarkan..."
+                  placeholder="Ketik topik & subtopik spesifik yang ingin diajarkan..."
                   className="w-full px-3 py-2 bg-orange-50 border border-orange-200 rounded-lg text-sm focus:outline-none focus:border-orange-500"
                   disabled={isCompleted}
                 />
               </div>
             )}
+            
+            <div className="mt-4 space-y-4 pt-4 border-t border-slate-100">
+              <div>
+                <label className="text-xs font-bold text-slate-500 mb-1 block">Tujuan Pembelajaran</label>
+                <textarea 
+                  value={learningObjectives}
+                  onChange={e => setLearningObjectives(e.target.value)}
+                  placeholder="Contoh: Siswa dapat menghitung luas bangun datar kompleks..."
+                  className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-lg text-sm resize-none h-20"
+                  disabled={isCompleted}
+                />
+              </div>
+              <div>
+                <label className="text-xs font-bold text-slate-500 mb-1 block">Metode Pembelajaran (Opsional)</label>
+                <input 
+                  type="text"
+                  value={learningMethods}
+                  onChange={e => setLearningMethods(e.target.value)}
+                  placeholder="Contoh: Diskusi Kelompok, Ceramah & Latihan Soal..."
+                  className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-lg text-sm"
+                  disabled={isCompleted}
+                />
+              </div>
+            </div>
+
+            <div className="mt-6 flex justify-end items-center border-t border-slate-100 pt-4">
+              <div className="mr-4 text-xs text-slate-400 italic">
+                Rencana ini akan dikirim & disimpan di sistem Tata Usaha.
+              </div>
+              <Button onClick={saveWorkspace} disabled={saving || isCompleted || isGeneratingAi} className="gap-2 bg-indigo-600 hover:bg-indigo-700">
+                {saving || isGeneratingAi ? <Loader2 className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />}
+                {isGeneratingAi ? 'Menyusun Modul...' : 'Simpan Rencana & Kirim ke TU'}
+              </Button>
+            </div>
 
             {(selectedTopic || schedule.topic) && !selectedLevel && (
               <div className="mt-4 p-3 bg-indigo-50 border border-indigo-100 rounded-lg text-sm text-indigo-700">
@@ -350,8 +427,16 @@ export default function LessonWorkspacePage() {
           </Card>
 
           {/* Student Attendance */}
-          <Card className="p-6">
-            <div className="flex justify-between items-center mb-4">
+          <div className={!schedule.topic ? "opacity-50 pointer-events-none transition-opacity" : "transition-opacity"}>
+            <Card className="p-6 relative overflow-hidden">
+              {!schedule.topic && (
+                <div className="absolute inset-0 z-10 bg-white/60 backdrop-blur-[2px] flex items-center justify-center">
+                  <div className="bg-white px-4 py-2 rounded-lg shadow-lg border border-orange-200 text-orange-700 font-bold text-sm flex items-center gap-2">
+                    <BookOpen className="w-4 h-4" /> Isi Rencana Pembelajaran Dulu
+                  </div>
+                </div>
+              )}
+              <div className="flex justify-between items-center mb-4">
               <h2 className="text-lg font-bold text-slate-900 flex items-center gap-2">
                 <Users className="w-5 h-5 text-orange-500" /> Absensi Siswa
               </h2>
@@ -394,12 +479,20 @@ export default function LessonWorkspacePage() {
                 ))}
               </div>
             )}
-          </Card>
+            </Card>
+          </div>
         </div>
 
-        {/* Right Column */}
-        <div className="space-y-6">
-          <Card className="p-6">
+        {/* Right Column: Documentation & Finish */}
+        <div className={`space-y-6 ${!schedule.topic ? "opacity-50 pointer-events-none transition-opacity" : "transition-opacity"}`}>
+          <Card className="p-6 relative overflow-hidden">
+            {!schedule.topic && (
+                <div className="absolute inset-0 z-10 bg-white/60 backdrop-blur-[2px] flex items-center justify-center">
+                  <div className="bg-white px-4 py-2 rounded-lg shadow-lg border border-orange-200 text-orange-700 font-bold text-sm text-center">
+                    <BookOpen className="w-4 h-4 mx-auto mb-1" /> Terkunci
+                  </div>
+                </div>
+            )}
             <h2 className="text-lg font-bold text-slate-900 mb-4 flex items-center gap-2">
               <Camera className="w-5 h-5 text-teal-500" /> Dokumentasi
             </h2>

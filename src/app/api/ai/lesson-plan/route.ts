@@ -12,7 +12,7 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: "Gemini API key not configured" }, { status: 500 });
     }
 
-    const { jenjang, mapel, topik, subtopik, materiLainnya } = await req.json();
+    const { jenjang, mapel, topik, subtopik, materiLainnya, tujuanPembelajaran, metodePembelajaran } = await req.json();
 
     if (!jenjang || !mapel) {
       return NextResponse.json({ error: "Jenjang dan Mapel harus diisi" }, { status: 400 });
@@ -20,7 +20,8 @@ export async function POST(req: Request) {
 
     const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" }); // using flash for fast response
 
-    const topicStr = topik === "Lainnya" ? materiLainnya : `${topik} - ${subtopik !== 'Lainnya' ? subtopik : materiLainnya}`;
+    const subtopicsStr = Array.isArray(subtopik) ? subtopik.join(", ") : subtopik;
+    const topicStr = topik === "Lainnya" ? materiLainnya : `${topik} - ${subtopicsStr}`;
 
     const prompt = `Anda adalah asisten kurikulum akademik jenius yang bertugas membuat Rencana Pembelajaran untuk Bimbingan Belajar.
 
@@ -28,6 +29,8 @@ Tolong buatkan materi untuk:
 - Jenjang: ${jenjang}
 - Mata Pelajaran: ${mapel}
 - Topik / Subtopik: ${topicStr}
+- Tujuan Pembelajaran: ${tujuanPembelajaran || 'Bebas sesuai standar kurikulum'}
+- Metode Pembelajaran: ${metodePembelajaran || 'Diskusi & Latihan Soal'}
 
 Tolong berikan balasan MURNI dalam format JSON (tanpa tag markdown \`\`\`json) dengan struktur persis seperti ini:
 {
