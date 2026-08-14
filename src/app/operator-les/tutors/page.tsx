@@ -114,7 +114,7 @@ export default function OperatorTutorsPage() {
       )}
 
       {isModalOpen && (
-        <Modal onClose={() => setIsModalOpen(false)}>
+        <Modal isOpen={isModalOpen} onClose={() => setIsModalOpen(false)}>
           <div className="p-6 max-w-md w-full">
             <h2 className="text-xl font-bold text-slate-900 mb-4">Tambah Tutor Baru</h2>
             <form onSubmit={handleAddTutor} className="space-y-4">
