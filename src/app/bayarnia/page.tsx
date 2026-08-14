@@ -490,7 +490,7 @@ export default function BayarNiaPage() {
               <a href="/bayarnia/search-invoice" className="hover:text-teal-600 transition-colors">Cari Invoice</a>
             </div>
           </div>
-          <a href="/login" className="px-5 py-2 bg-[#b8623b] text-white text-sm font-bold rounded-full hover:bg-orange-700 transition-colors">
+          <a href="/app" className="px-5 py-2 bg-[#b8623b] text-white text-sm font-bold rounded-full hover:bg-orange-700 transition-colors">
             Masuk / Daftar
           </a>
         </div>

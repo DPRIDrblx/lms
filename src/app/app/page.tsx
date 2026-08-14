@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { useAuth } from "@/lib/auth-context";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
 import { User, Mail, Lock, Eye, EyeOff, ArrowRight, ArrowLeft, Check, GraduationCap, Globe } from "lucide-react";
 import Link from "next/link";
@@ -11,7 +11,9 @@ import { NiaPwaInstallButton } from "@/components/ui/nia-pwa-install-button";
 export default function AppLoginPage() {
   const { user, profile, signInWithEmail, signUpWithEmail, signInWithGoogle } = useAuth();
   const router = useRouter();
-  
+  const searchParams = useSearchParams();
+  const redirectUrl = searchParams.get("redirect") || "/dashboard";
+
   useEffect(() => {
     if (user) {
       if (profile?.force_password_change) {
@@ -19,11 +21,11 @@ export default function AppLoginPage() {
         return;
       }
       const timer = setTimeout(() => {
-        router.push("/dashboard");
+        router.push(redirectUrl);
       }, profile ? 0 : 1500);
       return () => clearTimeout(timer);
     }
-  }, [user, profile, router]);
+  }, [user, profile, router, redirectUrl]);
 
   const [mode, setMode] = useState<"signin" | "signup">("signin");
   const [email, setEmail] = useState("");

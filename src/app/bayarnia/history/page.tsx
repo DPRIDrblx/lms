@@ -16,7 +16,7 @@ export default function HistoryPage() {
 
   useEffect(() => {
     if (!authLoading && !profile) {
-      router.push("/login?redirect=/bayarnia/history");
+      router.push("/app?redirect=/bayarnia/history");
       return;
     }
 
