@@ -410,6 +410,16 @@ export const TUTORING_TOPICS: EducationLevel[] = [
           { name: "Kedatangan Bangsa Barat", subtopics: ["Latar Belakang Kedatangan Bangsa Eropa (3G)", "Masa VOC & Kebijakannya (Monopoli, Ekstirpasi)", "Kebijakan Daendels, Raffles, & Tanam Paksa (Cultuurstelsel)", "Perlawanan Rakyat (Diponegoro, Pattimura, Sultan Hasanuddin)"] },
           { name: "Pergerakan Nasional", subtopics: ["Faktor Internal & Eksternal Kebangkitan Nasional", "Organisasi Pergerakan (Budi Utomo, Sarekat Islam, PNI)", "Sumpah Pemuda", "Masa Pendudukan Jepang"] }
         ]
+      },
+      {
+        name: "Pendidikan Pancasila (PPKN)",
+        topics: [
+          { name: "Kedudukan dan Makna Pancasila", subtopics: ["Pancasila sebagai Dasar Negara", "Pancasila sebagai Pandangan Hidup Bangsa", "Membiasakan Perilaku Sesuai Nilai-nilai Pancasila"] },
+          { name: "Bentuk dan Kedaulatan Negara", subtopics: ["Makna Kedaulatan", "Teori Kedaulatan", "Bentuk Kedaulatan yang Dianut Indonesia", "Prinsip-prinsip Kedaulatan Negara RI"] },
+          { name: "Tata Urutan Peraturan Perundang-undangan", subtopics: ["Makna Tata Urutan Perundang-undangan", "Proses Pembuatan Peraturan Perundang-undangan", "Sikap Kepatuhan Terhadap Hukum"] },
+          { name: "Kebangkitan Nasional 1908", subtopics: ["Kondisi Bangsa Indonesia Sebelum 1908", "Perintis Kebangkitan Nasional", "Mewujudkan Persatuan dan Kebanggaan Nasional"] },
+          { name: "Sumpah Pemuda dalam Bingkai Bhinneka Tunggal Ika", subtopics: ["Arti dan Makna Sumpah Pemuda", "Memaknai Semangat Kejuangan Pemuda", "Nilai Semangat Sumpah Pemuda Masa Kini"] }
+        ]
       }
     ]
   },
