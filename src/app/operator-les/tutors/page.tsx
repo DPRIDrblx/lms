@@ -153,7 +153,7 @@ export default function OperatorTutorsPage() {
               <div className="mt-5 pt-4 border-t border-slate-100">
                 <Button 
                   onClick={() => { setSelectedTutor(tutor); setResetModalOpen(true); }}
-                  variant="outline" 
+                  variant="secondary" 
                   className="w-full border-slate-200 text-slate-600 hover:bg-slate-50 hover:text-orange-600"
                 >
                   <KeyRound className="w-4 h-4 mr-2" /> Ubah Password
