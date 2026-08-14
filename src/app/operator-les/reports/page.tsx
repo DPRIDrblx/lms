@@ -31,7 +31,7 @@ export default function OperatorReportsPage() {
         profiles (full_name)
       `)
       .in("status", ["ongoing", "completed"])
-      .order("start_time", { ascending: false });
+      .order("schedule_time", { ascending: false });
 
     if (error) {
       console.error("Supabase Error fetching schedules:", error);
@@ -126,7 +126,7 @@ export default function OperatorReportsPage() {
                   </div>
                   <div className="flex items-center gap-2 text-sm text-slate-600">
                     <Clock className="w-4 h-4 text-slate-400" />
-                    <span>{new Date(schedule.start_time).toLocaleString('id-ID', { dateStyle: 'medium', timeStyle: 'short' })}</span>
+                    <span>{new Date(schedule.schedule_time).toLocaleString('id-ID', { dateStyle: 'medium', timeStyle: 'short' })}</span>
                   </div>
                 </div>
 
@@ -167,7 +167,7 @@ export default function OperatorReportsPage() {
                 </div>
                 <div>
                   <p className="text-sm text-slate-500 font-medium mb-1">Jadwal</p>
-                  <p className="font-bold text-slate-900">{new Date(selectedSchedule.start_time).toLocaleString('id-ID', { dateStyle: 'full', timeStyle: 'short' })}</p>
+                  <p className="font-bold text-slate-900">{new Date(selectedSchedule.schedule_time).toLocaleString('id-ID', { dateStyle: 'full', timeStyle: 'short' })}</p>
                 </div>
                 <div>
                   <p className="text-sm text-slate-500 font-medium mb-1">Status</p>
