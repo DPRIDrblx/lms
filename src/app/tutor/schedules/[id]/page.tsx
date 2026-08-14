@@ -214,7 +214,7 @@ export default function LessonWorkspacePage() {
       addSection("3. Catatan Papan Tulis / Materi PPT", data.papan_tulis);
 
       // Add Watermark and Footer to all pages
-      const pageCount = doc.internal.getNumberOfPages();
+      const pageCount = (doc as any).internal.getNumberOfPages();
       for (let i = 1; i <= pageCount; i++) {
         doc.setPage(i);
         // Watermark
@@ -274,11 +274,6 @@ export default function LessonWorkspacePage() {
       if (attError) throw attError;
 
       toast.success("Workspace berhasil disimpan!", { id: toastId });
-      
-      // Auto-generate AI if this is the first save of the topic
-      if ((selectedTopic || customTopic) && !isCompleted) {
-        await generateAiPdf();
-      }
       
     } catch (err: any) {
       toast.error(err.message, { id: toastId });
