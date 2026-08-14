@@ -34,7 +34,10 @@ export default function OperatorPaymentsPage() {
     }
 
     const { data, error } = await query;
-    if (!error && data) {
+    if (error) {
+      console.error("Fetch Transactions Error:", error);
+      toast.error("Gagal mengambil data transaksi: " + error.message);
+    } else if (data) {
       setTransactions(data);
     }
     setLoading(false);
