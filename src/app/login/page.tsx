@@ -26,6 +26,8 @@ export default function LoginPage() {
           router.push('/operator-les');
         } else if (profile?.role === 'pengurus_nia') {
           router.push('/pengurus-nia');
+        } else if (profile?.role === 'tutor') {
+          router.push('/tutor');
         } else {
           router.push("/dashboard");
         }

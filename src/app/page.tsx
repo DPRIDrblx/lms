@@ -14,9 +14,21 @@ export default function RootPage() {
 
   useEffect(() => {
     if (!loading && user) {
-      router.replace("/dashboard");
+      if (profile?.force_password_change) {
+        router.replace("/auth/change-password");
+      } else if (profile?.role === 'sobat_nia') {
+        router.replace('/sobat-nia');
+      } else if (profile?.role === 'operator_les') {
+        router.replace('/operator-les');
+      } else if (profile?.role === 'pengurus_nia') {
+        router.replace('/pengurus-nia');
+      } else if (profile?.role === 'tutor') {
+        router.replace('/tutor');
+      } else {
+        router.replace("/dashboard");
+      }
     }
-  }, [user, loading, router]);
+  }, [user, profile, loading, router]);
 
   if (loading || user) {
     return (
