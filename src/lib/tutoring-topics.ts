@@ -16,326 +16,712 @@ export interface EducationLevel {
 }
 
 export const TUTORING_TOPICS: EducationLevel[] = [
+  // ==========================================
+  // JENJANG SD (Kelas 1 - 6)
+  // ==========================================
   {
-    level: "SD",
+    level: "Kelas 1 SD",
     subjects: [
       {
         name: "Matematika",
         topics: [
-          { name: "Bilangan & Operasi Hitung", subtopics: ["Mengenal Bilangan Ratusan & Ribuan", "Penjumlahan & Pengurangan Menyimpan", "Perkalian (Tabel 1-10) & Bersusun", "Pembagian Bersusun (Porogapit)", "Operasi Hitung Campuran", "Pecahan Biasa & Campuran", "Penjumlahan & Pengurangan Pecahan", "Perkalian & Pembagian Pecahan", "Desimal & Persen", "KPK (Kelipatan Persekutuan Terkecil)", "FPB (Faktor Persekutuan Terbesar)", "Bilangan Romawi", "Bilangan Pangkat Dua & Akar Kuadrat"] },
-          { name: "Geometri Dasar", subtopics: ["Sifat-sifat Bangun Datar", "Keliling & Luas Persegi & Persegi Panjang", "Keliling & Luas Segitiga", "Keliling & Luas Lingkaran", "Sifat-sifat Bangun Ruang (Kubus, Balok, Tabung)", "Volume Kubus & Balok", "Jaring-jaring Kubus & Balok", "Simetri Lipat & Simetri Putar", "Pencerminan Bangun Datar"] },
-          { name: "Pengukuran & Skala", subtopics: ["Membaca Jam Analog & Digital", "Operasi Hitung Satuan Waktu (Jam, Menit, Detik)", "Satuan Panjang (km, hm, dam, m, dll)", "Satuan Berat (kg, hg, dag, g, dll)", "Satuan Volume (Liter & Meter Kubik)", "Kecepatan, Jarak, & Waktu", "Debit, Volume, & Waktu", "Membaca Peta & Skala"] },
-          { name: "Pengolahan Data", subtopics: ["Mengumpulkan & Mengurutkan Data", "Membaca Diagram Batang", "Membaca Diagram Garis", "Membaca Diagram Lingkaran", "Rata-rata (Mean)", "Nilai Tengah (Median)", "Nilai Paling Sering Muncul (Modus)"] }
-        ]
-      },
-      {
-        name: "IPA",
-        topics: [
-          { name: "Makhluk Hidup & Lingkungannya", subtopics: ["Ciri & Kebutuhan Makhluk Hidup", "Penggolongan Hewan (Herbivora, Karnivora, dll)", "Penggolongan Tumbuhan (Biji, Akar, Batang)", "Rantai Makanan & Jaring-jaring Makanan", "Adaptasi Hewan terhadap Lingkungan", "Adaptasi Tumbuhan terhadap Lingkungan", "Pelestarian Hewan & Tumbuhan Langka", "Ekosistem & Keseimbangan Alam"] },
-          { name: "Anatomi & Tubuh Manusia", subtopics: ["Panca Indera & Fungsinya", "Sistem Pencernaan Manusia", "Sistem Pernapasan Manusia", "Sistem Peredaran Darah", "Rangka & Otot Manusia", "Pemeliharaan Kesehatan Organ Tubuh"] },
-          { name: "Benda & Sifatnya", subtopics: ["Wujud Benda (Padat, Cair, Gas)", "Sifat-sifat Benda Padat, Cair, Gas", "Perubahan Wujud Benda (Mencair, Membeku, Menguap, dll)", "Suhu & Kalor (Perpindahan Panas)", "Sifat Bahan (Kaca, Kayu, Logam, Plastik, Karet)", "Perubahan Benda (Pembusukan, Perkaratan, Pelapukan)"] },
-          { name: "Energi & Gaya", subtopics: ["Macam-macam Gaya (Otot, Gesek, Pegas, Gravitasi, Magnet)", "Pengaruh Gaya terhadap Gerak Benda", "Pesawat Sederhana (Tuas, Katrol, Bidang Miring)", "Sumber Energi & Bentuk Energi", "Perubahan Bentuk Energi", "Energi Alternatif", "Listrik Statis & Dinamis", "Rangkaian Listrik Seri & Paralel", "Sifat-sifat Magnet", "Cahaya & Sifat-sifatnya", "Bunyi & Sifat-sifatnya"] },
-          { name: "Bumi & Alam Semesta", subtopics: ["Struktur & Permukaan Bumi", "Daur Air (Siklus Air)", "Cuaca, Musim, & Iklim", "Jenis-jenis Batuan & Tanah", "Tata Surya & Planet", "Rotasi & Revolusi Bumi", "Gerhana Matahari & Gerhana Bulan", "Sumber Daya Alam (Dapat Diperbarui & Tidak)"] }
+          { name: "Mengenal Bilangan 1-20", subtopics: ["Membilang banyak benda 1-10", "Membilang banyak benda 11-20", "Membaca dan menulis lambang bilangan", "Membandingkan dua bilangan", "Mengurutkan bilangan dari terkecil & terbesar"] },
+          { name: "Penjumlahan & Pengurangan", subtopics: ["Penjumlahan bilangan 1-10", "Penjumlahan bilangan 11-20", "Pengurangan bilangan 1-10", "Pengurangan bilangan 11-20", "Soal cerita penjumlahan", "Soal cerita pengurangan"] },
+          { name: "Mengenal Waktu & Panjang", subtopics: ["Mengenal nama-nama hari", "Mengenal nama-nama bulan", "Membaca jam analog (tepat)", "Mengukur panjang dengan satuan tidak baku (jengkal, langkah)"] },
+          { name: "Bangun Datar & Ruang Sederhana", subtopics: ["Mengenal segitiga, segi empat, dan lingkaran", "Mengenal kubus, balok, tabung, bola", "Mengelompokkan bangun datar", "Mengelompokkan bangun ruang"] }
         ]
       },
       {
         name: "Bahasa Indonesia",
         topics: [
-          { name: "Membaca & Memahami Teks", subtopics: ["Menentukan Ide Pokok Paragraf", "Menyimpulkan Isi Teks", "Memahami Cerita Pendek (Cerpen)", "Memahami Dongeng, Fabel, & Legenda", "Menjawab Pertanyaan Berdasarkan Teks (5W+1H)", "Menemukan Informasi Tersurat & Tersirat", "Membaca Denah & Petunjuk Arah"] },
-          { name: "Kosakata, Ejaan & Tanda Baca", subtopics: ["Sinonim & Antonim", "Makna Kata & Istilah", "Huruf Kapital & Penggunaannya", "Tanda Baca (Titik, Koma, Tanya, Seru, Petik)", "Kata Dasar & Kata Imbuhan", "Kata Baku & Tidak Baku", "Kata Ulang"] },
-          { name: "Menulis & Menyusun Teks", subtopics: ["Menyusun Kalimat Acak Menjadi Paragraf", "Menulis Puisi Sederhana", "Menulis Pantun", "Surat Pribadi & Surat Resmi", "Menulis Laporan Pengamatan", "Teks Prosedur (Petunjuk Penggunaan)", "Teks Deskripsi (Menggambarkan Benda/Tempat)", "Teks Pidato Persuasif Dasar"] }
+          { name: "Membaca Permulaan", subtopics: ["Mengenal huruf abjad (A-Z)", "Mengeja suku kata (ba-bi-bu)", "Membaca kata sederhana (dua suku kata)", "Membaca kalimat pendek"] },
+          { name: "Menulis Permulaan", subtopics: ["Menulis huruf tegak bersambung (dasar)", "Menyalin kata dari papan tulis", "Menulis nama sendiri dan teman", "Menulis kalimat sederhana dengan huruf kapital di awal"] },
+          { name: "Bercerita & Mendengarkan", subtopics: ["Mendengarkan dongeng fabel (hewan)", "Menjawab pertanyaan dari cerita yang didengar", "Menceritakan pengalaman liburan", "Memperkenalkan diri sendiri"] }
         ]
       },
       {
-        name: "Bahasa Inggris",
+        name: "Pendidikan Pancasila (PPKN)",
         topics: [
-          { name: "Vocabulary & Things Around Us", subtopics: ["Animals (Wild, Tame, Pets)", "Fruits & Vegetables", "Professions & Occupations", "Family Members & Family Tree", "Daily Activities & Routines", "Parts of the Body", "Things in the Classroom", "Things in the House (Living Room, Kitchen, etc.)", "Transportation & Vehicles", "Colors, Shapes, & Numbers (1-100+)", "Days, Months, & Seasons", "Food & Drinks"] },
-          { name: "Grammar Basics", subtopics: ["Pronouns (Subject, Object, Possessive)", "To Be (is, am, are, was, were)", "Simple Present Tense (Habits & Facts)", "Present Continuous Tense (-ing)", "There is / There are", "Prepositions of Place (in, on, under, etc.)", "Articles (a, an, the)", "Adjectives (Opposites & Describing Words)", "Plural & Singular Nouns"] },
-          { name: "Everyday Expressions", subtopics: ["Greetings & Partings", "Introducing Self & Others", "Asking & Giving Directions", "Expressing Feelings & Emotions", "Polite Requests (Can, May, Could)", "Telling the Time", "Asking & Telling Price", "Inviting & Apologizing"] },
-          { name: "Short Texts", subtopics: ["Short Descriptive Text (Describing Pets/People)", "Short Notices & Warnings", "Greeting Cards", "Short Messages"] }
+          { name: "Pancasila & Simbolnya", subtopics: ["Mengenal Burung Garuda", "Simbol Sila 1 sampai 5", "Menghafal teks Pancasila", "Contoh sikap Sila 1 (Berdoa sebelum belajar)"] },
+          { name: "Aturan & Tata Tertib", subtopics: ["Aturan di rumah (tidur tepat waktu, merapikan mainan)", "Aturan di sekolah (seragam, masuk kelas)", "Akibat tidak mematuhi aturan"] },
+          { name: "Kebersamaan dalam Keberagaman", subtopics: ["Keberagaman di keluarga (usia, jenis kelamin)", "Menghargai teman di sekolah", "Bermain bersama tanpa membeda-bedakan"] }
         ]
       },
       {
-        name: "PPKN (Pendidikan Pancasila & Kewarganegaraan)",
+        name: "IPAS (Ilmu Pengetahuan Alam & Sosial)",
         topics: [
-          { name: "Pancasila", subtopics: ["Sejarah Perumusan Pancasila", "Tokoh Perumus Pancasila", "Lambang Negara & Sila Pancasila", "Nilai-nilai Luhur Sila ke-1 sampai ke-5", "Penerapan Pancasila di Rumah", "Penerapan Pancasila di Sekolah", "Penerapan Pancasila di Masyarakat"] },
-          { name: "UUD 1945 & Peraturan", subtopics: ["Pengertian Konstitusi & UUD 1945", "Makna Pembukaan UUD 1945", "Tata Urutan Peraturan Perundang-undangan", "Mematuhi Tata Tertib Sekolah", "Peraturan Lalu Lintas"] },
-          { name: "Negara & Pemerintahan", subtopics: ["Bentuk Negara Kesatuan Republik Indonesia (NKRI)", "Sistem Pemerintahan Desa & Kelurahan", "Sistem Pemerintahan Kecamatan", "Sistem Pemerintahan Kabupaten/Kota & Provinsi", "Sistem Pemerintahan Pusat (Presiden, Menteri, MPR, DPR)", "Lembaga-lembaga Negara", "Pemilihan Umum (Pemilu)"] },
-          { name: "Hak, Kewajiban & Tanggung Jawab", subtopics: ["Pengertian Hak & Kewajiban", "Hak & Kewajiban Anak di Rumah", "Hak & Kewajiban Siswa di Sekolah", "Hak & Kewajiban Warga Negara", "Tanggung Jawab terhadap Lingkungan"] },
-          { name: "Persatuan & Keberagaman", subtopics: ["Sumpah Pemuda", "Bhineka Tunggal Ika", "Suku Bangsa di Indonesia", "Pakaian, Rumah Adat, & Tarian Daerah", "Sikap Toleransi & Menghargai Perbedaan", "Gotong Royong", "Bangga sebagai Bangsa Indonesia"] }
-        ]
-      },
-      {
-        name: "IPS",
-        topics: [
-          { name: "Pengetahuan Geografi Dasar", subtopics: ["Membaca Peta, Atlas, & Globe", "Arah Mata Angin & Denah", "Kondisi Geografis Indonesia (Pulau, Gunung, Laut)", "Batas Wilayah Indonesia", "Kenampakan Alam & Buatan", "Cuaca & Iklim di Indonesia"] },
-          { name: "Kehidupan Sosial & Ekonomi", subtopics: ["Kebutuhan Manusia (Primer, Sekunder, Tersier)", "Jenis Pekerjaan Berdasarkan Dataran", "Kegiatan Ekonomi (Produksi, Distribusi, Konsumsi)", "Koperasi di Indonesia", "Sumber Daya Alam & Pemanfaatannya", "Teknologi Transportasi & Komunikasi (Dulu & Kini)"] },
-          { name: "Sejarah & Budaya", subtopics: ["Peninggalan Sejarah Masa Hindu, Buddha, & Islam", "Kerajaan-kerajaan Besar di Nusantara", "Tokoh Pahlawan Kemerdekaan", "Sejarah Proklamasi Kemerdekaan RI", "Perjuangan Mempertahankan Kemerdekaan", "Mengenal Negara-negara ASEAN"] }
+          { name: "Mengenal Anggota Tubuh", subtopics: ["Nama-nama panca indra", "Fungsi mata, hidung, telinga, lidah, kulit", "Cara merawat kebersihan tubuh", "Makanan sehat dan bergizi"] },
+          { name: "Benda di Sekitarku", subtopics: ["Mengenal benda hidup (hewan, tumbuhan, manusia)", "Mengenal benda tak hidup (meja, buku, batu)", "Ciri-ciri benda (warna, bentuk, ukuran)"] },
+          { name: "Lingkungan Sehat & Tidak Sehat", subtopics: ["Ciri rumah yang bersih", "Ciri rumah yang kotor", "Cara menjaga kebersihan lingkungan sekolah"] }
         ]
       }
     ]
   },
   {
-    level: "SMP",
+    level: "Kelas 2 SD",
     subjects: [
       {
         name: "Matematika",
         topics: [
-          { name: "Bilangan & Pecahan", subtopics: ["Operasi Hitung Bilangan Bulat", "Operasi Hitung Bilangan Pecahan", "Perpangkatan Bilangan Bulat", "Bentuk Akar", "Pola Bilangan & Barisan (Aritmatika & Geometri)"] },
-          { name: "Aljabar", subtopics: ["Pengenalan Bentuk Aljabar", "Operasi Penjumlahan & Pengurangan Aljabar", "Perkalian & Pembagian Aljabar", "Pemfaktoran Aljabar", "Persamaan Linear Satu Variabel (PLSV)", "Pertidaksamaan Linear Satu Variabel (PtLSV)", "Sistem Persamaan Linear Dua Variabel (SPLDV)", "Persamaan Kuadrat & Pemfaktorannya"] },
-          { name: "Aritmatika Sosial", subtopics: ["Nilai Keseluruhan & Per Unit", "Keuntungan, Kerugian, & Persentase", "Diskon (Rabat), Pajak, & Bunga Tunggal", "Bruto, Netto, & Tara"] },
-          { name: "Geometri", subtopics: ["Garis & Sudut", "Hubungan Antarsudut (Berpelurus, Berpenyiku, Bertolak Belakang)", "Segitiga (Jenis, Keliling, Luas)", "Segiempat (Persegi, Jajargenjang, Trapesium, Belah Ketupat, Layang-layang)", "Teorema Pythagoras", "Lingkaran (Keliling, Luas, Busur, Juring)", "Garis Singgung Lingkaran", "Bangun Ruang Sisi Datar (Kubus, Balok, Prisma, Limas)", "Bangun Ruang Sisi Lengkung (Tabung, Kerucut, Bola)", "Kesebangunan & Kekongruenan"] },
-          { name: "Fungsi, Himpunan & Statistika", subtopics: ["Konsep Himpunan (Irisan, Gabungan, Komplemen)", "Relasi & Fungsi", "Fungsi Linear & Menggambar Grafik", "Persamaan Garis Lurus (Gradien)", "Penyajian Data (Tabel, Diagram)", "Ukuran Pemusatan Data (Mean, Median, Modus)", "Ukuran Penyebaran Data", "Peluang Empiris & Peluang Teoritik"] }
-        ]
-      },
-      {
-        name: "IPA Fisika",
-        topics: [
-          { name: "Pengukuran & Besaran", subtopics: ["Besaran Pokok & Turunan", "Satuan Internasional (SI)", "Alat Ukur (Jangka Sorong, Mikrometer Sekrup)"] },
-          { name: "Zat & Kalor", subtopics: ["Sifat Zat Padat, Cair, Gas", "Massa Jenis", "Suhu & Termometer", "Pemuaian Zat", "Kalor & Perpindahan Kalor (Asas Black)"] },
-          { name: "Mekanika", subtopics: ["Gerak Lurus Beraturan (GLB)", "Gerak Lurus Berubah Beraturan (GLBB)", "Gaya & Hukum Newton (I, II, III)", "Usaha & Energi", "Pesawat Sederhana (Tuas, Katrol, Bidang Miring)", "Tekanan Zat Padat", "Tekanan Hidrostatis & Hukum Archimedes", "Hukum Pascal & Tekanan Udara"] },
-          { name: "Getaran, Gelombang & Optik", subtopics: ["Getaran (Periode, Frekuensi, Amplitudo)", "Gelombang Transversal & Longitudinal", "Bunyi (Infrasonik, Audiosonik, Ultrasonik, Resonansi)", "Cahaya (Pemantulan, Pembiasan)", "Cermin & Lensa", "Alat Optik (Mata, Lup, Mikroskop)"] },
-          { name: "Listrik & Magnet", subtopics: ["Listrik Statis (Gaya Coulomb, Medan Listrik)", "Listrik Dinamis (Hukum Ohm, Rangkaian Seri & Paralel)", "Energi & Daya Listrik", "Kemagnetan (Cara Membuat Magnet, Medan Magnet)", "Gaya Lorentz & Induksi Elektromagnetik"] }
-        ]
-      },
-      {
-        name: "IPA Biologi",
-        topics: [
-          { name: "Struktur Kehidupan", subtopics: ["Mikroskop & Keselamatan Kerja", "Sel sebagai Unit Terkecil", "Jaringan pada Hewan & Tumbuhan", "Organ & Sistem Organ"] },
-          { name: "Klasifikasi Makhluk Hidup", subtopics: ["Ciri-ciri Benda Tak Hidup & Makhluk Hidup", "Sistem Klasifikasi 5 Kingdom", "Monera, Protista, Fungi", "Plantae (Tumbuhan Berpembuluh & Tidak)", "Animalia (Vertebrata & Invertebrata)"] },
-          { name: "Sistem Organ Manusia", subtopics: ["Sistem Gerak (Tulang & Otot, Sendi, Kelainan)", "Sistem Pencernaan (Organ, Enzim, Penyakit)", "Sistem Pernapasan (Mekanisme & Penyakit)", "Sistem Peredaran Darah (Jantung, Pembuluh, Golongan Darah)", "Sistem Ekskresi (Ginjal, Hati, Paru-paru, Kulit)", "Sistem Reproduksi Manusia"] },
-          { name: "Tumbuhan", subtopics: ["Struktur & Fungsi Akar, Batang, Daun", "Fotosintesis (Percobaan Sach & Ingenhousz)", "Gerak pada Tumbuhan", "Reproduksi Tumbuhan"] },
-          { name: "Ekosistem & Kependudukan", subtopics: ["Komponen Biotik & Abiotik", "Interaksi Makhluk Hidup (Simbiosis, Predasi, Kompetisi)", "Dinamika Populasi & Kepadatan Penduduk", "Pencemaran Lingkungan (Air, Udara, Tanah)", "Pemanasan Global (Greenhouse Effect)"] },
-          { name: "Genetika & Bioteknologi", subtopics: ["Kromosom, DNA, RNA", "Hukum Mendel I & II", "Persilangan Monohibrid & Dihibrid", "Kelainan Genetik", "Bioteknologi Konvensional (Fermentasi)", "Bioteknologi Modern"] }
-        ]
-      },
-      {
-        name: "Bahasa Inggris",
-        topics: [
-          { name: "Tenses & Advanced Grammar", subtopics: ["Simple Present & Present Continuous", "Simple Past & Past Continuous", "Present Perfect Tense", "Simple Future (Will & Be going to)", "Passive Voice (Present & Past)", "Degrees of Comparison (Positive, Comparative, Superlative)", "Question Tags", "Conjunctions (so, because, although, etc.)", "Gerunds & Infinitives"] },
-          { name: "Text Types (Genres)", subtopics: ["Descriptive Text", "Recount Text (Personal & Factual)", "Narrative Text (Fairy Tales, Legends, Fables)", "Procedure Text (Recipes, Manuals)", "Report Text", "Notice, Warning & Caution", "Short Message & Announcement", "Label (Food & Drug)"] },
-          { name: "Functional Expressions", subtopics: ["Asking for & Giving Opinion", "Expressing Agreement & Disagreement", "Congratulating & Complimenting", "Expressing Hope & Wish", "Asking for & Giving Permission", "Checking for Understanding", "Showing Appreciation", "Inviting, Accepting & Declining Invitation"] },
-          { name: "Reading Comprehension Strategy", subtopics: ["Finding Main Idea", "Finding Specific Information", "Understanding Reference Words", "Understanding Synonym/Antonym from Context"] }
+          { name: "Bilangan Cacah Sampai 500", subtopics: ["Membaca lambang bilangan 100-500", "Nilai tempat (ratusan, puluhan, satuan)", "Membandingkan bilangan tiga angka", "Mengurutkan bilangan ratusan"] },
+          { name: "Penjumlahan & Pengurangan (Bersusun)", subtopics: ["Penjumlahan tanpa menyimpan", "Penjumlahan dengan menyimpan", "Pengurangan tanpa meminjam", "Pengurangan dengan meminjam", "Soal cerita campuran"] },
+          { name: "Perkalian & Pembagian Dasar", subtopics: ["Konsep perkalian sebagai penjumlahan berulang (tabel 1-5)", "Konsep pembagian sebagai pengurangan berulang", "Hubungan perkalian dan pembagian"] },
+          { name: "Pengukuran Panjang & Berat", subtopics: ["Alat ukur baku (penggaris, meteran)", "Satuan panjang (cm, m)", "Alat ukur berat (timbangan)", "Satuan berat (gram, kilogram)"] }
         ]
       },
       {
         name: "Bahasa Indonesia",
         topics: [
-          { name: "Teks Laporan & Observasi", subtopics: ["Struktur Teks Laporan Hasil Observasi", "Menentukan Gagasan Pokok LHO", "Kebahasaan (Kalimat Definisi & Deskripsi)"] },
-          { name: "Teks Eksposisi & Tanggapan", subtopics: ["Struktur Teks Eksposisi (Tesis, Argumen, Penegasan)", "Teks Tanggapan (Kritik & Pujian)", "Teks Persuasi (Ajakan, Fakta, Pendapat)"] },
-          { name: "Teks Naratif & Sastra", subtopics: ["Teks Cerita Fantasi", "Teks Fabel", "Teks Cerpen (Unsur Intrinsik & Ekstrinsik)", "Puisi Rakyat (Pantun, Gurindam, Syair)", "Teks Puisi Modern", "Teks Drama (Dialog, Tokoh, Latar)", "Teks Ulasan/Resensi (Buku & Film)"] },
-          { name: "Teks Informatif", subtopics: ["Teks Berita (Unsur ADiKSiMBa)", "Teks Prosedur (Tujuan, Bahan, Langkah)", "Teks Eksplanasi (Proses Fenomena Alam/Sosial)", "Teks Biografi (Perjalanan Hidup Tokoh)", "Teks Diskusi (Argumen Pro & Kontra)"] },
-          { name: "Kaidah Kebahasaan", subtopics: ["Kalimat Aktif Transitif & Intransitif", "Kalimat Langsung & Tidak Langsung", "Kata Kerja Mental & Material", "Konjungsi Temporal & Kausalitas", "Gaya Bahasa / Majas (Personifikasi, Metafora, Hiperbola, dll)", "Ejaan & Tanda Baca (PUEBI)"] }
+          { name: "Teks Permintaan Maaf & Tolong", subtopics: ["Menulis kalimat permintaan tolong yang sopan", "Menulis kalimat permintaan maaf", "Bermain peran (Roleplay) ungkapan maaf & tolong"] },
+          { name: "Puisi & Pantun Anak", subtopics: ["Membaca puisi anak dengan lafal dan intonasi", "Menulis puisi sederhana tentang alam", "Mengenal ciri pantun anak-anak"] },
+          { name: "Menulis Tegak Bersambung", subtopics: ["Menulis kalimat dengan huruf tegak bersambung", "Penggunaan huruf kapital pada nama orang", "Penggunaan huruf kapital pada awal kalimat dan nama hari"] }
+        ]
+      },
+      {
+        name: "Pendidikan Pancasila (PPKN)",
+        topics: [
+          { name: "Penerapan Sila Pancasila", subtopics: ["Penerapan Sila 1 dan 2 di rumah dan sekolah", "Penerapan Sila 3, 4, dan 5 saat bermain", "Bermusyawarah menentukan ketua kelas"] },
+          { name: "Persatuan dalam Keberagaman", subtopics: ["Keberagaman agama di Indonesia", "Cara menghargai teman berbeda agama", "Kerja bakti membersihkan kelas"] }
+        ]
+      },
+      {
+        name: "IPAS",
+        topics: [
+          { name: "Hewan & Tumbuhan di Sekitarku", subtopics: ["Bagian-bagian tubuh hewan", "Bagian-bagian tumbuhan (akar, batang, daun)", "Hewan peliharaan dan cara merawatnya", "Hewan liar dan berbahaya"] },
+          { name: "Wujud & Sifat Benda", subtopics: ["Ciri benda padat", "Ciri benda cair", "Ciri benda gas", "Perubahan wujud (es mencair)"] }
+        ]
+      }
+    ]
+  },
+  {
+    level: "Kelas 3 SD",
+    subjects: [
+      {
+        name: "Matematika",
+        topics: [
+          { name: "Bilangan Sampai 1.000", subtopics: ["Operasi hitung bilangan ribuan", "Garis bilangan", "Penaksiran ratusan terdekat", "Perkalian tabel 6-10", "Pembagian bersusun (Porogapit dasar)"] },
+          { name: "Pecahan Sederhana", subtopics: ["Mengenal pecahan 1/2, 1/3, 1/4", "Pecahan senilai dengan gambar", "Membandingkan pecahan sederhana"] },
+          { name: "Uang", subtopics: ["Mengenal nilai mata uang Rupiah", "Kesetaraan nilai pecahan uang", "Soal cerita jual beli sederhana"] },
+          { name: "Bangun Datar", subtopics: ["Sifat persegi, persegi panjang, segitiga", "Menghitung keliling bangun datar dengan kotak satuan", "Simetri lipat pada bangun datar", "Simetri putar"] }
+        ]
+      },
+      {
+        name: "Bahasa Indonesia",
+        topics: [
+          { name: "Informasi Teks & Paragraf", subtopics: ["Menemukan gagasan pokok", "Menceritakan kembali isi dongeng", "Menulis cerita berdasarkan gambar seri"] },
+          { name: "Kosakata Baru & Kamus", subtopics: ["Mencari arti kata dalam kamus", "Menemukan sinonim dan antonim", "Penggunaan tanda baca koma (,) dan titik (.)"] },
+          { name: "Wawancara Sederhana", subtopics: ["Membuat daftar pertanyaan wawancara (Adiksimba)", "Melakukan wawancara dengan teman/guru", "Menulis laporan hasil wawancara singkat"] }
+        ]
+      },
+      {
+        name: "Pendidikan Pancasila (PPKN)",
+        topics: [
+          { name: "Sumpah Pemuda", subtopics: ["Sejarah singkat Sumpah Pemuda", "Makna Satu Nusa, Satu Bangsa, Satu Bahasa", "Menerapkan semangat Sumpah Pemuda di sekolah"] },
+          { name: "Hak & Kewajiban di Rumah", subtopics: ["Kewajiban anak membantu orang tua", "Hak anak mendapatkan kasih sayang", "Hak & kewajiban terkait makanan dan pakaian"] },
+          { name: "Hak & Kewajiban di Sekolah", subtopics: ["Kewajiban menjaga fasilitas sekolah", "Kewajiban mengerjakan piket", "Hak mendapat pelajaran dari guru"] }
+        ]
+      },
+      {
+        name: "IPAS",
+        topics: [
+          { name: "Cuaca & Iklim", subtopics: ["Jenis-jenis cuaca (Cerah, Berawan, Mendung, Hujan)", "Pengaruh cuaca terhadap kegiatan manusia", "Pakaian & makanan yang cocok untuk berbagai cuaca"] },
+          { name: "Energi & Perubahannya", subtopics: ["Sumber energi terbesar (Matahari)", "Energi angin dan air", "Perubahan energi listrik menjadi panas/cahaya/gerak", "Cara menghemat energi listrik"] },
+          { name: "Perkembangbiakan Makhluk Hidup", subtopics: ["Daur hidup kupu-kupu & katak", "Pertumbuhan ayam & kucing", "Cara tumbuhan berkembang biak (Biji, Tunas)"] }
+        ]
+      }
+    ]
+  },
+  {
+    level: "Kelas 4 SD",
+    subjects: [
+      {
+        name: "Matematika",
+        topics: [
+          { name: "Pecahan Lanjut", subtopics: ["Pecahan biasa, campuran, desimal, dan persen", "Mengubah bentuk pecahan (biasa ke desimal, dsb)", "Penjumlahan & Pengurangan pecahan penyebut sama", "Penaksiran hasil hitung pecahan"] },
+          { name: "KPK & FPB", subtopics: ["Faktor & Kelipatan suatu bilangan", "Bilangan Prima & Faktor Prima", "Pohon Faktor", "Mencari FPB (Faktor Persekutuan Terbesar)", "Mencari KPK (Kelipatan Persekutuan Terkecil)", "Soal cerita KPK dan FPB"] },
+          { name: "Pengukuran Sudut & Panjang", subtopics: ["Mengenal sudut (lancip, siku-siku, tumpul)", "Mengukur sudut dengan busur derajat", "Pembulatan hasil pengukuran panjang dan berat"] },
+          { name: "Keliling & Luas Bangun Datar", subtopics: ["Rumus Luas Persegi & Persegi Panjang", "Rumus Keliling Persegi & Persegi Panjang", "Luas & Keliling Segitiga", "Penyelesaian masalah bangun datar"] }
+        ]
+      },
+      {
+        name: "Bahasa Indonesia",
+        topics: [
+          { name: "Teks Petunjuk (Prosedur)", subtopics: ["Ciri-ciri teks petunjuk (kalimat perintah)", "Membuat poster hemat energi", "Menulis teks petunjuk penggunaan alat"] },
+          { name: "Gagasan Pokok & Pendukung", subtopics: ["Menentukan kalimat utama dalam paragraf", "Menemukan gagasan pendukung", "Merangkum bacaan"] },
+          { name: "Puisi Lama & Baru", subtopics: ["Menulis puisi tentang cita-cita", "Makna kiasan dalam puisi", "Mendeklamasikan puisi dengan ekspresi"] }
+        ]
+      },
+      {
+        name: "Pendidikan Pancasila (PPKN)",
+        topics: [
+          { name: "Pemerintahan Desa & Kecamatan", subtopics: ["Struktur perangkat desa (Kepala Desa, Sekdes, dll)", "Struktur pemerintahan kelurahan", "Struktur pemerintahan kecamatan"] },
+          { name: "Keragaman Sosial & Budaya", subtopics: ["Suku-suku di Indonesia (Batak, Minang, Jawa, Asmat)", "Rumah Adat dan Pakaian Tradisional", "Tarian Daerah", "Sikap toleransi antar suku bangsa"] }
+        ]
+      },
+      {
+        name: "IPAS (Fokus IPA)",
+        topics: [
+          { name: "Gaya & Gerak", subtopics: ["Gaya otot, gaya gesek, dan gaya gravitasi", "Pengaruh gaya terhadap gerak benda", "Pengaruh gaya terhadap bentuk benda", "Gaya magnet (kutub utara & selatan)"] },
+          { name: "Bunyi & Cahaya", subtopics: ["Syarat terjadinya bunyi", "Sifat-sifat bunyi (merambat, memantul, menyerap)", "Sifat-sifat cahaya (merambat lurus, menembus benda bening, dipantulkan, dibiaskan)", "Alat optik sederhana (Lup, Periskop)"] }
+        ]
+      },
+      {
+        name: "IPAS (Fokus IPS)",
+        topics: [
+          { name: "Sumber Daya Alam", subtopics: ["SDA yang dapat diperbarui (Tumbuhan, Hewan, Air, Angin)", "SDA yang tidak dapat diperbarui (Batu bara, Minyak bumi, Emas)", "Pemanfaatan SDA untuk ekonomi", "Dampak eksploitasi SDA berlebihan"] },
+          { name: "Kerajaan Hindu-Buddha & Islam", subtopics: ["Peninggalan kerajaan Tarumanegara & Kutai", "Peninggalan kerajaan Sriwijaya & Majapahit", "Kerajaan Samudera Pasai & Demak", "Tokoh-tokoh pahlawan masa kerajaan"] }
+        ]
+      }
+    ]
+  },
+  {
+    level: "Kelas 5 SD",
+    subjects: [
+      {
+        name: "Matematika",
+        topics: [
+          { name: "Operasi Hitung Pecahan", subtopics: ["Penjumlahan pecahan beda penyebut", "Pengurangan pecahan beda penyebut", "Perkalian pecahan biasa dan campuran", "Pembagian pecahan", "Penjumlahan & pengurangan desimal"] },
+          { name: "Jarak, Kecepatan, Debit", subtopics: ["Rumus Jarak = Kecepatan x Waktu", "Rumus Debit = Volume / Waktu", "Konversi satuan waktu (Jam, Menit, Detik)", "Konversi satuan volume (Liter, cc, cm3)"] },
+          { name: "Skala & Denah", subtopics: ["Membaca mata angin pada denah", "Menentukan titik koordinat sederhana", "Rumus Skala = Jarak Peta / Jarak Sebenarnya", "Mencari Jarak Sebenarnya"] },
+          { name: "Volume Bangun Ruang", subtopics: ["Jaring-jaring kubus dan balok", "Menghitung Volume Kubus (s x s x s)", "Menghitung Volume Balok (p x l x t)", "Akar pangkat tiga (Mencari sisi kubus jika volume diketahui)"] },
+          { name: "Pengumpulan & Penyajian Data", subtopics: ["Membuat tabel frekuensi", "Membaca Piktogram (Diagram Gambar)", "Membuat & membaca Diagram Batang", "Membaca Diagram Garis"] }
+        ]
+      },
+      {
+        name: "Bahasa Indonesia",
+        topics: [
+          { name: "Teks Narasi Sejarah", subtopics: ["Menentukan aspek 5W+1H dari teks sejarah", "Menggali informasi penting dari teks penjajahan", "Kata baku dan tidak baku"] },
+          { name: "Iklan & Pantun", subtopics: ["Ciri-ciri bahasa iklan media cetak", "Iklan layanan masyarakat", "Ciri-ciri pantun (Sajak a-b-a-b, Sampiran, Isi)", "Membalas pantun"] },
+          { name: "Surat Undangan", subtopics: ["Bagian-bagian surat resmi (Kop, Nomor, Lampiran)", "Surat undangan setengah resmi", "Surat undangan tidak resmi (Ulang tahun)"] }
+        ]
+      },
+      {
+        name: "Pendidikan Pancasila (PPKN)",
+        topics: [
+          { name: "Nilai-nilai Pancasila", subtopics: ["Nilai Ketuhanan & Kemanusiaan dalam kehidupan", "Nilai Persatuan, Kerakyatan, Keadilan", "Gotong royong di masyarakat", "Sikap tanggung jawab sebagai warga masyarakat"] },
+          { name: "Keutuhan NKRI", subtopics: ["Pengertian NKRI", "Batas wilayah Indonesia", "Ancaman terhadap persatuan bangsa", "Cara menjaga keutuhan NKRI"] }
+        ]
+      },
+      {
+        name: "IPAS (Fokus IPA)",
+        topics: [
+          { name: "Sistem Organ Manusia & Hewan", subtopics: ["Alat gerak hewan vertebrata & avertebrata", "Sistem pernapasan manusia (Hidung, Tenggorokan, Paru-paru)", "Sistem pencernaan manusia (Mulut, Kerongkongan, Lambung, Usus)", "Sistem peredaran darah manusia (Jantung & Pembuluh darah)"] },
+          { name: "Ekosistem & Jaring Makanan", subtopics: ["Rantai makanan (Produsen, Konsumen, Pengurai)", "Jaring-jaring makanan", "Simbiosis Mutualisme, Komensalisme, Parasitisme"] },
+          { name: "Suhu, Kalor, & Air", subtopics: ["Perpindahan kalor: Konduksi, Konveksi, Radiasi", "Siklus air (Evaporasi, Kondensasi, Presipitasi)", "Faktor yang mempengaruhi kualitas air bersih"] }
+        ]
+      },
+      {
+        name: "IPAS (Fokus IPS)",
+        topics: [
+          { name: "Geografi Indonesia", subtopics: ["Letak geografis & astronomis Indonesia", "Kondisi geografis pulau-pulau besar (Sumatra, Jawa, Kalimantan, dll)", "Dampak letak geografis (Iklim & Flora Fauna)"] },
+          { name: "Sejarah Penjajahan & Proklamasi", subtopics: ["Masa penjajahan Belanda & VOC", "Masa penjajahan Jepang (Romusha)", "Persiapan kemerdekaan (BPUPKI & PPKI)", "Peristiwa Rengasdengklok & Detik-detik Proklamasi"] }
+        ]
+      }
+    ]
+  },
+  {
+    level: "Kelas 6 SD",
+    subjects: [
+      {
+        name: "Matematika",
+        topics: [
+          { name: "Bilangan Bulat Negatif", subtopics: ["Mengenal bilangan bulat negatif pada garis bilangan", "Penjumlahan & Pengurangan bilangan bulat positif & negatif", "Perkalian & Pembagian bilangan bulat negatif", "Operasi hitung campuran bilangan bulat"] },
+          { name: "Operasi Hitung Campuran (Lanjut)", subtopics: ["Urutan pengerjaan operasi campuran (KUKABATAKU)", "Campuran bilangan cacah, pecahan, & desimal", "Menyelesaikan soal cerita OSN dasar"] },
+          { name: "Lingkaran", subtopics: ["Unsur-unsur lingkaran (Pusat, Jari-jari, Diameter, Busur, Tali busur, Tembereng, Juring)", "Rumus Keliling Lingkaran (2πr atau πd)", "Rumus Luas Lingkaran (πr²)", "Luas & Keliling gabungan bangun datar (setengah lingkaran + persegi panjang)"] },
+          { name: "Bangun Ruang (Prisma, Limas, Kerucut, Bola)", subtopics: ["Sifat-sifat Prisma & Limas", "Volume Prisma Segitiga & Limas Segiempat", "Volume Tabung & Kerucut", "Volume Bola", "Luas Permukaan Bangun Ruang (Dasar)"] },
+          { name: "Statistika Dasar", subtopics: ["Menentukan Mean (Rata-rata)", "Menentukan Median (Nilai Tengah)", "Menentukan Modus (Nilai yang paling sering muncul)", "Membaca diagram lingkaran dalam Persen & Derajat"] }
+        ]
+      },
+      {
+        name: "Bahasa Indonesia",
+        topics: [
+          { name: "Teks Laporan Hasil Pengamatan", subtopics: ["Struktur teks LHO (Pernyataan umum, Deskripsi bagian)", "Menyimpulkan isi laporan", "Kata baku, sinonim, antonim dalam laporan"] },
+          { name: "Teks Eksplanasi & Pidato", subtopics: ["Menggali informasi penting dari teks eksplanasi ilmiah", "Menentukan unsur teks pidato (Pembuka, Isi, Penutup)", "Menulis teks pidato persuasif (ajakan)"] },
+          { name: "Teks Fiksi & Formulir", subtopics: ["Unsur intrinsik cerita (Tokoh, Latar, Watak, Amanat)", "Mengisi formulir pendaftaran, wesel pos, daftar riwayat hidup", "Membuat ringkasan cerita"] }
+        ]
+      },
+      {
+        name: "Pendidikan Pancasila (PPKN)",
+        topics: [
+          { name: "Penerapan Pancasila dalam Kehidupan", subtopics: ["Sikap yang sesuai dengan Sila ke-1 sampai ke-5", "Studi kasus penerapan Pancasila di lingkungan sekolah & masyarakat", "Pancasila sebagai dasar negara"] },
+          { name: "Kerja Sama ASEAN", subtopics: ["Sejarah berdirinya ASEAN & Tokoh Pendiri", "Peran Indonesia di ASEAN dalam bidang Ekonomi", "Peran Indonesia di ASEAN dalam bidang Politik & Sosial Budaya"] }
+        ]
+      },
+      {
+        name: "IPAS (Fokus IPA)",
+        topics: [
+          { name: "Perkembangbiakan Mahluk Hidup", subtopics: ["Perkembangbiakan Tumbuhan Generatif (Bunga)", "Perkembangbiakan Tumbuhan Vegetatif Alami (Tunas, Umbi, Rizoma)", "Perkembangbiakan Tumbuhan Vegetatif Buatan (Cangkok, Stek)", "Perkembangbiakan Hewan (Ovipar, Vivipar, Ovovivipar)"] },
+          { name: "Adaptasi Mahluk Hidup", subtopics: ["Ciri khusus hewan & fungsinya (Kelelawar, Cicak, Unta, dll)", "Ciri khusus tumbuhan (Kaktus, Teratai, Kantong Semar)"] },
+          { name: "Listrik & Magnet", subtopics: ["Komponen listrik sederhana", "Rangkaian Seri & Rangkaian Paralel", "Cara membuat magnet (Gosok, Induksi, Elektromagnet)", "Sifat-sifat magnet"] },
+          { name: "Tata Surya", subtopics: ["Urutan planet dalam Tata Surya", "Karakteristik setiap planet", "Rotasi Bumi & Akibatnya (Siang & Malam, Perbedaan Waktu)", "Revolusi Bumi & Akibatnya (Pergantian Musim)", "Gerhana Matahari & Gerhana Bulan"] }
+        ]
+      },
+      {
+        name: "IPAS (Fokus IPS)",
+        topics: [
+          { name: "Negara-negara ASEAN", subtopics: ["Letak geografis & batas wilayah ASEAN", "Ibukota & Mata uang negara ASEAN", "Keadaan alam, ekonomi, & budaya negara ASEAN"] },
+          { name: "Peran Indonesia Era Globalisasi", subtopics: ["Dampak positif & negatif globalisasi", "Barang ekspor & impor Indonesia", "Kerja sama internasional Indonesia (PBB, GNB)"] },
+          { name: "Perjuangan Mempertahankan Kemerdekaan", subtopics: ["Pertempuran 10 November di Surabaya", "Bandung Lautan Api & Ambarawa", "Perjanjian Linggajati, Renville, Roem-Royen", "Konferensi Meja Bundar (KMB)"] }
+        ]
+      }
+    ]
+  },
+
+  // ==========================================
+  // JENJANG SMP (Kelas 7 - 9)
+  // ==========================================
+  {
+    level: "Kelas 7 SMP",
+    subjects: [
+      {
+        name: "Matematika",
+        topics: [
+          { name: "Bilangan Bulat & Pecahan", subtopics: ["Operasi bilangan bulat (Kabataku)", "Sifat komutatif, asosiatif, distributif", "Operasi pecahan biasa, desimal, dan persen", "Menyelesaikan masalah HOTS bilangan"] },
+          { name: "Himpunan", subtopics: ["Konsep Himpunan, anggota, dan notasi", "Himpunan semesta dan himpunan kosong", "Diagram Venn", "Irisan, Gabungan, Komplemen, dan Selisih Himpunan", "Soal cerita himpunan (survei)"] },
+          { name: "Bentuk Aljabar", subtopics: ["Mengenal variabel, koefisien, konstanta, suku", "Penjumlahan & Pengurangan Aljabar", "Perkalian & Pembagian Aljabar", "Menyederhanakan pecahan aljabar"] },
+          { name: "Persamaan & Pertidaksamaan Linear 1 Variabel", subtopics: ["Konsep Persamaan Linear Satu Variabel (PLSV)", "Penyelesaian PLSV", "Konsep Pertidaksamaan Linear Satu Variabel (PtLSV)", "Penyelesaian dan grafik PtLSV", "Model matematika soal cerita"] },
+          { name: "Perbandingan & Skala", subtopics: ["Perbandingan senilai", "Perbandingan berbalik nilai", "Penerapan skala peta dan foto"] },
+          { name: "Aritmatika Sosial", subtopics: ["Harga Beli, Harga Jual, Untung, Rugi", "Persentase Keuntungan dan Kerugian", "Diskon (Rabat), Pajak UMKM/PPN", "Bunga Tunggal Bank", "Bruto, Netto, Tara"] },
+          { name: "Garis & Sudut", subtopics: ["Hubungan titik, garis, bidang", "Sudut berpelurus, berpenyiku, bertolak belakang", "Hubungan sudut pada dua garis sejajar dipotong garis lain (sehadap, berseberangan, sepihak)"] },
+          { name: "Segiempat & Segitiga", subtopics: ["Sifat, Keliling, Luas Persegi & Persegi Panjang", "Jajargenjang, Belah Ketupat, Layang-layang, Trapesium", "Garis istimewa pada segitiga (tinggi, bagi, berat)"] }
+        ]
+      },
+      {
+        name: "IPA Terpadu",
+        topics: [
+          { name: "Besaran & Pengukuran (Fisika)", subtopics: ["Besaran pokok dan turunan (SI)", "Mengukur dengan Jangka Sorong & Mikrometer Sekrup", "Angka penting dan notasi ilmiah"] },
+          { name: "Zat & Wujudnya (Fisika)", subtopics: ["Sifat partikel zat padat, cair, gas", "Kohesi, Adhesi, Kapilaritas", "Massa jenis dan terapung/tenggelam"] },
+          { name: "Suhu, Kalor, Pemuaian (Fisika)", subtopics: ["Termometer (Celcius, Reamur, Fahrenheit, Kelvin)", "Asas Black (Campuran Kalor)", "Pemuaian panjang, luas, volume"] },
+          { name: "Organisasi Kehidupan (Biologi)", subtopics: ["Sel hewan dan sel tumbuhan", "Jaringan pada tumbuhan (Xilem, Floem, Meristem)", "Jaringan pada hewan (Epitel, Otot, Saraf, Ikat)", "Organ, Sistem Organ, Organisme"] },
+          { name: "Klasifikasi Makhluk Hidup (Biologi)", subtopics: ["Ciri-ciri makhluk hidup vs tak hidup", "Kunci determinasi & Taksonomi", "Sistem 5 Kingdom (Monera, Protista, Fungi, Plantae, Animalia)", "Mikroskop (Bagian dan Cara Pakai)"] },
+          { name: "Interaksi Ekosistem (Biologi)", subtopics: ["Komponen Biotik & Abiotik", "Simbiosis, Predasi, Antibiosis", "Rantai & Jaring makanan tingkat lanjut", "Pencemaran lingkungan & Pemanasan Global"] }
+        ]
+      },
+      {
+        name: "Bahasa Inggris",
+        topics: [
+          { name: "Greetings & Introductions", subtopics: ["Formal & Informal Greetings", "Leave taking", "Introducing oneself & others", "Pronouns (Subject, Object, Possessive)"] },
+          { name: "Things & Places Around Us", subtopics: ["Prepositions of place (in, on, under, behind, next to)", "There is / There are", "Articles (a, an, the)", "Describing rooms and public places"] },
+          { name: "Descriptive Text", subtopics: ["Adjectives (Physical appearance, personality)", "Simple Present Tense (Verbs, To Be)", "Describing people, animals, things", "WH-Questions"] },
+          { name: "Daily Routines", subtopics: ["Telling time (past, to, half, quarter)", "Days & Months", "Adverbs of frequency (always, usually, sometimes, never)"] }
+        ]
+      },
+      {
+        name: "Bahasa Indonesia",
+        topics: [
+          { name: "Teks Deskripsi", subtopics: ["Struktur teks deskripsi (Identifikasi, Deskripsi Bagian)", "Penggunaan kalimat panca indra", "Kata depan di- dan awalan di-"] },
+          { name: "Teks Narasi (Cerita Fantasi)", subtopics: ["Ciri teks cerita fantasi", "Struktur narasi (Orientasi, Komplikasi, Resolusi)", "Penggunaan konjungsi urutan waktu"] },
+          { name: "Teks Prosedur", subtopics: ["Struktur teks prosedur", "Kalimat imperatif (perintah), deklaratif, interogatif", "Kata keterangan alat, tujuan, dan cara"] },
+          { name: "Teks Laporan Hasil Observasi", subtopics: ["Struktur (Pernyataan Umum, Deskripsi Bagian, Simpulan)", "Kalimat definisi vs kalimat klasifikasi", "Penggunaan istilah teknis"] },
+          { name: "Buku Fiksi & Nonfiksi", subtopics: ["Perbedaan fiksi & nonfiksi", "Unsur buku fiksi", "Unsur buku nonfiksi", "Membuat ringkasan buku"] }
         ]
       },
       {
         name: "IPS Terpadu",
         topics: [
-          { name: "Geografi & Interaksi Ruang", subtopics: ["Pemahaman Lokasi Melalui Peta", "Letak Astronomis & Geografis Indonesia", "Potensi Sumber Daya Alam Indonesia", "Dinamika Kependudukan Indonesia", "Kondisi Alam Negara-Negara ASEAN", "Interaksi Antarruang Negara ASEAN", "Karakteristik Benua Asia & Benua Lainnya", "Dampak Perdagangan Internasional"] },
-          { name: "Sosiologi (Interaksi Sosial)", subtopics: ["Bentuk-bentuk Interaksi Sosial (Asosiatif & Disosiatif)", "Lembaga Sosial (Keluarga, Agama, Pendidikan, Ekonomi, Politik)", "Mobilitas Sosial (Vertikal & Horizontal)", "Pluralitas Masyarakat Indonesia (Agama, Budaya, Suku)", "Konflik & Integrasi Sosial", "Perubahan Sosial Budaya", "Dampak Globalisasi"] },
-          { name: "Ekonomi", subtopics: ["Kelangkaan & Skala Prioritas", "Kebutuhan & Alat Pemuas Kebutuhan", "Tindakan, Motif, & Prinsip Ekonomi", "Kegiatan Ekonomi (Produksi, Distribusi, Konsumsi)", "Permintaan, Penawaran, & Harga Keseimbangan (Pasar)", "Peran Pelaku Ekonomi (RTK, RTP, Pemerintah, Luar Negeri)", "Perdagangan Antardaerah & Antarpulau", "Perdagangan Internasional (Ekspor & Impor)", "Ekonomi Kreatif"] },
-          { name: "Sejarah Nusantara & Nasional", subtopics: ["Masa Praaksara di Indonesia", "Masa Hindu-Buddha di Nusantara", "Masa Islam di Nusantara", "Kedatangan Bangsa Barat (Kolonialisme)", "Masa Pendudukan Jepang", "Pergerakan Nasional (Budi Utomo, Sumpah Pemuda)", "Persiapan & Proklamasi Kemerdekaan RI", "Mempertahankan Kemerdekaan", "Masa Demokrasi Liberal & Terpimpin", "Masa Orde Baru & Reformasi"] }
+          { name: "Ruang & Interaksi Antarruang", subtopics: ["Letak & Luas Indonesia (Astronomis, Geografis, Geologis)", "Potensi SDA (Hutan, Tambang, Laut)", "Dinamika Kependudukan Indonesia"] },
+          { name: "Interaksi Sosial", subtopics: ["Syarat Interaksi Sosial (Kontak & Komunikasi)", "Bentuk Interaksi Asosiatif (Kerja sama, Akomodasi, Asimilasi)", "Bentuk Interaksi Disosiatif (Persaingan, Kontravensi, Konflik)", "Lembaga Sosial (Keluarga, Agama, Ekonomi, Politik, Pendidikan)"] },
+          { name: "Aktivitas Manusia Penuhi Kebutuhan", subtopics: ["Kelangkaan & Skala Prioritas", "Tindakan, Motif, & Prinsip Ekonomi", "Kegiatan Produksi, Distribusi, Konsumsi", "Permintaan, Penawaran, Pasar, & Harga"] },
+          { name: "Kehidupan Masa Praaksara & Hindu-Buddha", subtopics: ["Pembagian Zaman Praaksara", "Jenis Manusia Purba di Indonesia", "Teori Masuknya Hindu-Buddha", "Kerajaan Tarumanegara, Sriwijaya, Majapahit"] }
         ]
       },
       {
-        name: "PPKN (Pendidikan Pancasila & Kewarganegaraan)",
+        name: "PPKN",
         topics: [
-          { name: "Pancasila sebagai Dasar Negara", subtopics: ["Sejarah Perumusan Pancasila sebagai Dasar Negara", "Penetapan Pancasila", "Semangat Pendiri Negara dalam Merumuskan Pancasila", "Dinamika Perwujudan Pancasila dari Masa ke Masa", "Pancasila sebagai Ideologi Terbuka", "Nilai-nilai Pancasila dalam Kehidupan Sehari-hari"] },
-          { name: "Konstitusi & UUD 1945", subtopics: ["Perumusan & Pengesahan UUD NRI Tahun 1945", "Makna Alinea Pembukaan UUD 1945", "Pokok Pikiran Pembukaan UUD 1945", "Tata Urutan Peraturan Perundang-undangan di Indonesia", "Proses Pembuatan Undang-Undang"] },
-          { name: "Norma, Hukum, & Keadilan", subtopics: ["Macam-macam Norma (Agama, Kesusilaan, Kesopanan, Hukum)", "Pentingnya Norma dalam Kehidupan Bermasyarakat", "Sistem Hukum & Peradilan di Indonesia", "Sikap Taat terhadap Hukum"] },
-          { name: "Negara Kesatuan Republik Indonesia (NKRI)", subtopics: ["Makna Persatuan & Kesatuan", "Daerah dalam Kerangka NKRI", "Peran Daerah dalam Perjuangan Kemerdekaan", "Otonomi Daerah", "Ancaman terhadap NKRI & Strategi Mengatasinya", "Bela Negara"] },
-          { name: "Kebangkitan Nasional & Sumpah Pemuda", subtopics: ["Latar Belakang Kebangkitan Nasional (Budi Utomo)", "Makna Sumpah Pemuda 1928", "Nilai Semangat Sumpah Pemuda", "Semangat & Komitmen Kebangsaan Pendiri Negara"] },
-          { name: "Keberagaman Suku, Agama, Ras, dan Antargolongan (SARA)", subtopics: ["Faktor Penyebab Keberagaman Masyarakat Indonesia", "Keberagaman Suku, Agama, Ras, dan Budaya", "Makna Bhinneka Tunggal Ika", "Toleransi dalam Keberagaman", "Penyelesaian Konflik dalam Masyarakat Beragam"] }
+          { name: "Perumusan Pancasila", subtopics: ["Sidang BPUPKI & PPKI", "Usulan rumusan Pancasila (Soekarno, Yamin, Soepomo)", "Semangat & komitmen kebangsaan pendiri negara"] },
+          { name: "Norma dalam Masyarakat", subtopics: ["Norma Agama, Kesusilaan, Kesopanan, Hukum", "Sanksi pelanggaran norma", "Pentingnya norma untuk keadilan"] },
+          { name: "Keberagaman SARA", subtopics: ["Faktor keberagaman di Indonesia", "Suku, Agama, Ras, Antargolongan", "Toleransi & Bhinneka Tunggal Ika"] },
+          { name: "Daerah dalam NKRI", subtopics: ["Makna otonomi daerah", "Peran daerah melawan penjajah", "Menjaga keutuhan NKRI"] }
         ]
       }
     ]
   },
   {
-    level: "SMA/K",
+    level: "Kelas 8 SMP",
     subjects: [
       {
-        name: "Matematika Wajib",
+        name: "Matematika",
         topics: [
-          { name: "Persamaan & Pertidaksamaan Nilai Mutlak", subtopics: ["Konsep Nilai Mutlak", "Persamaan Linear Nilai Mutlak Satu Variabel", "Pertidaksamaan Linear Nilai Mutlak Satu Variabel"] },
-          { name: "Sistem Persamaan & Pertidaksamaan", subtopics: ["Sistem Persamaan Linear Tiga Variabel (SPLTV)", "Sistem Persamaan Linear Kuadrat (SPLK)", "Pertidaksamaan Rasional & Irasional", "Sistem Pertidaksamaan Dua Variabel (Linear-Kuadrat, Kuadrat-Kuadrat)"] },
-          { name: "Relasi & Fungsi", subtopics: ["Domain, Kodomain, Range", "Fungsi Linear, Kuadrat, Rasional", "Fungsi Komposisi", "Fungsi Invers"] },
-          { name: "Trigonometri", subtopics: ["Ukuran Sudut (Derajat & Radian)", "Perbandingan Trigonometri Segitiga Siku-siku", "Sudut Berelasi di Berbagai Kuadran", "Aturan Sinus & Cosinus", "Luas Segitiga dengan Trigonometri", "Grafik Fungsi Trigonometri (Sin, Cos, Tan)"] },
-          { name: "Barisan & Deret", subtopics: ["Barisan & Deret Aritmatika", "Barisan & Deret Geometri", "Deret Geometri Tak Hingga", "Aplikasi Barisan & Deret (Bunga Majemuk, Pertumbuhan, Peluruhan)"] },
-          { name: "Matriks", subtopics: ["Konsep & Jenis Matriks", "Operasi Matriks (Penjumlahan, Perkalian)", "Determinan Matriks Ordo 2x2 & 3x3", "Invers Matriks", "Penyelesaian SPLDV dengan Matriks"] },
-          { name: "Program Linear", subtopics: ["Pertidaksamaan Linear Dua Variabel", "Sistem Pertidaksamaan Linear Dua Variabel", "Nilai Optimum Fungsi Objektif", "Model Matematika Program Linear"] },
-          { name: "Kalkulus Dasar", subtopics: ["Limit Fungsi Aljabar (Metode Substitusi, Pemfaktoran, Akar Sekawan)", "Limit di Tak Hingga", "Turunan Fungsi Aljabar (Aturan Rantai)", "Aplikasi Turunan (Persamaan Garis Singgung, Fungsi Naik/Turun, Nilai Maks/Min)", "Integral Tak Tentu Fungsi Aljabar", "Integral Tentu & Luas Daerah"] },
-          { name: "Geometri Ruang (Dimensi Tiga)", subtopics: ["Kedudukan Titik, Garis, Bidang", "Jarak Titik ke Titik, Garis, Bidang", "Sudut antara Garis dan Bidang, Bidang dan Bidang"] },
-          { name: "Statistika & Peluang", subtopics: ["Penyajian Data (Tabel Distribusi Frekuensi, Histogram, Poligon, Ogive)", "Ukuran Pemusatan Data Berkelompok (Mean, Median, Modus)", "Ukuran Letak & Penyebaran Data Berkelompok (Kuartil, Simpangan Baku)", "Kaidah Pencacahan (Aturan Penjumlahan, Perkalian)", "Permutasi (Unsur Sama, Siklis)", "Kombinasi", "Peluang Kejadian Saling Lepas, Bebas, Bersyarat"] }
+          { name: "Pola Bilangan", subtopics: ["Mengenal pola konfigurasi objek", "Pola bilangan genap, ganjil, persegi, segitiga, Pascal", "Barisan Aritmatika (Suku ke-n)", "Barisan Geometri (Suku ke-n)"] },
+          { name: "Koordinat Kartesius", subtopics: ["Posisi titik terhadap sumbu-X dan sumbu-Y", "Kuadran I, II, III, IV", "Posisi titik terhadap titik asal (0,0) dan titik tertentu (a,b)", "Posisi garis sejajar & tegak lurus"] },
+          { name: "Relasi & Fungsi", subtopics: ["Pengertian relasi & penyajiannya (Diagram panah, himpunan, grafik)", "Pengertian Fungsi (Pemetaan)", "Domain, Kodomain, Range", "Menentukan nilai fungsi ( f(x) = ax + b )", "Korespondensi Satu-Satu"] },
+          { name: "Persamaan Garis Lurus", subtopics: ["Grafik persamaan garis lurus", "Menentukan Gradien (kemiringan garis)", "Persamaan garis jika diketahui gradien dan 1 titik", "Persamaan garis yang melalui 2 titik", "Garis Sejajar & Garis Tegak Lurus"] },
+          { name: "Sistem Persamaan Linear Dua Variabel (SPLDV)", subtopics: ["Membuat model matematika SPLDV", "Metode Substitusi", "Metode Eliminasi", "Metode Campuran", "Penyelesaian soal cerita aplikasi SPLDV"] },
+          { name: "Teorema Pythagoras", subtopics: ["Pembuktian Teorema Pythagoras", "Mencari panjang sisi miring (hipotenusa) atau sisi siku-siku", "Tripel Pythagoras", "Menentukan jenis segitiga (lancip, siku-siku, tumpul)", "Penerapan Pythagoras dalam ruang/bidang"] },
+          { name: "Lingkaran", subtopics: ["Keliling dan Luas Lingkaran", "Panjang Busur & Luas Juring", "Hubungan Sudut Pusat dan Sudut Keliling", "Garis Singgung Persekutuan Dalam (GSPD)", "Garis Singgung Persekutuan Luar (GSPL)"] },
+          { name: "Bangun Ruang Sisi Datar", subtopics: ["Kubus & Balok (Jaring, Luas Permukaan, Volume)", "Prisma (Luas Permukaan, Volume)", "Limas (Luas Permukaan, Volume)", "Bangun ruang sisi datar gabungan"] },
+          { name: "Statistika", subtopics: ["Menganalisis data (Mean, Median, Modus data tunggal/tabel)", "Jangkauan, Kuartil (Q1, Q2, Q3), Simpangan Kuartil"] },
+          { name: "Peluang", subtopics: ["Ruang Sampel & Titik Sampel (Koin, Dadu, Kartu)", "Peluang Empiris", "Peluang Teoritik (Peluang suatu kejadian)"] }
         ]
       },
       {
-        name: "Matematika Peminatan (IPA)",
+        name: "IPA Fisika",
         topics: [
-          { name: "Fungsi Eksponensial & Logaritma", subtopics: ["Sifat-sifat Eksponen & Logaritma", "Fungsi & Grafik Eksponensial", "Persamaan & Pertidaksamaan Eksponensial", "Fungsi & Grafik Logaritma", "Persamaan & Pertidaksamaan Logaritma"] },
-          { name: "Vektor", subtopics: ["Konsep Vektor (Aljabar & Geometri)", "Operasi Vektor di R2 dan R3", "Perkalian Skalar Dua Vektor (Dot Product)", "Proyeksi Ortogonal Vektor"] },
-          { name: "Persamaan Trigonometri", subtopics: ["Persamaan Trigonometri Dasar", "Persamaan Trigonometri Bentuk a cos x + b sin x = c"] },
-          { name: "Rumus-rumus Trigonometri", subtopics: ["Rumus Jumlah & Selisih Dua Sudut", "Rumus Sudut Ganda & Sudut Pertengahan", "Rumus Perkalian, Jumlah, & Selisih Sinus dan Cosinus"] },
-          { name: "Lingkaran", subtopics: ["Persamaan Lingkaran Pusat (0,0) & (a,b)", "Bentuk Umum Persamaan Lingkaran", "Kedudukan Titik, Garis, & Lingkaran terhadap Lingkaran", "Persamaan Garis Singgung Lingkaran"] },
-          { name: "Polinomial (Suku Banyak)", subtopics: ["Operasi Polinomial", "Nilai Polinomial (Substitusi & Horner)", "Teorema Sisa & Teorema Faktor", "Akar-akar Persamaan Polinomial"] },
-          { name: "Kalkulus Lanjut", subtopics: ["Limit Fungsi Trigonometri", "Limit Menuju Tak Hingga Fungsi Trigonometri", "Turunan Fungsi Trigonometri", "Aplikasi Turunan Trigonometri (Garis Singgung, Titik Stasioner)", "Integral Parsial & Substitusi", "Integral Trigonometri"] },
-          { name: "Distribusi Probabilitas", subtopics: ["Variabel Acak Diskrit", "Distribusi Binomial", "Distribusi Normal (Kurva Normal Z)"] }
+          { name: "Gerak Benda", subtopics: ["Jarak vs Perpindahan", "Kelajuan vs Kecepatan", "Gerak Lurus Beraturan (GLB)", "Gerak Lurus Berubah Beraturan (GLBB)", "Gaya & Hukum Newton I, II, III", "Penerapan Hukum Newton"] },
+          { name: "Usaha & Pesawat Sederhana", subtopics: ["Konsep Usaha (W = F x s)", "Daya", "Tuas / Pengungkit (Jenis 1, 2, 3)", "Katrol (Tetap, Bebas, Majemuk)", "Bidang Miring", "Keuntungan Mekanis"] },
+          { name: "Tekanan", subtopics: ["Tekanan Zat Padat (P = F/A)", "Tekanan Hidrostatis", "Hukum Archimedes (Mengapung, Melayang, Tenggelam)", "Hukum Pascal (Dongkrak Hidrolik)", "Tekanan Udara & Hukum Boyle"] },
+          { name: "Getaran & Gelombang", subtopics: ["Periode & Frekuensi Getaran", "Gelombang Transversal & Longitudinal", "Rumus Cepat Rambat Gelombang (v = λ x f)", "Pemantulan Gelombang"] },
+          { name: "Bunyi", subtopics: ["Syarat terdengar bunyi (Infrasonik, Audiosonik, Ultrasonik)", "Resonansi", "Pemantulan Bunyi (Gaung, Gema)", "Efek Doppler (Dasar)"] },
+          { name: "Cahaya & Optik", subtopics: ["Pemantulan Cahaya (Hukum Snellius, Cermin Datar, Cekung, Cembung)", "Sinar Istimewa & Pembentukan Bayangan pada Cermin", "Pembiasan Cahaya (Lensa Cembung & Cekung)", "Kekuatan Lensa", "Alat Optik (Mata, Cacat Mata & Kacamata, Lup, Mikroskop)"] }
         ]
       },
       {
-        name: "Fisika",
+        name: "IPA Biologi",
         topics: [
-          { name: "Pengukuran & Vektor", subtopics: ["Besaran, Satuan & Dimensi", "Ketidakpastian Pengukuran & Angka Penting", "Vektor (Penjumlahan, Resultan, Uraian Vektor)"] },
-          { name: "Kinematika Gerak", subtopics: ["Gerak Lurus (GLB, GLBB, Gerak Jatuh Bebas, Vertikal)", "Gerak Parabola (Proyektil)", "Gerak Melingkar Beraturan (GMB & GMBB)", "Hubungan Roda-roda"] },
-          { name: "Dinamika Partikel", subtopics: ["Hukum I, II, III Newton", "Gaya Berat, Gaya Normal, Gaya Gesek, Gaya Tegangan Tali", "Aplikasi Hukum Newton pada Bidang Datar & Miring", "Hukum Gravitasi Newton & Hukum Kepler"] },
-          { name: "Usaha, Energi, Momentum, & Impuls", subtopics: ["Usaha & Gaya", "Energi Kinetik, Energi Potensial, Energi Mekanik", "Hukum Kekekalan Energi Mekanik", "Daya", "Momentum & Impuls", "Hukum Kekekalan Momentum", "Tumbukan (Lenting Sempurna, Sebagian, Tidak Lenting)"] },
-          { name: "Dinamika Rotasi & Kesetimbangan Tegar", subtopics: ["Momen Gaya (Torsi)", "Momen Inersia", "Hukum II Newton untuk Rotasi", "Energi Kinetik Rotasi & Menggelinding", "Momentum Sudut", "Titik Berat", "Kesetimbangan Benda Tegar"] },
-          { name: "Elastisitas & Fluida", subtopics: ["Tegangan, Regangan, Modulus Young", "Hukum Hooke & Susunan Pegas", "Fluida Statis (Tekanan Hidrostatis, Hukum Pascal, Archimedes)", "Tegangan Permukaan & Kapilaritas", "Fluida Dinamis (Asas Kontinuitas, Hukum Bernoulli & Aplikasinya)"] },
-          { name: "Suhu, Kalor, & Termodinamika", subtopics: ["Termometer & Pemuaian", "Kalor, Perubahan Wujud, & Asas Black", "Perpindahan Kalor (Konduksi, Konveksi, Radiasi)", "Teori Kinetik Gas Ideal (Hukum Boyle, Charles, Gay-Lussac, Persamaan Gas Ideal)", "Energi Dalam Gas", "Termodinamika (Proses Isotermik, Isokhorik, Isobarik, Adiabatik)", "Hukum I & II Termodinamika", "Siklus Carnot & Mesin Pendingin"] },
-          { name: "Gelombang & Optik", subtopics: ["Gelombang Mekanik (Transversal, Longitudinal)", "Gelombang Berjalan & Stasioner", "Gelombang Bunyi (Intensitas, Taraf Intensitas, Efek Doppler, Dawai, Pipa Organa)", "Cahaya (Interferensi, Difraksi, Polarisasi)", "Alat Optik (Mata, Kacamata, Kamera, Lup, Mikroskop, Teropong)"] },
-          { name: "Listrik & Magnet", subtopics: ["Listrik Dinamis Arus Searah (DC, Hukum Ohm, Hukum I & II Kirchhoff)", "Listrik Statis (Gaya Coulomb, Medan Listrik, Potensial Listrik, Kapasitor)", "Medan Magnet (Kawat Lurus, Melingkar, Solenoida, Toroida)", "Gaya Lorentz", "Induksi Elektromagnetik (Hukum Faraday, Lenz, Generator, Transformator)", "Listrik Arus Bolak-balik (AC, Resistor, Induktor, Kapasitor, Rangkaian RLC)"] },
-          { name: "Fisika Modern", subtopics: ["Radiasi Benda Hitam & Hipotesis Planck", "Efek Fotolistrik & Efek Compton", "Relativitas Khusus (Dilatasi Waktu, Kontraksi Panjang, Massa & Energi Relativistik)", "Inti Atom (Defek Massa, Energi Ikat, Reaksi Fisi & Fusi)", "Radioaktivitas (Sinar Alfa, Beta, Gamma, Waktu Paruh)", "Teknologi Digital & Transmisi Data"] }
-        ]
-      },
-      {
-        name: "Kimia",
-        topics: [
-          { name: "Pengenalan Kimia & Struktur Atom", subtopics: ["Hakikat Ilmu Kimia & Metode Ilmiah", "Perkembangan Model Atom (Dalton - Mekanika Kuantum)", "Partikel Penyusun Atom (Proton, Elektron, Neutron)", "Isotop, Isobar, Isoton", "Konfigurasi Elektron (Bohr & Mekanika Kuantum, Bilangan Kuantum)"] },
-          { name: "Sistem Periodik Unsur (SPU) & Ikatan Kimia", subtopics: ["Perkembangan SPU & Letak Unsur (Golongan & Periode)", "Sifat Keperiodikan Unsur (Jari-jari, Energi Ionisasi, Afinitas, Keelektronegatifan)", "Kestabilan Unsur & Struktur Lewis", "Ikatan Ion & Ikatan Kovalen (Polar/Nonpolar)", "Ikatan Logam", "Bentuk Molekul (VSEPR & Domain Elektron)", "Gaya Antarmolekul (London, Dipol, Ikatan Hidrogen)"] },
-          { name: "Stoikiometri (Hitungan Kimia)", subtopics: ["Tata Nama Senyawa Anorganik & Organik Sederhana", "Persamaan Reaksi Kimia", "Hukum Dasar Kimia (Lavoisier, Proust, Dalton, Gay-Lussac, Avogadro)", "Konsep Mol (Massa Molar, Volume Molar, Molaritas)", "Rumus Empiris & Rumus Molekul", "Stoikiometri Reaksi & Pereaksi Pembatas", "Air Kristal / Hidrat"] },
-          { name: "Larutan Elektrolit & Redoks Dasar", subtopics: ["Larutan Elektrolit Kuat, Lemah, & Non-Elektrolit", "Daya Hantar Listrik Larutan", "Konsep Reaksi Redoks (Oksigen, Elektron, Biloks)", "Menentukan Bilangan Oksidasi (Biloks)", "Tata Nama Senyawa Redoks (IUPAC)"] },
-          { name: "Hidrokarbon & Minyak Bumi", subtopics: ["Kekhasan Atom Karbon & Atom C Primer, Sekunder, Tersier, Kuartener", "Alkana, Alkena, Alkuna (Tata Nama, Isomer, Sifat, Reaksi)", "Minyak Bumi & Fraksi-fraksinya", "Bensin & Bilangan Oktan", "Dampak Pembakaran Hidrokarbon"] },
-          { name: "Termokimia", subtopics: ["Reaksi Eksoterm & Endoterm", "Persamaan Termokimia & Entalpi Standar (Pembentukan, Penguraian, Pembakaran)", "Penentuan Entalpi Reaksi (Kalorimetri, Hukum Hess, Data Entalpi Pembentukan, Energi Ikatan)"] },
-          { name: "Laju Reaksi & Kesetimbangan Kimia", subtopics: ["Konsep Laju Reaksi & Molaritas", "Faktor-faktor yang Mempengaruhi Laju Reaksi (Teori Tumbukan)", "Orde Reaksi & Persamaan Laju", "Konsep Kesetimbangan Dinamis & Reaksi Reversibel", "Tetapan Kesetimbangan (Kc & Kp)", "Pergeseran Kesetimbangan (Asas Le Chatelier)"] },
-          { name: "Kimia Larutan", subtopics: ["Teori Asam Basa (Arrhenius, Bronsted-Lowry, Lewis)", "pH Asam Basa Kuat & Lemah", "Titrasi Asam Basa & Kurva Titrasi", "Larutan Penyangga (Buffer) & Perhitungan pH", "Hidrolisis Garam & Perhitungan pH", "Kelarutan (s) & Hasil Kali Kelarutan (Ksp)", "Prediksi Pengendapan (Qc vs Ksp)"] },
-          { name: "Sistem Koloid", subtopics: ["Sistem Dispersi (Larutan, Koloid, Suspensi)", "Jenis-jenis Koloid", "Sifat-sifat Koloid (Efek Tyndall, Gerak Brown, Adsorpsi, Koagulasi)", "Koloid Liofil & Liofob", "Pembuatan Koloid"] },
-          { name: "Sifat Koligatif Larutan", subtopics: ["Konsentrasi Larutan (Molalitas, Fraksi Mol)", "Penurunan Tekanan Uap (Hukum Raoult)", "Kenaikan Titik Didih & Penurunan Titik Beku", "Tekanan Osmotik", "Sifat Koligatif Larutan Elektrolit (Faktor Van't Hoff)"] },
-          { name: "Redoks Lanjut & Elektrokimia", subtopics: ["Penyetaraan Reaksi Redoks (Metode Setengah Reaksi & Biloks)", "Sel Volta / Galvani (Potensial Sel, Deret Volta)", "Baterai & Aki", "Korosi & Pencegahannya", "Sel Elektrolisis (Reaksi di Katoda & Anoda)", "Hukum Faraday I & II"] },
-          { name: "Kimia Unsur", subtopics: ["Kelimpahan Unsur di Alam", "Sifat, Pembuatan & Kegunaan Unsur Golongan Utama (Gas Mulia, Halogen, Alkali, Alkali Tanah, dll)", "Unsur Transisi Periode 4", "Senyawa Kompleks"] },
-          { name: "Senyawa Karbon Turunan Alkana", subtopics: ["Gugus Fungsi", "Alkohol & Eter (Tata Nama, Isomer, Sifat, Reaksi)", "Aldehid & Keton", "Asam Karboksilat & Ester (Reaksi Esterifikasi)", "Haloalkana"] },
-          { name: "Benzena & Makromolekul", subtopics: ["Struktur & Resonansi Benzena", "Turunan Benzena & Tata Namanya", "Sifat & Kegunaan Benzena", "Polimer (Adisi & Kondensasi)", "Karbohidrat, Protein, Lipid (Lemak)"] }
-        ]
-      },
-      {
-        name: "Biologi",
-        topics: [
-          { name: "Ruang Lingkup Biologi & Keanekaragaman Hayati", subtopics: ["Cabang-cabang Biologi & Kerja Ilmiah", "Tingkat Organisasi Kehidupan", "Tingkat Keanekaragaman Hayati (Gen, Jenis, Ekosistem)", "Keanekaragaman Hayati Indonesia (Garis Wallace & Weber)", "Upaya Pelestarian Keanekaragaman Hayati", "Klasifikasi Makhluk Hidup (Sistem 5 Kingdom, Kladogram)"] },
-          { name: "Virus & Monera", subtopics: ["Ciri-ciri & Struktur Virus", "Reproduksi Virus (Daur Litik & Lisogenik)", "Peranan Virus dalam Kehidupan (Penyakit & Vaksin)", "Bakteri (Archaebacteria & Eubacteria)", "Struktur, Bentuk, & Reproduksi Bakteri", "Peranan Bakteri"] },
-          { name: "Protista & Fungi", subtopics: ["Protista Mirip Hewan (Protozoa)", "Protista Mirip Tumbuhan (Alga/Ganggang)", "Protista Mirip Jamur", "Ciri & Struktur Fungi (Jamur)", "Klasifikasi Fungi (Zygomycota, Ascomycota, Basidiomycota, Deuteromycota)", "Simbiosis Jamur (Mikoriza, Lichen)"] },
-          { name: "Plantae (Dunia Tumbuhan)", subtopics: ["Ciri Umum Plantae", "Tumbuhan Lumut (Bryophyta)", "Tumbuhan Paku (Pteridophyta)", "Tumbuhan Berbiji (Spermatophyta: Gymnospermae & Angiospermae)", "Metagenesis (Daur Hidup Tumbuhan)"] },
-          { name: "Animalia (Dunia Hewan)", subtopics: ["Ciri Umum Animalia & Simetri Tubuh", "Invertebrata (Porifera, Coelenterata, Vermes, Arthropoda, Mollusca, Echinodermata)", "Vertebrata (Pisces, Amphibia, Reptilia, Aves, Mammalia)"] },
-          { name: "Ekosistem & Lingkungan", subtopics: ["Komponen Ekosistem", "Aliran Energi (Rantai, Jaring Makanan, Piramida Ekologi)", "Daur Biogeokimia (Karbon, Nitrogen, Air, Fosfor)", "Perubahan Lingkungan & Limbah", "Polusi & Pemanasan Global"] },
-          { name: "Sel", subtopics: ["Teori Sel", "Struktur & Fungsi Organel Sel (Hewan & Tumbuhan)", "Transport Membran (Difusi, Osmosis, Transpor Aktif, Endositosis, Eksositosis)"] },
-          { name: "Jaringan Tumbuhan & Hewan", subtopics: ["Jaringan Meristem & Dewasa (Epidermis, Parenkim, Penyokong, Pengangkut)", "Organ Tumbuhan (Akar, Batang, Daun, Bunga)", "Jaringan Epitel, Ikat, Otot, Saraf pada Hewan", "Sistem Organ Manusia & Hewan"] },
-          { name: "Sistem Organ Manusia", subtopics: ["Sistem Gerak (Tulang, Sendi, Otot, Gangguan)", "Sistem Peredaran Darah (Jantung, Pembuluh, Darah, Sistem Limfa, Gangguan)", "Sistem Pencernaan (Zat Makanan, Organ, Enzim, Ruminansia, Gangguan)", "Sistem Pernapasan (Mekanisme, Volume, Gangguan)", "Sistem Ekskresi (Ginjal, Kulit, Paru-paru, Hati, Proses Pembentukan Urine)", "Sistem Koordinasi (Sistem Saraf, Otak, Sumsum Tulang Belakang)", "Sistem Endokrin (Hormon)", "Sistem Indera (Mata, Telinga, Hidung, Lidah, Kulit)", "Sistem Reproduksi Manusia (Pria & Wanita, Spermatogenesis, Oogenesis, Menstruasi)", "Sistem Pertahanan Tubuh (Imunitas Spesifik & Non-spesifik)"] },
-          { name: "Pertumbuhan & Perkembangan", subtopics: ["Perkecambahan & Tipe Perkecambahan", "Pertumbuhan Primer & Sekunder", "Faktor Internal (Hormon) & Eksternal yang Mempengaruhi", "Pertumbuhan pada Hewan (Metamorfosis)"] },
-          { name: "Metabolisme", subtopics: ["Enzim (Struktur, Sifat, Cara Kerja, Faktor Pengaruh)", "Katabolisme Karbohidrat (Respirasi Aerob: Glikolisis, Dekarboksilasi Oksidatif, Siklus Krebs, Transpor Elektron)", "Respirasi Anaerob (Fermentasi Asam Laktat & Alkohol)", "Anabolisme (Fotosintesis: Reaksi Terang & Gelap/Siklus Calvin)", "Kemosintesis", "Keterkaitan Metabolisme Karbohidrat, Lemak, Protein"] },
-          { name: "Substansi Genetika & Pembelahan Sel", subtopics: ["Kromosom, Gen, Alel", "Struktur DNA & RNA", "Replikasi DNA", "Sintesis Protein (Transkripsi & Translasi)", "Siklus Sel (Interfase & Mitosis)", "Meiosis I & II", "Gametogenesis (Spermatogenesis, Oogenesis, Mikro/Megasporogenesis)"] },
-          { name: "Hukum Mendel & Pewarisan Sifat", subtopics: ["Persilangan Monohibrid & Dihibrid", "Hukum Mendel I (Segregasi) & II (Asortasi)", "Penyimpangan Semu Hukum Mendel (Atavisme, Kriptomeri, Polimeri, Epistasis-Hipostasis, Komplementer)", "Pautan, Pindah Silang, Gagal Berpisah, Gen Letal", "Pewarisan Sifat pada Manusia (Golongan Darah, Buta Warna, Hemofilia, Albino)"] },
-          { name: "Mutasi & Evolusi", subtopics: ["Mutasi Gen (Substitusi, Delesi, Insersi)", "Mutasi Kromosom (Aneuploidi, Euploidi, Aberasi Kromosom)", "Penyebab Mutasi (Mutagen)", "Teori Evolusi Darwin vs Lamarck", "Petunjuk Evolusi (Fosil, Homologi, Analogi, Embriologi, Biokimia)", "Mekanisme Evolusi & Hukum Hardy-Weinberg", "Spesiasi"] },
-          { name: "Bioteknologi", subtopics: ["Bioteknologi Konvensional (Mikroorganisme dalam Pangan)", "Bioteknologi Modern (Rekayasa Genetika, Plasmid, Kloning)", "Kultur Jaringan", "Antibodi Monoklonal, Bayi Tabung, Transgenik", "Dampak Positif & Negatif Bioteknologi"] }
-        ]
-      },
-      {
-        name: "PPKN (Pendidikan Pancasila & Kewarganegaraan)",
-        topics: [
-          { name: "Pancasila", subtopics: ["Pancasila dalam Praktik Penyelenggaraan Negara", "Pancasila sebagai Ideologi Terbuka", "Pelanggaran & Penegakan HAM dalam Perspektif Pancasila", "Dinamika Penerapan Pancasila", "Ancaman terhadap Integrasi Nasional & Pancasila"] },
-          { name: "Konstitusi & UUD 1945", subtopics: ["Sistem Pembagian Kekuasaan Negara RI", "Kedudukan & Fungsi Kementerian Negara RI", "Nilai-nilai Konstitusional UUD NRI 1945", "Sistem Pemerintahan Indonesia dari Masa ke Masa", "Pengelolaan Keuangan Negara & Kekuasaan Kehakiman"] },
-          { name: "Hak Asasi Manusia (HAM)", subtopics: ["Kasus Pelanggaran HAM di Indonesia & Dunia", "Upaya Penegakan HAM", "Instrumen HAM Nasional & Internasional", "Peradilan HAM di Indonesia"] },
-          { name: "Demokrasi & Sistem Hukum", subtopics: ["Sistem & Dinamika Demokrasi Pancasila", "Perkembangan Demokrasi di Indonesia", "Sistem Hukum & Peradilan Nasional", "Peran Lembaga Penegak Hukum (Polri, Kejaksaan, KPK, Hakim, Advokat)", "Perlindungan & Penegakan Hukum di Indonesia"] },
-          { name: "Hubungan Internasional", subtopics: ["Peran Indonesia dalam Perdamaian Dunia", "Hubungan Internasional & Politik Luar Negeri Bebas Aktif", "Organisasi Internasional (PBB, ASEAN, GNB)"] },
-          { name: "Wawasan Nusantara & Geopolitik", subtopics: ["Wawasan Nusantara dalam Konteks NKRI", "Asas & Kedudukan Wawasan Nusantara", "Trigatra & Pancagatra", "Geopolitik & Geostrategi Indonesia (Ketahanan Nasional)"] },
-          { name: "Hak & Kewajiban Warga Negara", subtopics: ["Kasus Pelanggaran Hak & Pengingkaran Kewajiban Warga Negara", "Warga Negara dalam Demokrasi", "Penanganan Pelanggaran Hak & Kewajiban"] }
-        ]
-      },
-      {
-        name: "Ekonomi",
-        topics: [
-          { name: "Konsep Dasar Ilmu Ekonomi", subtopics: ["Kebutuhan, Kelangkaan, & Biaya Peluang (Opportunity Cost)", "Prinsip & Motif Ekonomi", "Pembagian Ilmu Ekonomi", "Sistem Ekonomi (Tradisional, Komando, Pasar, Campuran)"] },
-          { name: "Kegiatan & Pelaku Ekonomi", subtopics: ["Produksi, Distribusi, Konsumsi", "Circular Flow Diagram (2, 3, 4 Sektor)", "Perilaku Konsumen (Pendekatan Kardinal & Ordinal)", "Perilaku Produsen (Teori Produksi & Biaya Produksi)"] },
-          { name: "Pasar & Terbentuknya Harga Pasar", subtopics: ["Permintaan (Demand) & Penawaran (Supply)", "Hukum & Kurva Permintaan/Penawaran", "Faktor Pergeseran Kurva", "Harga Keseimbangan (Equilibrium)", "Elastisitas Permintaan & Penawaran", "Struktur Pasar (Persaingan Sempurna, Monopoli, Oligopoli, Monopolistik)"] },
-          { name: "Lembaga Jasa Keuangan & Bank Sentral", subtopics: ["Otoritas Jasa Keuangan (OJK)", "Bank Sentral (Bank Indonesia) - Tugas & Wewenang", "Bank Umum, BPR, Bank Syariah", "Lembaga Keuangan Bukan Bank (Asuransi, Pegadaian, Dana Pensiun, Pasar Modal)", "Alat Pembayaran (Tunai & Non-tunai)"] },
-          { name: "Manajemen & Badan Usaha", subtopics: ["Unsur, Fungsi, & Bidang Manajemen", "BUMN, BUMD, BUMS (Ciri, Peran, Bentuk)", "Koperasi (Asas, Prinsip, Perangkat, SHU)"] },
-          { name: "Pendapatan Nasional & Pertumbuhan Ekonomi", subtopics: ["Konsep Pendapatan Nasional (GDP, GNP, NNP, NNI, PI, DI)", "Metode Perhitungan Pendapatan Nasional (Produksi, Pendapatan, Pengeluaran)", "Pendapatan Per Kapita", "Pertumbuhan Ekonomi vs Pembangunan Ekonomi", "Teori Pertumbuhan Ekonomi", "Indikator Pembangunan Ekonomi"] },
-          { name: "Ketenagakerjaan & Indeks Harga", subtopics: ["Angkatan Kerja, Tenaga Kerja, Kesempatan Kerja", "Sistem Upah & Pengangguran (Jenis & Cara Mengatasi)", "Indeks Harga", "Inflasi (Penyebab, Jenis, Dampak, Cara Mengatasi)"] },
-          { name: "Kebijakan Ekonomi (Moneter & Fiskal)", subtopics: ["Kebijakan Moneter (Instrumen: Diskonto, Pasar Terbuka, Cadangan Kas)", "Kebijakan Fiskal (Pajak & Pengeluaran Pemerintah)"] },
-          { name: "APBN & APBD", subtopics: ["Fungsi & Tujuan APBN/APBD", "Sumber Penerimaan & Jenis Pengeluaran", "Mekanisme Penyusunan APBN/APBD", "Pajak (Fungsi, Asas, Jenis, PPh, PBB, PPN)"] },
-          { name: "Perdagangan & Kerja Sama Internasional", subtopics: ["Teori Perdagangan Internasional (Keunggulan Mutlak & Komparatif)", "Kebijakan Perdagangan Internasional (Tarif, Kuota, Subsidi, Dumping)", "Neraca Pembayaran & Devisa", "Bentuk-bentuk Kerja Sama Ekonomi Internasional", "Lembaga Ekonomi Internasional (IMF, World Bank, WTO, ASEAN)"] },
-          { name: "Akuntansi Perusahaan Jasa", subtopics: ["Persamaan Dasar Akuntansi", "Bukti Transaksi & Aturan Debit/Kredit", "Jurnal Umum & Buku Besar", "Neraca Saldo", "Jurnal Penyesuaian", "Kertas Kerja (Worksheet)", "Laporan Keuangan (Laba/Rugi, Perubahan Modal, Neraca)", "Jurnal Penutup & Pembalik"] },
-          { name: "Akuntansi Perusahaan Dagang", subtopics: ["Karakteristik Perusahaan Dagang & Syarat Pembayaran", "Jurnal Khusus (Pembelian, Penjualan, Penerimaan Kas, Pengeluaran Kas)", "Buku Besar Utama & Pembantu", "Harga Pokok Penjualan (HPP)", "Jurnal Penyesuaian Perusahaan Dagang (Metode Ikhtisar L/R & HPP)", "Laporan Keuangan Perusahaan Dagang", "Jurnal Penutup & Neraca Saldo Setelah Penutupan"] }
-        ]
-      },
-      {
-        name: "Geografi",
-        topics: [
-          { name: "Pengetahuan Dasar Geografi", subtopics: ["Ruang Lingkup & Objek Studi Geografi", "Konsep Esensial Geografi (Lokasi, Jarak, Keterjangkauan, dll)", "Prinsip Geografi (Distribusi, Interelasi, Deskripsi, Korologi)", "Pendekatan Geografi (Keruangan, Kelingkungan, Kompleks Wilayah)"] },
-          { name: "Pemetaan, Penginderaan Jauh, & SIG", subtopics: ["Peta (Komponen, Skala, Proyeksi)", "Penginderaan Jauh (Komponen, Citra, Interpretasi)", "Sistem Informasi Geografis / SIG (Komponen, Subsistem, Manfaat)"] },
-          { name: "Dinamika Litosfer", subtopics: ["Struktur Lapisan Bumi", "Tenaga Endogen (Tektonisme, Vulkanisme, Seisme)", "Tenaga Eksogen (Pelapukan, Erosi, Mass Wasting, Sedimentasi)", "Siklus Batuan", "Pembentukan & Jenis Tanah"] },
-          { name: "Dinamika Atmosfer", subtopics: ["Lapisan Atmosfer & Manfaatnya", "Unsur Cuaca & Iklim (Suhu, Tekanan, Angin, Kelembapan, Curah Hujan)", "Klasifikasi Iklim (Koppen, Junghuhn, Schmidt-Ferguson)", "El Nino & La Nina", "Lembaga BMKG"] },
-          { name: "Dinamika Hidrosfer", subtopics: ["Siklus Hidrologi", "Perairan Darat (Sungai, Danau, Air Tanah, Rawa)", "Perairan Laut (Zona Laut, Relief Dasar Laut, Arus Laut)", "Potensi & Pelestarian Perairan Indonesia"] },
-          { name: "Dinamika Biosfer (Flora & Fauna)", subtopics: ["Faktor Persebaran Flora & Fauna", "Persebaran Bioma di Dunia", "Persebaran Flora & Fauna di Indonesia (Asiatis, Peralihan, Australis)", "Konservasi Flora & Fauna (Taman Nasional, Cagar Alam)"] },
-          { name: "Dinamika Antroposfer (Kependudukan)", subtopics: ["Sumber Data Kependudukan (Sensus, Survei, Registrasi)", "Kuantitas Penduduk (Kelahiran, Kematian, Migrasi)", "Kualitas Penduduk", "Piramida Penduduk & Bonus Demografi"] },
-          { name: "Sumber Daya Alam (SDA)", subtopics: ["Klasifikasi SDA", "Potensi & Persebaran SDA Indonesia (Kehutanan, Pertambangan, Kelautan, Pariwisata)", "AMDAL & Pembangunan Berkelanjutan"] },
-          { name: "Mitigasi Bencana Alam", subtopics: ["Jenis & Karakteristik Bencana Alam", "Siklus Penanggulangan Bencana", "Mitigasi Gempa, Tsunami, Gunung Meletus, Banjir, Tanah Longsor"] },
-          { name: "Wilayah & Perwilayahan", subtopics: ["Konsep Wilayah (Formal & Fungsional)", "Pusat Pertumbuhan (Teori Tempat Sentral, Kutub Pertumbuhan)", "Perencanaan Tata Ruang Nasional"] },
-          { name: "Interaksi Desa & Kota", subtopics: ["Struktur Keruangan Desa & Kota", "Teori Interaksi Kota (Gravitasi, Titik Henti, Grafik)", "Dampak Interaksi Desa-Kota (Urbanisasi)"] },
-          { name: "Negara Maju & Berkembang", subtopics: ["Karakteristik & Indikator Negara Maju & Berkembang", "Persebaran Negara Maju & Berkembang di Dunia", "Bentuk Kerja Sama Negara Maju & Berkembang"] }
-        ]
-      },
-      {
-        name: "Sosiologi",
-        topics: [
-          { name: "Fungsi Sosiologi", subtopics: ["Sosiologi sebagai Ilmu Pengetahuan", "Objek Kajian Sosiologi", "Fungsi Sosiologi dalam Pemecahan Masalah & Pembangunan", "Peran Sosiolog"] },
-          { name: "Individu, Kelompok, & Hubungan Sosial", subtopics: ["Tindakan Sosial", "Interaksi Sosial (Syarat & Faktor Pendorong)", "Bentuk Interaksi Asosiatif & Disosiatif", "Nilai & Norma Sosial", "Sosialisasi (Tahap, Agen, Tipe)", "Keteraturan Sosial"] },
-          { name: "Gejala Sosial & Masalah Sosial", subtopics: ["Ragam Gejala Sosial di Masyarakat", "Kemiskinan, Kriminalitas, Kesenjangan Sosial", "Perilaku Menyimpang & Teori Penyimpangan", "Pengendalian Sosial (Preventif, Represif)"] },
-          { name: "Kelompok Sosial", subtopics: ["Syarat & Ciri Kelompok Sosial", "Tipe Kelompok Sosial (Klasifikasi Durkheim, Tonnies, Cooley, dll)", "Dinamika Kelompok Sosial"] },
-          { name: "Struktur Sosial & Multikulturalisme", subtopics: ["Diferensiasi Sosial (Agama, Suku, Ras, Profesi)", "Stratifikasi Sosial (Sifat, Dasar, Bentuk)", "Masyarakat Multikultural (Karakteristik & Konsekuensi)", "Interseksi & Konsolidasi"] },
-          { name: "Konflik, Kekerasan, & Perdamaian", subtopics: ["Faktor Penyebab & Bentuk Konflik Sosial", "Dampak Konflik & Kekerasan", "Resolusi Konflik (Akomodasi, Mediasi, Arbitrase)", "Integrasi Sosial & Reintegrasi"] },
-          { name: "Mobilitas Sosial", subtopics: ["Bentuk Mobilitas Sosial (Vertikal, Horizontal, Antargenerasi)", "Faktor Pendorong & Penghambat", "Saluran Mobilitas Sosial", "Dampak Mobilitas Sosial"] },
-          { name: "Perubahan Sosial & Globalisasi", subtopics: ["Teori & Bentuk Perubahan Sosial", "Faktor Pendorong & Penghambat Perubahan", "Dampak Globalisasi & Modernisasi", "Westernisasi, Hedonisme, Konsumerisme", "Kearifan Lokal dalam Menghadapi Globalisasi"] },
-          { name: "Penelitian Sosial", subtopics: ["Jenis Penelitian Sosial (Kualitatif & Kuantitatif)", "Rancangan Penelitian (Topik, Rumusan Masalah, Variabel)", "Teknik Pengumpulan Data (Angket, Wawancara, Observasi)", "Pengolahan & Analisis Data", "Penyusunan Laporan Penelitian Sosial"] }
-        ]
-      },
-      {
-        name: "Sejarah",
-        topics: [
-          { name: "Konsep Dasar Sejarah", subtopics: ["Pengertian & Unsur Sejarah", "Konsep Ruang & Waktu dalam Sejarah", "Berpikir Diakronik, Sinkronik, Kronologis", "Sumber, Bukti, & Fakta Sejarah", "Penelitian Sejarah (Heuristik, Kritik, Interpretasi, Historiografi)"] },
-          { name: "Masa Praaksara", subtopics: ["Asal Usul Nenek Moyang Bangsa Indonesia", "Manusia Purba di Indonesia & Dunia", "Corak Kehidupan Masa Praaksara (Berburu, Bercocok Tanam, Perundagian)", "Hasil Budaya Praaksara (Megalitikum)"] },
-          { name: "Masa Peradaban Kuno Dunia", subtopics: ["Peradaban Mesopotamia & Mesir Kuno", "Peradaban India & Tiongkok Kuno", "Peradaban Yunani & Romawi Kuno"] },
-          { name: "Masa Hindu-Buddha", subtopics: ["Teori Masuknya Hindu-Buddha", "Kerajaan-kerajaan Hindu-Buddha di Nusantara (Kutai, Tarumanegara, Sriwijaya, Majapahit, dll)", "Peninggalan Budaya Hindu-Buddha (Candi, Prasasti, Kitab)"] },
-          { name: "Masa Kerajaan Islam", subtopics: ["Teori Masuknya Islam ke Nusantara", "Kerajaan-kerajaan Islam (Samudera Pasai, Demak, Mataram Islam, Ternate-Tidore, dll)", "Akulturasi Kebudayaan Islam & Lokal"] },
-          { name: "Penjelajahan Samudra & Kolonialisme", subtopics: ["Latar Belakang Penjelajahan Samudra (3G)", "Masa Kekuasaan VOC & Kebijakannya", "Masa Hindia Belanda (Daendels, Raffles, Tanam Paksa, Politik Etis)", "Perlawanan Rakyat Daerah terhadap Kolonialisme (Pangeran Diponegoro, Imam Bonjol, Pattimura, dll)"] },
-          { name: "Pergerakan Nasional", subtopics: ["Faktor Pendorong Pergerakan Nasional", "Organisasi Pergerakan (Budi Utomo, Sarekat Islam, Indische Partij, PNI)", "Sumpah Pemuda 1928", "Masa Pendudukan Jepang (Organisasi Militer, Semimiliter, Romusha, Perlawanan Rakyat)"] },
-          { name: "Proklamasi Kemerdekaan", subtopics: ["Peristiwa Rengasdengklok", "Perumusan Teks Proklamasi", "Makna Proklamasi & Pembentukan Kelengkapan Negara (PPKI)"] },
-          { name: "Mempertahankan Kemerdekaan", subtopics: ["Perjuangan Fisik/Bersenjata (Pertempuran Surabaya, Ambarawa, Bandung Lautan Api)", "Perjuangan Diplomasi (Linggajati, Renville, Roem-Royen, KMB)", "Agresi Militer Belanda I & II"] },
-          { name: "Ancaman Disintegrasi Bangsa", subtopics: ["Pemberontakan PKI Madiun, DI/TII", "Pemberontakan APRA, Andi Azis, RMS", "PRRI/Permesta, G30S/PKI"] },
-          { name: "Demokrasi Liberal & Terpimpin", subtopics: ["Sistem Kabinet Masa Demokrasi Liberal", "Pemilu 1955", "Dekrit Presiden 1959", "Dinamika Politik & Ekonomi Demokrasi Terpimpin"] },
-          { name: "Orde Baru & Reformasi", subtopics: ["Lahirnya Orde Baru (Supersemar)", "Kebijakan Politik & Ekonomi Orde Baru", "Krisis Moneter 1997 & Jatuhnya Soeharto", "Masa Reformasi (Habibie, Gus Dur, Megawati, SBY)"] },
-          { name: "Peran Indonesia di Tingkat Global", subtopics: ["Konferensi Asia Afrika (KAA)", "Gerakan Non-Blok (GNB)", "Misi Garuda & ASEAN", "Perkembangan IPTEK di Era Globalisasi"] },
-          { name: "Peristiwa Kontemporer Dunia", subtopics: ["Perang Dingin (Blok Barat vs Blok Timur)", "Runtuhnya Uni Soviet, Jerman Timur, Yugoslavia", "Konflik Timur Tengah & Apartheid di Afrika Selatan"] }
+          { name: "Sistem Gerak Manusia", subtopics: ["Fungsi Rangka", "Tulang Rawan & Tulang Keras", "Jenis Sendi (Engsel, Peluru, Putar, Pelana)", "Macam-macam Otot (Polos, Lurik, Jantung)", "Kelainan Tulang (Kifosis, Lordosis, Skoliosis, Osteoporosis)"] },
+          { name: "Struktur & Fungsi Tumbuhan", subtopics: ["Jaringan Epidermis, Parenkim, Penyokong", "Xilem & Floem", "Akar, Batang, Daun (Monokotil vs Dikotil)", "Struktur Bunga", "Teknologi terinspirasi struktur tumbuhan"] },
+          { name: "Sistem Pencernaan Manusia", subtopics: ["Zat Makanan (Karbohidrat, Protein, Lemak, Vitamin)", "Uji Makanan (Lugol, Biuret, Benedict)", "Organ Pencernaan (Mulut, Lambung, Usus Halus, Usus Besar)", "Enzim Pencernaan (Ptialin, Pepsin, Lipase, dll)", "Penyakit Pencernaan"] },
+          { name: "Zat Aditif & Adiktif", subtopics: ["Pewarna, Pemanis, Pengawet, Penyedap Alami vs Buatan", "Narkotika, Psikotropika, Zat Psikoaktif lainnya (Kopi, Rokok)", "Dampak negatif & Pencegahan"] },
+          { name: "Sistem Peredaran Darah Manusia", subtopics: ["Komponen Darah (Eritrosit, Leukosit, Trombosit, Plasma)", "Golongan Darah", "Jantung & Pembuluh Darah (Arteri vs Vena)", "Peredaran Darah Besar & Kecil", "Penyakit (Anemia, Hipertensi, Jantung Koroner)"] },
+          { name: "Sistem Pernapasan Manusia", subtopics: ["Organ Pernapasan", "Mekanisme Pernapasan Dada & Perut", "Volume Udara Pernapasan (Tidal, Cadangan, Residu)", "Penyakit (Asma, TBC, Bronkitis)"] },
+          { name: "Sistem Ekskresi Manusia", subtopics: ["Ginjal (Proses pembentukan urine: Filtrasi, Reabsorpsi, Augmentasi)", "Kulit, Paru-paru, Hati sebagai alat ekskresi", "Penyakit (Batu ginjal, Diabetes melitus, Albuminuria)"] }
         ]
       },
       {
         name: "Bahasa Inggris",
         topics: [
-          { name: "Advanced Tenses & Grammar", subtopics: ["Review 16 Tenses", "Passive Voice (All Tenses)", "Conditional Sentences (Type 1, 2, 3)", "Subjunctive (Wish, If only, As if, Would rather)", "Causative Verbs (Have, Get, Make, Let)", "Direct & Indirect Speech (Reported Speech)", "Relative Clauses & Adjective Clauses", "Participles (Present & Past Participle)", "Inversion in Sentences"] },
-          { name: "Text Types (Advanced)", subtopics: ["Narrative Text (Short Story, Novel Extract)", "Analytical Exposition Text", "Hortatory Exposition Text", "Explanation Text", "Discussion Text", "Review Text (Movies, Books)", "News Item Text", "Formal Letters (Application, Inquiry)"] },
-          { name: "Reading Comprehension & Literacy", subtopics: ["Main Idea & Topic Sentence", "Explicit & Implicit Information", "Inference (Drawing Conclusions)", "Reference Words", "Vocabulary in Context (Synonym/Antonym)"] },
-          { name: "Listening & Speaking Expressions", subtopics: ["Offering Help & Services", "Giving Suggestions & Advice", "Expressing Cause & Effect", "Expressing Satisfaction & Dissatisfaction", "Expressing Persuasion & Argumentation", "Presenting a Proposal or Report"] },
-          { name: "TOEFL/UTBK Preparation", subtopics: ["Structure & Written Expression (Error Recognition)", "Reading Comprehension Strategies (Skimming & Scanning)", "Vocabulary Mastery for UTBK", "Literasi Bahasa Inggris (SNBT)"] }
+          { name: "Modals & Obligations", subtopics: ["Must vs Should (Obligation vs Advice)", "Can vs Will (Ability vs Willingness)", "Rules in class/school"] },
+          { name: "Present Continuous & Past Tense", subtopics: ["Present Continuous (What are you doing?)", "Past Continuous", "Simple Past Tense (Regular & Irregular Verbs)", "Telling past experiences"] },
+          { name: "Degrees of Comparison", subtopics: ["Positive degree (as ... as)", "Comparative degree (-er / more)", "Superlative degree (-est / most)"] },
+          { name: "Recount & Narrative Text", subtopics: ["Personal Recount (Holiday experience)", "Narrative Text (Fairy tales, fables)", "Generic structure of Recount & Narrative"] },
+          { name: "Short Messages & Notices", subtopics: ["Greeting cards", "Short message / SMS", "Notice / Warning / Caution in public places"] }
         ]
       },
       {
         name: "Bahasa Indonesia",
         topics: [
-          { name: "Teks Prosedur & Eksplanasi", subtopics: ["Struktur & Kebahasaan Teks Prosedur Kompleks", "Struktur & Kebahasaan Teks Eksplanasi (Fenomena)", "Menyusun Teks Prosedur & Eksplanasi"] },
-          { name: "Teks Ceramah & Pidato", subtopics: ["Unsur & Struktur Teks Ceramah", "Kaidah Kebahasaan Teks Ceramah", "Teknik Berpidato/Berceramah"] },
-          { name: "Teks Cerpen, Novel & Resensi", subtopics: ["Unsur Intrinsik & Ekstrinsik Cerpen/Novel", "Nilai-nilai dalam Karya Sastra (Moral, Sosial, Budaya)", "Struktur Teks Resensi/Ulasan", "Menulis Resensi Buku/Film"] },
-          { name: "Teks Negosiasi & Debat", subtopics: ["Struktur & Kebahasaan Teks Negosiasi", "Unsur-unsur Debat (Mosi, Tim Afirmasi, Oposisi, Netral)", "Tata Cara & Ragam Bahasa Debat"] },
-          { name: "Teks Biografi & Puisi", subtopics: ["Struktur Teks Biografi (Orientasi, Peristiwa, Reorientasi)", "Kaidah Kebahasaan Biografi", "Unsur Pembangun Puisi (Fisik & Batin)", "Mendemonstrasikan & Menulis Puisi"] },
-          { name: "Teks Editorial & Opini", subtopics: ["Fakta & Opini dalam Teks Editorial (Tajuk Rencana)", "Struktur & Kebahasaan Teks Editorial", "Menulis Artikel Opini/Jurnalistik"] },
-          { name: "Karya Tulis Ilmiah", subtopics: ["Sistematika Karya Ilmiah (Makalah, Proposal)", "Penulisan Daftar Pustaka & Kutipan", "Kaidah Kebahasaan Karya Ilmiah (Kata Baku, Kalimat Efektif)"] },
-          { name: "Teks Kritik Sastra & Esai", subtopics: ["Perbedaan Kritik Sastra & Esai", "Struktur & Kebahasaan Kritik Sastra", "Menyusun Esai Pribadi"] },
-          { name: "Literasi & Pemahaman Teks UTBK", subtopics: ["Gagasan Utama & Kesimpulan Paragraf", "Makna Kata, Istilah, & Frasa", "Kalimat Efektif & Padu", "Ejaan Bahasa Indonesia (PUEBI)", "Kepaduan Paragraf & Analisis Teks Panjang (SNBT)"] }
+          { name: "Teks Berita", subtopics: ["Unsur berita (5W+1H / ADiKSiMBa)", "Struktur berita (Kepala, Tubuh, Ekor berita)", "Kaidah kebahasaan (Kalimat langsung, konjungsi bahwa)"] },
+          { name: "Teks Iklan, Slogan, Poster", subtopics: ["Perbedaan Iklan, Slogan, Poster", "Unsur pembentuk iklan", "Menulis & mendesain poster/slogan persuasif"] },
+          { name: "Teks Eksposisi", subtopics: ["Struktur teks eksposisi (Tesis, Argumentasi, Penegasan Ulang)", "Fakta vs Opini dalam teks", "Kata ganti (pronomina) & konjungsi kausalitas"] },
+          { name: "Puisi", subtopics: ["Unsur pembangun puisi (Diksi, Imaji, Majas, Rima, Tema, Amanat)", "Majas personifikasi, metafora, hiperbola", "Menulis puisi"] },
+          { name: "Teks Eksplanasi", subtopics: ["Struktur (Identifikasi fenomena, Deretan penjelas, Ulasan)", "Fenomena alam, sosial, budaya", "Kaidah kebahasaan (Kata teknis, konjungsi kausal/temporal)"] },
+          { name: "Teks Ulasan (Resensi)", subtopics: ["Struktur ulasan (Identitas, Orientasi, Sinopsis, Evaluasi)", "Keunggulan & kelemahan karya (Film, Buku)", "Konjungsi penerang (bahwa, yakni) & penyebaban"] },
+          { name: "Teks Persuasi", subtopics: ["Struktur teks persuasi", "Kalimat ajakan, bujukan, larangan", "Fakta untuk memperkuat argumen persuasif"] },
+          { name: "Teks Drama", subtopics: ["Unsur drama (Prolog, Dialog, Epilog, Tokoh, Latar)", "Jenis-jenis drama", "Menulis naskah drama pendek"] }
+        ]
+      },
+      {
+        name: "IPS Terpadu",
+        topics: [
+          { name: "Keunggulan Lokasi ASEAN", subtopics: ["Letak koordinat & geografis negara ASEAN", "Iklim & Bentang Alam", "Kerja sama antarnegara ASEAN (Ekonomi, Politik, Sosial, Budaya)"] },
+          { name: "Mobilitas Sosial", subtopics: ["Pengertian & Bentuk Mobilitas (Vertikal Naik/Turun, Horizontal)", "Faktor Pendorong & Penghambat Mobilitas", "Saluran Mobilitas Sosial", "Dampak Mobilitas Sosial"] },
+          { name: "Pluralitas Masyarakat Indonesia", subtopics: ["Perbedaan Agama, Budaya, Suku Bangsa, Pekerjaan", "Peran & Fungsi Keragaman Budaya", "Konflik & Integrasi Sosial (Penyebab konflik & cara mengatasi)"] },
+          { name: "Keunggulan & Keterbatasan Antarruang", subtopics: ["Peran Pelaku Ekonomi (RTK, RTP, Pemerintah, Luar Negeri)", "Perdagangan Antardaerah & Antarpulau", "Perdagangan Internasional (Ekspor, Impor)", "Pengembangan Ekonomi Maritim & Agrikultur"] },
+          { name: "Kedatangan Bangsa Barat", subtopics: ["Latar Belakang Kedatangan Bangsa Eropa (3G)", "Masa VOC & Kebijakannya (Monopoli, Ekstirpasi)", "Kebijakan Daendels, Raffles, & Tanam Paksa (Cultuurstelsel)", "Perlawanan Rakyat (Diponegoro, Pattimura, Sultan Hasanuddin)"] },
+          { name: "Pergerakan Nasional", subtopics: ["Faktor Internal & Eksternal Kebangkitan Nasional", "Organisasi Pergerakan (Budi Utomo, Sarekat Islam, PNI)", "Sumpah Pemuda", "Masa Pendudukan Jepang"] }
+        ]
+      }
+    ]
+  },
+  {
+    level: "Kelas 9 SMP",
+    subjects: [
+      {
+        name: "Matematika",
+        topics: [
+          { name: "Perpangkatan & Bentuk Akar", subtopics: ["Sifat-sifat bilangan berpangkat", "Pangkat nol dan negatif", "Merasionalkan bentuk akar", "Operasi penjumlahan & perkalian bentuk akar", "Notasi Ilmiah (Bentuk Baku)"] },
+          { name: "Persamaan Kuadrat", subtopics: ["Bentuk umum persamaan kuadrat (ax² + bx + c = 0)", "Mencari akar dengan Pemfaktoran", "Mencari akar dengan Melengkapkan Kuadrat Sempurna", "Mencari akar dengan Rumus ABC", "Diskriminan & Jenis-jenis akar"] },
+          { name: "Fungsi Kuadrat", subtopics: ["Bentuk umum Fungsi Kuadrat ( y = ax² + bx + c )", "Titik Potong sumbu-X dan sumbu-Y", "Sumbu Simetri (x = -b/2a)", "Nilai Maksimum/Minimum & Titik Puncak", "Menggambar Grafik Parabola"] },
+          { name: "Transformasi Geometri", subtopics: ["Translasi (Pergeseran)", "Refleksi (Pencerminan terhadap Sumbu X, Y, y=x, dll)", "Rotasi (Perputaran dengan pusat 0,0)", "Dilatasi (Perkalian ukuran dengan faktor skala k)", "Komposisi Transformasi"] },
+          { name: "Kesebangunan & Kekongruenan", subtopics: ["Syarat Dua Bangun Kongruen", "Syarat Dua Bangun Sebangun", "Kesebangunan pada Segitiga", "Segitiga Sebangun pada Segitiga Siku-siku (Garis Tinggi)", "Soal Cerita Skala, Foto, dan Model Gedung"] },
+          { name: "Bangun Ruang Sisi Lengkung", subtopics: ["Tabung (Jaring, Luas Permukaan, Luas Selimut, Volume)", "Kerucut (Garis Pelukis, Luas Permukaan, Volume)", "Bola (Luas Permukaan, Volume)", "Bangun ruang gabungan & terpotong"] }
+        ]
+      },
+      {
+        name: "IPA Fisika",
+        topics: [
+          { name: "Listrik Statis", subtopics: ["Muatan Listrik (Proton, Elektron)", "Hukum Coulomb (F = k.q1.q2/r²)", "Medan Listrik & Beda Potensial", "Kelistrikan pada Sistem Saraf Manusia"] },
+          { name: "Listrik Dinamis", subtopics: ["Arus Listrik & Beda Potensial (I = q/t)", "Hukum Ohm (V = I x R)", "Rangkaian Hambatan Seri & Paralel", "Hukum I Kirchhoff (Arus Masuk = Arus Keluar)", "Energi Listrik (W = V.I.t) & Daya Listrik (P = V.I)", "Perhitungan Biaya Listrik Bulanan PLN"] },
+          { name: "Kemagnetan", subtopics: ["Sifat Magnet & Cara Membuat Magnet", "Teori Kemagnetan Bumi (Deklinasi, Inklinasi)", "Gaya Lorentz (F = B.I.L)", "Motor Listrik"] },
+          { name: "Induksi Elektromagnetik", subtopics: ["GGL Induksi (Hukum Faraday)", "Generator (AC & DC)", "Transformator (Trafo Step Up & Step Down)", "Efisiensi Trafo"] }
+        ]
+      },
+      {
+        name: "IPA Biologi",
+        topics: [
+          { name: "Sistem Reproduksi Manusia", subtopics: ["Pembelahan Sel (Mitosis & Meiosis)", "Organ Reproduksi Laki-laki & Spermatogenesis", "Organ Reproduksi Perempuan & Oogenesis", "Siklus Menstruasi, Fertilisasi, Kehamilan", "Penyakit Menular Seksual (HIV/AIDS, Sifilis, Gonore)"] },
+          { name: "Reproduksi Tumbuhan & Hewan", subtopics: ["Vegetatif Alami & Buatan Tumbuhan", "Generatif Tumbuhan Berbiji (Penyerbukan & Pembuahan Ganda)", "Reproduksi Hewan (Aseksual: Tunas, Fragmentasi) & Seksual", "Teknologi Reproduksi (Kultur Jaringan, Inseminasi Buatan)"] },
+          { name: "Pewarisan Sifat (Genetika)", subtopics: ["Materi Genetik (Kromosom, DNA, RNA, Gen)", "Istilah Genetika (Genotipe, Fenotipe, Dominan, Resesif)", "Persilangan Monohibrid (Hukum Mendel I)", "Persilangan Dihibrid (Hukum Mendel II)", "Pewarisan Sifat pada Manusia (Golongan Darah, Buta Warna)"] },
+          { name: "Bioteknologi", subtopics: ["Bioteknologi Konvensional (Pembuatan Tempe, Yoghurt, Nata de Coco, Tape, Keju)", "Bioteknologi Modern (Rekayasa Genetika, Transgenik, Kloning)", "Dampak Positif & Negatif Bioteknologi bagi Lingkungan"] },
+          { name: "Tanah & Kehidupan", subtopics: ["Peran Tanah bagi Kehidupan", "Komponen Penyusun Tanah & Lapisan Tanah", "Organisme Tanah (Cacing, Bakteri, Jamur)", "Upaya Menjaga Kelestarian Tanah"] }
+        ]
+      },
+      {
+        name: "Bahasa Inggris",
+        topics: [
+          { name: "Expression of Hope, Wish & Congratulation", subtopics: ["Saying Congratulations", "Expressing Hope & Wish (I hope..., I wish...)", "Agreement & Disagreement (I agree, I completely disagree)"] },
+          { name: "Labels & Products", subtopics: ["Reading Food & Drug Labels (Nutrition facts, Expiry date, Dosage)", "Procedure Text (Recipes & Manuals)"] },
+          { name: "Present Perfect Tense", subtopics: ["Formulas (Have/Has + V3)", "Since & For", "Differentiating Present Perfect and Simple Past"] },
+          { name: "Passive Voice", subtopics: ["Passive Voice in Present Tense", "Passive Voice in Past Tense", "Changing Active to Passive Sentences"] },
+          { name: "Report Text", subtopics: ["Factual Report vs Descriptive Text", "Generic Structure (General Classification, Description)", "Scientific facts about animals/natural phenomena"] },
+          { name: "Advertisement", subtopics: ["Identifying parts of an advertisement", "Promoting products/services"] }
+        ]
+      },
+      {
+        name: "Bahasa Indonesia",
+        topics: [
+          { name: "Teks Laporan Percobaan", subtopics: ["Struktur teks (Tujuan, Alat & Bahan, Langkah, Hasil, Simpulan)", "Kaidah Kebahasaan (Sinonim, Antonim, Kalimat Kompleks)", "Menyajikan laporan hasil percobaan sains"] },
+          { name: "Pidato Persuasif", subtopics: ["Struktur Pidato (Pembukaan, Isi, Penutup)", "Metode Berpidato (Ekstemporan, Naskah, Hafalan, Impromtu)", "Kalimat aktif, kosa kata emotif, kata tugas"] },
+          { name: "Cerpen (Cerita Pendek)", subtopics: ["Unsur Intrinsik (Tema, Alur, Penokohan, Latar, Sudut Pandang, Amanat)", "Unsur Ekstrinsik (Latar belakang penulis, nilai sosial)", "Menulis cerpen berdasarkan pengalaman"] },
+          { name: "Teks Tanggapan Kritis", subtopics: ["Struktur (Konteks, Deskripsi, Penilaian)", "Memberi pujian dan kritik obyektif", "Bahasa evaluatif yang santun"] },
+          { name: "Teks Diskusi", subtopics: ["Struktur (Isu, Argumen Mendukung/Pro, Argumen Menentang/Kontra, Simpulan)", "Kata rujukan, konjungsi pertentangan (namun, sebaliknya)", "Menyusun teks diskusi isu terkini"] },
+          { name: "Teks Cerita Inspiratif", subtopics: ["Struktur (Orientasi, Perumitan Peristiwa, Komplikasi, Resolusi, Koda)", "Makna tersirat dari kisah inspiratif", "Menulis cerita tokoh inspiratif"] }
+        ]
+      },
+      {
+        name: "IPS Terpadu",
+        topics: [
+          { name: "Interaksi Antarnegara Asia & Benua Lainnya", subtopics: ["Letak & Luas Benua Asia, Amerika, Afrika, Eropa, Australia", "Kondisi Alam & Iklim Negara Maju (Jepang, AS, Inggris)", "Dinamika Penduduk Benua-benua di Dunia", "Pengaruh Perubahan Ruang terhadap Ekonomi & Politik Global"] },
+          { name: "Perubahan Sosial Budaya & Globalisasi", subtopics: ["Bentuk Perubahan Sosial (Evolusi, Revolusi, Direncanakan, Tidak Direncanakan)", "Faktor Pendorong & Penghambat Perubahan Sosial", "Globalisasi di Bidang Ekonomi, Komunikasi, IPTEK, Budaya", "Dampak Positif & Negatif Globalisasi (Westernisasi, Kesenjangan Sosial)"] },
+          { name: "Ketergantungan Antarruang & Kesejahteraan", subtopics: ["Perdagangan Internasional (Teori Keunggulan Mutlak & Komparatif)", "Kebijakan Perdagangan Internasional (Proteksi, Kuota, Tarif, Dumping)", "Ekonomi Kreatif (Gagasan, Potensi, Pusat Keunggulan Ekonomi)", "Pasar Bebas (MEA, AFTA, APEC, MEE, WTO)"] },
+          { name: "Masa Kemerdekaan Hingga Reformasi", subtopics: ["Masa Kemerdekaan (1945-1950) & Mempertahankan Kemerdekaan", "Masa Demokrasi Parlementer (Liberal) (1950-1959)", "Masa Demokrasi Terpimpin (1959-1965) (Dekrit Presiden, Trikora)", "Masa Orde Baru (1966-1998) (Supersemar, Pembangunan Lima Tahun)", "Masa Reformasi (1998-Sekarang)"] }
+        ]
+      }
+    ]
+  },
+
+  // ==========================================
+  // JENJANG SMA/K (Kelas 10 - 12)
+  // ==========================================
+  {
+    level: "Kelas 10 SMA/K",
+    subjects: [
+      {
+        name: "Matematika Wajib",
+        topics: [
+          { name: "Persamaan & Pertidaksamaan Nilai Mutlak", subtopics: ["Konsep Nilai Mutlak", "Persamaan Linear Nilai Mutlak 1 Variabel (|ax+b| = c)", "Pertidaksamaan Nilai Mutlak (|ax+b| < c, |ax+b| > |cx+d|)"] },
+          { name: "Sistem Persamaan Linear Tiga Variabel (SPLTV)", subtopics: ["Metode Substitusi & Eliminasi SPLTV", "Penyelesaian Soal Cerita SPLTV (Model Matematika)"] },
+          { name: "Sistem Pertidaksamaan Dua Variabel", subtopics: ["Sistem Pertidaksamaan Linear-Kuadrat (SPtLDV)", "Sistem Pertidaksamaan Kuadrat-Kuadrat", "Daerah Himpunan Penyelesaian (DHP) pada Grafik"] },
+          { name: "Relasi & Fungsi", subtopics: ["Fungsi Linear (Grafik & Persamaan)", "Fungsi Kuadrat (Menyusun persamaan kuadrat baru)", "Fungsi Rasional (Asimtot datar & tegak)", "Fungsi Komposisi (f o g)(x)", "Fungsi Invers f⁻¹(x)"] },
+          { name: "Trigonometri Dasar", subtopics: ["Ukuran Sudut (Derajat & Radian)", "Perbandingan Trigonometri (Sin, Cos, Tan, Csc, Sec, Cot) pada Segitiga Siku-siku", "Trigonometri Sudut Istimewa (0, 30, 45, 60, 90)", "Trigonometri di Berbagai Kuadran & Sudut Berelasi", "Identitas Trigonometri Dasar", "Aturan Sinus & Aturan Cosinus", "Luas Segitiga dengan Trigonometri", "Grafik Fungsi Trigonometri (Y = A sin(bx + c))"] }
+        ]
+      },
+      {
+        name: "Fisika",
+        topics: [
+          { name: "Hakikat Fisika & Pengukuran", subtopics: ["Metode Ilmiah", "Besaran & Satuan (Dimensi)", "Alat Ukur & Angka Penting", "Ketidakpastian Pengukuran"] },
+          { name: "Vektor", subtopics: ["Penjumlahan Vektor (Poligon, Jajargenjang)", "Metode Analitis (Mengurai Vektor Sumbu X & Y)", "Resultan & Arah Vektor"] },
+          { name: "Gerak Lurus (Kinematika)", subtopics: ["Posisi, Jarak, Perpindahan, Kelajuan, Kecepatan", "Grafik s-t dan v-t pada GLB & GLBB", "Gerak Jatuh Bebas (GJB) & Gerak Vertikal (GVA, GVB)"] },
+          { name: "Gerak Parabola", subtopics: ["Perpaduan GLB (Sumbu X) & GLBB (Sumbu Y)", "Tinggi Maksimum & Jarak Terjauh", "Waktu Mencapai Titik Puncak"] },
+          { name: "Gerak Melingkar Beraturan (GMB)", subtopics: ["Frekuensi, Periode, Kecepatan Sudut, Kecepatan Linear", "Percepatan Sentripetal & Gaya Sentripetal", "Hubungan Roda-roda (Seporos, Bersinggungan, Dihubungkan Tali)"] },
+          { name: "Hukum Newton tentang Gerak (Dinamika)", subtopics: ["Hukum I, II, III Newton", "Gaya Berat, Gaya Normal, Gaya Gesek (Statis & Kinetis)", "Gaya Tegangan Tali, Sistem Katrol, Bidang Miring"] },
+          { name: "Hukum Newton tentang Gravitasi", subtopics: ["Gaya Gravitasi Antar Partikel", "Kuat Medan Gravitasi (Percepatan Gravitasi)", "Hukum I, II, III Kepler & Aplikasinya pada Planet/Satelit"] },
+          { name: "Usaha & Energi", subtopics: ["Usaha (W = F.s cos θ)", "Energi Kinetik (Ek) & Teorema Usaha-Energi", "Energi Potensial Gravitasi & Pegas", "Hukum Kekekalan Energi Mekanik"] },
+          { name: "Momentum & Impuls", subtopics: ["Konsep Momentum (p = m.v) & Impuls (I = F.Δt)", "Teorema Impuls-Momentum", "Hukum Kekekalan Momentum", "Tumbukan Lenting Sempurna, Sebagian (Koefisien Restitusi), Tidak Lenting Sama Sekali"] }
+        ]
+      },
+      {
+        name: "Kimia",
+        topics: [
+          { name: "Struktur Atom & Sistem Periodik Unsur", subtopics: ["Perkembangan Teori Atom (Dalton - Mekanika Kuantum)", "Proton, Elektron, Neutron, Isotop, Isobar, Isoton", "Konfigurasi Elektron (Kulit Bohr & Subkulit Aufbau/Hund/Pauli)", "Bilangan Kuantum (n, l, m, s)", "Sistem Periodik Unsur (Golongan & Periode)", "Sifat Keperiodikan (Jari-jari, Energi Ionisasi, Afinitas Elektron, Keelektronegatifan)"] },
+          { name: "Ikatan Kimia & Bentuk Molekul", subtopics: ["Kestabilan Unsur & Struktur Lewis", "Ikatan Ion (Proses Pembentukan & Sifat)", "Ikatan Kovalen (Tunggal, Rangkap, Polar, Nonpolar, Koordinasi)", "Bentuk Molekul (Teori VSEPR & Domain Elektron)", "Hibridisasi", "Gaya Antarmolekul (Gaya London, Dipol-dipol, Ikatan Hidrogen)"] },
+          { name: "Tata Nama Senyawa & Persamaan Reaksi", subtopics: ["Tata Nama Senyawa Biner & Poliatomik (Anorganik)", "Tata Nama Senyawa Organik Sederhana", "Menyetarakan Persamaan Reaksi Kimia"] },
+          { name: "Hukum Dasar Kimia & Stoikiometri", subtopics: ["Hukum Lavoisier, Proust, Dalton, Gay-Lussac, Hipotesis Avogadro", "Konsep Mol (Hubungan Massa, Volume STP/RTP, Partikel, Molaritas)", "Rumus Empiris & Rumus Molekul", "Stoikiometri Reaksi (Pereaksi Pembatas, Pereaksi Sisa)", "Kadar Zat (Persen, ppm) & Air Kristal (Hidrat)"] }
+        ]
+      },
+      {
+        name: "Biologi",
+        topics: [
+          { name: "Ruang Lingkup Biologi", subtopics: ["Cabang-cabang Ilmu Biologi", "Tingkat Organisasi Kehidupan (Molekul hingga Biosfer)", "Metode Ilmiah & Keselamatan Kerja di Laboratorium"] },
+          { name: "Keanekaragaman Hayati", subtopics: ["Keanekaragaman Tingkat Gen, Jenis, dan Ekosistem", "Persebaran Flora & Fauna Indonesia (Wallace, Weber)", "Upaya Pelestarian Keanekaragaman Hayati (In situ, Ex situ)"] },
+          { name: "Klasifikasi Makhluk Hidup", subtopics: ["Tujuan & Manfaat Klasifikasi", "Sistem Binomial Nomenclature (Tata Nama Ganda)", "Kladogram & Sistem 5 Kingdom"] },
+          { name: "Virus", subtopics: ["Ciri & Struktur Virus (Bakteriofag dll)", "Reproduksi Virus (Daur Litik & Lisogenik)", "Peranan Virus yang Merugikan (Penyakit) & Menguntungkan (Vaksin)"] },
+          { name: "Monera (Bakteri & Archaebacteria)", subtopics: ["Struktur & Bentuk Sel Bakteri", "Reproduksi Bakteri (Seksual & Aseksual)", "Peranan Bakteri (Lactobacillus, Rhizobium, Patogen)"] },
+          { name: "Protista", subtopics: ["Ciri Umum Protista", "Protista Mirip Hewan (Protozoa: Rhizopoda, Flagellata, Ciliata, Sporozoa)", "Protista Mirip Tumbuhan (Alga)", "Protista Mirip Jamur (Oomycota, Myxomycota)"] },
+          { name: "Fungi (Jamur)", subtopics: ["Ciri Umum & Struktur Hifa", "Zygomycota, Ascomycota, Basidiomycota, Deuteromycota", "Mikoriza & Lichenes (Simbiosis Mutualisme)", "Peran Fungi di Bidang Pangan & Medis"] },
+          { name: "Plantae (Tumbuhan)", subtopics: ["Tumbuhan Lumut (Bryophyta) & Daur Hidupnya", "Tumbuhan Paku (Pteridophyta) & Daur Hidupnya", "Tumbuhan Berbiji (Spermatophyta: Gymnospermae & Angiospermae)", "Manfaat Tumbuhan"] },
+          { name: "Animalia (Hewan)", subtopics: ["Invertebrata (Porifera, Cnidaria, Platyhelminthes, Nematoda, Annelida, Mollusca, Arthropoda, Echinodermata)", "Vertebrata (Pisces, Amphibia, Reptilia, Aves, Mammalia)"] },
+          { name: "Ekologi & Perubahan Lingkungan", subtopics: ["Komponen Ekosistem & Interaksi (Rantai, Jaring, Piramida Ekologi)", "Daur Biogeokimia (Karbon, Air, Nitrogen, Fosfor, Sulfur)", "Pencemaran Lingkungan & Penanganannya", "Pemanasan Global, Efek Rumah Kaca, Penipisan Ozon"] }
+        ]
+      },
+      {
+        name: "Bahasa Inggris",
+        topics: [
+          { name: "Tenses Review", subtopics: ["Present (Simple, Continuous, Perfect)", "Past (Simple, Continuous, Perfect)", "Future (Will, Be going to, Continuous)", "Passive Voice Analysis"] },
+          { name: "Descriptive & Recount Text", subtopics: ["Describing historical places/tourist attractions", "Recounting historical events (Biographies)"] },
+          { name: "Narrative Text", subtopics: ["Legends & Myths", "Analyzing Moral Values", "Direct vs Indirect Speech in Narrative"] },
+          { name: "Announcement & Invitation", subtopics: ["Formal vs Informal Invitations", "School/Public Announcements"] },
+          { name: "Expressing Intentions", subtopics: ["I would like to...", "I am going to...", "Plans and intentions"] }
+        ]
+      },
+      {
+        name: "Bahasa Indonesia",
+        topics: [
+          { name: "Teks Laporan Hasil Observasi (SMA)", subtopics: ["Menganalisis isi & struktur LHO tingkat lanjut", "Kaidah kebahasaan (Afiksasi, Frasa Nomina/Verba, Kalimat Kompleks/Simpleks)"] },
+          { name: "Teks Eksposisi (SMA)", subtopics: ["Struktur Tesis, Argumentasi, Penegasan Ulang", "Menulis esai argumentatif/eksposisi", "Pronomina, Nomina, Adjektiva, Verba"] },
+          { name: "Teks Anekdot", subtopics: ["Struktur Anekdot (Abstraksi, Orientasi, Krisis, Reaksi, Koda)", "Makna tersirat/Kritikan dalam Anekdot", "Menulis Anekdot yang menyentil tapi santun"] },
+          { name: "Hikayat & Cerpen", subtopics: ["Karakteristik Hikayat (Kemustahilan, Kesaktian, Anonim, Istanasentris)", "Nilai-nilai dalam Hikayat (Moral, Agama, Sosial)", "Membandingkan Hikayat dengan Cerpen Modern"] },
+          { name: "Teks Negosiasi", subtopics: ["Struktur Negosiasi (Orientasi, Pengajuan, Penawaran, Persetujuan)", "Kalimat Persuasif & Sopan santun tawar-menawar", "Mendemonstrasikan negosiasi bisnis/konflik"] },
+          { name: "Teks Biografi", subtopics: ["Struktur (Orientasi, Kejadian Penting, Reorientasi)", "Karakter Unggul Tokoh", "Penggunaan Pronomina Persona Ketiga & Kata Kerja Tindakan"] },
+          { name: "Puisi (Batin & Fisik)", subtopics: ["Diksi, Imaji, Kata Konkret, Majas, Rima/Ritma", "Tema, Perasaan, Nada, Amanat", "Musikalisasi Puisi & Mendemonstrasikan Puisi"] }
+        ]
+      }
+    ]
+  },
+  {
+    level: "Kelas 11 SMA/K",
+    subjects: [
+      {
+        name: "Matematika Wajib",
+        topics: [
+          { name: "Induksi Matematika", subtopics: ["Prinsip Induksi Matematika", "Penerapan Induksi pada Barisan Bilangan", "Penerapan Induksi pada Keterbagian"] },
+          { name: "Program Linear", subtopics: ["Sistem Pertidaksamaan Linear Dua Variabel", "Fungsi Objektif & Nilai Optimum (Maks/Min)", "Model Matematika dari Masalah Kontekstual", "Garis Selidik"] },
+          { name: "Matriks", subtopics: ["Konsep, Kesamaan, & Transpose Matriks", "Operasi Matriks (Penjumlahan, Pengurangan, Perkalian Skalar, Perkalian Matriks)", "Determinan Matriks (Ordo 2x2 & 3x3 Sarrus/Kofaktor)", "Invers Matriks Ordo 2x2 & 3x3", "Penyelesaian SPLDV & SPLTV dengan Matriks (Aturan Cramer)"] },
+          { name: "Transformasi Geometri (Matriks)", subtopics: ["Translasi, Refleksi, Rotasi, Dilatasi dengan Matriks", "Komposisi Transformasi dengan Perkalian Matriks", "Luas Bayangan Bangun oleh Matriks Transformasi"] },
+          { name: "Barisan & Deret", subtopics: ["Barisan & Deret Aritmatika", "Barisan & Deret Geometri", "Deret Geometri Tak Hingga", "Aplikasi (Bunga Majemuk, Anuitas, Pertumbuhan, Peluruhan)"] },
+          { name: "Limit Fungsi Aljabar", subtopics: ["Konsep Limit Mendekati Suatu Titik", "Limit Bentuk Tentu & Tak Tentu (0/0)", "Metode Substitusi, Pemfaktoran, Akar Sekawan"] },
+          { name: "Turunan Fungsi Aljabar", subtopics: ["Konsep Turunan (Limit h->0)", "Aturan Turunan (Pangkat, Penjumlahan, Perkalian u.v, Pembagian u/v)", "Aturan Rantai", "Aplikasi Turunan (Gradien Garis Singgung, Fungsi Naik/Turun, Titik Stasioner, Nilai Maks/Min)"] },
+          { name: "Integral Tak Tentu Fungsi Aljabar", subtopics: ["Integral sebagai Anti-Turunan", "Rumus Dasar Integral Aljabar", "Sifat-sifat Integral Tak Tentu"] }
+        ]
+      },
+      {
+        name: "Matematika Peminatan (IPA)",
+        topics: [
+          { name: "Persamaan Trigonometri", subtopics: ["Persamaan Trigonometri Dasar (Sin x = Sin a, Cos x = Cos a, Tan x = Tan a)", "Persamaan Trigonometri Bentuk Kuadrat", "Penyelesaian Persamaan a cos x + b sin x = c"] },
+          { name: "Rumus Jumlah & Selisih Sudut Trigonometri", subtopics: ["Rumus Sin(A+B), Cos(A+B), Tan(A+B)", "Rumus Sudut Ganda (Sin 2A, Cos 2A, Tan 2A)", "Rumus Sudut Pertengahan", "Rumus Perkalian Sinus dan Cosinus", "Rumus Penjumlahan & Pengurangan Sinus dan Cosinus"] },
+          { name: "Lingkaran", subtopics: ["Persamaan Lingkaran Pusat (0,0) dan (a,b)", "Bentuk Umum Persamaan Lingkaran (x² + y² + Ax + By + C = 0)", "Posisi Titik dan Garis terhadap Lingkaran", "Persamaan Garis Singgung Lingkaran (Diketahui Titik, Gradien, Titik di Luar)"] },
+          { name: "Polinomial (Suku Banyak)", subtopics: ["Operasi Aljabar pada Polinomial", "Nilai Polinomial (Substitusi & Skema Horner)", "Teorema Sisa (Dibagi x-k, ax-b, Kuadrat)", "Teorema Faktor", "Persamaan Polinomial & Akar-akarnya (Teorema Vieta)"] }
+        ]
+      },
+      {
+        name: "Fisika",
+        topics: [
+          { name: "Dinamika Rotasi & Kesetimbangan Benda Tegar", subtopics: ["Torsi (Momen Gaya) τ = F x r", "Momen Inersia (I = mr²)", "Hukum II Newton pada Gerak Rotasi (τ = I.α)", "Energi Kinetik Rotasi & Menggelinding", "Momentum Sudut (L = I.ω)", "Titik Berat Benda", "Syarat Kesetimbangan Benda Tegar (ΣF=0, Στ=0)"] },
+          { name: "Elastisitas & Hukum Hooke", subtopics: ["Tegangan (Stress), Regangan (Strain), Modulus Young", "Hukum Hooke pada Pegas (F = k.Δx)", "Susunan Pegas Seri & Paralel", "Energi Potensial Pegas"] },
+          { name: "Fluida Statis", subtopics: ["Tekanan Hidrostatis (P = ρ.g.h)", "Hukum Utama Hidrostatis (Pipa U)", "Hukum Pascal (P1 = P2)", "Hukum Archimedes (Gaya Apung Fa = ρ.g.V)", "Tegangan Permukaan, Meniskus, Kapilaritas", "Viskositas & Hukum Stokes (Kecepatan Terminal)"] },
+          { name: "Fluida Dinamis", subtopics: ["Debit Fluida (Q = V/t = A.v)", "Persamaan Kontinuitas (A1.v1 = A2.v2)", "Asas Bernoulli (P + ½ρv² + ρgh = konstan)", "Penerapan Bernoulli (Teorema Torricelli, Venturimeter, Tabung Pitot, Gaya Angkat Sayap Pesawat)"] },
+          { name: "Suhu, Kalor, & Perpindahan Kalor", subtopics: ["Pemuaian (Zat Padat, Cair, Gas)", "Kalor Jenis, Kapasitas Kalor, Perubahan Wujud", "Asas Black", "Laju Perpindahan Kalor (Konduksi, Konveksi, Radiasi Hukum Stefan-Boltzmann)"] },
+          { name: "Teori Kinetik Gas", subtopics: ["Hukum Boyle-Gay Lussac & Persamaan Gas Ideal (PV = nRT)", "Tekanan Gas Ideal (Teori Kinetik)", "Suhu & Energi Kinetik Rata-rata Gas (Ek = 3/2 kT)", "Kecepatan Efektif Gas (vRMS)", "Derajat Kebebasan & Teorema Ekipartisi Energi"] },
+          { name: "Termodinamika", subtopics: ["Usaha pada Proses Termodinamika (Isotermik, Isokhorik, Isobarik, Adiabatik)", "Hukum I Termodinamika (Q = W + ΔU)", "Kapasitas Kalor Gas (Cp dan Cv)", "Hukum II Termodinamika (Entropi)", "Siklus Carnot & Efisiensi Mesin Kalor", "Mesin Pendingin (Koefisien Performansi)"] },
+          { name: "Gelombang Mekanik", subtopics: ["Sifat-sifat Gelombang (Refleksi, Refraksi, Difraksi, Interferensi, Polarisasi)", "Persamaan Gelombang Berjalan (y = A sin(ωt ± kx))", "Fase & Beda Fase Gelombang", "Gelombang Stasioner (Ujung Terikat & Ujung Bebas)"] },
+          { name: "Gelombang Bunyi & Cahaya", subtopics: ["Cepat Rambat Bunyi (Zat Padat, Cair, Gas)", "Dawai & Pipa Organa (Terbuka/Tertutup)", "Intensitas & Taraf Intensitas Bunyi (TI)", "Efek Doppler", "Interferensi Cahaya (Celah Ganda Young, Selaput Tipis)", "Difraksi Cahaya (Celah Tunggal, Kisi)", "Polarisasi Cahaya"] },
+          { name: "Alat Optik (Lanjut)", subtopics: ["Mata & Kacamata (Miopi, Hipermetropi, Presbiopi)", "Lup (Mata Berakomodasi & Tak Berakomodasi)", "Mikroskop (Perbesaran & Panjang Tubus)", "Teropong (Bintang, Bumi)"] }
+        ]
+      },
+      {
+        name: "Kimia",
+        topics: [
+          { name: "Senyawa Hidrokarbon", subtopics: ["Kekhasan Atom Karbon", "Atom C Primer, Sekunder, Tersier, Kuartener", "Alkana, Alkena, Alkuna (Tata Nama IUPAC, Sifat Fisik)", "Isomer (Rangka, Posisi, Geometri Cis-Trans)", "Reaksi Hidrokarbon (Oksidasi/Pembakaran, Substitusi, Adisi Markovnikov, Eliminasi)"] },
+          { name: "Minyak Bumi", subtopics: ["Proses Pembentukan & Fraksi Minyak Bumi (Distilasi Bertingkat)", "Bensin (Bilangan Oktan, TEL, MTBE)", "Dampak Pembakaran Bahan Bakar & Asap Kabut (Smog)"] },
+          { name: "Termokimia", subtopics: ["Sistem & Lingkungan, Reaksi Eksoterm & Endoterm", "Persamaan Termokimia & Jenis-jenis ΔH Standar (Pembentukan, Penguraian, Pembakaran)", "Penentuan ΔH Berdasarkan Kalorimetri (Q = mcΔT)", "Penentuan ΔH Berdasarkan Hukum Hess", "Penentuan ΔH Berdasarkan Data Entalpi Pembentukan (ΔHf)", "Penentuan ΔH Berdasarkan Energi Ikatan Rata-rata"] },
+          { name: "Laju Reaksi", subtopics: ["Molaritas (M)", "Konsep Laju Reaksi (Berkurangnya Reaktan / Bertambahnya Produk)", "Teori Tumbukan & Energi Aktivasi", "Faktor-faktor yang Mempengaruhi Laju (Konsentrasi, Luas Permukaan, Suhu, Katalis)", "Persamaan Laju Reaksi & Orde Reaksi (Dari Data Eksperimen)"] },
+          { name: "Kesetimbangan Kimia", subtopics: ["Kesetimbangan Dinamis & Reaksi Reversibel", "Tetapan Kesetimbangan Konsentrasi (Kc)", "Tetapan Kesetimbangan Tekanan (Kp)", "Hubungan Kc dan Kp", "Pergeseran Kesetimbangan (Asas Le Chatelier: Konsentrasi, Volume, Tekanan, Suhu)", "Perhitungan Kesetimbangan (Derajat Disosiasi)"] },
+          { name: "Asam Basa", subtopics: ["Teori Asam Basa (Arrhenius, Bronsted-Lowry, Lewis)", "Indikator Asam Basa & Trayek pH", "Perhitungan pH Asam Kuat, Basa Kuat", "Perhitungan pH Asam Lemah, Basa Lemah (Ka, Kb, Derajat Ionisasi)"] },
+          { name: "Hidrolisis Garam", subtopics: ["Jenis-jenis Garam (Sifat Asam/Basa/Netral)", "Reaksi Hidrolisis Kation / Anion", "Perhitungan pH Larutan Garam"] },
+          { name: "Larutan Penyangga (Buffer)", subtopics: ["Komponen Buffer Asam & Buffer Basa", "Prinsip Kerja Larutan Penyangga", "Perhitungan pH Larutan Penyangga (Persamaan Henderson-Hasselbalch)", "Peran Buffer dalam Tubuh (Darah, Air Liur)"] },
+          { name: "Titrasi Asam Basa", subtopics: ["Konsep Titrasi (Titran, Titrat, Titik Ekivalen, Titik Akhir Titrasi)", "Kurva Titrasi (Kuat-Kuat, Kuat-Lemah)", "Perhitungan Kadar Zat Berdasarkan Titrasi"] },
+          { name: "Kelarutan & Hasil Kali Kelarutan (Ksp)", subtopics: ["Kelarutan (s)", "Tetapan Hasil Kali Kelarutan (Ksp)", "Hubungan s dan Ksp", "Pengaruh Ion Senama terhadap Kelarutan", "Memprediksi Terbentuknya Endapan (Qc vs Ksp)"] },
+          { name: "Sistem Koloid", subtopics: ["Larutan, Koloid, Suspensi", "Jenis-jenis Koloid (Aerosol, Emulsi, Buih, Sol, Gel)", "Sifat Koloid (Efek Tyndall, Gerak Brown, Adsorpsi, Koagulasi, Dialisis, Elektroforesis)", "Koloid Pelindung & Koloid Liofil/Liofob", "Pembuatan Koloid (Kondensasi & Dispersi)"] }
+        ]
+      },
+      {
+        name: "Biologi",
+        topics: [
+          { name: "Sel", subtopics: ["Sejarah Penemuan Sel & Teori Sel", "Sel Prokariotik vs Eukariotik", "Struktur & Fungsi Organel Sel (Nukleus, Mitokondria, Ribosom, RE, Badan Golgi, Lisosom, Kloroplas, Vakuola, Sitoskeleton)", "Perbedaan Sel Hewan & Tumbuhan", "Transpor Membran (Difusi, Difusi Terfasilitasi, Osmosis, Transpor Aktif, Endositosis, Eksositosis)"] },
+          { name: "Jaringan Tumbuhan", subtopics: ["Jaringan Meristem (Primer & Sekunder/Kambium)", "Jaringan Permanen (Epidermis, Parenkim, Kolenkim, Sklerenkim)", "Jaringan Pengangkut (Xilem & Floem)", "Organ Tumbuhan (Akar, Batang, Daun, Bunga, Buah, Biji)", "Totipotensi & Kultur Jaringan Tumbuhan"] },
+          { name: "Jaringan Hewan", subtopics: ["Jaringan Epitel (Bentuk & Fungsi)", "Jaringan Ikat (Longgar, Padat, Tulang Rawan, Tulang Keras, Darah, Limfa)", "Jaringan Otot (Polos, Lurik, Jantung)", "Jaringan Saraf (Neuron, Neuroglia)"] },
+          { name: "Sistem Gerak", subtopics: ["Tulang Pembentuk Rangka Aksial & Apendikular", "Mekanisme Pembentukan Tulang (Osifikasi)", "Jenis Persendian (Diartrosis, Amfiartrosis, Sinartrosis)", "Struktur Otot Sarkomer", "Mekanisme Kontraksi Otot (Aktin, Miosin, ATP, Kalsium)", "Gangguan Sistem Gerak (Artritis, Fraktura, Atrofi, Tetanus)"] },
+          { name: "Sistem Peredaran Darah", subtopics: ["Plasma Darah & Sel Darah (Eritrosit, Leukosit, Trombosit)", "Mekanisme Pembekuan Darah", "Penggolongan Darah (ABO & Rhesus) serta Transfusi", "Anatomi Jantung (Atrium, Ventrikel, Katup)", "Sistem Peredaran Darah Pulmonalis & Sistemik", "Sistem Limfatik", "Gangguan (Hemofilia, Anemia, Leukemia, Jantung Koroner, Stroke)"] },
+          { name: "Sistem Pencernaan", subtopics: ["Kandungan Zat Makanan (Karbohidrat, Protein, Lemak, Vitamin, Mineral, BMI)", "Saluran Pencernaan (Mulut hingga Anus)", "Kelenjar Pencernaan (Hati, Pankreas, Kelenjar Saliva)", "Proses Pencernaan Mekanik & Kimiawi (Enzim)", "Pencernaan Ruminansia (Sapi)", "Gangguan (Maag, Diare, Sembelit, Apendisitis)"] },
+          { name: "Sistem Pernapasan", subtopics: ["Struktur Organ Pernapasan (Hidung, Faring, Laring, Trakea, Bronkus, Alveolus)", "Mekanisme Inspirasi & Ekspirasi (Pernapasan Dada & Perut)", "Kapasitas Paru-paru (Tidal, Cadangan Inspirasi/Ekspirasi, Residu, Vital, Total)", "Mekanisme Pertukaran Gas (O2 dan CO2)", "Bahaya Rokok & Gangguan Pernapasan (Asma, TBC, Pnemonia, Asfiksi)"] },
+          { name: "Sistem Ekskresi", subtopics: ["Struktur & Fungsi Ginjal (Nefron, Kapsula Bowman, Glomerulus, Tubulus)", "Proses Pembentukan Urine (Filtrasi, Reabsorpsi, Augmentasi)", "Faktor Pengaruh Produksi Urine (ADH)", "Kulit, Paru-paru, Hati (Siklus Ornitin)", "Gangguan Ginjal (Nefritis, Albuminuria, Hematuria, Gagal Ginjal)"] },
+          { name: "Sistem Koordinasi (Saraf & Hormon)", subtopics: ["Struktur Sel Saraf (Neuron, Sinapsis)", "Mekanisme Penghantaran Impuls (Gerak Sadar & Refleks)", "Sistem Saraf Pusat (Otak, Sumsum Tulang Belakang) & Tepi", "Sistem Endokrin (Kelenjar Hipofisis, Tiroid, Adrenal, Pankreas, Gonad) dan Hormonnya", "NAPZA & Dampaknya terhadap Sistem Saraf"] },
+          { name: "Sistem Indera", subtopics: ["Mata (Retina, Lensa, Fotoreseptor)", "Telinga (Membran Timpani, Tulang Pendengaran, Koklea)", "Kulit, Hidung, Lidah (Kemoreseptor, Mekanoreseptor)"] },
+          { name: "Sistem Reproduksi", subtopics: ["Alat Reproduksi Pria & Spermatogenesis", "Alat Reproduksi Wanita & Oogenesis", "Siklus Menstruasi (Hormon FSH, LH, Estrogen, Progesteron)", "Fertilisasi, Kehamilan, Persalinan", "ASI Eksklusif & Keluarga Berencana (KB)", "Penyakit Menular Seksual"] },
+          { name: "Sistem Imunitas (Kekebalan Tubuh)", subtopics: ["Pertahanan Nonspesifik (Kulit, Membran Mukosa, Fagositosis, Inflamasi)", "Pertahanan Spesifik (Sel B / Antibodi & Sel T)", "Imunitas Aktif & Pasif (Vaksin & Serum)", "Gangguan Sistem Imun (Alergi, Autoimun, HIV/AIDS)"] }
+        ]
+      },
+      {
+        name: "Bahasa Inggris",
+        topics: [
+          { name: "Analytical Exposition Text", subtopics: ["Generic Structure (Thesis, Arguments, Reiteration)", "Language Features (Internal conjunctions, Causal conjunctions)", "Formulating strong arguments"] },
+          { name: "Personal Letter", subtopics: ["Structure of Personal Letter", "Formal vs Informal Language", "Replying to a letter"] },
+          { name: "Cause and Effect", subtopics: ["Because of, Due to, Owing to, Thanks to", "Because, Since, As, For", "Writing Cause and Effect essays"] },
+          { name: "Explanation Text", subtopics: ["Generic Structure (General statement, Sequenced explanation)", "Passive Voice usage in Explanation text", "Explaining natural and social phenomena"] },
+          { name: "Passive Voice (Advanced)", subtopics: ["Passive voice in Perfect Tenses", "Passive voice with Modals", "Causative Verbs (Have/Get something done)"] }
+        ]
+      }
+    ]
+  },
+  {
+    level: "Kelas 12 SMA/K",
+    subjects: [
+      {
+        name: "Matematika Wajib",
+        topics: [
+          { name: "Geometri Ruang (Dimensi Tiga)", subtopics: ["Kedudukan Titik, Garis, dan Bidang dalam Ruang", "Jarak Titik ke Titik (Diagonal Sisi, Diagonal Ruang Kubus/Balok)", "Jarak Titik ke Garis", "Jarak Titik ke Bidang (Proyeksi ortogonal)", "Sudut Antara Garis dan Bidang", "Sudut Antara Bidang dan Bidang"] },
+          { name: "Statistika Dasar & Data Berkelompok", subtopics: ["Penyajian Data Berkelompok (Tabel Distribusi Frekuensi, Histogram, Poligon, Ogive)", "Ukuran Pemusatan Data Berkelompok (Rata-rata/Mean, Median, Modus)", "Ukuran Letak Data Berkelompok (Kuartil, Desil, Persentil)", "Ukuran Penyebaran Data Berkelompok (Simpangan Rata-rata, Ragam/Varians, Simpangan Baku/Standar Deviasi)"] },
+          { name: "Kaidah Pencacahan", subtopics: ["Aturan Penjumlahan & Aturan Perkalian (Filling Slots)", "Faktorial (n!)", "Permutasi dari Unsur yang Berbeda (P(n,r))", "Permutasi dengan Unsur yang Sama", "Permutasi Siklis", "Kombinasi (C(n,r))"] },
+          { name: "Peluang Kejadian Majemuk", subtopics: ["Peluang Suatu Kejadian", "Komplemen Suatu Kejadian", "Peluang Kejadian Saling Lepas (P(A U B))", "Peluang Kejadian Saling Bebas (P(A ∩ B))", "Peluang Kejadian Bersyarat"] }
+        ]
+      },
+      {
+        name: "Matematika Peminatan (IPA)",
+        topics: [
+          { name: "Limit Fungsi Trigonometri", subtopics: ["Teorema Limit Trigonometri (sin x / x = 1)", "Limit Trigonometri dengan Manipulasi Aljabar & Identitas", "Limit Trigonometri dengan Rumus Sudut Ganda / Jumlah Selisih"] },
+          { name: "Limit di Ketakhinggaan", subtopics: ["Limit Fungsi Aljabar di Ketakhinggaan (Polinomial & Pecahan rasional)", "Limit Bentuk Akar di Ketakhinggaan (√ax²+bx+c - √px²+qx+r)", "Limit Fungsi Trigonometri di Ketakhinggaan (Substitusi y = 1/x)"] },
+          { name: "Turunan Fungsi Trigonometri", subtopics: ["Rumus Dasar Turunan Sin, Cos, Tan, Sec, Csc, Cot", "Aturan Rantai pada Fungsi Trigonometri", "Turunan Implisit"] },
+          { name: "Aplikasi Turunan Fungsi Trigonometri", subtopics: ["Persamaan Garis Singgung & Garis Normal Kurva Trigonometri", "Kemonotonan (Fungsi Naik/Turun)", "Nilai Maksimum & Minimum, Titik Balik, Titik Belok", "Kecekungan Kurva"] },
+          { name: "Integral Tak Tentu & Tentu Trigonometri", subtopics: ["Integral Dasar Trigonometri", "Metode Substitusi Trigonometri", "Integral Parsial"] },
+          { name: "Aplikasi Integral", subtopics: ["Luas Daerah yang Dibatasi Kurva", "Volume Benda Putar (Metode Cakram & Cincin)"] },
+          { name: "Distribusi Binomial", subtopics: ["Variabel Acak Diskrit & Kontinu", "Fungsi Peluang Variabel Acak Diskrit", "Distribusi Probabilitas Binomial", "Nilai Harapan & Varians Binomial"] },
+          { name: "Distribusi Normal", subtopics: ["Kurva Distribusi Normal", "Distribusi Normal Standar (Kurva Z)", "Membaca Tabel Z", "Penerapan Distribusi Normal dalam Masalah Kontekstual"] }
+        ]
+      },
+      {
+        name: "Fisika",
+        topics: [
+          { name: "Listrik Searah (DC)", subtopics: ["Hukum Ohm & Hambatan Jenis Kawat", "Rangkaian Seri, Paralel, & Jembatan Wheatstone", "Hukum I & II Kirchhoff (Rangkaian 1 dan 2 Loop)", "Energi & Daya Listrik"] },
+          { name: "Listrik Statis", subtopics: ["Gaya Coulomb (F = k.Q1.Q2/r²)", "Medan Listrik (E = k.Q/r²)", "Energi Potensial Listrik & Potensial Listrik (V = k.Q/r)", "Usaha untuk Memindahkan Muatan", "Kapasitor Keping Sejajar (Kapasitas, Energi, Susunan Seri & Paralel)"] },
+          { name: "Medan Magnet", subtopics: ["Hukum Biot-Savart", "Medan Magnet di Sekitar Kawat Lurus & Melingkar", "Medan Magnet pada Solenoida & Toroida", "Gaya Lorentz pada Kawat Berarus & Muatan Bergerak (Kaidah Tangan Kanan)", "Gaya Lorentz Antara Dua Kawat Sejajar"] },
+          { name: "Induksi Elektromagnetik", subtopics: ["Fluks Magnetik", "Hukum Faraday (GGL Induksi E = -N dΦ/dt) & Hukum Lenz", "GGL Induksi pada Kawat Memotong Medan Magnet (E = B.l.v)", "Generator AC/DC & Transformator", "Induktor & GGL Induksi Diri (Henry)"] },
+          { name: "Rangkaian Arus Bolak-Balik (AC)", subtopics: ["Tegangan & Arus Maksimum, Efektif (RMS)", "Fasor (Diagram Vektor)", "Resistor, Induktor (Reaktansi Induktif XL), Kapasitor (Reaktansi Kapasitif XC) pada Rangkaian AC", "Rangkaian Seri RLC & Impedansi (Z)", "Resonansi (Frekuesi Resonansi)", "Daya pada Rangkaian AC (Faktor Daya cos θ)"] },
+          { name: "Radiasi Elektromagnetik", subtopics: ["Spektrum Gelombang Elektromagnetik (Radio, Mikro, Inframerah, Cahaya Tampak, UV, X-Ray, Gamma)", "Sifat & Pemanfaatan GEM dalam Kehidupan", "Bahaya Radiasi GEM"] },
+          { name: "Teori Relativitas Khusus", subtopics: ["Postulat Einstein", "Transformasi Lorentz & Penjumlahan Kecepatan Relativistik", "Dilatasi Waktu (Waktu Relativistik)", "Kontraksi Panjang", "Massa, Momentum, & Energi Relativistik (E = mc²)"] },
+          { name: "Fenomena Kuantum", subtopics: ["Radiasi Benda Hitam & Hukum Pergeseran Wien", "Teori Kuantum Planck (E = h.f)", "Efek Fotolistrik (Fungsi Kerja, Energi Kinetik Maksimum, Potensial Henti)", "Efek Compton (Hamburan Foton)", "Sifat Gelombang dari Partikel (Hipotesis de Broglie)"] },
+          { name: "Inti Atom & Radioaktivitas", subtopics: ["Struktur Inti Atom (Proton, Neutron, Gaya Inti)", "Defek Massa & Energi Ikat Inti (E = Δm.931 MeV)", "Radioaktivitas (Peluruhan Alfa, Beta, Gamma)", "Waktu Paruh & Aktivitas Radioaktif", "Reaksi Fisi (Pembelahan) & Fusi (Penggabungan)", "Reaktor Nuklir & Pemanfaatan Radioisotop"] },
+          { name: "Penyimpanan & Transmisi Data (Digital)", subtopics: ["Teknologi Analog vs Digital", "Prinsip Penyimpanan Data (Hardisk, Flashdisk, CD)", "Prinsip Transmisi Data (Fiber Optik, Satelit)"] }
+        ]
+      },
+      {
+        name: "Kimia",
+        topics: [
+          { name: "Sifat Koligatif Larutan", subtopics: ["Satuan Konsentrasi (Molaritas, Molalitas, Fraksi Mol)", "Penurunan Tekanan Uap (ΔP) & Hukum Raoult", "Kenaikan Titik Didih (ΔTb) & Penurunan Titik Beku (ΔTf)", "Tekanan Osmotik (π)", "Sifat Koligatif Larutan Elektrolit (Faktor Van't Hoff / i)", "Penerapan Sifat Koligatif (Anti beku, Desalinasi, Cairan Infus)"] },
+          { name: "Redoks & Sel Elektrokimia", subtopics: ["Penyetaraan Persamaan Reaksi Redoks (Metode Biloks & Setengah Reaksi pada suasana Asam/Basa)", "Sel Volta/Galvani (Anoda, Katoda, Jembatan Garam)", "Potensial Elektroda Standar (E°) & Potensial Sel (E°sel)", "Deret Volta & Spontanitas Reaksi", "Aplikasi Sel Volta (Baterai Kering, Aki, Sel Bahan Bakar)", "Korosi & Cara Pencegahannya (Perlindungan Katodik)"] },
+          { name: "Sel Elektrolisis", subtopics: ["Prinsip Sel Elektrolisis (Energi Listrik -> Reaksi Kimia)", "Reaksi di Katoda (Reduksi Kation) & Anoda (Oksidasi Anion/Elektroda)", "Hukum Faraday I (W = e.i.t/96500)", "Hukum Faraday II (W1/e1 = W2/e2)", "Aplikasi Elektrolisis (Penyepuhan, Pemurnian Logam)"] },
+          { name: "Kimia Unsur", subtopics: ["Kelimpahan Unsur Utama & Transisi di Alam", "Gas Mulia (Gol VIII A) - Sifat, Pembuatan, Kegunaan", "Halogen (Gol VII A) - Daya Oksidator, Reaksi Pengeseran Halogen", "Alkali (Gol I A) & Alkali Tanah (Gol II A) - Reaksi nyala, Sifat Basa", "Unsur Periode 3 (Na hingga Ar) - Sifat Asam Basa, Pembuatan", "Unsur Transisi Periode 4 (Sc hingga Zn) - Sifat Magnetik, Ion Berwarna, Ion Kompleks", "Tata Nama Senyawa/Ion Kompleks"] },
+          { name: "Senyawa Karbon Turunan Alkana", subtopics: ["Gugus Fungsi Senyawa Karbon", "Alkohol / Alkanol (Tata Nama, Isomer Primer/Sekunder/Tersier, Sifat, Oksidasi Alkohol)", "Eter / Alkoksi Alkana", "Aldehida / Alkanal (Uji Tollens & Fehling)", "Keton / Alkanon", "Asam Karboksilat / Asam Alkanoat", "Ester / Alkyl Alkanoat (Reaksi Esterifikasi, Hidrolisis, Saponifikasi/Penyabunan)", "Haloalkana (Pembuatan & Kegunaan CFC, Teflon)"] },
+          { name: "Benzena & Turunannya", subtopics: ["Struktur & Resonansi Kekule Benzena", "Tata Nama Turunan Benzena (Toluena, Fenol, Anilin, Asam Benzoat, dll)", "Turunan Benzena Disubstitusi (Orto, Meta, Para)", "Reaksi Substitusi Benzena (Halogenasi, Nitrasi, Sulfonasi, Alkilasi)", "Kegunaan & Dampak Benzena"] },
+          { name: "Makromolekul (Polimer)", subtopics: ["Konsep Polimerisasi (Monomer -> Polimer)", "Polimerisasi Adisi (Karet Alam, PVC, Teflon, Polietilena)", "Polimerisasi Kondensasi (Nilon, Dakron, Bakelit)", "Penggolongan Polimer (Alam vs Sintesis, Termoplas vs Termoset)"] },
+          { name: "Biomolekul (Karbohidrat, Protein, Lemak)", subtopics: ["Karbohidrat: Monosakarida (Glukosa, Fruktosa), Disakarida (Sukrosa, Maltosa), Polisakarida (Amilum, Selulosa)", "Uji Karbohidrat (Molisch, Benedict, Iodin)", "Asam Amino (Esensial & Non-Esensial, Zwitter Ion)", "Protein (Ikatan Peptida, Denaturasi, Uji Biuret/Xantoproteat/Timbal asetat)", "Lipid / Lemak (Asam Lemak Jenuh & Tak Jenuh, Fosfolipid, Steroid)", "Angka Kolesterol & Dampak Kesehatan"] }
+        ]
+      },
+      {
+        name: "Biologi",
+        topics: [
+          { name: "Pertumbuhan & Perkembangan", subtopics: ["Konsep Tumbuh & Kembang (Kuantitatif vs Kualitatif)", "Perkecambahan (Epigeal & Hipogeal)", "Pertumbuhan Primer (Meristem Apikal) & Sekunder (Kambium, Lingkaran Tahun)", "Faktor Internal (Gen, Hormon: Auksin, Giberelin, Sitokinin, Gas Etilen, Asam Absisat)", "Faktor Eksternal (Cahaya, Suhu, Nutrisi, Air) & Etiolasi", "Pertumbuhan & Perkembangan Hewan (Fase Embrionik & Pasca-Embrionik, Metamorfosis, Metagenesis)"] },
+          { name: "Enzim & Metabolisme", subtopics: ["Sifat-sifat Enzim (Biokatalisator, Spesifik, Thermolabil)", "Cara Kerja Enzim (Lock and Key vs Induced Fit)", "Faktor yang Mempengaruhi Kerja Enzim (Suhu, pH, Konsentrasi, Inhibitor Kompetitif & Non-Kompetitif)", "Metabolisme: Katabolisme & Anabolisme"] },
+          { name: "Katabolisme", subtopics: ["Respirasi Aerob: Glikolisis (Sitosol)", "Dekarboksilasi Oksidatif & Siklus Krebs (Matriks Mitokondria)", "Transpor Elektron & Fosforilasi Oksidatif (Krista Mitokondria, Menghasilkan 36/38 ATP)", "Respirasi Anaerob: Fermentasi Asam Laktat (Otot Manusia, Bakteri)", "Respirasi Anaerob: Fermentasi Alkohol (Khamir/Saccharomyces)", "Keterkaitan Metabolisme Karbohidrat, Lemak, dan Protein"] },
+          { name: "Anabolisme (Fotosintesis)", subtopics: ["Struktur Kloroplas (Tilakoid, Grana, Stroma)", "Reaksi Terang (Fotofosforilasi Siklik & Non-Siklik, Fotolisis Air, Menghasilkan ATP, NADPH, O2)", "Reaksi Gelap / Siklus Calvin (Fiksasi CO2, Reduksi, Regenerasi RuBP, Menghasilkan Glukosa)", "Tumbuhan C3, C4, dan CAM", "Kemosintesis (Bakteri Nitrifikasi, Belerang)"] },
+          { name: "Substansi Genetika", subtopics: ["Kromosom (Struktur, Bentuk, Autosom & Gonosom, Karyotipe)", "Struktur DNA (Double Helix, Nukleotida, Basa Nitrogen Purin & Pirimidin)", "Struktur RNA (mRNA, tRNA, rRNA)", "Replikasi DNA (Teori Semikonservatif, Enzim Helikase, Polimerase, Ligase)", "Sintesis Protein: Transkripsi (Di Nukleus)", "Sintesis Protein: Translasi (Di Ribosom, Membaca Kodon)"] },
+          { name: "Pembelahan Sel", subtopics: ["Siklus Sel (Interfase: G1, S, G2)", "Mitosis (Profase, Metafase, Anafase, Telofase) & Sitokinesis", "Meiosis I & Meiosis II (Reduksi Kromosom, Crossing Over / Pindah Silang)", "Perbedaan Mitosis & Meiosis", "Gametogenesis Hewan (Spermatogenesis & Oogenesis)", "Gametogenesis Tumbuhan Berbiji (Mikrosporogenesis & Megasporogenesis)"] },
+          { name: "Hukum Mendel & Penyimpangan Semu", subtopics: ["Hukum I Mendel (Segregasi Bebas) & Persilangan Monohibrid", "Hukum II Mendel (Asortasi Bebas) & Persilangan Dihibrid (Rasio 9:3:3:1)", "Testcross & Backcross", "Penyimpangan Semu: Atavisme (Interaksi Gen) - Pial Ayam (9:3:3:1)", "Kriptomeri (Bunga Linaria, 9:3:4)", "Polimeri (Gandum, 15:1)", "Epistasis & Hipostasis (Gandum, 12:3:1)", "Komplementer (Bunga Lathyrus, 9:7)"] },
+          { name: "Pola-pola Hereditas", subtopics: ["Tautan (Linkage) & Tautan Seks (Pautan Kromosom X & Y)", "Pindah Silang (Crossing Over) & Nilai Pindah Silang (NPS)", "Gagal Berpisah (Nondisjunction) & Sindrom Genetik (Down, Turner, Klinefelter)", "Gen Letal Dominan & Resesif"] },
+          { name: "Hereditas pada Manusia", subtopics: ["Pedigree (Peta Silsilah Keluarga)", "Pewarisan Golongan Darah (Sistem ABO, Rhesus)", "Penyakit Menurun Autosom (Albino, PTC, Sickle Cell Anemia, Thalassemia)", "Penyakit Menurun Gonosom / Tautan X (Buta Warna, Hemofilia)", "Upaya Menghindari Penyakit Menurun (Eugenetika)"] },
+          { name: "Mutasi", subtopics: ["Pengertian Mutasi & Mutan, Mutasi Alami vs Buatan", "Mutasi Titik / Gen (Substitusi: Transisi, Transversi; Insersi, Delesi)", "Dampak Mutasi Gen (Silent, Missense, Nonsense, Frameshift Mutation)", "Mutasi Kromosom / Aberasi (Delesi, Duplikasi, Inversi, Translokasi)", "Mutasi Jumlah Kromosom (Aneuploidi: Monosomi, Trisomi; Euploidi: Poliploidi pada Tanaman)", "Mutagen (Fisika, Kimia, Biologi)"] },
+          { name: "Evolusi", subtopics: ["Teori Asal Usul Kehidupan (Abiogenesis Aristoteles, Biogenesis Pasteur, Evolusi Kimia Oparin-Haldane-Urey, Evolusi Biologi)", "Teori Evolusi (Lamarck vs Darwin vs Weismann)", "Mekanisme Evolusi Darwin (Seleksi Alam & Adaptasi)", "Petunjuk Evolusi (Fosil, Anatomi Perbandingan Homologi/Analogi, Embriologi Perbandingan, Sisa Alat Tubuh, Biokimia)", "Hukum Hardy-Weinberg (p² + 2pq + q² = 1) & Syarat Keseimbangan", "Mekanisme Spesiasi (Isolasi Geografis, Reproduksi)"] },
+          { name: "Bioteknologi", subtopics: ["Prinsip Dasar Bioteknologi Konvensional (Fermentasi) vs Modern (Rekayasa Genetika)", "Teknologi DNA Rekombinan (Plasmid Ti, Enzim Restriksi Endonuklease, Enzim Ligase)", "Kloning (Transfer Inti / Somatic Cell Nuclear Transfer - Domba Dolly)", "Fusi Sel (Hibridoma & Antibodi Monoklonal)", "Kultur Jaringan Tumbuhan (Sifat Totipotensi)", "Aplikasi Bioteknologi di Bidang Medis (Hormon Insulin Buatan, Vaksin Transgenik, Terapi Gen)", "Aplikasi Bioteknologi Pertanian (Kapas Bt, Golden Rice)", "Dampak Bioteknologi (Etika, Ekologi, Kesehatan, Sosial Ekonomi)"] }
+        ]
+      },
+      {
+        name: "Bahasa Inggris",
+        topics: [
+          { name: "Application Letter", subtopics: ["Parts of an Application Letter (Heading, Salutation, Body, Closing)", "Writing a strong Cover Letter", "Curriculum Vitae (CV) & Resume"] },
+          { name: "News Item Text", subtopics: ["Generic Structure (Newsworthy event, Background events, Sources)", "Language Features (Action verbs, Saying verbs, Passive Voice)", "Analyzing headlines & journalistic writing"] },
+          { name: "If Clause (Conditional Sentences) Advanced", subtopics: ["If Clause + Imperative/Suggestion", "If Clause + General Truth", "If Clause to show a dream"] },
+          { name: "Caption & Visual Information", subtopics: ["How to write a good caption for pictures/graphs", "Interpreting charts, graphs, and tables", "Message within a photo"] },
+          { name: "Review Text", subtopics: ["Critiquing artworks, movies, and literature", "Structure: Orientation, Evaluation, Interpretative Recount, Evaluative Summation"] },
+          { name: "UTBK/SNBT Preparation", subtopics: ["Literasi Bahasa Inggris: Reading Comprehension Deep Dive", "Finding implicit meaning and author's tone", "Synthesizing information from multiple texts", "Advanced Vocabulary & Idioms"] }
         ]
       }
     ]

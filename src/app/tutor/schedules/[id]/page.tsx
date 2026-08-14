@@ -411,11 +411,11 @@ export default function LessonWorkspacePage() {
 
             <div className="mt-6 flex justify-end items-center border-t border-slate-100 pt-4">
               <div className="mr-4 text-xs text-slate-400 italic">
-                Rencana ini akan dikirim & disimpan di sistem Tata Usaha.
+                Rencana ini akan dikirim & disimpan di sistem Student Advisor.
               </div>
               <Button onClick={saveWorkspace} disabled={saving || isCompleted || isGeneratingAi} className="gap-2 bg-indigo-600 hover:bg-indigo-700">
                 {saving || isGeneratingAi ? <Loader2 className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />}
-                {isGeneratingAi ? 'Menyusun Modul...' : 'Simpan Rencana & Kirim ke TU'}
+                {isGeneratingAi ? 'Menyusun Modul...' : 'Simpan Rencana & Kirim ke Student Advisor'}
               </Button>
             </div>
 
