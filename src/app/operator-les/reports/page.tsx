@@ -14,6 +14,7 @@ export default function OperatorReportsPage() {
   const [selectedSchedule, setSelectedSchedule] = useState<any>(null);
   const [attendances, setAttendances] = useState<any[]>([]);
   const [loadingDetails, setLoadingDetails] = useState(false);
+  const [errorMsg, setErrorMsg] = useState("");
 
   useEffect(() => {
     fetchSchedules();
@@ -26,11 +27,18 @@ export default function OperatorReportsPage() {
       .from("center_schedules")
       .select(`
         *,
-        classes (name, branches (name)),
-        profiles!tutor_id (full_name)
+        classes (name),
+        profiles (full_name)
       `)
       .in("status", ["ongoing", "completed"])
       .order("start_time", { ascending: false });
+
+    if (error) {
+      console.error("Supabase Error fetching schedules:", error);
+      setErrorMsg(error.message);
+    } else {
+      setErrorMsg("");
+    }
 
     if (data) setSchedules(data);
     setLoading(false);
@@ -78,7 +86,12 @@ export default function OperatorReportsPage() {
         </div>
       </div>
 
-      {loading ? (
+      {errorMsg ? (
+        <div className="bg-red-50 border border-red-200 text-red-700 p-4 rounded-xl">
+          <p className="font-bold">Gagal mengambil data laporan:</p>
+          <pre className="mt-2 text-sm whitespace-pre-wrap">{errorMsg}</pre>
+        </div>
+      ) : loading ? (
         <div className="flex justify-center p-12">
           <Loader2 className="w-8 h-8 animate-spin text-slate-400" />
         </div>
