@@ -267,7 +267,7 @@ export default function BayarNiaPage() {
         toast.error("Akun dibuat, namun gagal login otomatis.");
       }
       
-      setCheckoutStep(3); // Success Screen
+      setCheckoutStep(4); // Success Screen
     } catch (error: any) {
       toast.error("Gagal membuat akun: " + error.message);
     } finally {
