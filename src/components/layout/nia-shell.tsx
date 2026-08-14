@@ -4,7 +4,7 @@ import React, { useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useAuth } from "@/lib/auth-context";
-import { Sparkles, BookOpen, User, LogOut, Menu, X, LayoutDashboard, Settings } from "lucide-react";
+import { Sparkles, BookOpen, User, LogOut, Menu, X, LayoutDashboard, Settings, MapPin } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 
 export function NiaShell({ children }: { children: React.ReactNode }) {
@@ -23,6 +23,7 @@ export function NiaShell({ children }: { children: React.ReactNode }) {
     ] : []),
     ...(profile?.role === "operator_les" ? [
       { name: "Manajemen Paket", href: "/operator-les/packages", icon: BookOpen },
+      { name: "Cabang Center", href: "/operator-les/branches", icon: MapPin },
       { name: "Promo Voucher", href: "/operator-les/promos", icon: Sparkles },
     ] : []),
   ];
