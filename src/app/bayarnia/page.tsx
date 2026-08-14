@@ -24,9 +24,11 @@ export default function BayarNiaPage() {
   const [showLevelModal, setShowLevelModal] = useState(false);
   const [showBranchModal, setShowBranchModal] = useState(false);
   const [showPromoModal, setShowPromoModal] = useState(false);
+  const [showXendit, setShowXendit] = useState(false);
 
   const supabase = createClient();
   const [isProcessingSignup, setIsProcessingSignup] = useState(false);
+  const [invoiceId, setInvoiceId] = useState("");
 
   // Form & Checkout State
   const [form, setForm] = useState({ name: "", email: "", password: "", voucher: "", phone: "", schoolName: "", parentName: "", parentPhone: "" });
@@ -134,7 +136,12 @@ export default function BayarNiaPage() {
     setCheckoutStep(2); // Go to Invoice
   };
 
-  const processPayment = async () => {
+  const handleBeliClick = () => {
+    setShowXendit(true);
+  };
+
+  const handlePaymentSuccess = async () => {
+    setShowXendit(false);
     setIsProcessingSignup(true);
     try {
       // 1. Sign Up & Assign Subscription
@@ -161,6 +168,8 @@ export default function BayarNiaPage() {
         toast.error("Akun dibuat, namun gagal login otomatis.");
       }
       
+      // Generate mock invoice id
+      setInvoiceId(`INV-${new Date().getFullYear()}${new Date().getMonth()+1}${new Date().getDate()}-${Math.floor(1000 + Math.random() * 9000)}`);
       setCheckoutStep(3); // Success Screen
     } catch (error: any) {
       toast.error("Gagal membuat akun: " + error.message);
@@ -175,14 +184,34 @@ export default function BayarNiaPage() {
 
   if (checkoutStep === 3) {
     return (
-      <div className="min-h-screen bg-slate-50 flex items-center justify-center p-6">
-        <div className="bg-white p-10 rounded-[2rem] shadow-xl text-center max-w-md w-full border border-slate-100">
+      <div className="min-h-screen bg-slate-50 flex items-center justify-center p-6 font-sans">
+        <div className="bg-white p-10 rounded-[2rem] shadow-xl max-w-md w-full border border-slate-100">
           <div className="w-20 h-20 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-6">
             <CheckCircle className="w-10 h-10 text-green-500" />
           </div>
-          <h2 className="text-3xl font-black text-slate-900 mb-2">Berhasil!</h2>
-          <p className="text-slate-600 mb-8">Pendaftaran selesai dan paket belajar sudah aktif. Selamat belajar di NIA Tutoring!</p>
-          <button onClick={() => window.location.href = '/sobat-nia'} className="w-full py-4 bg-orange-500 text-white font-bold rounded-xl hover:bg-orange-600">
+          <h2 className="text-3xl font-black text-slate-900 mb-2 text-center">Pembayaran Berhasil!</h2>
+          <p className="text-slate-500 mb-6 text-center">Terima kasih, pendaftaran kamu telah selesai dan paket belajar sudah aktif.</p>
+          
+          <div className="bg-slate-50 rounded-2xl p-5 mb-8 border border-slate-200 border-dashed">
+            <div className="flex justify-between items-center mb-3">
+              <span className="text-sm text-slate-500">No. Invoice</span>
+              <span className="font-bold text-slate-900">{invoiceId}</span>
+            </div>
+            <div className="flex justify-between items-center mb-3">
+              <span className="text-sm text-slate-500">Paket</span>
+              <span className="font-bold text-slate-900 text-right max-w-[200px] truncate">{selectedPackage?.name}</span>
+            </div>
+            <div className="flex justify-between items-center mb-3">
+              <span className="text-sm text-slate-500">Metode</span>
+              <span className="font-bold text-slate-900">{paymentMethod === 'Lunas' ? 'Lunas' : installmentVariation}</span>
+            </div>
+            <div className="pt-3 border-t border-slate-200 flex justify-between items-center mt-2">
+              <span className="font-bold text-slate-900">Total Dibayar</span>
+              <span className="text-lg font-black text-orange-600">Rp {finalPrice.toLocaleString()}</span>
+            </div>
+          </div>
+          
+          <button onClick={() => window.location.href = '/sobat-nia'} className="w-full py-4 bg-orange-500 text-white font-bold rounded-xl hover:bg-orange-600 shadow-lg shadow-orange-500/20">
             Masuk ke Kelas
           </button>
         </div>
@@ -291,11 +320,10 @@ export default function BayarNiaPage() {
               )}
 
               <button 
-                onClick={processPayment}
-                disabled={isProcessingSignup}
+                onClick={handleBeliClick}
                 className="w-full mt-6 py-4 bg-orange-500 hover:bg-orange-600 text-white font-bold rounded-xl text-lg flex justify-center items-center gap-2"
               >
-                {isProcessingSignup ? <Loader2 className="w-5 h-5 animate-spin" /> : "Beli"}
+                Beli
               </button>
               
               <div className="mt-4 text-center">
@@ -344,6 +372,24 @@ export default function BayarNiaPage() {
             </div>
           )}
         </AnimatePresence>
+
+        {/* Xendit Mock Payment Modal */}
+        <XenditPaymentModal
+          isOpen={showXendit}
+          onClose={() => setShowXendit(false)}
+          amount={finalPrice}
+          onSuccess={handlePaymentSuccess}
+          title={`Pembayaran: ${selectedPackage?.name}`}
+        />
+        
+        {/* Loading Overlay when processing signup */}
+        {isProcessingSignup && (
+          <div className="fixed inset-0 z-[200] bg-slate-900/60 backdrop-blur-sm flex flex-col items-center justify-center text-white">
+            <Loader2 className="w-12 h-12 animate-spin text-orange-500 mb-4" />
+            <h2 className="text-xl font-bold">Memproses Pembayaran & Akun...</h2>
+            <p className="text-slate-300">Mohon tunggu sebentar</p>
+          </div>
+        )}
       </div>
     );
   }
