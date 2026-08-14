@@ -57,7 +57,15 @@ export default function BayarNiaPage() {
       
       // Fetch branches
       const { data: branchData } = await supabase.from("nia_branches").select("*").eq("is_active", true);
-      if (branchData) setBranches(branchData);
+      if (branchData && branchData.length > 0) {
+        setBranches(branchData);
+      } else {
+        setBranches([
+          { id: 'b1', name: 'NIA Center Jakarta Selatan', address: 'Jl. Kemang Raya No. 12', city: 'Jakarta', is_active: true },
+          { id: 'b2', name: 'NIA Center Bandung', address: 'Jl. Dago No. 100', city: 'Bandung', is_active: true },
+          { id: 'b3', name: 'NIA Center Surabaya', address: 'Jl. Raya Darmo No. 50', city: 'Surabaya', is_active: true }
+        ]);
+      }
 
       // Fetch active promos
       const { data: promoData } = await supabase.from("nia_promo_codes").select("*");
@@ -259,7 +267,7 @@ export default function BayarNiaPage() {
   // RENDERING COMPONENTS
   // -------------------------------------------------------------
 
-  if (checkoutStep === 3) {
+  if (checkoutStep === 4) {
     return (
       <div className="min-h-screen bg-slate-50 flex items-center justify-center p-6 font-sans">
         <div className="bg-white p-10 rounded-[2rem] shadow-xl max-w-md w-full border border-slate-100">
@@ -296,152 +304,49 @@ export default function BayarNiaPage() {
     );
   }
 
-  if (checkoutStep === 2) {
+  if (checkoutStep === 3) {
     // -------------------------------------------------------------
-    // INVOICE CHECKOUT PAGE (RUANGGURU STYLE)
+    // INVOICE PREVIEW PAGE (PDF)
     // -------------------------------------------------------------
     return (
-      <div className="min-h-screen bg-slate-50 font-sans">
-        {/* Header Checkout */}
-        <div className="bg-gradient-to-r from-teal-500 to-teal-400 p-4 flex items-center gap-4 text-white">
-          <button onClick={() => setCheckoutStep(1)} className="w-10 h-10 bg-white/20 rounded-full flex items-center justify-center hover:bg-white/30 transition">
-            <ChevronRight className="w-6 h-6 rotate-180" />
+      <div className="min-h-screen bg-slate-50 font-sans p-6 flex flex-col items-center">
+        <div className="w-full max-w-4xl mb-8 mt-10">
+          <button onClick={() => setCheckoutStep(2)} className="flex items-center gap-2 text-slate-500 hover:text-slate-900 font-bold mb-4">
+            <ChevronRight className="w-5 h-5 rotate-180" /> Kembali ke Data Diri
           </button>
-          <div className="text-xl font-bold">{selectedMode === 'Center' ? 'NIA Tutoring Center' : 'NIA Tutoring Online'}</div>
-        </div>
-
-        <div className="max-w-6xl mx-auto p-4 md:p-8 grid md:grid-cols-[1fr_400px] gap-6">
-          {/* LEFT: Package Info & PDF Reader */}
-          <div className="space-y-4">
-            {selectedMode === 'Center' && selectedBranch && (
-              <div className="bg-white p-4 rounded-2xl flex items-center justify-between border border-slate-200">
-                <div className="flex items-center gap-3">
-                  <BookOpen className="w-6 h-6 text-slate-700" />
-                  <div>
-                    <div className="font-bold text-slate-900">{selectedBranch.name}</div>
-                    <div className="text-xs text-slate-500">{selectedBranch.address}</div>
-                  </div>
-                </div>
-                <button onClick={() => { setCheckoutStep(0); setShowBranchModal(true); }} className="px-4 py-1.5 border border-slate-300 rounded-full text-sm font-bold text-slate-700">Ubah</button>
-              </div>
-            )}
-
-            <div className="bg-white rounded-2xl border-2 border-teal-500/20 shadow-sm relative overflow-hidden h-[600px] flex flex-col">
-              <div className="p-4 border-b border-slate-100 bg-slate-50 flex items-center gap-2">
+          
+          <div className="bg-white rounded-[2rem] p-8 shadow-xl border border-slate-100 flex flex-col items-center">
+            <h2 className="text-3xl font-black text-slate-900 mb-2">Pratinjau Draft Invoice</h2>
+            <p className="text-slate-500 mb-8 text-center max-w-lg">Mohon periksa kembali rincian pesanan Anda sebelum melanjutkan ke pembayaran.</p>
+            
+            <div className="w-full max-w-3xl bg-slate-100 rounded-2xl overflow-hidden h-[600px] flex flex-col mb-8 border border-slate-200">
+              <div className="p-4 border-b border-slate-200 bg-slate-50 flex items-center gap-2">
                 <div className="w-3 h-3 rounded-full bg-red-400"></div>
                 <div className="w-3 h-3 rounded-full bg-amber-400"></div>
                 <div className="w-3 h-3 rounded-full bg-green-400"></div>
                 <span className="ml-2 text-xs font-bold text-slate-500">Draft Invoice - Pratinjau PDF</span>
               </div>
               {pdfUrl ? (
-                <iframe src={pdfUrl} className="w-full flex-1 border-none" title="Draft Invoice PDF"></iframe>
+                <iframe src={pdfUrl} className="w-full flex-1 border-none bg-white" title="Draft Invoice PDF"></iframe>
               ) : (
                 <div className="flex-1 flex items-center justify-center text-slate-400 font-bold">Membuat PDF...</div>
               )}
             </div>
-          </div>
-
-          {/* RIGHT: Payment Config */}
-          <div className="space-y-4">
-            <div className="bg-white p-6 rounded-2xl border border-slate-200">
-              <label className="block font-bold text-slate-900 mb-2">Pilih metode pelunasan</label>
-              <select value={paymentMethod} onChange={(e) => setPaymentMethod(e.target.value)} className="w-full p-3 border border-slate-200 rounded-xl focus:border-orange-500 focus:ring-1 focus:ring-orange-500 outline-none">
-                <option value="Lunas">Pembayaran Lunas</option>
-                <option value="Cicilan">Pembayaran Cicilan</option>
-              </select>
-
-              {paymentMethod === 'Cicilan' && (
-                <div className="mt-3">
-                  <label className="block text-sm text-slate-500 mb-2">Opsi Cicilan (Setiap opsi akan dikenakan biaya admin Rp 50.000 / termin)</label>
-                  <select value={installmentVariation} onChange={(e) => setInstallmentVariation(e.target.value)} className="w-full p-3 border border-slate-200 rounded-xl focus:border-orange-500 focus:ring-1 focus:ring-orange-500 outline-none">
-                    <option value="3x">Cicilan 3x (3 Bulan)</option>
-                    <option value="6x">Cicilan 6x (6 Bulan)</option>
-                  </select>
-                </div>
-              )}
-            </div>
-
-            <div className="bg-white p-6 rounded-2xl border border-slate-200">
-              <label className="block font-bold text-slate-900 mb-2">Gunakan kode diskon</label>
-              <div 
-                onClick={() => setShowPromoModal(true)}
-                className={`w-full p-4 border rounded-xl flex items-center justify-between cursor-pointer transition ${appliedPromo ? 'border-green-500 bg-green-50' : 'border-slate-200 hover:bg-slate-50'}`}
-              >
-                <div className="flex items-center gap-3">
-                  <div className={`w-6 h-6 rounded-full flex items-center justify-center ${appliedPromo ? 'bg-green-500 text-white' : 'bg-slate-200 text-slate-400'}`}>
-                    <CheckCircle2 className="w-4 h-4" />
-                  </div>
-                  <div>
-                    <div className="font-bold text-slate-800">{appliedPromo ? appliedPromo.code : 'Punya kode diskon atau referral?'}</div>
-                    {appliedPromo && <div className="text-xs text-green-700">Dapat potongan harga Rp {appliedPromo.discount_value.toLocaleString()}</div>}
-                  </div>
-                </div>
-                <ChevronRight className="w-5 h-5 text-slate-400" />
-              </div>
-              
-              <div className="mt-6 pt-6 border-t border-slate-100 flex items-end justify-between">
-                <span className="text-slate-500 font-medium">Total Harga</span>
-                <span className="text-2xl font-black text-red-600">Rp {finalPrice.toLocaleString()}</span>
-              </div>
-              {paymentMethod === 'Cicilan' && (
-                <p className="text-xs text-slate-500 mt-2 text-right">*(Ini adalah tagihan bulan pertama)</p>
-              )}
-
+            
+            <div className="w-full max-w-md">
               <button 
                 onClick={handleBeliClick}
-                className="w-full mt-6 py-4 bg-orange-500 hover:bg-orange-600 text-white font-bold rounded-xl text-lg flex justify-center items-center gap-2"
+                className="w-full py-4 bg-orange-500 hover:bg-orange-600 text-white font-bold rounded-xl text-lg flex justify-center items-center gap-2"
               >
-                Beli
+                Lanjutkan Pembayaran
               </button>
-              
               <div className="mt-4 text-center">
-                <p className="text-[10px] text-slate-400">Dengan menekan Beli, kamu sudah menyetujui Syarat dan Ketentuan.</p>
+                <p className="text-[10px] text-slate-400">Dengan menekan tombol di atas, kamu menyetujui Syarat dan Ketentuan.</p>
               </div>
             </div>
           </div>
         </div>
-
-        {/* Promo Modal */}
-        <AnimatePresence>
-          {showPromoModal && (
-            <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
-              <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="absolute inset-0 bg-slate-900/40" onClick={() => setShowPromoModal(false)} />
-              <motion.div initial={{ opacity: 0, scale: 0.95, y: 20 }} animate={{ opacity: 1, scale: 1, y: 0 }} exit={{ opacity: 0, scale: 0.95, y: 20 }} className="relative bg-white rounded-3xl p-6 w-full max-w-md shadow-2xl">
-                <div className="flex justify-between items-center mb-6">
-                  <h3 className="text-xl font-bold">Gunakan kode diskon</h3>
-                  <button onClick={() => setShowPromoModal(false)}><X className="w-5 h-5 text-slate-400" /></button>
-                </div>
-                
-                <div className="flex gap-2 mb-6">
-                  <input type="text" value={form.voucher} onChange={e => setForm({...form, voucher: e.target.value})} placeholder="Ketik kode diskon..." className="flex-1 p-3 border border-slate-200 rounded-xl outline-none focus:border-orange-500 uppercase" />
-                  <button onClick={handleApplyVoucherText} className="px-4 py-3 bg-white border border-slate-200 rounded-xl font-bold hover:bg-slate-50">Terapkan</button>
-                </div>
-
-                <h4 className="font-bold text-slate-700 mb-3">Kamu bisa langsung pakai kode ini!</h4>
-                <div className="space-y-3 max-h-60 overflow-y-auto">
-                  {availablePromos.map(promo => (
-                    <div key={promo.id} className="border border-teal-200 bg-teal-50/50 rounded-xl p-4 relative overflow-hidden flex justify-between items-center">
-                      <div className="absolute right-0 top-0 text-teal-100 opacity-20 transform translate-x-4 -translate-y-4">
-                        <Ticket className="w-24 h-24" />
-                      </div>
-                      <div className="relative z-10">
-                        <div className="font-black text-slate-900 text-lg mb-1">{promo.code}</div>
-                        <div className="text-sm text-slate-600 mb-2">Hemat {promo.discount_type === 'percent' ? `${promo.discount_value}%` : `Rp ${promo.discount_value.toLocaleString()}`}</div>
-                        <div className="text-xs text-slate-400 flex items-center gap-1"><CalendarIcon className="w-3 h-3"/> Berlaku hingga {promo.valid_until ? new Date(promo.valid_until).toLocaleDateString('id-ID') : 'Selamanya'}</div>
-                      </div>
-                      <button onClick={() => handleApplyVoucher(promo)} className="relative z-10 px-4 py-2 bg-white text-teal-600 font-bold text-sm border border-teal-200 rounded-full hover:bg-teal-50">Gunakan</button>
-                    </div>
-                  ))}
-                  {appliedPromo && (
-                    <button onClick={() => setAppliedPromo(null)} className="w-full py-3 text-center text-red-500 font-bold hover:bg-red-50 rounded-xl">Hapus Promo</button>
-                  )}
-                </div>
-              </motion.div>
-            </div>
-          )}
-        </AnimatePresence>
-
-        {/* Xendit Mock Payment Modal */}
+        
         <XenditPaymentModal
           isOpen={showXendit}
           onClose={() => setShowXendit(false)}
@@ -450,7 +355,6 @@ export default function BayarNiaPage() {
           title={`Pembayaran: ${selectedPackage?.name}`}
         />
         
-        {/* Loading Overlay when processing signup */}
         {isProcessingSignup && (
           <div className="fixed inset-0 z-[200] bg-slate-900/60 backdrop-blur-sm flex flex-col items-center justify-center text-white">
             <Loader2 className="w-12 h-12 animate-spin text-orange-500 mb-4" />
@@ -462,15 +366,15 @@ export default function BayarNiaPage() {
     );
   }
 
-  if (checkoutStep === 1) {
+  if (checkoutStep === 2) {
     // -------------------------------------------------------------
     // REGISTRATION FORM
     // -------------------------------------------------------------
     return (
       <div className="min-h-screen bg-slate-50 p-6 flex flex-col items-center">
         <div className="w-full max-w-3xl mb-8 mt-10">
-          <button onClick={() => setCheckoutStep(0)} className="flex items-center gap-2 text-slate-500 hover:text-slate-900 font-bold mb-4">
-            <ChevronRight className="w-5 h-5 rotate-180" /> Batal & Kembali
+          <button onClick={() => setCheckoutStep(1)} className="flex items-center gap-2 text-slate-500 hover:text-slate-900 font-bold mb-4">
+            <ChevronRight className="w-5 h-5 rotate-180" /> Kembali
           </button>
           <div className="bg-white rounded-[2rem] p-8 shadow-xl border border-slate-100">
             <h2 className="text-3xl font-black text-slate-900 mb-2">Lengkapi Data Diri</h2>
@@ -528,11 +432,164 @@ export default function BayarNiaPage() {
             </div>
             <div className="mt-8 flex justify-end">
               <button onClick={processForm} className="px-8 py-4 bg-teal-500 text-white font-bold rounded-xl hover:bg-teal-600 transition-colors">
-                Lanjut ke Pembayaran <ChevronRight className="w-5 h-5 inline" />
+                Pratinjau Draft Invoice <ChevronRight className="w-5 h-5 inline" />
               </button>
             </div>
           </div>
         </div>
+      </div>
+    );
+  }
+
+  if (checkoutStep === 1) {
+    // -------------------------------------------------------------
+    // PAYMENT CONFIG PAGE (PROMO, METODE)
+    // -------------------------------------------------------------
+    return (
+      <div className="min-h-screen bg-slate-50 font-sans">
+        {/* Header Checkout */}
+        <div className="bg-gradient-to-r from-teal-500 to-teal-400 p-4 flex items-center gap-4 text-white">
+          <button onClick={() => setCheckoutStep(0)} className="w-10 h-10 bg-white/20 rounded-full flex items-center justify-center hover:bg-white/30 transition">
+            <ChevronRight className="w-6 h-6 rotate-180" />
+          </button>
+          <div className="text-xl font-bold">{selectedMode === 'Center' ? 'NIA Tutoring Center' : 'NIA Tutoring Online'}</div>
+        </div>
+
+        <div className="max-w-6xl mx-auto p-4 md:p-8 grid md:grid-cols-[1fr_400px] gap-6">
+          {/* LEFT: Package Info */}
+          <div className="space-y-4">
+            {selectedMode === 'Center' && selectedBranch && (
+              <div className="bg-white p-4 rounded-2xl flex items-center justify-between border border-slate-200">
+                <div className="flex items-center gap-3">
+                  <BookOpen className="w-6 h-6 text-slate-700" />
+                  <div>
+                    <div className="font-bold text-slate-900">{selectedBranch.name}</div>
+                    <div className="text-xs text-slate-500">{selectedBranch.address}</div>
+                  </div>
+                </div>
+                <button onClick={() => { setCheckoutStep(0); setShowBranchModal(true); }} className="px-4 py-1.5 border border-slate-300 rounded-full text-sm font-bold text-slate-700">Ubah</button>
+              </div>
+            )}
+
+            <div className="bg-white p-6 rounded-2xl border-2 border-teal-500/20 shadow-sm relative overflow-hidden">
+              <div className="absolute top-6 right-6 w-5 h-5 rounded-full border-4 border-teal-500 flex items-center justify-center">
+                <div className="w-2.5 h-2.5 bg-teal-500 rounded-full"></div>
+              </div>
+              <h2 className="text-xl font-bold text-slate-900 pr-12 mb-2">{selectedBranch?.city || ''} - {selectedPackage?.name}</h2>
+              <p className="text-slate-500 text-sm mb-4">Paket aktif selama 1 tahun ajaran penuh</p>
+              
+              <div className="inline-block px-3 py-1 bg-teal-100 text-teal-700 text-xs font-bold rounded-full mb-6">Program Regular</div>
+              
+              <div className="border-t border-slate-100 pt-6">
+                <h3 className="font-bold text-slate-900 mb-4">Deskripsi Paket</h3>
+                <p className="text-sm text-slate-600 mb-4">Pembelajaran terpadu untuk persiapan akademik dan ujian, termasuk:</p>
+                <div className="grid sm:grid-cols-2 gap-4">
+                  {selectedPackage?.features?.map((feat: string, i: number) => (
+                    <div key={i} className="flex gap-2">
+                      <CheckCircle2 className="w-5 h-5 text-green-500 shrink-0" />
+                      <span className="text-sm text-slate-700 leading-snug">{feat}</span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* RIGHT: Payment Config */}
+          <div className="space-y-4">
+            <div className="bg-white p-6 rounded-2xl border border-slate-200">
+              <label className="block font-bold text-slate-900 mb-2">Pilih metode pelunasan</label>
+              <select value={paymentMethod} onChange={(e) => setPaymentMethod(e.target.value)} className="w-full p-3 border border-slate-200 rounded-xl focus:border-orange-500 focus:ring-1 focus:ring-orange-500 outline-none">
+                <option value="Lunas">Pembayaran Lunas</option>
+                <option value="Cicilan">Pembayaran Cicilan</option>
+              </select>
+
+              {paymentMethod === 'Cicilan' && (
+                <div className="mt-3">
+                  <label className="block text-sm text-slate-500 mb-2">Opsi Cicilan (Setiap opsi akan dikenakan biaya admin Rp 50.000 / termin)</label>
+                  <select value={installmentVariation} onChange={(e) => setInstallmentVariation(e.target.value)} className="w-full p-3 border border-slate-200 rounded-xl focus:border-orange-500 focus:ring-1 focus:ring-orange-500 outline-none">
+                    <option value="3x">Cicilan 3x (3 Bulan)</option>
+                    <option value="6x">Cicilan 6x (6 Bulan)</option>
+                  </select>
+                </div>
+              )}
+            </div>
+
+            <div className="bg-white p-6 rounded-2xl border border-slate-200">
+              <label className="block font-bold text-slate-900 mb-2">Gunakan kode diskon</label>
+              <div 
+                onClick={() => setShowPromoModal(true)}
+                className={`w-full p-4 border rounded-xl flex items-center justify-between cursor-pointer transition ${appliedPromo ? 'border-green-500 bg-green-50' : 'border-slate-200 hover:bg-slate-50'}`}
+              >
+                <div className="flex items-center gap-3">
+                  <div className={`w-6 h-6 rounded-full flex items-center justify-center ${appliedPromo ? 'bg-green-500 text-white' : 'bg-slate-200 text-slate-400'}`}>
+                    <CheckCircle2 className="w-4 h-4" />
+                  </div>
+                  <div>
+                    <div className="font-bold text-slate-800">{appliedPromo ? appliedPromo.code : 'Punya kode diskon atau referral?'}</div>
+                    {appliedPromo && <div className="text-xs text-green-700">Dapat potongan harga Rp {appliedPromo.discount_value.toLocaleString()}</div>}
+                  </div>
+                </div>
+                <ChevronRight className="w-5 h-5 text-slate-400" />
+              </div>
+              
+              <div className="mt-6 pt-6 border-t border-slate-100 flex items-end justify-between">
+                <span className="text-slate-500 font-medium">Total Harga</span>
+                <span className="text-2xl font-black text-red-600">Rp {finalPrice.toLocaleString()}</span>
+              </div>
+              {paymentMethod === 'Cicilan' && (
+                <p className="text-xs text-slate-500 mt-2 text-right">*(Ini adalah tagihan bulan pertama)</p>
+              )}
+
+              <button 
+                onClick={() => setCheckoutStep(2)}
+                className="w-full mt-6 py-4 bg-orange-500 hover:bg-orange-600 text-white font-bold rounded-xl text-lg flex justify-center items-center gap-2"
+              >
+                Lanjut Isi Data Pribadi
+              </button>
+            </div>
+          </div>
+        </div>
+
+        {/* Promo Modal */}
+        <AnimatePresence>
+          {showPromoModal && (
+            <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
+              <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="absolute inset-0 bg-slate-900/40" onClick={() => setShowPromoModal(false)} />
+              <motion.div initial={{ opacity: 0, scale: 0.95, y: 20 }} animate={{ opacity: 1, scale: 1, y: 0 }} exit={{ opacity: 0, scale: 0.95, y: 20 }} className="relative bg-white rounded-3xl p-6 w-full max-w-md shadow-2xl">
+                <div className="flex justify-between items-center mb-6">
+                  <h3 className="text-xl font-bold">Gunakan kode diskon</h3>
+                  <button onClick={() => setShowPromoModal(false)}><X className="w-5 h-5 text-slate-400" /></button>
+                </div>
+                
+                <div className="flex gap-2 mb-6">
+                  <input type="text" value={form.voucher} onChange={e => setForm({...form, voucher: e.target.value})} placeholder="Ketik kode diskon..." className="flex-1 p-3 border border-slate-200 rounded-xl outline-none focus:border-orange-500 uppercase" />
+                  <button onClick={handleApplyVoucherText} className="px-4 py-3 bg-white border border-slate-200 rounded-xl font-bold hover:bg-slate-50">Terapkan</button>
+                </div>
+
+                <h4 className="font-bold text-slate-700 mb-3">Kamu bisa langsung pakai kode ini!</h4>
+                <div className="space-y-3 max-h-60 overflow-y-auto">
+                  {availablePromos.map(promo => (
+                    <div key={promo.id} className="border border-teal-200 bg-teal-50/50 rounded-xl p-4 relative overflow-hidden flex justify-between items-center">
+                      <div className="absolute right-0 top-0 text-teal-100 opacity-20 transform translate-x-4 -translate-y-4">
+                        <Ticket className="w-24 h-24" />
+                      </div>
+                      <div className="relative z-10">
+                        <div className="font-black text-slate-900 text-lg mb-1">{promo.code}</div>
+                        <div className="text-sm text-slate-600 mb-2">Hemat {promo.discount_type === 'percent' ? `${promo.discount_value}%` : `Rp ${promo.discount_value.toLocaleString()}`}</div>
+                        <div className="text-xs text-slate-400 flex items-center gap-1"><CalendarIcon className="w-3 h-3"/> Berlaku hingga {promo.valid_until ? new Date(promo.valid_until).toLocaleDateString('id-ID') : 'Selamanya'}</div>
+                      </div>
+                      <button onClick={() => handleApplyVoucher(promo)} className="relative z-10 px-4 py-2 bg-white text-teal-600 font-bold text-sm border border-teal-200 rounded-full hover:bg-teal-50">Gunakan</button>
+                    </div>
+                  ))}
+                  {appliedPromo && (
+                    <button onClick={() => setAppliedPromo(null)} className="w-full py-3 text-center text-red-500 font-bold hover:bg-red-50 rounded-xl">Hapus Promo</button>
+                  )}
+                </div>
+              </motion.div>
+            </div>
+          )}
+        </AnimatePresence>
       </div>
     );
   }
