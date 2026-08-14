@@ -279,6 +279,7 @@ function AppLoginPageContent() {
 
         </div>
 
+      </motion.div>
     </div>
   );
 }
