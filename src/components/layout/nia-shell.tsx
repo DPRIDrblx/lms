@@ -4,7 +4,7 @@ import React, { useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useAuth } from "@/lib/auth-context";
-import { Sparkles, BookOpen, User, LogOut, Menu, X, LayoutDashboard, Settings, MapPin, CreditCard } from "lucide-react";
+import { Sparkles, BookOpen, User, LogOut, Menu, X, LayoutDashboard, Settings, MapPin, CreditCard, GraduationCap } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 
 export function NiaShell({ children }: { children: React.ReactNode }) {
@@ -38,12 +38,12 @@ export function NiaShell({ children }: { children: React.ReactNode }) {
     <div className="min-h-screen bg-slate-50 font-sans flex text-slate-800">
       {/* Desktop Sidebar */}
       <aside className="hidden lg:flex w-72 flex-col bg-white border-r border-slate-200 shadow-sm fixed h-full z-40">
-        <div className="p-6 border-b border-slate-100 flex items-center gap-3">
-          <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-amber-400 to-orange-600 flex items-center justify-center shadow-lg shadow-orange-500/20">
-            <Sparkles className="w-6 h-6 text-white" />
+        <div className="p-4 border-b border-slate-100 flex items-center gap-3">
+          <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-blue-600 to-indigo-800 flex items-center justify-center shadow-lg shadow-blue-500/20">
+            <GraduationCap className="w-6 h-6 text-white" />
           </div>
           <div>
-            <h1 className="font-black text-xl text-slate-900 tracking-tight">IGNITE<span className="text-orange-500">Tutoring</span></h1>
+            <h1 className="font-black text-xl text-slate-900 tracking-tight">NIA Tutoring <span className="text-blue-600">AKSES</span></h1>
             <p className="text-xs font-bold text-slate-400 uppercase tracking-widest">{profile?.role?.replace('_', ' ')}</p>
           </div>
         </div>
@@ -55,7 +55,7 @@ export function NiaShell({ children }: { children: React.ReactNode }) {
               <Link key={item.name} href={item.href}>
                 <div className={`flex items-center gap-3 px-4 py-3 rounded-xl font-bold transition-all ${
                   isActive 
-                    ? "bg-orange-50 text-orange-600 shadow-sm border border-orange-100" 
+                    ? "bg-blue-50 text-blue-700 shadow-sm border border-blue-100" 
                     : "text-slate-500 hover:bg-slate-50 hover:text-slate-900"
                 }`}>
                   <item.icon className="w-5 h-5" />
@@ -92,10 +92,10 @@ export function NiaShell({ children }: { children: React.ReactNode }) {
       {/* Mobile Header */}
       <header className="lg:hidden fixed top-0 w-full h-16 bg-white border-b border-slate-200 z-50 flex items-center justify-between px-4">
         <div className="flex items-center gap-2">
-          <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-amber-400 to-orange-600 flex items-center justify-center">
-            <Sparkles className="w-4 h-4 text-white" />
+          <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-blue-600 to-indigo-800 flex items-center justify-center">
+            <GraduationCap className="w-4 h-4 text-white" />
           </div>
-          <span className="font-black text-lg text-slate-900">IGNITE<span className="text-orange-500">Tutoring</span></span>
+          <span className="font-black text-lg text-slate-900">NIA Tutoring <span className="text-blue-600">AKSES</span></span>
         </div>
         <button onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)} className="p-2 -mr-2 text-slate-600">
           {isMobileMenuOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}

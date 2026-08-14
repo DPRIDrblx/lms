@@ -18,7 +18,7 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: "Jenjang dan Mapel harus diisi" }, { status: 400 });
     }
 
-    const model = genAI.getGenerativeModel({ model: "gemini-pro" }); // fallback to 1.0 pro for compatibility
+    const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" }); // using flash for fast response
 
     const subtopicsStr = Array.isArray(subtopik) ? subtopik.join(", ") : subtopik;
     const topicStr = topik === "Lainnya" ? materiLainnya : `${topik} - ${subtopicsStr}`;
