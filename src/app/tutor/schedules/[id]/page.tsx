@@ -9,9 +9,10 @@ import { Button } from "@/components/ui/button";
 import { TUTORING_TOPICS, EducationLevel, Subject, Topic } from "@/lib/tutoring-topics";
 import { 
   ArrowLeft, Clock, Users, BookOpen, Save, CheckCircle2, 
-  Camera, FileText, Loader2, KeyRound 
+  Camera, FileText, Loader2, KeyRound, Sparkles 
 } from "lucide-react";
 import toast from "react-hot-toast";
+import jsPDF from "jspdf";
 
 export default function LessonWorkspacePage() {
   const { id } = useParams();
@@ -30,6 +31,8 @@ export default function LessonWorkspacePage() {
   const [selectedSubject, setSelectedSubject] = useState<string>("");
   const [selectedTopic, setSelectedTopic] = useState<string>("");
   const [selectedSubtopic, setSelectedSubtopic] = useState<string>("");
+  const [customTopic, setCustomTopic] = useState<string>(""); // for Lainnya
+  const [isGeneratingAi, setIsGeneratingAi] = useState(false);
 
   // Summary & Photos States
   const [meetingSummary, setMeetingSummary] = useState("");
@@ -102,6 +105,75 @@ export default function LessonWorkspacePage() {
     }
   };
 
+  const generateAiPdf = async () => {
+    if (!selectedLevel || !selectedSubject || (!selectedTopic && !schedule.topic)) {
+      toast.error("Pilih jenjang, mapel, dan topik terlebih dahulu.");
+      return;
+    }
+    
+    setIsGeneratingAi(true);
+    const toastId = toast.loading("AI sedang menyusun dan membuat PDF...");
+
+    try {
+      const res = await fetch("/api/ai/lesson-plan", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          jenjang: selectedLevel,
+          mapel: selectedSubject,
+          topik: selectedTopic || schedule.topic,
+          subtopik: selectedSubtopic || schedule.subtopic,
+          materiLainnya: customTopic
+        })
+      });
+
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error);
+
+      // Generate PDF
+      const doc = new jsPDF();
+      
+      // Title
+      doc.setFontSize(18);
+      doc.setFont("helvetica", "bold");
+      doc.text("Rencana Pembelajaran AI", 20, 20);
+      
+      doc.setFontSize(12);
+      doc.setFont("helvetica", "normal");
+      doc.text(`Kelas: ${schedule.classes?.name || 'Umum'}`, 20, 30);
+      doc.text(`Materi: ${selectedSubject} (${selectedLevel}) - ${selectedTopic === 'Lainnya' ? customTopic : selectedTopic}`, 20, 36);
+
+      // Helper to add wrapped text
+      let cursorY = 46;
+      const addSection = (title: string, content: string) => {
+        if (cursorY > 270) { doc.addPage(); cursorY = 20; }
+        doc.setFont("helvetica", "bold");
+        doc.text(title, 20, cursorY);
+        cursorY += 6;
+        
+        doc.setFont("helvetica", "normal");
+        const lines = doc.splitTextToSize(content, 170);
+        
+        for (let i = 0; i < lines.length; i++) {
+          if (cursorY > 280) { doc.addPage(); cursorY = 20; }
+          doc.text(lines[i], 20, cursorY);
+          cursorY += 6;
+        }
+        cursorY += 10;
+      };
+
+      addSection("Rencana Aktivitas Kelas", data.aktivitas);
+      addSection("Dialog Kelas (Socratic)", data.dialog);
+      addSection("Catatan Papan Tulis / PPT", data.papan_tulis);
+
+      doc.save(`Rencana_Ajar_${schedule.classes?.name || 'Umum'}_${Date.now()}.pdf`);
+      toast.success("PDF Rencana Pembelajaran berhasil dibuat!", { id: toastId });
+    } catch (err: any) {
+      toast.error(err.message, { id: toastId });
+    }
+    setIsGeneratingAi(false);
+  };
+
   const saveWorkspace = async () => {
     setSaving(true);
     const toastId = toast.loading("Menyimpan data kelas...");
@@ -129,7 +201,6 @@ export default function LessonWorkspacePage() {
         created_at: new Date().toISOString()
       }));
 
-      // Because unique constraint might conflict, we use upsert
       const { error: attError } = await supabase
         .from("center_schedule_attendances")
         .upsert(attendancePayload, { onConflict: 'schedule_id, student_id' });
@@ -137,6 +208,12 @@ export default function LessonWorkspacePage() {
       if (attError) throw attError;
 
       toast.success("Workspace berhasil disimpan!", { id: toastId });
+      
+      // Auto-generate AI if this is the first save of the topic
+      if ((selectedTopic || customTopic) && !isCompleted) {
+        await generateAiPdf();
+      }
+      
     } catch (err: any) {
       toast.error(err.message, { id: toastId });
     }
@@ -205,7 +282,7 @@ export default function LessonWorkspacePage() {
                 <label className="text-xs font-bold text-slate-500 mb-1 block">Jenjang Pendidikan</label>
                 <select 
                   className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-lg text-sm"
-                  value={selectedLevel} onChange={e => { setSelectedLevel(e.target.value); setSelectedSubject(""); setSelectedTopic(""); setSelectedSubtopic(""); }}
+                  value={selectedLevel} onChange={e => { setSelectedLevel(e.target.value); setSelectedSubject(""); setSelectedTopic(""); setSelectedSubtopic(""); setCustomTopic(""); }}
                   disabled={isCompleted}
                 >
                   <option value="">-- Pilih Jenjang --</option>
@@ -216,7 +293,7 @@ export default function LessonWorkspacePage() {
                 <label className="text-xs font-bold text-slate-500 mb-1 block">Mata Pelajaran</label>
                 <select 
                   className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-lg text-sm"
-                  value={selectedSubject} onChange={e => { setSelectedSubject(e.target.value); setSelectedTopic(""); setSelectedSubtopic(""); }}
+                  value={selectedSubject} onChange={e => { setSelectedSubject(e.target.value); setSelectedTopic(""); setSelectedSubtopic(""); setCustomTopic(""); }}
                   disabled={!selectedLevel || isCompleted}
                 >
                   <option value="">-- Pilih Mapel --</option>
@@ -227,25 +304,44 @@ export default function LessonWorkspacePage() {
                 <label className="text-xs font-bold text-slate-500 mb-1 block">Topik Pokok</label>
                 <select 
                   className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-lg text-sm"
-                  value={selectedTopic} onChange={e => { setSelectedTopic(e.target.value); setSelectedSubtopic(""); }}
+                  value={selectedTopic} onChange={e => { setSelectedTopic(e.target.value); setSelectedSubtopic(""); setCustomTopic(""); }}
                   disabled={!selectedSubject || isCompleted}
                 >
                   <option value="">-- Pilih Topik --</option>
                   {selectedSubjectData?.topics.map(t => <option key={t.name} value={t.name}>{t.name}</option>)}
+                  <option value="Lainnya">Lainnya...</option>
                 </select>
               </div>
               <div>
                 <label className="text-xs font-bold text-slate-500 mb-1 block">Subtopik</label>
                 <select 
                   className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-lg text-sm"
-                  value={selectedSubtopic} onChange={e => setSelectedSubtopic(e.target.value)}
+                  value={selectedSubtopic} onChange={e => { setSelectedSubtopic(e.target.value); setCustomTopic(""); }}
                   disabled={!selectedTopic || isCompleted}
                 >
                   <option value="">-- Pilih Subtopik --</option>
                   {selectedTopicData?.subtopics.map(s => <option key={s} value={s}>{s}</option>)}
+                  <option value="Lainnya">Lainnya...</option>
                 </select>
               </div>
             </div>
+
+            {(selectedTopic === 'Lainnya' || selectedSubtopic === 'Lainnya') && (
+              <div className="mt-4">
+                <label className="text-xs font-bold text-slate-500 mb-1 block flex items-center gap-1">
+                  <Sparkles className="w-3 h-3 text-orange-500" /> Topik Khusus (AI akan membantu menyusun materinya)
+                </label>
+                <input 
+                  type="text" 
+                  value={customTopic}
+                  onChange={e => setCustomTopic(e.target.value)}
+                  placeholder="Ketik topik spesifik yang ingin diajarkan..."
+                  className="w-full px-3 py-2 bg-orange-50 border border-orange-200 rounded-lg text-sm focus:outline-none focus:border-orange-500"
+                  disabled={isCompleted}
+                />
+              </div>
+            )}
+
             {(selectedTopic || schedule.topic) && !selectedLevel && (
               <div className="mt-4 p-3 bg-indigo-50 border border-indigo-100 rounded-lg text-sm text-indigo-700">
                 <span className="font-bold">Topik Tersimpan:</span> {schedule.topic} - {schedule.subtopic}
