@@ -414,7 +414,7 @@ export default function LessonWorkspacePage() {
                 Rencana ini akan dikirim & disimpan di sistem Student Advisor.
               </div>
               <div className="flex gap-2">
-                <Button onClick={generateAiPdf} disabled={isGeneratingAi || (!selectedTopic && !customTopic)} variant="outline" className="gap-2 border-indigo-200 text-indigo-700 hover:bg-indigo-50">
+                <Button onClick={generateAiPdf} disabled={isGeneratingAi || (!selectedTopic && !customTopic)} variant="secondary" className="gap-2 border-indigo-200 text-indigo-700 hover:bg-indigo-50 border bg-white">
                   {isGeneratingAi ? <Loader2 className="w-4 h-4 animate-spin" /> : <BookOpen className="w-4 h-4" />}
                   Unduh Modul (PDF)
                 </Button>
