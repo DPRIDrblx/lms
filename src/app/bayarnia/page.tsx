@@ -2,7 +2,9 @@
 
 import React, { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Search, BookOpen, Target, Sparkles, CheckCircle2, ChevronRight, GraduationCap, Calculator, Globe, X, Loader2, Phone, Building, User, Mail, Key, Ticket, Users, MapPin, SearchIcon, FileText, CheckCircle } from "lucide-react";
+import { CreditCard, Wallet, BookOpen, Clock, Calendar, Search, MapPin, X, AlertCircle, Building2, Ticket, CheckCircle, ChevronRight, CheckCircle2, ChevronLeft, MonitorPlay, School, LayoutGrid, Target, Sparkles, GraduationCap, Calculator, Globe, Loader2, Phone, Building, User, Mail, Key, Users, SearchIcon, FileText } from "lucide-react";
+import jsPDF from "jspdf";
+import autoTable from "jspdf-autotable";
 import { XenditPaymentModal } from "@/components/finance/XenditPaymentModal";
 import { createClient } from "@/lib/supabase";
 import toast from "react-hot-toast";
@@ -124,6 +126,78 @@ export default function BayarNiaPage() {
     }
   };
 
+  const [pdfUrl, setPdfUrl] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (checkoutStep === 2) {
+      generatePdf();
+    }
+  }, [checkoutStep, paymentMethod, installmentVariation, appliedPromo, finalPrice, form, selectedPackage, selectedBranch]);
+
+  const generatePdf = () => {
+    const doc = new jsPDF();
+    
+    // Kop Surat
+    doc.setFontSize(22);
+    doc.setTextColor(20, 184, 166);
+    doc.text("NIA Tutoring", 14, 22);
+    
+    doc.setFontSize(10);
+    doc.setTextColor(100, 100, 100);
+    doc.text("DRAFT INVOICE", 14, 28);
+    
+    // Garis pemisah
+    doc.setDrawColor(200, 200, 200);
+    doc.line(14, 32, 196, 32);
+    
+    // Informasi Siswa
+    doc.setFontSize(11);
+    doc.setTextColor(50, 50, 50);
+    doc.text(`Tanggal: ${new Date().toLocaleDateString('id-ID')}`, 14, 42);
+    doc.text(`Nama Lengkap: ${form.name || '-'}`, 14, 49);
+    doc.text(`Email: ${form.email || '-'}`, 14, 56);
+    doc.text(`Asal Sekolah: ${form.schoolName || '-'}`, 14, 63);
+    
+    doc.text(`Paket Pilihan: ${selectedPackage?.name || '-'}`, 120, 42);
+    doc.text(`Mode Belajar: ${selectedMode}`, 120, 49);
+    doc.text(`Cabang: ${selectedBranch?.name || 'Online'}`, 120, 56);
+    
+    // Tabel Rincian
+    const tableBody = [
+      ['Biaya Paket ' + (selectedPackage?.name || ''), 'Rp ' + (selectedPackage?.price || 0).toLocaleString('id-ID')]
+    ];
+    
+    if (paymentMethod === 'Cicilan') {
+      tableBody.push(['Biaya Admin Cicilan (' + installmentVariation + ')', 'Rp 50.000']);
+    }
+    
+    if (appliedPromo) {
+      tableBody.push(['Diskon Promo (' + appliedPromo.code + ')', '- Rp ' + appliedPromo.discount_value.toLocaleString('id-ID')]);
+    }
+
+    autoTable(doc, {
+      startY: 75,
+      head: [['Deskripsi Tagihan', 'Nominal']],
+      body: tableBody,
+      foot: [['TOTAL PEMBAYARAN', 'Rp ' + finalPrice.toLocaleString('id-ID')]],
+      theme: 'grid',
+      headStyles: { fillColor: [20, 184, 166], textColor: 255 },
+      footStyles: { fillColor: [249, 115, 22], textColor: 255, fontStyle: 'bold' },
+      styles: { fontSize: 10 }
+    });
+    
+    const finalY = (doc as any).lastAutoTable.finalY || 120;
+    
+    doc.setFontSize(9);
+    doc.setTextColor(150, 150, 150);
+    doc.text("* Ini adalah draft invoice yang dibuat sebelum pembayaran selesai.", 14, finalY + 15);
+    doc.text("* Invoice resmi akan diterbitkan setelah pembayaran lunas / termin pertama dibayarkan.", 14, finalY + 20);
+    
+    const pdfBlob = doc.output('blob');
+    const url = URL.createObjectURL(pdfBlob);
+    setPdfUrl(url);
+  };
+
   const processForm = () => {
     if (!form.name || !form.email || !form.password || !form.phone || !form.schoolName) {
       toast.error("Mohon lengkapi form wajib (Nama, Email, Password, No WA, Asal Sekolah)");
@@ -237,7 +311,7 @@ export default function BayarNiaPage() {
         </div>
 
         <div className="max-w-6xl mx-auto p-4 md:p-8 grid md:grid-cols-[1fr_400px] gap-6">
-          {/* LEFT: Package Info */}
+          {/* LEFT: Package Info & PDF Reader */}
           <div className="space-y-4">
             {selectedMode === 'Center' && selectedBranch && (
               <div className="bg-white p-4 rounded-2xl flex items-center justify-between border border-slate-200">
@@ -252,27 +326,18 @@ export default function BayarNiaPage() {
               </div>
             )}
 
-            <div className="bg-white p-6 rounded-2xl border-2 border-teal-500/20 shadow-sm relative overflow-hidden">
-              <div className="absolute top-6 right-6 w-5 h-5 rounded-full border-4 border-teal-500 flex items-center justify-center">
-                <div className="w-2.5 h-2.5 bg-teal-500 rounded-full"></div>
+            <div className="bg-white rounded-2xl border-2 border-teal-500/20 shadow-sm relative overflow-hidden h-[600px] flex flex-col">
+              <div className="p-4 border-b border-slate-100 bg-slate-50 flex items-center gap-2">
+                <div className="w-3 h-3 rounded-full bg-red-400"></div>
+                <div className="w-3 h-3 rounded-full bg-amber-400"></div>
+                <div className="w-3 h-3 rounded-full bg-green-400"></div>
+                <span className="ml-2 text-xs font-bold text-slate-500">Draft Invoice - Pratinjau PDF</span>
               </div>
-              <h2 className="text-xl font-bold text-slate-900 pr-12 mb-2">{selectedBranch?.city || ''} - {selectedPackage?.name}</h2>
-              <p className="text-slate-500 text-sm mb-4">Paket aktif selama 1 tahun ajaran penuh</p>
-              
-              <div className="inline-block px-3 py-1 bg-teal-100 text-teal-700 text-xs font-bold rounded-full mb-6">Program Regular</div>
-              
-              <div className="border-t border-slate-100 pt-6">
-                <h3 className="font-bold text-slate-900 mb-4">Deskripsi Paket</h3>
-                <p className="text-sm text-slate-600 mb-4">Pembelajaran terpadu untuk persiapan akademik dan ujian, termasuk:</p>
-                <div className="grid sm:grid-cols-2 gap-4">
-                  {selectedPackage?.features?.map((feat: string, i: number) => (
-                    <div key={i} className="flex gap-2">
-                      <CheckCircle2 className="w-5 h-5 text-green-500 shrink-0" />
-                      <span className="text-sm text-slate-700 leading-snug">{feat}</span>
-                    </div>
-                  ))}
-                </div>
-              </div>
+              {pdfUrl ? (
+                <iframe src={pdfUrl} className="w-full flex-1 border-none" title="Draft Invoice PDF"></iframe>
+              ) : (
+                <div className="flex-1 flex items-center justify-center text-slate-400 font-bold">Membuat PDF...</div>
+              )}
             </div>
           </div>
 
