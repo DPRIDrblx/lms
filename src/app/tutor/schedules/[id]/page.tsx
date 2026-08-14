@@ -71,9 +71,9 @@ export default function LessonWorkspacePage() {
             
           if (attData) {
             const attMap: Record<string, string> = {};
-            attData.forEach(a => { attMap[a.student_id] = a.status; });
+            attData.forEach((a: any) => { attMap[a.student_id] = a.status; });
             // For students without attendance record yet, default to 'hadir'
-            stds.forEach(s => {
+            stds.forEach((s: any) => {
               if (!attMap[s.id]) attMap[s.id] = 'hadir';
             });
             setAttendances(attMap);
