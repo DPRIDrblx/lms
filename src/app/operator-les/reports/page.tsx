@@ -1,13 +1,13 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { supabase } from "@/lib/supabase";
+import { createClient } from "@/lib/supabase";
 import { Loader2, Search, Calendar, User, BookOpen, Clock, FileText, CheckCircle2, MapPin, Eye, X } from "lucide-react";
-import { Card, CardContent } from "@/components/ui/card";
+import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 
 export default function OperatorReportsPage() {
+  const supabase = createClient();
   const [schedules, setSchedules] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState("");
@@ -68,11 +68,12 @@ export default function OperatorReportsPage() {
         </div>
         <div className="relative w-full md:w-72">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
-          <Input 
+          <input 
+            type="text"
             placeholder="Cari tutor, kelas, atau topik..." 
             value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
-            className="pl-9 bg-white border-slate-200"
+            onChange={(e: any) => setSearchTerm(e.target.value)}
+            className="pl-9 pr-4 py-2 w-full rounded-lg bg-white border border-slate-200 outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-shadow text-sm"
           />
         </div>
       </div>
@@ -86,7 +87,7 @@ export default function OperatorReportsPage() {
           {filteredSchedules.map((schedule) => (
             <Card key={schedule.id} className="overflow-hidden border-slate-200 shadow-sm hover:shadow-md transition-shadow">
               <div className={`h-1.5 w-full ${schedule.status === 'completed' ? 'bg-emerald-500' : 'bg-amber-400'}`} />
-              <CardContent className="p-5">
+              <div className="p-5">
                 <div className="flex justify-between items-start mb-4">
                   <div>
                     <h3 className="font-bold text-lg text-slate-900">{schedule.classes?.name || 'Umum'}</h3>
@@ -119,7 +120,7 @@ export default function OperatorReportsPage() {
                 <Button onClick={() => openDetails(schedule)} variant="secondary" className="w-full gap-2 border border-slate-200 bg-white">
                   <Eye className="w-4 h-4" /> Lihat Detail Laporan
                 </Button>
-              </CardContent>
+              </div>
             </Card>
           ))}
           {filteredSchedules.length === 0 && (
