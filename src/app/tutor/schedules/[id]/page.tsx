@@ -143,40 +143,94 @@ export default function LessonWorkspacePage() {
       // Generate PDF
       const doc = new jsPDF();
       
-      // Title
-      doc.setFontSize(18);
-      doc.setFont("helvetica", "bold");
-      doc.text("Rencana Pembelajaran AI", 20, 20);
-      
-      doc.setFontSize(12);
-      doc.setFont("helvetica", "normal");
-      doc.text(`Kelas: ${schedule.classes?.name || 'Umum'}`, 20, 30);
-      doc.text(`Materi: ${selectedSubject} (${selectedLevel}) - ${selectedTopic === 'Lainnya' ? customTopic : selectedTopic}`, 20, 36);
+      const pageWidth = doc.internal.pageSize.width;
+      const pageHeight = doc.internal.pageSize.height;
 
-      // Helper to add wrapped text
-      let cursorY = 46;
+      // Header Background
+      doc.setFillColor(37, 99, 235); // Blue-600
+      doc.rect(0, 0, pageWidth, 40, "F");
+
+      // Header Text - Title
+      doc.setTextColor(255, 255, 255);
+      doc.setFontSize(20);
+      doc.setFont("helvetica", "bold");
+      doc.text("MODUL PEMBELAJARAN (AI)", 15, 25);
+      
+      // Header Text - Logo/Brand
+      doc.setFontSize(14);
+      doc.setFont("helvetica", "italic");
+      doc.text("NIA Tutoring AKSES", pageWidth - 15, 25, { align: "right" });
+
+      // Reset Text Color for body
+      doc.setTextColor(50, 50, 50);
+
+      // Metadata Section
+      doc.setFontSize(12);
+      doc.setFont("helvetica", "bold");
+      doc.text("Informasi Kelas", 15, 55);
+      
+      doc.setFont("helvetica", "normal");
+      doc.setFontSize(11);
+      doc.text(`Kelas / Jenjang : ${schedule.classes?.name || 'Umum'} / ${selectedLevel}`, 15, 63);
+      doc.text(`Mata Pelajaran  : ${selectedSubject}`, 15, 70);
+      doc.text(`Topik Pokok     : ${selectedTopic === 'Lainnya' ? customTopic : selectedTopic}`, 15, 77);
+      
+      doc.setDrawColor(200, 200, 200);
+      doc.line(15, 83, pageWidth - 15, 83); // divider
+
+      let cursorY = 95;
+
       const addSection = (title: string, content: string) => {
-        if (cursorY > 270) { doc.addPage(); cursorY = 20; }
-        doc.setFont("helvetica", "bold");
-        doc.text(title, 20, cursorY);
-        cursorY += 6;
+        if (cursorY > 260) { doc.addPage(); cursorY = 25; }
         
+        // Section Title with background highlight
+        doc.setFillColor(240, 245, 255); // very light blue
+        doc.rect(15, cursorY - 6, pageWidth - 30, 10, "F");
+        
+        doc.setTextColor(37, 99, 235); // Blue-600
+        doc.setFontSize(12);
+        doc.setFont("helvetica", "bold");
+        doc.text(title.toUpperCase(), 18, cursorY + 1);
+        cursorY += 12;
+        
+        doc.setTextColor(50, 50, 50);
         doc.setFont("helvetica", "normal");
-        const lines = doc.splitTextToSize(content, 170);
+        doc.setFontSize(11);
+        
+        // Remove markdown artifacts for cleaner PDF text
+        const cleanContent = content.replace(/\*\*/g, "").replace(/\#/g, "");
+        const lines = doc.splitTextToSize(cleanContent, pageWidth - 30);
         
         for (let i = 0; i < lines.length; i++) {
-          if (cursorY > 280) { doc.addPage(); cursorY = 20; }
-          doc.text(lines[i], 20, cursorY);
+          if (cursorY > 275) { doc.addPage(); cursorY = 25; }
+          doc.text(lines[i], 15, cursorY);
           cursorY += 6;
         }
         cursorY += 10;
       };
 
-      addSection("Rencana Aktivitas Kelas", data.aktivitas);
-      addSection("Dialog Kelas (Socratic)", data.dialog);
-      addSection("Catatan Papan Tulis / PPT", data.papan_tulis);
+      addSection("1. Rencana Aktivitas Kelas", data.aktivitas);
+      addSection("2. Dialog Kelas (Socratic Method)", data.dialog);
+      addSection("3. Catatan Papan Tulis / Materi PPT", data.papan_tulis);
 
-      doc.save(`Rencana_Ajar_${schedule.classes?.name || 'Umum'}_${Date.now()}.pdf`);
+      // Add Watermark and Footer to all pages
+      const pageCount = doc.internal.getNumberOfPages();
+      for (let i = 1; i <= pageCount; i++) {
+        doc.setPage(i);
+        // Watermark
+        doc.setTextColor(240, 242, 245); // Very faint grey
+        doc.setFontSize(60);
+        doc.setFont("helvetica", "bold");
+        doc.text("NIA TUTORING", pageWidth / 2, pageHeight / 2 + 20, { angle: 45, align: "center" });
+        
+        // Footer
+        doc.setTextColor(150, 150, 150);
+        doc.setFontSize(9);
+        doc.setFont("helvetica", "normal");
+        doc.text(`Dicetak otomatis oleh Sistem AI NIA Tutoring AKSES - Halaman ${i} dari ${pageCount}`, pageWidth / 2, pageHeight - 10, { align: "center" });
+      }
+
+      doc.save(`Modul_NIA_${schedule.classes?.name || 'Umum'}_${selectedSubject.replace(/ /g, "_")}.pdf`);
       toast.success("PDF Rencana Pembelajaran berhasil dibuat!", { id: toastId });
     } catch (err: any) {
       toast.error(err.message, { id: toastId });
