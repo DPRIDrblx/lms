@@ -9,7 +9,7 @@ import Link from "next/link";
 import { PwaInstallButton } from "@/components/ui/pwa-install-button";
 
 export default function RootPage() {
-  const { user, loading } = useAuth();
+  const { user, profile, loading } = useAuth();
   const router = useRouter();
 
   useEffect(() => {
