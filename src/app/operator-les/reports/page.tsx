@@ -249,7 +249,12 @@ export default function OperatorReportsPage() {
                       <p className="text-xs font-bold text-slate-500 mb-2 text-center">FOTO AWAL KELAS</p>
                       <div className="aspect-video bg-slate-100 rounded-lg overflow-hidden flex items-center justify-center">
                         {selectedSchedule.photo_start_url ? (
-                          <img src={selectedSchedule.photo_start_url} alt="Foto Awal" className="w-full h-full object-cover" />
+                          <img 
+                            src={selectedSchedule.photo_start_url} 
+                            alt="Foto Awal" 
+                            className="w-full h-full object-cover cursor-pointer hover:opacity-80 transition-opacity" 
+                            onClick={() => window.open(selectedSchedule.photo_start_url, '_blank')}
+                          />
                         ) : (
                           <span className="text-slate-400 text-sm">Belum ada foto</span>
                         )}
@@ -259,7 +264,12 @@ export default function OperatorReportsPage() {
                       <p className="text-xs font-bold text-slate-500 mb-2 text-center">FOTO AKHIR KELAS</p>
                       <div className="aspect-video bg-slate-100 rounded-lg overflow-hidden flex items-center justify-center">
                         {selectedSchedule.photo_end_url ? (
-                          <img src={selectedSchedule.photo_end_url} alt="Foto Akhir" className="w-full h-full object-cover" />
+                          <img 
+                            src={selectedSchedule.photo_end_url} 
+                            alt="Foto Akhir" 
+                            className="w-full h-full object-cover cursor-pointer hover:opacity-80 transition-opacity" 
+                            onClick={() => window.open(selectedSchedule.photo_end_url, '_blank')}
+                          />
                         ) : (
                           <span className="text-slate-400 text-sm">Belum ada foto</span>
                         )}
