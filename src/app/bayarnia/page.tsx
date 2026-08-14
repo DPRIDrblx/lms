@@ -18,6 +18,8 @@ export default function BayarNiaPage() {
   // States
   const [selectedLevel, setSelectedLevel] = useState("Semua");
   const [selectedMode, setSelectedMode] = useState("Online"); // Center or Online
+  const [selectedProgram, setSelectedProgram] = useState("Reguler"); // Reguler or Premium
+  const [selectionStep, setSelectionStep] = useState<"mode" | "program" | "packages">("mode");
   const [selectedPackage, setSelectedPackage] = useState<any>(null);
   const [selectedBranch, setSelectedBranch] = useState<any>(null);
   const [showCheckout, setShowCheckout] = useState(false);
@@ -78,7 +80,8 @@ export default function BayarNiaPage() {
 
   const filteredPackages = packages.filter(p => 
     (selectedLevel === "Semua" || p.level === selectedLevel) && 
-    (p.learning_mode === selectedMode || (!p.learning_mode && selectedMode === "Online"))
+    (p.learning_mode === selectedMode || (!p.learning_mode && selectedMode === "Online")) &&
+    (p.program_type === selectedProgram || (!p.program_type && selectedProgram === "Reguler"))
   );
 
   // Compute Final Price
@@ -478,7 +481,7 @@ export default function BayarNiaPage() {
               <h2 className="text-xl font-bold text-slate-900 pr-12 mb-2">{selectedBranch?.city || ''} - {selectedPackage?.name}</h2>
               <p className="text-slate-500 text-sm mb-4">Paket aktif selama 1 tahun ajaran penuh</p>
               
-              <div className="inline-block px-3 py-1 bg-teal-100 text-teal-700 text-xs font-bold rounded-full mb-6">Program Regular</div>
+              <div className={`inline-block px-3 py-1 text-xs font-bold rounded-full mb-6 ${selectedPackage?.program_type === 'Premium' ? 'bg-amber-100 text-amber-700' : 'bg-blue-100 text-blue-700'}`}>Program {selectedPackage?.program_type || 'Reguler'}</div>
               
               <div className="border-t border-slate-100 pt-6">
                 <h3 className="font-bold text-slate-900 mb-4">Deskripsi Paket</h3>
@@ -622,8 +625,8 @@ export default function BayarNiaPage() {
       <div className="max-w-7xl mx-auto px-6 py-8 grid md:grid-cols-1 gap-6">
         
         {/* Filters Top Bar */}
-        <div className="grid md:grid-cols-2 gap-4">
-          <div className="bg-white p-4 rounded-xl border border-slate-200 flex items-center justify-between cursor-pointer" onClick={() => setShowLevelModal(true)}>
+        <div className="grid md:grid-cols-1 gap-4">
+          <div className="bg-white p-4 rounded-xl border border-slate-200 flex items-center justify-between cursor-pointer max-w-sm" onClick={() => setShowLevelModal(true)}>
             <div className="flex items-center gap-3">
               <div className="w-8 h-8 bg-orange-100 text-orange-600 rounded-full flex items-center justify-center">
                 <Target className="w-4 h-4" />
@@ -631,18 +634,6 @@ export default function BayarNiaPage() {
               <span className="font-bold text-slate-700">{selectedLevel === 'Semua' ? 'Pilih Jenjang' : selectedLevel}</span>
             </div>
             <ChevronRight className="w-5 h-5 text-slate-400" />
-          </div>
-          
-          <div className="flex gap-2 bg-white p-2 rounded-xl border border-slate-200 overflow-x-auto scrollbar-hide">
-             {["Online", "Center"].map(mode => (
-               <button 
-                 key={mode} 
-                 onClick={() => setSelectedMode(mode)}
-                 className={`px-4 py-2 rounded-lg font-bold text-sm whitespace-nowrap transition-colors ${selectedMode === mode ? 'bg-teal-50 text-teal-700 border border-teal-200' : 'text-slate-600 hover:bg-slate-100 border border-transparent'}`}
-               >
-                 {mode === "Center" ? "Bimbel Tatap Muka" : "Video Belajar Online"}
-               </button>
-             ))}
           </div>
         </div>
 
@@ -729,41 +720,104 @@ export default function BayarNiaPage() {
           )}
         </AnimatePresence>
 
-        {/* Product Grid */}
+        {/* Step-by-Step Selection */}
         <div className="mb-10">
-          <div className="flex items-center gap-3 mb-6">
-            <div className="w-6 h-6 grid grid-cols-2 gap-0.5">
-              <div className="bg-slate-400 rounded-sm"></div><div className="bg-slate-400 rounded-sm"></div>
-              <div className="bg-slate-400 rounded-sm"></div><div className="bg-slate-400 rounded-sm"></div>
-            </div>
-            <h2 className="text-xl font-bold text-slate-800">Cek semua produknya, yuk!</h2>
-          </div>
           
-          {loadingPackages ? (
-            <div className="flex justify-center py-20"><Loader2 className="w-10 h-10 animate-spin text-teal-500" /></div>
-          ) : (
-            <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
-              {filteredPackages.map(pkg => (
-                <div key={pkg.id} className="bg-white border border-slate-200 rounded-2xl p-6 flex flex-col hover:shadow-xl transition-all">
-                  {pkg.popular && <div className="inline-block px-3 py-1 bg-red-100 text-red-600 text-xs font-bold rounded-full self-start mb-4">Paling Diminati</div>}
-                  <h3 className="text-lg font-bold text-slate-900 mb-2 leading-tight">{pkg.name}</h3>
-                  <div className="text-xs text-slate-500 mb-4">{pkg.level} • {pkg.grade || 'Umum'} {pkg.major ? `• ${pkg.major}` : ''}</div>
-                  
-                  <div className="mt-auto pt-4 border-t border-slate-100">
-                    {pkg.original_price && <div className="text-sm text-slate-400 line-through mb-1">Rp {pkg.original_price.toLocaleString()}</div>}
-                    <div className="text-xl font-black text-red-600 mb-4">Rp {pkg.price.toLocaleString()}</div>
-                    <button 
-                      onClick={() => initiateCheckout(pkg)}
-                      className="w-full py-3 border-2 border-[#b8623b] text-[#b8623b] font-bold rounded-full hover:bg-orange-50 transition-colors"
-                    >
-                      Beli Paket Ini
-                    </button>
+          {selectionStep === "mode" && (
+            <div>
+              <h2 className="text-2xl font-black text-slate-800 mb-6 text-center">Pilih Mode Belajar</h2>
+              <div className="grid md:grid-cols-2 gap-6 max-w-4xl mx-auto">
+                <div onClick={() => { setSelectedMode("Online"); setSelectionStep("program"); }} className="bg-white border-2 border-transparent hover:border-teal-500 rounded-2xl p-8 flex flex-col items-center justify-center text-center cursor-pointer shadow-sm hover:shadow-xl transition-all group">
+                  <div className="w-20 h-20 bg-teal-50 text-teal-600 rounded-full flex items-center justify-center mb-6 group-hover:scale-110 transition-transform">
+                    <MonitorPlay className="w-10 h-10" />
                   </div>
+                  <h3 className="text-xl font-bold text-slate-900 mb-2">Video Belajar Online</h3>
+                  <p className="text-slate-500 text-sm">Belajar fleksibel kapan saja, di mana saja dengan modul dan video interaktif.</p>
                 </div>
-              ))}
-              {filteredPackages.length === 0 && (
-                <div className="col-span-full text-center py-20 text-slate-500 font-medium">
-                  Belum ada paket untuk kriteria ini.
+                <div onClick={() => { setSelectedMode("Center"); setSelectionStep("program"); }} className="bg-white border-2 border-transparent hover:border-orange-500 rounded-2xl p-8 flex flex-col items-center justify-center text-center cursor-pointer shadow-sm hover:shadow-xl transition-all group">
+                  <div className="w-20 h-20 bg-orange-50 text-orange-600 rounded-full flex items-center justify-center mb-6 group-hover:scale-110 transition-transform">
+                    <Building2 className="w-10 h-10" />
+                  </div>
+                  <h3 className="text-xl font-bold text-slate-900 mb-2">Bimbel Tatap Muka</h3>
+                  <p className="text-slate-500 text-sm">Belajar intensif dan interaktif langsung di cabang NIA Tutoring Center terdekat.</p>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {selectionStep === "program" && (
+            <div>
+              <div className="flex items-center gap-4 mb-6 max-w-4xl mx-auto">
+                <button onClick={() => setSelectionStep("mode")} className="flex items-center justify-center w-10 h-10 bg-white border border-slate-200 rounded-full hover:bg-slate-50">
+                  <ChevronLeft className="w-5 h-5 text-slate-600" />
+                </button>
+                <h2 className="text-2xl font-black text-slate-800">Pilih Tipe Program</h2>
+              </div>
+              <div className="grid md:grid-cols-2 gap-6 max-w-4xl mx-auto">
+                <div onClick={() => { setSelectedProgram("Reguler"); setSelectionStep("packages"); }} className="bg-white border-2 border-transparent hover:border-blue-500 rounded-2xl p-8 flex flex-col items-center justify-center text-center cursor-pointer shadow-sm hover:shadow-xl transition-all group">
+                  <div className="w-20 h-20 bg-blue-50 text-blue-600 rounded-full flex items-center justify-center mb-6 group-hover:scale-110 transition-transform">
+                    <BookOpen className="w-10 h-10" />
+                  </div>
+                  <h3 className="text-xl font-bold text-slate-900 mb-2">Program Reguler</h3>
+                  <p className="text-slate-500 text-sm">Paket belajar esensial dengan fitur kurikulum lengkap dan latihan soal.</p>
+                </div>
+                <div onClick={() => { setSelectedProgram("Premium"); setSelectionStep("packages"); }} className="bg-white border-2 border-transparent hover:border-amber-500 rounded-2xl p-8 flex flex-col items-center justify-center text-center cursor-pointer shadow-sm hover:shadow-xl transition-all group relative overflow-hidden">
+                  <div className="absolute top-4 right-4 bg-amber-100 text-amber-700 text-xs font-bold px-3 py-1 rounded-full">Disarankan</div>
+                  <div className="w-20 h-20 bg-amber-50 text-amber-600 rounded-full flex items-center justify-center mb-6 group-hover:scale-110 transition-transform">
+                    <Sparkles className="w-10 h-10" />
+                  </div>
+                  <h3 className="text-xl font-bold text-slate-900 mb-2">Program Premium</h3>
+                  <p className="text-slate-500 text-sm">Akses tanpa batas ke seluruh materi, tryout eksklusif, dan pendampingan khusus.</p>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {selectionStep === "packages" && (
+            <div>
+              <div className="flex items-center gap-4 mb-6">
+                <button onClick={() => setSelectionStep("program")} className="flex items-center justify-center w-10 h-10 bg-white border border-slate-200 rounded-full hover:bg-slate-50">
+                  <ChevronLeft className="w-5 h-5 text-slate-600" />
+                </button>
+                <div>
+                  <h2 className="text-2xl font-black text-slate-800 leading-tight">Pilih Paket Belajar</h2>
+                  <p className="text-sm font-medium text-slate-500">
+                    Menampilkan paket {selectedMode === "Center" ? "Tatap Muka" : "Online"} - {selectedProgram}
+                  </p>
+                </div>
+              </div>
+              
+              {loadingPackages ? (
+                <div className="flex justify-center py-20"><Loader2 className="w-10 h-10 animate-spin text-teal-500" /></div>
+              ) : (
+                <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+                  {filteredPackages.map(pkg => (
+                    <div key={pkg.id} className="bg-white border border-slate-200 rounded-2xl p-6 flex flex-col hover:shadow-xl transition-all">
+                      {pkg.popular && <div className="inline-block px-3 py-1 bg-red-100 text-red-600 text-xs font-bold rounded-full self-start mb-4">Paling Diminati</div>}
+                      <h3 className="text-lg font-bold text-slate-900 mb-2 leading-tight">{pkg.name}</h3>
+                      <div className="text-xs text-slate-500 mb-4">{pkg.level} • {pkg.grade || 'Umum'} {pkg.major ? `• ${pkg.major}` : ''}</div>
+                      
+                      <div className="mt-auto pt-4 border-t border-slate-100">
+                        {pkg.original_price && <div className="text-sm text-slate-400 line-through mb-1">Rp {pkg.original_price.toLocaleString()}</div>}
+                        <div className="text-xl font-black text-red-600 mb-4">Rp {pkg.price.toLocaleString()}</div>
+                        <button 
+                          onClick={() => initiateCheckout(pkg)}
+                          className="w-full py-3 border-2 border-[#b8623b] text-[#b8623b] font-bold rounded-full hover:bg-orange-50 transition-colors"
+                        >
+                          Beli Paket Ini
+                        </button>
+                      </div>
+                    </div>
+                  ))}
+                  {filteredPackages.length === 0 && (
+                    <div className="col-span-full text-center py-20 bg-white border border-slate-200 rounded-2xl flex flex-col items-center">
+                      <div className="w-16 h-16 bg-slate-100 text-slate-400 rounded-full flex items-center justify-center mb-4">
+                        <SearchIcon className="w-8 h-8" />
+                      </div>
+                      <h3 className="text-lg font-bold text-slate-800 mb-1">Belum ada paket</h3>
+                      <p className="text-slate-500">Belum ada paket untuk kriteria jenjang dan program ini.</p>
+                    </div>
+                  )}
                 </div>
               )}
             </div>
