@@ -22,9 +22,13 @@ export async function registerSobatNiaAction(formData: {
   schoolName?: string;
   parentName?: string;
   parentPhone?: string;
+  invoiceId: string;
+  amount: number;
+  paymentMethod: string;
+  promoCode?: string;
 }) {
   try {
-    const { name, email, password, packageId, phone, schoolName, parentName, parentPhone } = formData;
+    const { name, email, password, packageId, phone, schoolName, parentName, parentPhone, invoiceId, amount, paymentMethod, promoCode } = formData;
 
     // 1. Create user using admin API (bypasses rate limits and auto-confirms email)
     const { data: authData, error: authError } = await supabaseAdmin.auth.admin.createUser({
@@ -57,18 +61,31 @@ export async function registerSobatNiaAction(formData: {
       parent_phone: parentPhone || null
     }).eq("id", userId);
 
-    // 3. Add subscription
+    // 3. Add subscription (PENDING state)
     const validUntil = new Date();
     validUntil.setFullYear(validUntil.getFullYear() + 1); // 1 year
 
     const { error: subError } = await supabaseAdmin.from("nia_subscriptions").insert({
       student_id: userId,
       package_id: packageId,
-      status: "active",
+      status: "pending",
       valid_until: validUntil.toISOString()
     });
 
     if (subError) throw subError;
+
+    // 4. Create transaction record
+    const { error: txError } = await supabaseAdmin.from("nia_transactions").insert({
+      invoice_id: invoiceId,
+      student_id: userId,
+      package_id: packageId,
+      amount: amount,
+      payment_method: paymentMethod,
+      promo_code: promoCode || null,
+      status: "pending"
+    });
+
+    if (txError) throw txError;
 
     return { success: true, userId };
   } catch (error: any) {

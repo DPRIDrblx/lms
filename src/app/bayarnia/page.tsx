@@ -137,6 +137,7 @@ export default function BayarNiaPage() {
   };
 
   const handleBeliClick = () => {
+    setInvoiceId(`INV-${new Date().getFullYear()}${new Date().getMonth()+1}${new Date().getDate()}-${Math.floor(1000 + Math.random() * 9000)}`);
     setShowXendit(true);
   };
 
@@ -153,7 +154,11 @@ export default function BayarNiaPage() {
         phone: form.phone,
         schoolName: form.schoolName,
         parentName: form.parentName,
-        parentPhone: form.parentPhone
+        parentPhone: form.parentPhone,
+        invoiceId,
+        amount: finalPrice,
+        paymentMethod: paymentMethod === 'Lunas' ? 'Lunas' : installmentVariation,
+        promoCode: appliedPromo?.code || undefined
       });
 
       if (!result.success) throw new Error(result.error);
@@ -168,8 +173,6 @@ export default function BayarNiaPage() {
         toast.error("Akun dibuat, namun gagal login otomatis.");
       }
       
-      // Generate mock invoice id
-      setInvoiceId(`INV-${new Date().getFullYear()}${new Date().getMonth()+1}${new Date().getDate()}-${Math.floor(1000 + Math.random() * 9000)}`);
       setCheckoutStep(3); // Success Screen
     } catch (error: any) {
       toast.error("Gagal membuat akun: " + error.message);
@@ -482,9 +485,9 @@ export default function BayarNiaPage() {
               <div className="text-xl font-black text-teal-600 tracking-tight">NIA<span className="text-slate-800">Tutoring</span></div>
             </div>
             <div className="hidden md:flex gap-6 text-sm font-bold text-slate-600">
-              <a href="#" className="hover:text-teal-600 transition-colors">Produk Kami</a>
-              <a href="#" className="hover:text-teal-600 transition-colors">Riwayat & Status Pembelian</a>
-              <a href="#" className="hover:text-teal-600 transition-colors">Cari Invoice</a>
+              <a href="/bayarnia" className="hover:text-teal-600 transition-colors">Produk Kami</a>
+              <a href="/bayarnia/history" className="hover:text-teal-600 transition-colors">Riwayat & Status Pembelian</a>
+              <a href="/bayarnia/search-invoice" className="hover:text-teal-600 transition-colors">Cari Invoice</a>
             </div>
           </div>
           <a href="/login" className="px-5 py-2 bg-[#b8623b] text-white text-sm font-bold rounded-full hover:bg-orange-700 transition-colors">
