@@ -413,10 +413,16 @@ export default function LessonWorkspacePage() {
               <div className="mr-4 text-xs text-slate-400 italic">
                 Rencana ini akan dikirim & disimpan di sistem Student Advisor.
               </div>
-              <Button onClick={saveWorkspace} disabled={saving || isCompleted || isGeneratingAi} className="gap-2 bg-indigo-600 hover:bg-indigo-700">
-                {saving || isGeneratingAi ? <Loader2 className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />}
-                {isGeneratingAi ? 'Menyusun Modul...' : 'Simpan Rencana & Kirim ke Student Advisor'}
-              </Button>
+              <div className="flex gap-2">
+                <Button onClick={generateAiPdf} disabled={isGeneratingAi || (!selectedTopic && !customTopic)} variant="outline" className="gap-2 border-indigo-200 text-indigo-700 hover:bg-indigo-50">
+                  {isGeneratingAi ? <Loader2 className="w-4 h-4 animate-spin" /> : <BookOpen className="w-4 h-4" />}
+                  Unduh Modul (PDF)
+                </Button>
+                <Button onClick={saveWorkspace} disabled={saving || isCompleted || isGeneratingAi} className="gap-2 bg-indigo-600 hover:bg-indigo-700">
+                  {saving || isGeneratingAi ? <Loader2 className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />}
+                  {isGeneratingAi ? 'Menyusun Modul...' : 'Simpan Rencana & Kirim ke Student Advisor'}
+                </Button>
+              </div>
             </div>
 
             {(selectedTopic || schedule.topic) && !selectedLevel && (
