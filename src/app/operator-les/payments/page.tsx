@@ -24,7 +24,7 @@ export default function OperatorPaymentsPage() {
       .from("nia_transactions")
       .select(`
         *,
-        student:student_id (full_name, email, phone),
+        student:student_id (full_name, phone),
         package:package_id (name, level, price)
       `)
       .order("created_at", { ascending: false });
