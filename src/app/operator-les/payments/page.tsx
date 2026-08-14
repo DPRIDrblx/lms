@@ -12,6 +12,7 @@ export default function OperatorPaymentsPage() {
   const [loading, setLoading] = useState(true);
   const [filter, setFilter] = useState("pending"); // pending, approved, rejected, refunded, all
   const [searchTerm, setSearchTerm] = useState("");
+  const [noteModal, setNoteModal] = useState<{isOpen: boolean, tx: any, action: 'approve' | 'reject', note: string}>({isOpen: false, tx: null, action: 'approve', note: ''});
 
   useEffect(() => {
     fetchTransactions();
@@ -39,68 +40,58 @@ export default function OperatorPaymentsPage() {
     setLoading(false);
   };
 
-  const handleApprove = async (tx: any) => {
-    useConfirmStore.getState().showConfirm({
-      title: "Setujui Pembayaran?",
-      message: `Apakah Anda yakin ingin menyetujui pembayaran untuk ${tx.student?.full_name}? Paket akan langsung diaktifkan.`,
-      onConfirm: async () => {
-        const toastId = toast.loading("Memproses persetujuan...");
-        try {
-          // 1. Update transaction status
-          const { error: txError } = await supabase
-            .from("nia_transactions")
-            .update({ status: 'approved', updated_at: new Date().toISOString() })
-            .eq("id", tx.id);
-          
-          if (txError) throw txError;
-
-          // 2. Update subscription status to active
-          const { error: subError } = await supabase
-            .from("nia_subscriptions")
-            .update({ status: 'active' })
-            .eq("student_id", tx.student_id)
-            .eq("package_id", tx.package_id);
-
-          if (subError) throw subError;
-
-          toast.success("Pembayaran disetujui, paket aktif!", { id: toastId });
-          fetchTransactions();
-        } catch (error: any) {
-          toast.error("Gagal memproses: " + error.message, { id: toastId });
-        }
-      }
-    });
+  const handleApprove = (tx: any) => {
+    setNoteModal({isOpen: true, tx, action: 'approve', note: ''});
   };
 
-  const handleReject = async (tx: any) => {
-    useConfirmStore.getState().showConfirm({
-      title: "Tolak Pembayaran?",
-      message: `Tolak pembayaran untuk ${tx.student?.full_name}? Status akan menjadi Ditolak/Refund.`,
-      isAlert: true,
-      onConfirm: async () => {
-        const toastId = toast.loading("Memproses penolakan...");
-        try {
-          const { error: txError } = await supabase
-            .from("nia_transactions")
-            .update({ status: 'refunded', updated_at: new Date().toISOString() })
-            .eq("id", tx.id);
-          
-          if (txError) throw txError;
+  const handleReject = (tx: any) => {
+    setNoteModal({isOpen: true, tx, action: 'reject', note: ''});
+  };
 
-          // Note: we can optionally set subscription to expired or delete it. Let's delete it.
-          await supabase
-            .from("nia_subscriptions")
-            .delete()
-            .eq("student_id", tx.student_id)
-            .eq("package_id", tx.package_id);
+  const submitNoteAction = async () => {
+    if (!noteModal.tx) return;
+    const { tx, action, note } = noteModal;
+    const isApprove = action === 'approve';
+    
+    const toastId = toast.loading(isApprove ? "Memproses persetujuan..." : "Memproses penolakan...");
+    try {
+      // 1. Update transaction status and notes
+      const { error: txError } = await supabase
+        .from("nia_transactions")
+        .update({ 
+          status: isApprove ? 'approved' : 'refunded', 
+          notes: note || null,
+          updated_at: new Date().toISOString() 
+        })
+        .eq("id", tx.id);
+      
+      if (txError) throw txError;
 
-          toast.success("Pembayaran ditolak & direfund.", { id: toastId });
-          fetchTransactions();
-        } catch (error: any) {
-          toast.error("Gagal memproses: " + error.message, { id: toastId });
-        }
+      if (isApprove) {
+        // 2. Update subscription status to active
+        const { error: subError } = await supabase
+          .from("nia_subscriptions")
+          .update({ status: 'active' })
+          .eq("student_id", tx.student_id)
+          .eq("package_id", tx.package_id);
+
+        if (subError) throw subError;
+        toast.success("Pembayaran disetujui, paket aktif!", { id: toastId });
+      } else {
+        // 2. Delete subscription if rejected
+        await supabase
+          .from("nia_subscriptions")
+          .delete()
+          .eq("student_id", tx.student_id)
+          .eq("package_id", tx.package_id);
+        toast.success("Pembayaran ditolak & direfund.", { id: toastId });
       }
-    });
+
+      setNoteModal({isOpen: false, tx: null, action: 'approve', note: ''});
+      fetchTransactions();
+    } catch (error: any) {
+      toast.error("Gagal memproses: " + error.message, { id: toastId });
+    }
   };
 
   const filteredTransactions = transactions.filter(tx => 
@@ -202,6 +193,41 @@ export default function OperatorPaymentsPage() {
           </table>
         </div>
       </div>
+
+      {noteModal.isOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/40 backdrop-blur-sm">
+          <div className="bg-white rounded-2xl w-full max-w-md p-6 shadow-xl relative">
+            <h2 className="text-xl font-bold text-slate-900 mb-2">
+              {noteModal.action === 'approve' ? 'Setujui Pembayaran' : 'Tolak Pembayaran'}
+            </h2>
+            <p className="text-sm text-slate-500 mb-4">
+              Tambahkan catatan untuk siswa (opsional). Catatan ini akan ditampilkan di riwayat pembelian mereka.
+            </p>
+            
+            <textarea
+              className="w-full p-3 border border-slate-200 rounded-xl focus:border-teal-500 focus:ring-1 focus:ring-teal-500 outline-none min-h-[100px] mb-6"
+              placeholder="Ketik catatan di sini..."
+              value={noteModal.note}
+              onChange={(e) => setNoteModal({...noteModal, note: e.target.value})}
+            ></textarea>
+            
+            <div className="flex justify-end gap-3">
+              <button 
+                onClick={() => setNoteModal({isOpen: false, tx: null, action: 'approve', note: ''})}
+                className="px-4 py-2 text-slate-500 font-bold hover:bg-slate-100 rounded-xl"
+              >
+                Batal
+              </button>
+              <button 
+                onClick={submitNoteAction}
+                className={`px-4 py-2 text-white font-bold rounded-xl ${noteModal.action === 'approve' ? 'bg-green-500 hover:bg-green-600' : 'bg-red-500 hover:bg-red-600'}`}
+              >
+                {noteModal.action === 'approve' ? 'Setujui' : 'Tolak'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

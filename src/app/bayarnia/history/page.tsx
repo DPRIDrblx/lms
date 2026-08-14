@@ -89,6 +89,12 @@ export default function HistoryPage() {
                     <span>•</span>
                     <span>Metode: {tx.payment_method}</span>
                   </div>
+                  {tx.notes && (
+                    <div className="mt-3 p-3 bg-slate-50 border border-slate-200 rounded-lg text-sm text-slate-700">
+                      <span className="font-bold text-slate-900 block mb-1">Catatan Operator:</span>
+                      {tx.notes}
+                    </div>
+                  )}
                 </div>
                 
                 <div className="flex flex-col items-end w-full md:w-auto mt-4 md:mt-0 pt-4 md:pt-0 border-t md:border-t-0 border-slate-100">

@@ -141,11 +141,11 @@ export default function BayarNiaPage() {
 
   useEffect(() => {
     if (checkoutStep === 3) {
-      generatePdf();
+      generatePdf(true);
     }
   }, [checkoutStep, paymentMethod, installmentVariation, appliedPromo, finalPrice, form, selectedPackage, selectedBranch]);
 
-  const generatePdf = () => {
+  const generatePdf = (isDraft: boolean = true) => {
     const doc = new jsPDF();
     
     // Kop Surat
@@ -155,7 +155,7 @@ export default function BayarNiaPage() {
     
     doc.setFontSize(10);
     doc.setTextColor(100, 100, 100);
-    doc.text("DRAFT INVOICE", 14, 28);
+    doc.text(isDraft ? "DRAFT INVOICE" : "INVOICE RESMI", 14, 28);
     
     // Garis pemisah
     doc.setDrawColor(200, 200, 200);
@@ -199,14 +199,23 @@ export default function BayarNiaPage() {
     
     const finalY = (doc as any).lastAutoTable.finalY || 120;
     
-    doc.setFontSize(9);
-    doc.setTextColor(150, 150, 150);
-    doc.text("* Ini adalah draft invoice yang dibuat sebelum pembayaran selesai.", 14, finalY + 15);
-    doc.text("* Invoice resmi akan diterbitkan setelah pembayaran lunas / termin pertama dibayarkan.", 14, finalY + 20);
-    
-    const pdfBlob = doc.output('blob');
-    const url = URL.createObjectURL(pdfBlob);
-    setPdfUrl(url);
+    if (isDraft) {
+      doc.setFontSize(9);
+      doc.setTextColor(150, 150, 150);
+      doc.text("* Ini adalah draft invoice yang dibuat sebelum pembayaran selesai.", 14, finalY + 15);
+      doc.text("* Invoice resmi akan diterbitkan setelah pembayaran lunas / termin pertama dibayarkan.", 14, finalY + 20);
+      
+      const pdfBlob = doc.output('blob');
+      const url = URL.createObjectURL(pdfBlob);
+      setPdfUrl(url);
+    } else {
+      doc.setFontSize(9);
+      doc.setTextColor(100, 100, 100);
+      doc.text(`Invoice ID: ${invoiceId}`, 14, finalY + 15);
+      doc.text("Terima kasih atas pembayaran Anda. Pembayaran sedang diproses / diverifikasi.", 14, finalY + 20);
+      
+      doc.save(`Invoice_NIA_${invoiceId}.pdf`);
+    }
   };
 
   const processForm = () => {
@@ -299,9 +308,17 @@ export default function BayarNiaPage() {
             </div>
           </div>
           
-          <button onClick={() => window.location.href = '/sobat-nia'} className="w-full py-4 bg-orange-500 text-white font-bold rounded-xl hover:bg-orange-600 shadow-lg shadow-orange-500/20">
-            Masuk ke Kelas
-          </button>
+          <div className="flex flex-col gap-3">
+            <button onClick={() => generatePdf(false)} className="w-full py-4 bg-teal-500 text-white font-bold rounded-xl hover:bg-teal-600 shadow-lg shadow-teal-500/20 flex items-center justify-center gap-2">
+              <FileText className="w-5 h-5" /> Download Invoice Asli
+            </button>
+            <button onClick={() => window.location.href = '/bayarnia/history'} className="w-full py-4 bg-orange-500 text-white font-bold rounded-xl hover:bg-orange-600 shadow-lg shadow-orange-500/20">
+              Cek Status Pembelian
+            </button>
+            <button onClick={() => window.location.href = '/sobat-nia'} className="w-full py-3 bg-slate-100 text-slate-700 font-bold rounded-xl hover:bg-slate-200">
+              Masuk ke Kelas
+            </button>
+          </div>
         </div>
       </div>
     );
