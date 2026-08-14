@@ -580,7 +580,7 @@ export default function BayarNiaPage() {
                       <div className="relative z-10">
                         <div className="font-black text-slate-900 text-lg mb-1">{promo.code}</div>
                         <div className="text-sm text-slate-600 mb-2">Hemat {promo.discount_type === 'percent' ? `${promo.discount_value}%` : `Rp ${promo.discount_value.toLocaleString()}`}</div>
-                        <div className="text-xs text-slate-400 flex items-center gap-1"><CalendarIcon className="w-3 h-3"/> Berlaku hingga {promo.valid_until ? new Date(promo.valid_until).toLocaleDateString('id-ID') : 'Selamanya'}</div>
+                        <div className="text-xs text-slate-400 flex items-center gap-1"><Calendar className="w-3 h-3"/> Berlaku hingga {promo.valid_until ? new Date(promo.valid_until).toLocaleDateString('id-ID') : 'Selamanya'}</div>
                       </div>
                       <button onClick={() => handleApplyVoucher(promo)} className="relative z-10 px-4 py-2 bg-white text-teal-600 font-bold text-sm border border-teal-200 rounded-full hover:bg-teal-50">Gunakan</button>
                     </div>
