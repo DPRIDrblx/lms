@@ -146,7 +146,7 @@ export default function TutorSchedulesPage() {
                 <div className="mt-6 pt-4 border-t border-slate-100">
                   <Button 
                     onClick={() => claimSchedule(sched.id)}
-                    variant="outline"
+                    variant="secondary"
                     className="w-full border-teal-200 text-teal-700 hover:bg-teal-50"
                   >
                     <UserPlus className="w-4 h-4 mr-2" /> Klaim Jadwal Ini
