@@ -14,9 +14,13 @@ export function NiaShell({ children }: { children: React.ReactNode }) {
 
   // Role based navigation
   const navItems = [
-    { name: "Dashboard", href: profile?.role === "operator_les" ? "/operator-les" : profile?.role === "pengurus_nia" ? "/pengurus-nia" : "/sobat-nia", icon: LayoutDashboard },
+    { name: "Dashboard", href: profile?.role === "operator_les" ? "/operator-les" : profile?.role === "pengurus_nia" ? "/pengurus-nia" : profile?.role === "tutor" ? "/tutor" : "/sobat-nia", icon: LayoutDashboard },
     ...(profile?.role === "sobat_nia" ? [
       { name: "Materi Saya", href: "/sobat-nia/courses", icon: BookOpen },
+    ] : []),
+    ...(profile?.role === "tutor" ? [
+      { name: "Jadwal Ajar", href: "/tutor/schedules", icon: BookOpen },
+      { name: "Materi Modul", href: "/tutor/modules", icon: BookOpen },
     ] : []),
     ...(profile?.role === "pengurus_nia" ? [
       { name: "Manajemen Materi", href: "/pengurus-nia/courses", icon: BookOpen },
