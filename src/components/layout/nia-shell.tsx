@@ -30,6 +30,7 @@ export function NiaShell({ children }: { children: React.ReactNode }) {
       { name: "Persetujuan Pembayaran", href: "/operator-les/payments", icon: CreditCard },
       { name: "Cabang Center", href: "/operator-les/branches", icon: MapPin },
       { name: "Promo Voucher", href: "/operator-les/promos", icon: Sparkles },
+      { name: "Manajemen Tutor", href: "/operator-les/tutors", icon: User },
     ] : []),
   ];
 
