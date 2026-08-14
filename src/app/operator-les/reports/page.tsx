@@ -105,7 +105,9 @@ export default function OperatorReportsPage() {
                   <div>
                     <h3 className="font-bold text-lg text-slate-900">{schedule.classes?.name || 'Umum'}</h3>
                     <p className="text-sm text-slate-500 flex items-center gap-1 mt-1">
-                      <MapPin className="w-3.5 h-3.5" /> {schedule.classes?.branches?.name || '-'}
+                      <MapPin className="w-3.5 h-3.5" /> 
+                      {schedule.classes?.branches?.name || '-'}
+                      {schedule.room_number ? ` • ${schedule.room_number}` : ''}
                     </p>
                   </div>
                   <span className={`px-2.5 py-1 rounded-full text-xs font-bold ${
@@ -176,6 +178,10 @@ export default function OperatorReportsPage() {
                   }`}>
                     {selectedSchedule.status === 'completed' ? 'Selesai' : 'Sedang Berjalan'}
                   </span>
+                </div>
+                <div>
+                  <p className="text-sm text-slate-500 font-medium mb-1">Ruangan / Room</p>
+                  <p className="font-bold text-slate-900">{selectedSchedule.room_number || '-'}</p>
                 </div>
               </div>
 

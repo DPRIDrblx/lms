@@ -41,6 +41,7 @@ export default function LessonWorkspacePage() {
   const [photoStartUrl, setPhotoStartUrl] = useState("");
   const [photoEndUrl, setPhotoEndUrl] = useState("");
   const [uploadingPhoto, setUploadingPhoto] = useState(false);
+  const [roomNumber, setRoomNumber] = useState("");
 
   const fetchData = async () => {
     setLoading(true);
@@ -63,6 +64,7 @@ export default function LessonWorkspacePage() {
       setMeetingSummary(sched.meeting_summary || "");
       setPhotoStartUrl(sched.photo_start_url || "");
       setPhotoEndUrl(sched.photo_end_url || "");
+      setRoomNumber(sched.room_number || "");
 
       if (sched.class_id) {
         const { data: stds } = await supabase
@@ -274,6 +276,7 @@ export default function LessonWorkspacePage() {
           meeting_summary: meetingSummary,
           photo_start_url: photoStartUrl,
           photo_end_url: photoEndUrl,
+          room_number: roomNumber,
           status: 'ongoing'
         })
         .eq("id", schedule.id);
@@ -466,16 +469,29 @@ export default function LessonWorkspacePage() {
                   disabled={isCompleted}
                 />
               </div>
-              <div>
-                <label className="text-xs font-bold text-slate-500 mb-1 block">Metode Pembelajaran (Opsional)</label>
-                <input 
-                  type="text"
-                  value={learningMethods}
-                  onChange={e => setLearningMethods(e.target.value)}
-                  placeholder="Contoh: Diskusi Kelompok, Ceramah & Latihan Soal..."
-                  className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-lg text-sm"
-                  disabled={isCompleted}
-                />
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                  <label className="text-xs font-bold text-slate-500 mb-1 block">Nomor Room / Ruangan</label>
+                  <input 
+                    type="text"
+                    value={roomNumber}
+                    onChange={e => setRoomNumber(e.target.value)}
+                    placeholder="Contoh: Room 204"
+                    className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-lg text-sm"
+                    disabled={isCompleted}
+                  />
+                </div>
+                <div>
+                  <label className="text-xs font-bold text-slate-500 mb-1 block">Metode Pembelajaran (Opsional)</label>
+                  <input 
+                    type="text"
+                    value={learningMethods}
+                    onChange={e => setLearningMethods(e.target.value)}
+                    placeholder="Contoh: Diskusi Kelompok, Ceramah & Latihan Soal..."
+                    className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-lg text-sm"
+                    disabled={isCompleted}
+                  />
+                </div>
               </div>
             </div>
 
