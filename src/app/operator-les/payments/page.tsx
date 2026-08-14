@@ -5,6 +5,7 @@ import { createClient } from "@/lib/supabase";
 import { useConfirmStore } from "@/components/ui/GlobalConfirmModal";
 import { Loader2, CheckCircle2, XCircle, Search, Clock, FileText } from "lucide-react";
 import toast from "react-hot-toast";
+import { rejectPaymentAction } from "./actions";
 
 export default function OperatorPaymentsPage() {
   const supabase = createClient();
@@ -58,19 +59,19 @@ export default function OperatorPaymentsPage() {
     
     const toastId = toast.loading(isApprove ? "Memproses persetujuan..." : "Memproses penolakan...");
     try {
-      // 1. Update transaction status and notes
-      const { error: txError } = await supabase
-        .from("nia_transactions")
-        .update({ 
-          status: isApprove ? 'approved' : 'refunded', 
-          notes: note || null,
-          updated_at: new Date().toISOString() 
-        })
-        .eq("id", tx.id);
-      
-      if (txError) throw txError;
-
       if (isApprove) {
+        // 1. Update transaction status and notes
+        const { error: txError } = await supabase
+          .from("nia_transactions")
+          .update({ 
+            status: 'approved', 
+            notes: note || null,
+            updated_at: new Date().toISOString() 
+          })
+          .eq("id", tx.id);
+        
+        if (txError) throw txError;
+
         // 2. Update subscription status to active
         const { error: subError } = await supabase
           .from("nia_subscriptions")
@@ -81,13 +82,11 @@ export default function OperatorPaymentsPage() {
         if (subError) throw subError;
         toast.success("Pembayaran disetujui, paket aktif!", { id: toastId });
       } else {
-        // 2. Delete subscription if rejected
-        await supabase
-          .from("nia_subscriptions")
-          .delete()
-          .eq("student_id", tx.student_id)
-          .eq("package_id", tx.package_id);
-        toast.success("Pembayaran ditolak & direfund.", { id: toastId });
+        // Reject Payment: Delete user account and set status to rejected
+        const result = await rejectPaymentAction(tx.id, tx.student_id, note);
+        if (!result.success) throw new Error(result.error);
+        
+        toast.success("Pembayaran ditolak & akun dihapus.", { id: toastId });
       }
 
       setNoteModal({isOpen: false, tx: null, action: 'approve', note: ''});
@@ -177,8 +176,7 @@ export default function OperatorPaymentsPage() {
                   <td className="p-4">
                     {tx.status === 'pending' && <span className="inline-flex items-center gap-1 px-2.5 py-1 bg-amber-100 text-amber-700 text-xs font-bold rounded-full"><Clock className="w-3 h-3"/> Menunggu</span>}
                     {tx.status === 'approved' && <span className="inline-flex items-center gap-1 px-2.5 py-1 bg-green-100 text-green-700 text-xs font-bold rounded-full"><CheckCircle2 className="w-3 h-3"/> Disetujui</span>}
-                    {tx.status === 'refunded' && <span className="inline-flex items-center gap-1 px-2.5 py-1 bg-red-100 text-red-700 text-xs font-bold rounded-full"><XCircle className="w-3 h-3"/> Refund/Tolak</span>}
-                    {tx.status === 'rejected' && <span className="inline-flex items-center gap-1 px-2.5 py-1 bg-red-100 text-red-700 text-xs font-bold rounded-full"><XCircle className="w-3 h-3"/> Refund/Tolak</span>}
+                    {(tx.status === 'rejected' || tx.status === 'refunded' || tx.status === 'refund_success' || tx.status === 'processing_refund') && <span className="inline-flex items-center gap-1 px-2.5 py-1 bg-red-100 text-red-700 text-xs font-bold rounded-full"><XCircle className="w-3 h-3"/> {tx.status === 'rejected' ? 'Ditolak' : tx.status === 'processing_refund' ? 'Proses Refund' : 'Refund Berhasil'}</span>}
                   </td>
                   <td className="p-4 text-right space-x-2">
                     {tx.status === 'pending' ? (
