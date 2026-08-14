@@ -140,7 +140,7 @@ export default function BayarNiaPage() {
   const [pdfUrl, setPdfUrl] = useState<string | null>(null);
 
   useEffect(() => {
-    if (checkoutStep === 2) {
+    if (checkoutStep === 3) {
       generatePdf();
     }
   }, [checkoutStep, paymentMethod, installmentVariation, appliedPromo, finalPrice, form, selectedPackage, selectedBranch]);
@@ -218,7 +218,7 @@ export default function BayarNiaPage() {
       toast.error("Password minimal 6 karakter");
       return;
     }
-    setCheckoutStep(2); // Go to Invoice
+    setCheckoutStep(3); // Go to Invoice
   };
 
   const handleBeliClick = () => {
