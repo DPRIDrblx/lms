@@ -15,11 +15,13 @@ import { ShieldAlert, LogOut, CheckCircle2, Zap, Rocket } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Button } from "@/components/ui/button";
 import { createClient } from "@/lib/supabase";
+import { useTheme } from "@/lib/theme-context";
 
 export function AppShell({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
   const router = useRouter();
   const { profile, loading, isCenterStudent, updateProfile } = useAuth();
+  const { uiMode } = useTheme();
   const supabase = createClient();
   const isExam = pathname?.includes("/exam");
   const [isUpdatingCenter, setIsUpdatingCenter] = useState(false);
@@ -199,13 +201,13 @@ export function AppShell({ children }: { children: React.ReactNode }) {
         </AnimatePresence>
         
         <div 
-          className="min-h-screen bg-slate-50 text-[var(--text-primary)] pb-24 lg:pb-0"
-          data-theme={isCenterStudent ? "center" : undefined}
+          className={`min-h-screen pb-24 lg:pb-0 ${uiMode === 'clean' ? 'bg-[#f4f7f6]' : 'bg-slate-50'} text-[var(--text-primary)]`}
+          data-theme={isCenterStudent && uiMode === 'fun' ? "center" : undefined}
         >
           <StudentSidebar />
           <div className="lg:pl-[260px] flex flex-col min-h-screen">
             <StudentTopBar />
-            <main className="flex-1 p-4 sm:p-6 lg:p-8 max-w-5xl mx-auto w-full">
+            <main className={`flex-1 w-full mx-auto ${uiMode === 'clean' ? 'p-4 sm:p-6 max-w-6xl' : 'p-4 sm:p-6 lg:p-8 max-w-5xl'}`}>
               <ClassGuard>
                 {children}
               </ClassGuard>

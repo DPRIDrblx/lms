@@ -7,13 +7,15 @@ import { Home, Shield, Swords, User, Compass, Users, MessageCircle, ShoppingBag,
 import { cn } from "@/lib/utils";
 import { motion, AnimatePresence } from "framer-motion";
 import { useAuth } from "@/lib/auth-context";
-import { FolderOpen, Calendar, Archive, BookOpen } from "lucide-react";
+import { useTheme } from "@/lib/theme-context";
+import { FolderOpen, Calendar, Archive, BookOpen, GraduationCap } from "lucide-react";
 
 export function StudentSidebar() {
   const pathname = usePathname();
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
   const { isCenterStudent } = useAuth();
+  const { uiMode } = useTheme();
 
   let navItems = [
     { name: "Learn", href: "/dashboard", icon: Home },
@@ -58,27 +60,71 @@ export function StudentSidebar() {
   return (
     <>
       {/* Desktop Left Sidebar */}
-      <div className="hidden lg:flex flex-col fixed top-0 left-0 h-screen w-[260px] bg-white border-r-2 border-slate-200 p-6 z-40">
-        <div className="mb-8 px-4">
-          <h1 className={cn("text-3xl font-black tracking-tight", isCenterStudent ? "text-red-600" : "text-emerald-500")}>
-            IGNITE {isCenterStudent && <span className="text-blue-600">Center</span>}
-          </h1>
-        </div>
+      <div className={cn(
+        "hidden lg:flex flex-col fixed top-0 left-0 h-screen w-[260px] bg-white z-40",
+        uiMode === 'clean' ? "border-r border-slate-200" : "border-r-2 border-slate-200 p-6"
+      )}>
+        {uiMode === 'clean' ? (
+          <div className="p-6 pb-2 border-b border-transparent">
+            <div className="flex items-center gap-2 mb-4">
+              <div className="w-10 h-10 rounded-lg bg-emerald-50 text-emerald-600 flex items-center justify-center">
+                <GraduationCap className="w-6 h-6" />
+              </div>
+              <div>
+                <h1 className="text-xl font-bold tracking-tight text-slate-800 leading-tight">
+                  IGNITE <br/><span className="text-emerald-500 font-black">CENTER</span>
+                </h1>
+              </div>
+            </div>
+            {isCenterStudent && (
+              <div className="text-xs font-bold text-emerald-600 bg-emerald-50 px-3 py-1.5 rounded-full inline-block">
+                Bojonegoro - Dr. Cipto
+              </div>
+            )}
+          </div>
+        ) : (
+          <div className="mb-8 px-4">
+            <h1 className={cn("text-3xl font-black tracking-tight", isCenterStudent ? "text-red-600" : "text-emerald-500")}>
+              IGNITE {isCenterStudent && <span className="text-blue-600">Center</span>}
+            </h1>
+          </div>
+        )}
         
-        <nav className="flex flex-col gap-2 flex-1 overflow-y-auto pb-8 scrollbar-hide">
+        <nav className={cn(
+          "flex flex-col flex-1 overflow-y-auto pb-8 scrollbar-hide",
+          uiMode === 'clean' ? "py-4 gap-1 px-4" : "gap-2"
+        )}>
           {navItems.map((item) => {
             const isActive = pathname === item.href;
             return (
               <Link key={item.name} href={item.href}>
                 <div 
                   className={cn(
-                    "flex items-center gap-4 px-4 py-4 rounded-2xl font-bold text-lg transition-all border-2",
-                    isActive 
-                      ? (isCenterStudent ? "bg-red-100/50 border-red-200 text-red-600" : "bg-emerald-100/50 border-emerald-200 text-emerald-600")
-                      : "border-transparent text-slate-500 hover:bg-slate-100 hover:text-slate-700"
+                    "flex items-center transition-all",
+                    uiMode === 'clean'
+                      ? [
+                          "gap-4 px-4 py-3 rounded-xl font-semibold text-base",
+                          isActive 
+                            ? "bg-teal-50 text-teal-700" 
+                            : "text-slate-600 hover:bg-slate-50"
+                        ]
+                      : [
+                          "gap-4 px-4 py-4 rounded-2xl font-bold text-lg border-2",
+                          isActive 
+                            ? (isCenterStudent ? "bg-red-100/50 border-red-200 text-red-600" : "bg-emerald-100/50 border-emerald-200 text-emerald-600")
+                            : "border-transparent text-slate-500 hover:bg-slate-100 hover:text-slate-700"
+                        ]
                   )}
                 >
-                  <item.icon className={cn("w-7 h-7", isActive ? (isCenterStudent ? "text-red-500" : "text-emerald-500") : "text-slate-400")} strokeWidth={isActive ? 2.5 : 2} />
+                  <item.icon 
+                    className={cn(
+                      uiMode === 'clean' ? "w-5 h-5" : "w-7 h-7", 
+                      isActive 
+                        ? (uiMode === 'clean' ? "text-teal-600" : (isCenterStudent ? "text-red-500" : "text-emerald-500")) 
+                        : (uiMode === 'clean' ? "text-teal-500/70" : "text-slate-400")
+                    )} 
+                    strokeWidth={isActive ? (uiMode === 'clean' ? 2 : 2.5) : 2} 
+                  />
                   {item.name}
                 </div>
               </Link>

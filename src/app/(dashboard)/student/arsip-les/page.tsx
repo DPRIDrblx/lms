@@ -9,9 +9,12 @@ import { Card } from "@/components/ui/card";
 import { Modal } from "@/components/ui/modal";
 import { Button } from "@/components/ui/button";
 import toast from "react-hot-toast";
+import { useTheme } from "@/lib/theme-context";
+import { cn } from "@/lib/utils";
 
 export default function ArsipLesPage() {
   const { profile, isCenterStudent } = useAuth();
+  const { uiMode } = useTheme();
   const supabase = createClient();
   const [schedules, setSchedules] = useState<any[]>([]);
   const [attendances, setAttendances] = useState<Record<string, any>>({});
@@ -140,18 +143,25 @@ export default function ArsipLesPage() {
 
   return (
     <div className="max-w-4xl mx-auto space-y-8 font-sans pb-20">
-      <div className="bg-slate-200 rounded-3xl p-8 text-slate-900 relative overflow-hidden shadow-sm border-b-4 border-slate-300">
-        <div className="absolute top-0 right-0 w-64 h-64 bg-white/20 rounded-full blur-3xl -mr-20 -mt-20"></div>
-        <div className="relative z-10 flex flex-col md:flex-row items-center gap-6">
-          <div className="w-20 h-20 bg-white/30 rounded-2xl flex items-center justify-center shrink-0 backdrop-blur-sm border border-white/40">
-            <Archive className="w-10 h-10 text-slate-700" />
-          </div>
-          <div>
-            <h1 className="text-3xl md:text-4xl font-black mb-2 tracking-tight text-slate-800">Arsip Jadwal Les</h1>
-            <p className="text-slate-600 font-bold text-lg">Lihat kembali ringkasan pertemuan sesi sebelumnya.</p>
+      {uiMode === 'clean' ? (
+        <div className="mb-6 pb-4 border-b border-slate-200">
+          <h1 className="text-2xl font-bold text-slate-800">Arsip Jadwal Les</h1>
+          <p className="text-slate-500 mt-1">Lihat kembali ringkasan pertemuan sesi sebelumnya.</p>
+        </div>
+      ) : (
+        <div className="bg-slate-200 rounded-3xl p-8 text-slate-900 relative overflow-hidden shadow-sm border-b-4 border-slate-300">
+          <div className="absolute top-0 right-0 w-64 h-64 bg-white/20 rounded-full blur-3xl -mr-20 -mt-20"></div>
+          <div className="relative z-10 flex flex-col md:flex-row items-center gap-6">
+            <div className="w-20 h-20 bg-white/30 rounded-2xl flex items-center justify-center shrink-0 backdrop-blur-sm border border-white/40">
+              <Archive className="w-10 h-10 text-slate-700" />
+            </div>
+            <div>
+              <h1 className="text-3xl md:text-4xl font-black mb-2 tracking-tight text-slate-800">Arsip Jadwal Les</h1>
+              <p className="text-slate-600 font-bold text-lg">Lihat kembali ringkasan pertemuan sesi sebelumnya.</p>
+            </div>
           </div>
         </div>
-      </div>
+      )}
 
       <div className="space-y-4">
         {loading ? (
@@ -166,17 +176,25 @@ export default function ArsipLesPage() {
             return (
               <Card 
                 key={schedule.id} 
-                className={`p-0 flex flex-col sm:flex-row items-stretch border-2 cursor-pointer transition-all hover:scale-[1.01] overflow-hidden group border-slate-200 hover:border-slate-400 hover:shadow-lg`}
+                className={cn(
+                  "p-0 flex flex-col sm:flex-row items-stretch cursor-pointer transition-all overflow-hidden group",
+                  uiMode === 'clean' 
+                    ? "border border-slate-200 bg-white hover:border-slate-300 shadow-sm"
+                    : "border-2 border-slate-200 hover:border-slate-400 hover:shadow-lg"
+                )}
                 onClick={() => handleOpenSchedule(schedule)}
               >
-                <div className={`w-full sm:w-28 p-6 flex flex-row sm:flex-col items-center justify-center shrink-0 gap-3 border-b sm:border-b-0 sm:border-r border-slate-100 bg-slate-50 text-slate-500`}>
-                  <span className="text-sm font-bold uppercase">{date.toLocaleDateString('id-ID', { month: 'short' })}</span>
-                  <span className="text-3xl sm:text-4xl font-black leading-none">{date.getDate()}</span>
+                <div className={cn(
+                  "w-full sm:w-28 p-6 flex flex-row sm:flex-col items-center justify-center shrink-0 gap-3 border-b sm:border-b-0 sm:border-r border-slate-100 bg-slate-50 text-slate-500",
+                  uiMode === 'clean' ? "bg-slate-50" : "bg-slate-50"
+                )}>
+                  <span className={cn("text-sm uppercase", uiMode === 'clean' ? "font-semibold" : "font-bold")}>{date.toLocaleDateString('id-ID', { month: 'short' })}</span>
+                  <span className={cn("text-3xl sm:text-4xl leading-none", uiMode === 'clean' ? "font-bold" : "font-black")}>{date.getDate()}</span>
                 </div>
                 
                 <div className="flex-1 p-6 flex flex-col justify-center">
                   <div className="flex items-center gap-2 mb-1">
-                    <h3 className="font-black text-xl text-slate-800 group-hover:text-slate-600 transition-colors">{schedule.title}</h3>
+                    <h3 className={cn("text-xl text-slate-800 transition-colors", uiMode === 'clean' ? "font-semibold group-hover:text-slate-600" : "font-black group-hover:text-slate-600")}>{schedule.title}</h3>
                   </div>
                   
                   {schedule.description && (

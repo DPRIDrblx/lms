@@ -12,6 +12,8 @@ import { CenterLoader } from "@/components/ui/center-loader";
 import { getRank, getNextRank } from "@/lib/utils";
 import { checkAndUpdateStreak, generateDailyQuests } from "@/lib/gamification";
 import { motion, AnimatePresence } from "framer-motion";
+import { useTheme } from "@/lib/theme-context";
+import { cn } from "@/lib/utils";
 import { 
   BookOpen, 
   Trophy, 
@@ -50,6 +52,7 @@ interface SchoolEvent {
 
 export default function DashboardPage() {
   const { profile, isCenterStudent } = useAuth();
+  const { uiMode } = useTheme();
   const supabase = createClient();
   const router = useRouter();
   
@@ -223,7 +226,7 @@ export default function DashboardPage() {
   return (
     <div className="max-w-6xl mx-auto space-y-8 font-sans pb-20 relative">
       {/* Decorative Background for Center Students */}
-      {isCenterStudent && (
+      {isCenterStudent && uiMode === 'fun' && (
         <div className="absolute top-[-100px] left-1/2 -translate-x-1/2 w-[100vw] max-w-[1400px] h-[600px] overflow-hidden -z-10 pointer-events-none opacity-60">
           <div className="absolute -top-32 -left-20 w-[500px] h-[500px] rounded-full border-[80px] border-red-500/10 mix-blend-multiply blur-lg" />
           <div className="absolute top-20 right-[-10%] w-[600px] h-[600px] rounded-full border-[100px] border-yellow-400/10 mix-blend-multiply blur-2xl" />
@@ -258,6 +261,53 @@ export default function DashboardPage() {
             </div>
           )}
         </>
+      ) : uiMode === 'clean' ? (
+        <div className="bg-white rounded-3xl p-6 md:p-8 shadow-sm border border-slate-200 relative overflow-hidden">
+          <div className="relative z-10">
+            <div className="flex items-center justify-between mb-6 border-b border-slate-100 pb-4">
+              <div className="flex items-center gap-4">
+                <div className="w-12 h-12 bg-slate-100 rounded-xl flex items-center justify-center">
+                  <Calendar className="w-6 h-6 text-slate-700" />
+                </div>
+                <div>
+                  <h3 className="font-bold text-xl text-slate-800">Jadwal Les Terdekat</h3>
+                  <p className="text-slate-500 text-sm">Persiapkan dirimu untuk sesi belajar berikutnya!</p>
+                </div>
+              </div>
+              <Link href="/student/jadwal-les" className="hidden md:flex px-4 py-2 bg-slate-100 text-slate-700 font-semibold rounded-lg hover:bg-slate-200 transition-colors items-center gap-2">
+                Lihat Semua <ArrowRight className="w-4 h-4" />
+              </Link>
+            </div>
+            
+            {centerSchedules.length > 0 ? (
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                {centerSchedules.map((schedule) => (
+                  <div key={schedule.id} className="p-4 bg-slate-50 rounded-xl border border-slate-200 flex gap-4 hover:border-slate-300 transition-colors group cursor-pointer">
+                    <div className="w-14 h-14 bg-white border border-slate-200 rounded-lg flex flex-col items-center justify-center shrink-0">
+                      <span className="text-[10px] font-bold uppercase text-slate-400 tracking-wider">{new Date(schedule.schedule_time).toLocaleDateString('id-ID', { month: 'short' })}</span>
+                      <span className="text-xl font-bold leading-none text-slate-700">{new Date(schedule.schedule_time).getDate()}</span>
+                    </div>
+                    <div className="flex flex-col justify-center">
+                      <h4 className="font-semibold text-slate-800 text-base line-clamp-1 group-hover:text-teal-600 transition-colors">{schedule.title}</h4>
+                      <div className="flex items-center gap-1.5 mt-1">
+                        <Clock className="w-3.5 h-3.5 text-slate-400" />
+                        <p className="text-xs font-medium text-slate-500">{new Date(schedule.schedule_time).toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' })} WIB</p>
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <div className="text-center py-8 bg-slate-50 rounded-xl border border-dashed border-slate-200">
+                <p className="font-medium text-slate-500">Belum ada jadwal les dalam waktu dekat.</p>
+              </div>
+            )}
+            
+            <Link href="/student/jadwal-les" className="md:hidden mt-4 w-full flex px-4 py-2.5 bg-slate-100 text-slate-700 font-semibold rounded-lg justify-center items-center gap-2">
+              Lihat Semua <ArrowRight className="w-4 h-4" />
+            </Link>
+          </div>
+        </div>
       ) : (
         <div className="bg-red-600 rounded-[2.5rem] p-8 md:p-10 text-white shadow-2xl relative overflow-hidden border-b-8 border-red-800 transform hover:-translate-y-1 transition-transform duration-300">
           {/* Abstract SVG Backgrounds inside the Card */}
@@ -318,12 +368,17 @@ export default function DashboardPage() {
         {/* LEFT COLUMN: THE LEARNING PATH */}
         <div className="flex-1 flex flex-col items-center py-6 relative min-h-[80vh]">
          <div className="text-center mb-16 relative z-10 w-full max-w-md">
-           <div className="bg-emerald-500 rounded-3xl p-6 shadow-[0_8px_0_rgb(4,120,87)] border-2 border-emerald-600 text-white flex justify-between items-center transform transition-transform hover:-translate-y-1 active:translate-y-2 active:shadow-[0_0px_0_rgb(4,120,87)]">
+           <div className={cn(
+             "rounded-3xl p-6 flex justify-between items-center transition-transform",
+             uiMode === 'clean'
+               ? "bg-white border border-slate-200 shadow-sm text-slate-800"
+               : "bg-emerald-500 shadow-[0_8px_0_rgb(4,120,87)] border-2 border-emerald-600 text-white transform hover:-translate-y-1 active:translate-y-2 active:shadow-[0_0px_0_rgb(4,120,87)]"
+           )}>
              <div className="text-left">
-               <h2 className="text-2xl font-black mb-1">Your Learning Path</h2>
-               <p className="font-bold text-emerald-100">Continue your journey!</p>
+               <h2 className={cn("text-2xl mb-1", uiMode === 'clean' ? "font-bold text-slate-800" : "font-black")}>Your Learning Path</h2>
+               <p className={cn(uiMode === 'clean' ? "text-slate-500" : "font-bold text-emerald-100")}>Continue your journey!</p>
              </div>
-             <BookOpen className="w-12 h-12 text-emerald-200" />
+             <BookOpen className={cn("w-12 h-12", uiMode === 'clean' ? "text-teal-500" : "text-emerald-200")} />
            </div>
          </div>
 
@@ -337,20 +392,26 @@ export default function DashboardPage() {
                   <div className="absolute top-24 h-16 w-4 bg-slate-200 -z-10 rounded-full" />
                   <div className="relative w-full px-4">
                     <Link href={isCompleted ? '#' : `/student/drills/${drill.id}`}>
-                      <div className={`w-full rounded-[2rem] p-6 border-4 flex items-center gap-4 transition-all ${
-                        isCompleted 
-                        ? 'bg-emerald-50 border-emerald-200 opacity-70' 
-                        : 'bg-white border-amber-300 shadow-[0_8px_0_rgb(252,211,77)] hover:-translate-y-1 hover:shadow-[0_10px_0_rgb(252,211,77)] active:translate-y-2 active:shadow-none'
-                      }`}>
-                        <div className={`w-16 h-16 rounded-2xl flex items-center justify-center shrink-0 ${isCompleted ? 'bg-emerald-100' : 'bg-amber-100 animate-pulse'}`}>
-                          {isCompleted ? <Trophy className="w-8 h-8 text-emerald-500" /> : <Flame className="w-8 h-8 text-amber-500" />}
+                      <div className={cn(
+                        "w-full p-6 flex items-center gap-4 transition-all",
+                        uiMode === 'clean'
+                          ? (isCompleted ? "bg-slate-50 border border-slate-200 rounded-2xl opacity-70" : "bg-white border border-slate-200 shadow-sm rounded-2xl hover:border-amber-300")
+                          : (isCompleted ? "bg-emerald-50 border-4 border-emerald-200 rounded-[2rem] opacity-70" : "bg-white border-4 border-amber-300 rounded-[2rem] shadow-[0_8px_0_rgb(252,211,77)] hover:-translate-y-1 hover:shadow-[0_10px_0_rgb(252,211,77)] active:translate-y-2 active:shadow-none")
+                      )}>
+                        <div className={cn(
+                          "w-16 h-16 flex items-center justify-center shrink-0",
+                          uiMode === 'clean'
+                            ? (isCompleted ? 'bg-slate-100 rounded-xl' : 'bg-amber-50 rounded-xl')
+                            : (isCompleted ? 'bg-emerald-100 rounded-2xl' : 'bg-amber-100 animate-pulse rounded-2xl')
+                        )}>
+                          {isCompleted ? <Trophy className={cn("w-8 h-8", uiMode === 'clean' ? "text-slate-400" : "text-emerald-500")} /> : <Flame className="w-8 h-8 text-amber-500" />}
                         </div>
                         <div>
-                          <h3 className="text-xl font-black text-slate-800 mb-1">{drill.title}</h3>
+                          <h3 className={cn("text-xl mb-1", uiMode === 'clean' ? "font-bold text-slate-800" : "font-black text-slate-800")}>{drill.title}</h3>
                           {isCompleted ? (
-                            <p className="text-emerald-600 font-bold text-sm">Misi Selesai!</p>
+                            <p className={cn("text-sm", uiMode === 'clean' ? "text-slate-500" : "text-emerald-600 font-bold")}>Misi Selesai!</p>
                           ) : (
-                            <p className="text-amber-600 font-bold text-sm">Drill Mingguan! (+{drill.xp_reward} XP)</p>
+                            <p className={cn("text-sm", uiMode === 'clean' ? "text-amber-600 font-medium" : "text-amber-600 font-bold")}>Drill Mingguan! (+{drill.xp_reward} XP)</p>
                           )}
                         </div>
                       </div>
@@ -389,17 +450,27 @@ export default function DashboardPage() {
                      )}
                      
                      <div className="relative">
-                       {/* Circular 3D Button */}
+                       {/* Circular Button */}
                        <Link href={`/courses/${course.id}`} className="flex flex-col items-center">
-                         <div className={`w-24 h-24 rounded-full flex items-center justify-center border-4 ${color.border} ${color.bg} ${color.shadow} transform transition-all duration-150 active:translate-y-2 active:shadow-none hover:ring-8 ${color.ring} z-10 mb-3`}>
+                         <div className={cn(
+                           "w-24 h-24 rounded-full flex items-center justify-center z-10 mb-3 transition-all",
+                           uiMode === 'clean'
+                             ? `border-2 bg-white hover:bg-slate-50 ${isCompleted ? 'border-teal-500' : 'border-indigo-500'}`
+                             : `border-4 ${color.border} ${color.bg} ${color.shadow} transform duration-150 active:translate-y-2 active:shadow-none hover:ring-8 ${color.ring}`
+                         )}>
                            {isCompleted ? (
-                             <Trophy className="w-10 h-10 text-white/90 drop-shadow-md" />
+                             <Trophy className={cn("w-10 h-10 drop-shadow-md", uiMode === 'clean' ? "text-teal-500 drop-shadow-none" : "text-white/90")} />
                            ) : (
-                             <Star className="w-10 h-10 text-white/90 drop-shadow-md" />
+                             <Star className={cn("w-10 h-10 drop-shadow-md", uiMode === 'clean' ? "text-indigo-500 drop-shadow-none" : "text-white/90")} />
                            )}
                          </div>
-                         <div className="bg-white px-4 py-2 rounded-xl border-2 border-slate-200 shadow-sm text-center min-w-[120px] z-20">
-                           <div className="font-black text-slate-700 text-sm line-clamp-1">{course.title}</div>
+                         <div className={cn(
+                           "bg-white px-4 py-2 text-center min-w-[120px] z-20",
+                           uiMode === 'clean'
+                             ? "rounded-lg border border-slate-200 shadow-sm"
+                             : "rounded-xl border-2 border-slate-200 shadow-sm"
+                         )}>
+                           <div className={cn("text-slate-700 text-sm line-clamp-1", uiMode === 'clean' ? "font-bold" : "font-black")}>{course.title}</div>
                            <div className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">{done}/{course.lessons_count} Missions</div>
                          </div>
                        </Link>
@@ -422,9 +493,12 @@ export default function DashboardPage() {
       <div className="w-full lg:w-[350px] shrink-0 space-y-6 pt-12 px-4 lg:px-0">
         
         {/* League Box */}
-        <div className="bg-white rounded-[2rem] border-2 border-slate-200 p-6 shadow-sm">
-           <div className="flex items-center justify-between mb-4 border-b-2 border-slate-100 pb-4">
-              <h2 className="text-xl font-black text-slate-800">League</h2>
+        <div className={cn(
+          "bg-white p-6",
+          uiMode === 'clean' ? "rounded-2xl border border-slate-200 shadow-sm" : "rounded-[2rem] border-2 border-slate-200 shadow-sm"
+        )}>
+           <div className={cn("flex items-center justify-between mb-4 pb-4", uiMode === 'clean' ? "border-b border-slate-100" : "border-b-2 border-slate-100")}>
+              <h2 className={cn("text-xl text-slate-800", uiMode === 'clean' ? "font-bold" : "font-black")}>League</h2>
               <span className="text-sm font-bold text-indigo-500 uppercase">View All</span>
            </div>
            <div className="flex items-center gap-4">
@@ -448,9 +522,12 @@ export default function DashboardPage() {
         </div>
 
         {/* Daily Quests Box */}
-        <div className="bg-white rounded-[2rem] border-2 border-slate-200 p-6 shadow-sm">
-           <div className="flex items-center justify-between mb-6 border-b-2 border-slate-100 pb-4">
-              <h2 className="text-xl font-black text-slate-800">Daily Quests</h2>
+        <div className={cn(
+          "bg-white p-6",
+          uiMode === 'clean' ? "rounded-2xl border border-slate-200 shadow-sm" : "rounded-[2rem] border-2 border-slate-200 shadow-sm"
+        )}>
+           <div className={cn("flex items-center justify-between mb-6 pb-4", uiMode === 'clean' ? "border-b border-slate-100" : "border-b-2 border-slate-100")}>
+              <h2 className={cn("text-xl text-slate-800", uiMode === 'clean' ? "font-bold" : "font-black")}>Daily Quests</h2>
               <span className="text-sm font-bold text-indigo-500 uppercase">View All</span>
            </div>
            <div className="space-y-6">
@@ -482,9 +559,12 @@ export default function DashboardPage() {
          </div>
 
          {/* Quick Tools Box */}
-         <div className="bg-white rounded-[2rem] border-2 border-slate-200 p-6 shadow-sm">
-            <div className="flex items-center justify-between mb-6 border-b-2 border-slate-100 pb-4">
-               <h2 className="text-xl font-black text-slate-800">Quick Tools</h2>
+         <div className={cn(
+           "bg-white p-6",
+           uiMode === 'clean' ? "rounded-2xl border border-slate-200 shadow-sm" : "rounded-[2rem] border-2 border-slate-200 shadow-sm"
+         )}>
+            <div className={cn("flex items-center justify-between mb-6 pb-4", uiMode === 'clean' ? "border-b border-slate-100" : "border-b-2 border-slate-100")}>
+               <h2 className={cn("text-xl text-slate-800", uiMode === 'clean' ? "font-bold" : "font-black")}>Quick Tools</h2>
             </div>
             <div className="grid grid-cols-2 gap-4">
                <Link href="/attendance/ai" className="flex flex-col items-center justify-center p-4 rounded-2xl bg-indigo-50 hover:bg-indigo-100 border-2 border-indigo-200 transition-colors text-center gap-2 group">

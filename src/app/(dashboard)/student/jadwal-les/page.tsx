@@ -9,9 +9,12 @@ import { Card } from "@/components/ui/card";
 import { Modal } from "@/components/ui/modal";
 import { Button } from "@/components/ui/button";
 import toast from "react-hot-toast";
+import { useTheme } from "@/lib/theme-context";
+import { cn } from "@/lib/utils";
 
 export default function JadwalLesPage() {
   const { profile, isCenterStudent } = useAuth();
+  const { uiMode } = useTheme();
   const supabase = createClient();
   const [schedules, setSchedules] = useState<any[]>([]);
   const [attendances, setAttendances] = useState<Record<string, any>>({});
@@ -139,18 +142,25 @@ export default function JadwalLesPage() {
 
   return (
     <div className="max-w-4xl mx-auto space-y-8 font-sans pb-20">
-      <div className="bg-yellow-400 rounded-3xl p-8 text-slate-900 relative overflow-hidden shadow-lg border-b-4 border-yellow-500">
-        <div className="absolute top-0 right-0 w-64 h-64 bg-white/20 rounded-full blur-3xl -mr-20 -mt-20"></div>
-        <div className="relative z-10 flex flex-col md:flex-row items-center gap-6">
-          <div className="w-20 h-20 bg-white/30 rounded-2xl flex items-center justify-center shrink-0 backdrop-blur-sm border border-white/40">
-            <Calendar className="w-10 h-10 text-yellow-900" />
-          </div>
-          <div>
-            <h1 className="text-3xl md:text-4xl font-black mb-2 tracking-tight">Jadwal Les & Interaksi</h1>
-            <p className="text-yellow-800 font-bold text-lg">Akses bahan ajar, presensi, dan ringkasan pertemuan.</p>
+      {uiMode === 'clean' ? (
+        <div className="mb-6 pb-4 border-b border-slate-200">
+          <h1 className="text-2xl font-bold text-slate-800">Jadwal Les & Interaksi</h1>
+          <p className="text-slate-500 mt-1">Akses bahan ajar, presensi, dan ringkasan pertemuan.</p>
+        </div>
+      ) : (
+        <div className="bg-yellow-400 rounded-3xl p-8 text-slate-900 relative overflow-hidden shadow-lg border-b-4 border-yellow-500">
+          <div className="absolute top-0 right-0 w-64 h-64 bg-white/20 rounded-full blur-3xl -mr-20 -mt-20"></div>
+          <div className="relative z-10 flex flex-col md:flex-row items-center gap-6">
+            <div className="w-20 h-20 bg-white/30 rounded-2xl flex items-center justify-center shrink-0 backdrop-blur-sm border border-white/40">
+              <Calendar className="w-10 h-10 text-yellow-900" />
+            </div>
+            <div>
+              <h1 className="text-3xl md:text-4xl font-black mb-2 tracking-tight">Jadwal Les & Interaksi</h1>
+              <p className="text-yellow-800 font-bold text-lg">Akses bahan ajar, presensi, dan ringkasan pertemuan.</p>
+            </div>
           </div>
         </div>
-      </div>
+      )}
 
       <div className="space-y-4">
         {loading ? (
@@ -166,18 +176,31 @@ export default function JadwalLesPage() {
             return (
               <Card 
                 key={schedule.id} 
-                className={`p-0 flex flex-col sm:flex-row items-stretch border-2 cursor-pointer transition-all hover:scale-[1.01] overflow-hidden group ${isToday ? 'border-yellow-400 bg-yellow-50/30 hover:shadow-yellow-400/20' : 'border-slate-200 hover:border-blue-300 hover:shadow-lg'}`}
+                className={cn(
+                  "p-0 flex flex-col sm:flex-row items-stretch cursor-pointer transition-all overflow-hidden group",
+                  uiMode === 'clean'
+                    ? (isToday ? 'border border-teal-500 bg-white shadow-sm' : 'border border-slate-200 bg-white hover:border-slate-300 shadow-sm')
+                    : (isToday ? 'border-2 border-yellow-400 bg-yellow-50/30 hover:scale-[1.01] hover:shadow-yellow-400/20' : 'border-2 border-slate-200 hover:scale-[1.01] hover:border-blue-300 hover:shadow-lg')
+                )}
                 onClick={() => handleOpenSchedule(schedule)}
               >
-                <div className={`w-full sm:w-28 p-6 flex flex-row sm:flex-col items-center justify-center shrink-0 gap-3 border-b sm:border-b-0 sm:border-r border-slate-100 ${isToday ? 'bg-yellow-100/50 text-yellow-700' : 'bg-slate-50 text-slate-500'}`}>
-                  <span className="text-sm font-bold uppercase">{date.toLocaleDateString('id-ID', { month: 'short' })}</span>
-                  <span className="text-3xl sm:text-4xl font-black leading-none">{date.getDate()}</span>
+                <div className={cn(
+                  "w-full sm:w-28 p-6 flex flex-row sm:flex-col items-center justify-center shrink-0 gap-3 border-b sm:border-b-0 sm:border-r border-slate-100",
+                  uiMode === 'clean' 
+                    ? (isToday ? 'bg-teal-50 text-teal-700' : 'bg-slate-50 text-slate-500')
+                    : (isToday ? 'bg-yellow-100/50 text-yellow-700' : 'bg-slate-50 text-slate-500')
+                )}>
+                  <span className={cn("text-sm uppercase", uiMode === 'clean' ? "font-semibold" : "font-bold")}>{date.toLocaleDateString('id-ID', { month: 'short' })}</span>
+                  <span className={cn("text-3xl sm:text-4xl leading-none", uiMode === 'clean' ? "font-bold" : "font-black")}>{date.getDate()}</span>
                 </div>
                 
                 <div className="flex-1 p-6 flex flex-col justify-center">
                   <div className="flex items-center gap-2 mb-1">
-                    <h3 className="font-black text-xl text-slate-800 group-hover:text-blue-600 transition-colors">{schedule.title}</h3>
-                    {isToday && <span className="px-2 py-0.5 bg-yellow-400 text-yellow-900 text-[10px] font-black uppercase rounded-full tracking-wider">Hari Ini</span>}
+                    <h3 className={cn("text-xl text-slate-800 transition-colors", uiMode === 'clean' ? "font-semibold group-hover:text-teal-600" : "font-black group-hover:text-blue-600")}>{schedule.title}</h3>
+                    {isToday && <span className={cn(
+                      "px-2 py-0.5 text-[10px] uppercase rounded-full tracking-wider",
+                      uiMode === 'clean' ? "bg-teal-100 text-teal-700 font-bold" : "bg-yellow-400 text-yellow-900 font-black"
+                    )}>Hari Ini</span>}
                   </div>
                   
                   {schedule.description && (

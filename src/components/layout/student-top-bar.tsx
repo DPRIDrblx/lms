@@ -7,10 +7,12 @@ import { createClient } from "@/lib/supabase";
 import { getInitials, cn } from "@/lib/utils";
 import { motion, AnimatePresence } from "framer-motion";
 import { GraduationCap, Glasses } from "lucide-react";
+import { useTheme } from "@/lib/theme-context";
 
 export function StudentTopBar() {
   const { profile, signOut, isCenterStudent } = useAuth();
   const supabase = createClient();
+  const { uiMode } = useTheme();
   const [streak, setStreak] = useState(0);
   const [xp, setXp] = useState(0);
   const [gems, setGems] = useState(0);
@@ -74,7 +76,12 @@ export function StudentTopBar() {
   }, [profile?.id, supabase]);
 
   return (
-    <div className="sticky top-0 z-30 w-full h-16 bg-white/80 backdrop-blur-xl border-b-2 border-slate-200 flex items-center justify-between px-4 lg:px-8">
+    <div className={cn(
+      "sticky top-0 z-30 w-full h-16 flex items-center justify-between px-4 lg:px-8 transition-colors",
+      uiMode === 'clean' 
+        ? "bg-white border-b border-slate-200" 
+        : "bg-white/80 backdrop-blur-xl border-b-2 border-slate-200"
+    )}>
       {/* Spacer for desktop to account for left sidebar width */}
       <div className="hidden lg:block w-[260px]"></div>
 
@@ -99,40 +106,50 @@ export function StudentTopBar() {
           ) : (
             <Flame className="w-6 h-6 text-slate-400 fill-slate-300" />
           )}
-          <span className={`font-black text-lg ${streak > 0 ? 'text-orange-600' : 'text-slate-500'}`}>{streak}</span>
+          <span className={cn(
+            "text-lg", 
+            uiMode === 'clean' ? "font-semibold text-slate-700" : "font-black",
+            uiMode !== 'clean' && streak > 0 ? "text-orange-600" : (uiMode !== 'clean' ? "text-slate-500" : "")
+          )}>{streak}</span>
         </div>
 
         {/* XP */}
         <div className="flex items-center gap-2 hover:bg-slate-100 p-2 rounded-xl cursor-pointer transition-colors">
-          <Diamond className="w-6 h-6 text-blue-500 fill-blue-500" />
-          <span className="font-black text-blue-600 text-lg">{xp}</span>
+          <Diamond className={cn("w-6 h-6 text-blue-500", uiMode === 'clean' ? "" : "fill-blue-500")} />
+          <span className={cn("text-lg text-blue-600", uiMode === 'clean' ? "font-semibold" : "font-black")}>{xp}</span>
         </div>
 
         {/* Gems */}
         <div className="flex items-center gap-2 hover:bg-slate-100 p-2 rounded-xl cursor-pointer transition-colors">
-          <Gem className="w-6 h-6 text-pink-500 fill-pink-500" />
-          <span className="font-black text-pink-600 text-lg">{gems}</span>
+          <Gem className={cn("w-6 h-6 text-pink-500", uiMode === 'clean' ? "" : "fill-pink-500")} />
+          <span className={cn("text-lg text-pink-600", uiMode === 'clean' ? "font-semibold" : "font-black")}>{gems}</span>
         </div>
 
         {/* Hearts (Cosmetic for now) */}
         <div className="flex items-center gap-2 hover:bg-slate-100 p-2 rounded-xl cursor-pointer transition-colors hidden sm:flex">
-          <Heart className="w-6 h-6 text-rose-500 fill-rose-500" />
-          <span className="font-black text-rose-600 text-lg">5</span>
+          <Heart className={cn("w-6 h-6 text-rose-500", uiMode === 'clean' ? "" : "fill-rose-500")} />
+          <span className={cn("text-lg text-rose-600", uiMode === 'clean' ? "font-semibold" : "font-black")}>5</span>
         </div>
 
         {/* User Menu */}
         <div className="ml-2 lg:ml-6 relative flex items-center" ref={dropdownRef}>
           {profile?.active_title && (
             <div className="hidden md:flex flex-col items-end mr-3">
-              <span className="text-[10px] font-black uppercase tracking-widest text-slate-400">Gelar</span>
-              <span className="text-xs font-black text-amber-500 bg-amber-50 px-2 py-0.5 rounded-md border border-amber-200">
+              <span className={cn("text-[10px] uppercase tracking-widest text-slate-400", uiMode === 'clean' ? "font-semibold" : "font-black")}>Gelar</span>
+              <span className={cn(
+                "text-xs text-amber-500 bg-amber-50 px-2 py-0.5 rounded-md", 
+                uiMode === 'clean' ? "font-semibold border-none" : "font-black border border-amber-200"
+              )}>
                 {profile.active_title}
               </span>
             </div>
           )}
           <button
             onClick={() => setDropdownOpen(!dropdownOpen)}
-            className="flex items-center gap-2.5 p-1.5 pr-3 rounded-2xl hover:bg-slate-100 transition-all border-2 border-transparent hover:border-slate-200"
+            className={cn(
+              "flex items-center gap-2.5 p-1.5 pr-3 rounded-2xl hover:bg-slate-100 transition-all",
+              uiMode === 'clean' ? "border border-transparent hover:border-slate-200" : "border-2 border-transparent hover:border-slate-200"
+            )}
           >
             <div className="relative">
               {profile?.avatar_url ? (
@@ -166,15 +183,18 @@ export function StudentTopBar() {
                 animate={{ opacity: 1, y: 0, scale: 1 }}
                 exit={{ opacity: 0, y: 10, scale: 0.95 }}
                 transition={{ duration: 0.15 }}
-                className="absolute right-0 mt-3 w-56 bg-white border-2 border-slate-200 shadow-xl rounded-2xl py-2 overflow-hidden z-50"
+                className={cn(
+                  "absolute right-0 mt-3 w-56 bg-white shadow-xl rounded-2xl py-2 overflow-hidden z-50",
+                  uiMode === 'clean' ? "border border-slate-200" : "border-2 border-slate-200"
+                )}
               >
-                <div className="px-4 py-3 border-b-2 border-slate-100 mb-2">
-                  <p className="text-sm font-black text-slate-800 truncate">{profile?.full_name}</p>
-                  <p className="text-xs font-bold text-slate-400 capitalize">{profile?.role}</p>
+                <div className={cn("px-4 py-3 mb-2", uiMode === 'clean' ? "border-b border-slate-100" : "border-b-2 border-slate-100")}>
+                  <p className={cn("text-sm truncate text-slate-800", uiMode === 'clean' ? "font-bold" : "font-black")}>{profile?.full_name}</p>
+                  <p className={cn("text-xs capitalize text-slate-400", uiMode === 'clean' ? "font-medium" : "font-bold")}>{profile?.role}</p>
                 </div>
                 <button
                   onClick={() => { signOut(); setDropdownOpen(false); }}
-                  className="flex items-center gap-3 w-full px-4 py-3 text-sm font-bold text-rose-500 hover:bg-rose-50 hover:text-rose-600 transition-colors"
+                  className={cn("flex items-center gap-3 w-full px-4 py-3 text-sm text-rose-500 hover:bg-rose-50 hover:text-rose-600 transition-colors", uiMode === 'clean' ? "font-semibold" : "font-bold")}
                 >
                   <LogOut className="h-5 w-5" />
                   Sign out

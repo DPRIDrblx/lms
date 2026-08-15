@@ -1,7 +1,7 @@
 "use client";
 
 import { useAuth } from "@/lib/auth-context";
-import { Flame, Diamond, LogOut, CheckCircle2, Lock, Edit2, Fingerprint, Gem, Loader2, Image as ImageIcon, Send, Trash2, X, Copy } from "lucide-react";
+import { Flame, Diamond, LogOut, CheckCircle2, Lock, Edit2, Fingerprint, Gem, Loader2, Image as ImageIcon, Send, Trash2, X, Copy, LayoutTemplate } from "lucide-react";
 import { CenterLoader } from "@/components/ui/center-loader";
 import { PostCard } from "@/components/social/post-card";
 import { AchievementShowcase } from "@/components/profile/achievement-showcase";
@@ -9,6 +9,7 @@ import Link from "next/link";
 import { useState, useEffect, useRef } from "react";
 import { createClient } from "@/lib/supabase";
 import toast from "react-hot-toast";
+import { useTheme } from "@/lib/theme-context";
 
 const AVATARS = [
   "/avatars/boy-blue.png",
@@ -19,6 +20,7 @@ const AVATARS = [
 
 export default function ProfilePage() {
   const { profile, refreshProfile } = useAuth();
+  const { uiMode, setUiMode } = useTheme();
   const supabase = createClient();
   
   const [activeTab, setActiveTab] = useState<"stats" | "posts">("stats");
@@ -275,6 +277,32 @@ export default function ProfilePage() {
                 </div>
                 {copied ? <CheckCircle2 className="w-6 h-6 text-emerald-500" /> : <Copy className="w-5 h-5 text-slate-300 group-hover:text-indigo-500" />}
               </button>
+              
+              <div className="w-full flex items-center justify-between p-6 rounded-2xl border-2 border-slate-200 hover:bg-slate-50 transition-all group">
+                <div className="flex items-center gap-4">
+                  <div className="w-12 h-12 rounded-xl bg-slate-100 text-slate-500 flex items-center justify-center group-hover:bg-indigo-100 group-hover:text-indigo-600 transition-colors">
+                    <LayoutTemplate className="w-6 h-6" />
+                  </div>
+                  <div className="text-left">
+                    <h3 className="font-black text-slate-800 text-lg">Mode Tampilan UI</h3>
+                    <p className="text-sm font-bold text-slate-400">Pilih gaya antarmuka belajarmu</p>
+                  </div>
+                </div>
+                <div className="flex bg-slate-100 p-1 rounded-xl">
+                  <button
+                    onClick={() => setUiMode('fun')}
+                    className={`px-4 py-2 rounded-lg font-bold text-sm transition-all ${uiMode === 'fun' ? 'bg-white text-indigo-600 shadow-sm border-2 border-indigo-100' : 'text-slate-400 hover:text-slate-600 border-2 border-transparent'}`}
+                  >
+                    Fun Mode
+                  </button>
+                  <button
+                    onClick={() => setUiMode('clean')}
+                    className={`px-4 py-2 rounded-lg font-bold text-sm transition-all ${uiMode === 'clean' ? 'bg-white text-indigo-600 shadow-sm border-2 border-indigo-100' : 'text-slate-400 hover:text-slate-600 border-2 border-transparent'}`}
+                  >
+                    Clean Mode
+                  </button>
+                </div>
+              </div>
             </div>
           </div>
         )}

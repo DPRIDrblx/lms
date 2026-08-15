@@ -9,9 +9,12 @@ import { Card } from "@/components/ui/card";
 import { Modal } from "@/components/ui/modal";
 import { Button } from "@/components/ui/button";
 import toast from "react-hot-toast";
+import { useTheme } from "@/lib/theme-context";
+import { cn } from "@/lib/utils";
 
 export default function KlinikTanyaTutorPage() {
   const { profile } = useAuth();
+  const { uiMode } = useTheme();
   const supabase = createClient();
   const [clinics, setClinics] = useState<any[]>([]);
   const [tutors, setTutors] = useState<any[]>([]);
@@ -176,24 +179,39 @@ export default function KlinikTanyaTutorPage() {
 
   return (
     <div className="max-w-4xl mx-auto space-y-8 font-sans pb-20">
-      <div className="bg-gradient-to-r from-teal-500 to-emerald-500 rounded-3xl p-8 text-white relative overflow-hidden shadow-lg border-b-4 border-emerald-600">
-        <div className="absolute top-0 right-0 w-64 h-64 bg-white/10 rounded-full blur-3xl -mr-20 -mt-20"></div>
-        <div className="relative z-10 flex flex-col md:flex-row items-center gap-6">
-          <div className="w-20 h-20 bg-white/20 rounded-2xl flex items-center justify-center shrink-0 backdrop-blur-sm border border-white/30">
-            <BookOpen className="w-10 h-10 text-white" />
-          </div>
-          <div className="flex-1">
-            <h1 className="text-3xl md:text-4xl font-black mb-2 tracking-tight">Klinik Tanya Tutor</h1>
-            <p className="text-emerald-50 font-medium text-lg">Pesan waktu khusus dengan tutor untuk membahas materi yang belum dipahami secara privat atau kelompok kecil.</p>
+      {uiMode === 'clean' ? (
+        <div className="mb-6 pb-4 border-b border-slate-200 flex flex-col md:flex-row md:items-center justify-between gap-4">
+          <div>
+            <h1 className="text-2xl font-bold text-slate-800">Klinik Tanya Tutor</h1>
+            <p className="text-slate-500 mt-1">Pesan waktu khusus dengan tutor untuk membahas materi secara privat.</p>
           </div>
           <Button 
             onClick={() => setIsModalOpen(true)}
-            className="bg-white text-emerald-600 hover:bg-emerald-50 font-bold h-12 px-6 rounded-xl shrink-0 border-2 border-transparent hover:border-emerald-200 shadow-md transition-all"
+            className="bg-orange-500 hover:bg-orange-600 text-white font-bold h-11 px-5 rounded-lg shrink-0 shadow-sm transition-all"
           >
-            <Plus className="w-5 h-5 mr-2" /> Buat Pesanan Baru
+            <Plus className="w-5 h-5 mr-2" /> Pesan Klinik
           </Button>
         </div>
-      </div>
+      ) : (
+        <div className="bg-gradient-to-r from-teal-500 to-emerald-500 rounded-3xl p-8 text-white relative overflow-hidden shadow-lg border-b-4 border-emerald-600">
+          <div className="absolute top-0 right-0 w-64 h-64 bg-white/10 rounded-full blur-3xl -mr-20 -mt-20"></div>
+          <div className="relative z-10 flex flex-col md:flex-row items-center gap-6">
+            <div className="w-20 h-20 bg-white/20 rounded-2xl flex items-center justify-center shrink-0 backdrop-blur-sm border border-white/30">
+              <BookOpen className="w-10 h-10 text-white" />
+            </div>
+            <div className="flex-1">
+              <h1 className="text-3xl md:text-4xl font-black mb-2 tracking-tight">Klinik Tanya Tutor</h1>
+              <p className="text-emerald-50 font-medium text-lg">Pesan waktu khusus dengan tutor untuk membahas materi yang belum dipahami secara privat atau kelompok kecil.</p>
+            </div>
+            <Button 
+              onClick={() => setIsModalOpen(true)}
+              className="bg-white text-emerald-600 hover:bg-emerald-50 font-bold h-12 px-6 rounded-xl shrink-0 border-2 border-transparent hover:border-emerald-200 shadow-md transition-all"
+            >
+              <Plus className="w-5 h-5 mr-2" /> Buat Pesanan Baru
+            </Button>
+          </div>
+        </div>
+      )}
 
       <div className="space-y-4">
         <h2 className="text-xl font-black text-slate-800 flex items-center gap-2">
@@ -211,21 +229,31 @@ export default function KlinikTanyaTutorPage() {
             return (
               <Card 
                 key={clinic.id} 
-                className="p-0 flex flex-col sm:flex-row items-stretch border-2 border-slate-200 cursor-pointer transition-all hover:scale-[1.01] hover:border-teal-300 hover:shadow-lg overflow-hidden group"
+                className={cn(
+                  "p-0 flex flex-col sm:flex-row items-stretch cursor-pointer transition-all overflow-hidden group",
+                  uiMode === 'clean'
+                    ? "border border-slate-200 bg-white hover:border-teal-400 shadow-sm"
+                    : "border-2 border-slate-200 hover:scale-[1.01] hover:border-teal-300 hover:shadow-lg"
+                )}
                 onClick={() => {
                   setSelectedClinic(clinic);
                   setIsDetailModalOpen(true);
                 }}
               >
-                <div className="w-full sm:w-28 p-6 flex flex-row sm:flex-col items-center justify-center shrink-0 gap-3 border-b sm:border-b-0 sm:border-r border-slate-100 bg-slate-50 text-slate-500 group-hover:bg-teal-50 group-hover:text-teal-700 transition-colors">
-                  <span className="text-sm font-bold uppercase">{date.toLocaleDateString('id-ID', { month: 'short' })}</span>
-                  <span className="text-3xl sm:text-4xl font-black leading-none">{date.getDate()}</span>
+                <div className={cn(
+                  "w-full sm:w-28 p-6 flex flex-row sm:flex-col items-center justify-center shrink-0 gap-3 border-b sm:border-b-0 sm:border-r border-slate-100 transition-colors",
+                  uiMode === 'clean'
+                    ? "bg-slate-50 text-slate-500 group-hover:bg-teal-50 group-hover:text-teal-700"
+                    : "bg-slate-50 text-slate-500 group-hover:bg-teal-50 group-hover:text-teal-700"
+                )}>
+                  <span className={cn("text-sm uppercase", uiMode === 'clean' ? "font-semibold" : "font-bold")}>{date.toLocaleDateString('id-ID', { month: 'short' })}</span>
+                  <span className={cn("text-3xl sm:text-4xl leading-none", uiMode === 'clean' ? "font-bold" : "font-black")}>{date.getDate()}</span>
                 </div>
                 
                 <div className="flex-1 p-6 flex flex-col justify-center">
                   <div className="flex flex-wrap justify-between items-start gap-4 mb-2">
                     <div>
-                      <h3 className="font-black text-xl text-slate-800 group-hover:text-teal-600 transition-colors">{clinic.subject}</h3>
+                      <h3 className={cn("text-xl text-slate-800 transition-colors", uiMode === 'clean' ? "font-semibold group-hover:text-teal-600" : "font-black group-hover:text-teal-600")}>{clinic.subject}</h3>
                       <p className="text-slate-500 font-medium line-clamp-1">{clinic.topic}</p>
                     </div>
                     <span className={`px-3 py-1 rounded-full text-xs font-bold border ${getStatusColor(clinic.status)}`}>

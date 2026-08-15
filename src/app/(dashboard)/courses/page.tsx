@@ -9,6 +9,9 @@ import { motion } from "framer-motion";
 import { BookOpen, Search, Sparkles, PlayCircle, Map as MapIcon, ChevronRight } from "lucide-react";
 import { useEffect, useState } from "react";
 import Link from "next/link";
+import { useTheme } from "@/lib/theme-context";
+import { cn } from "@/lib/utils";
+
 interface Course {
   id: string;
   title: string;
@@ -22,6 +25,7 @@ interface Course {
 
 export default function CoursesPage() {
   const { profile } = useAuth();
+  const { uiMode } = useTheme();
   const supabase = createClient();
   const [courses, setCourses] = useState<Course[]>([]);
   const [progress, setProgress] = useState<Record<string, number>>({});
@@ -105,7 +109,7 @@ export default function CoursesPage() {
       </motion.div>
 
       {/* THE GOLDEN HOUR PORTAL */}
-      {goldenHourActive && profile?.role === 'student' && (
+      {goldenHourActive && profile?.role === 'student' && uiMode === 'fun' && (
          <motion.div 
             initial={{ opacity: 0, scale: 0.95 }}
             animate={{ opacity: 1, scale: 1 }}
@@ -137,6 +141,23 @@ export default function CoursesPage() {
          </motion.div>
       )}
 
+      {goldenHourActive && profile?.role === 'student' && uiMode === 'clean' && (
+         <div className="w-full rounded-2xl p-6 md:p-8 bg-gradient-to-r from-amber-500 to-orange-500 text-white shadow-sm mb-8 flex flex-col md:flex-row justify-between items-center gap-6">
+            <div>
+               <div className="inline-flex items-center gap-2 px-3 py-1 bg-white/20 rounded-full text-xs font-bold uppercase tracking-wider mb-3">
+                  <Sparkles className="w-4 h-4" /> Event Harian
+               </div>
+               <h2 className="text-2xl font-bold mb-1">The Golden Hour</h2>
+               <p className="text-sm text-white/90 max-w-lg">Masuk ke portal kuis harian dan menangkan Gems secara acak!</p>
+            </div>
+            <Link href="/student/golden-hour">
+               <button className="flex items-center gap-2 px-6 py-3 bg-white text-orange-600 rounded-lg font-bold hover:bg-orange-50 transition-colors">
+                  <PlayCircle className="w-5 h-5" /> Masuk Portal
+               </button>
+            </Link>
+         </div>
+      )}
+
       {/* Filters */}
       <div className="flex flex-col sm:flex-row gap-4 mb-8">
         <div className="relative flex-1 max-w-md">
@@ -154,11 +175,12 @@ export default function CoursesPage() {
             <button
               key={f}
               onClick={() => setFilter(f)}
-              className={`px-4 py-3 rounded-2xl text-xs font-black transition-all capitalize whitespace-nowrap border-2 ${
-                filter === f
-                  ? "bg-indigo-500 text-white border-indigo-600 shadow-[0_4px_0_rgb(79,70,229)] transform translate-y-1"
-                  : "bg-white text-slate-500 border-slate-200 shadow-[0_4px_0_rgb(226,232,240)] hover:-translate-y-1 hover:shadow-[0_6px_0_rgb(226,232,240)]"
-              }`}
+              className={cn(
+                "px-4 py-3 rounded-2xl text-xs transition-all capitalize whitespace-nowrap",
+                uiMode === 'clean' 
+                  ? (filter === f ? "bg-indigo-500 text-white font-bold" : "bg-transparent text-slate-500 font-medium hover:bg-slate-100")
+                  : `border-2 font-black ${filter === f ? "bg-indigo-500 text-white border-indigo-600 shadow-[0_4px_0_rgb(79,70,229)] transform translate-y-1" : "bg-white text-slate-500 border-slate-200 shadow-[0_4px_0_rgb(226,232,240)] hover:-translate-y-1 hover:shadow-[0_6px_0_rgb(226,232,240)]"}`
+              )}
             >
               {f.replace("-", " ")}
             </button>
@@ -187,7 +209,12 @@ export default function CoursesPage() {
                 transition={{ delay: i * 0.05 }}
               >
                 <Link href={`/courses/${course.id}`} className="block h-full group">
-                  <div className="bg-white rounded-3xl border-2 border-slate-200 overflow-hidden shadow-[0_8px_0_rgb(226,232,240)] transform transition-all duration-150 hover:-translate-y-1 active:translate-y-2 active:shadow-none h-full flex flex-col">
+                  <div className={cn(
+                    "bg-white overflow-hidden flex flex-col h-full transition-all",
+                    uiMode === 'clean'
+                      ? "rounded-2xl border border-slate-200 shadow-sm hover:border-indigo-400"
+                      : "rounded-3xl border-2 border-slate-200 shadow-[0_8px_0_rgb(226,232,240)] transform duration-150 hover:-translate-y-1 active:translate-y-2 active:shadow-none"
+                  )}>
                     <div className="aspect-[16/9] flex items-center justify-center relative bg-indigo-50 overflow-hidden">
                       {course.cover_image ? (
                         <img src={course.cover_image} alt="" className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700" />
@@ -207,8 +234,8 @@ export default function CoursesPage() {
                       </div>
                     </div>
                     <div className="p-6 flex-1 flex flex-col bg-white">
-                      <h2 className="text-base sm:text-xl font-black text-slate-800 mb-2 line-clamp-2 leading-snug group-hover:text-indigo-500 transition-colors">{course.title}</h2>
-                      <p className="text-sm font-bold text-slate-500 line-clamp-2 mb-6 flex-1 leading-relaxed">{course.description}</p>
+                      <h2 className={cn("mb-2 line-clamp-2 leading-snug group-hover:text-indigo-500 transition-colors", uiMode === 'clean' ? "text-lg font-bold text-slate-800" : "text-base sm:text-xl font-black text-slate-800")}>{course.title}</h2>
+                      <p className={cn("text-sm text-slate-500 line-clamp-2 mb-6 flex-1 leading-relaxed", uiMode === 'clean' ? "font-medium" : "font-bold")}>{course.description}</p>
                       <div className="pt-4 border-t border-[var(--border)]">
                         <div className="flex items-center justify-between mb-2">
                           <p className="text-xs font-medium text-[var(--text-tertiary)] truncate mr-2">By <span className="font-semibold text-[var(--text-secondary)]">{course.profiles?.full_name}</span></p>
