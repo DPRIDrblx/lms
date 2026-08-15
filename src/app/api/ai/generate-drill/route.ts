@@ -20,7 +20,7 @@ export async function POST(req: Request) {
     }
 
     // Use a fast model suitable for structured JSON generation
-    const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
+    const model = genAI.getGenerativeModel({ model: "gemini-3.5-flash" });
 
     const systemPrompt = `Anda adalah seorang ahli pembuat soal ujian untuk siswa sekolah di Indonesia.
 Tugas Anda adalah membuat soal pilihan ganda (4 opsi: A, B, C, D) berdasarkan parameter berikut:
