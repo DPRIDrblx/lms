@@ -7,6 +7,7 @@ import { Loader2, Medal, Trophy, Star, Zap, Flame, Crown, CheckCircle2, Lock } f
 import { CenterLoader } from "@/components/ui/center-loader";
 import toast from "react-hot-toast";
 import { cn } from "@/lib/utils";
+import { useTheme } from "@/lib/theme-context";
 
 const BADGES = [
   { id: "first_blood", name: "First Blood", desc: "Selesaikan ujian pertamamu.", icon: Zap, color: "text-amber-500", bg: "bg-amber-100", border: "border-amber-200" },
@@ -19,6 +20,7 @@ const BADGES = [
 export default function BadgesPage() {
   const { profile } = useAuth();
   const supabase = createClient();
+  const { uiMode } = useTheme();
   
   const [unlockedBadges, setUnlockedBadges] = useState<string[]>([]);
   const [activeTitle, setActiveTitle] = useState<string | null>(null);
@@ -71,18 +73,18 @@ export default function BadgesPage() {
 
   return (
     <div className="max-w-5xl mx-auto space-y-8 pb-10">
-      <div className="bg-gradient-to-r from-slate-900 to-indigo-900 rounded-3xl p-8 md:p-12 text-white relative overflow-hidden shadow-xl">
-        <div className="absolute top-0 right-0 p-8 opacity-20 rotate-12">
+      <div className={cn("p-8 md:p-12 relative overflow-hidden transition-all", uiMode === 'clean' ? "bg-slate-50 border border-slate-200 rounded-xl" : "bg-gradient-to-r from-slate-900 to-indigo-900 rounded-3xl text-white shadow-xl")}>
+        <div className={cn("absolute top-0 right-0 p-8 rotate-12 transition-all", uiMode === 'clean' ? "opacity-5 text-slate-400" : "opacity-20")}>
           <Trophy className="w-48 h-48" />
         </div>
         <div className="relative z-10">
-          <h1 className="text-4xl font-black mb-4">Ruang Piala & Gelar 🏆</h1>
-          <p className="text-indigo-200 font-medium max-w-xl text-lg">
+          <h1 className={cn("text-4xl font-black mb-4", uiMode === 'clean' ? "text-slate-800" : "text-white")}>Ruang Piala & Gelar 🏆</h1>
+          <p className={cn("font-medium max-w-xl text-lg", uiMode === 'clean' ? "text-slate-500" : "text-indigo-200")}>
             Selesaikan misi-misi rahasia untuk membuka gelar kehormatan. Pasang gelar favoritmu agar semua orang bisa melihatnya!
           </p>
           
-          <div className="mt-8 inline-flex items-center gap-3 bg-white/10 backdrop-blur-md px-6 py-3 rounded-2xl border-2 border-white/20">
-            <span className="font-bold text-indigo-200">Gelar Aktif:</span>
+          <div className={cn("mt-8 inline-flex items-center gap-3 px-6 py-3 transition-all", uiMode === 'clean' ? "bg-white rounded-lg border border-slate-200" : "bg-white/10 backdrop-blur-md rounded-2xl border-2 border-white/20")}>
+            <span className={cn("font-bold", uiMode === 'clean' ? "text-slate-600" : "text-indigo-200")}>Gelar Aktif:</span>
             {activeTitle ? (
               <span className="bg-amber-400 text-amber-950 px-3 py-1 rounded-lg font-black text-sm uppercase tracking-wider">
                 {activeTitle}
@@ -104,9 +106,7 @@ export default function BadgesPage() {
               key={badge.id}
               onClick={() => isUnlocked && equipTitle(badge.id, badge.name)}
               className={cn(
-                "p-6 rounded-3xl border-2 transition-all relative group overflow-hidden",
-                isUnlocked ? "bg-white shadow-sm hover:shadow-md hover:border-indigo-300 cursor-pointer" : "bg-slate-50 border-dashed border-slate-200 grayscale opacity-70",
-                isEquipped && "border-amber-400 shadow-[0_0_0_4px_rgba(251,191,36,0.2)] bg-amber-50/30"
+                "p-6 transition-all relative group overflow-hidden", uiMode === 'clean' ? "rounded-xl border border-slate-200" : "rounded-3xl border-2", isUnlocked ? (uiMode === 'clean' ? "bg-white shadow-sm hover:shadow-md hover:border-slate-300 cursor-pointer" : "bg-white shadow-sm hover:shadow-md hover:border-indigo-300 cursor-pointer") : (uiMode === 'clean' ? "bg-slate-50/50 border-dashed border-slate-200 grayscale opacity-50" : "bg-slate-50 border-dashed border-slate-200 grayscale opacity-70"), isEquipped && (uiMode === 'clean' ? "border-amber-400 shadow-sm bg-amber-50/20" : "border-amber-400 shadow-[0_0_0_4px_rgba(251,191,36,0.2)] bg-amber-50/30")
               )}
             >
               {isEquipped && (
@@ -121,7 +121,7 @@ export default function BadgesPage() {
                 </div>
               )}
 
-              <div className={cn("w-16 h-16 rounded-2xl flex items-center justify-center mb-6 border-2 shadow-sm", badge.bg, badge.color, badge.border)}>
+              <div className={cn("w-16 h-16 flex items-center justify-center mb-6 shadow-sm", uiMode === 'clean' ? `rounded-xl ${badge.bg} ${badge.color} border border-transparent opacity-90` : `rounded-2xl border-2 ${badge.bg} ${badge.color} ${badge.border}`)}>
                 <badge.icon className="w-8 h-8" strokeWidth={2.5} />
               </div>
               

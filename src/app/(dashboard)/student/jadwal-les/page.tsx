@@ -164,6 +164,10 @@ export default function JadwalLesPage() {
   const filteredSchedules = schedules.filter(s => s.schedule_time.startsWith(activeDateString));
 
   return (
+    <div className={cn(
+      "min-h-[calc(100vh-100px)]",
+      uiMode === 'clean' ? "bg-[var(--bg-secondary)] p-4 md:p-8 space-y-6" : ""
+    )}>
     <div className="max-w-5xl mx-auto space-y-6 font-sans pb-20">
       {uiMode === 'clean' ? (
         <div className="mb-2">
@@ -499,6 +503,7 @@ export default function JadwalLesPage() {
           );
         })()}
       </Modal>
+    </div>
     </div>
   );
 }

@@ -2,7 +2,7 @@
 
 import { useAuth } from "@/lib/auth-context";
 import { createClient } from "@/lib/supabase";
-import { useEffect, useState } from "react";
+import { useEffect, useState, useMemo } from "react";
 import { Calendar, Clock, CheckCircle2, ChevronRight, Star, Link2, KeyRound, FileText, Archive } from "lucide-react";
 import { CenterLoader } from "@/components/ui/center-loader";
 import { Card } from "@/components/ui/card";
@@ -142,14 +142,17 @@ export default function ArsipLesPage() {
   }
 
   return (
-    <div className="max-w-4xl mx-auto space-y-8 font-sans pb-20">
+    <div className={cn(
+      "min-h-[calc(100vh-100px)]",
+      uiMode === 'clean' ? "bg-[var(--bg-secondary)] p-4 md:p-8 space-y-6" : ""
+    )}>
+    <div className="max-w-5xl mx-auto space-y-6 font-sans pb-20">
       {uiMode === 'clean' ? (
-        <div className="mb-6 pb-4 border-b border-slate-200">
-          <h1 className="text-2xl font-bold text-slate-800">Arsip Jadwal Les</h1>
-          <p className="text-slate-500 mt-1">Lihat kembali ringkasan pertemuan sesi sebelumnya.</p>
+        <div className="mb-2">
+          <h1 className="text-[28px] font-black text-slate-800 tracking-tight">Arsip Tatap Muka</h1>
         </div>
       ) : (
-        <div className="bg-slate-200 rounded-3xl p-8 text-slate-900 relative overflow-hidden shadow-sm border-b-4 border-slate-300">
+        <div className="bg-slate-200 rounded-3xl p-8 text-slate-900 relative overflow-hidden shadow-sm border-b-4 border-slate-300 mb-6">
           <div className="absolute top-0 right-0 w-64 h-64 bg-white/20 rounded-full blur-3xl -mr-20 -mt-20"></div>
           <div className="relative z-10 flex flex-col md:flex-row items-center gap-6">
             <div className="w-20 h-20 bg-white/30 rounded-2xl flex items-center justify-center shrink-0 backdrop-blur-sm border border-white/40">
@@ -163,82 +166,164 @@ export default function ArsipLesPage() {
         </div>
       )}
 
-      <div className="space-y-4">
-        {loading ? (
-          <div className="flex flex-col justify-center items-center py-12">
-            <CenterLoader size="md" />
+      {uiMode === 'clean' ? (
+        <div className="bg-white rounded-[20px] shadow-sm border border-slate-200 overflow-hidden">
+          <div className="flex items-center border-b border-slate-200 overflow-x-auto no-scrollbar">
+             <div className="px-6 py-4 text-[#108B96] border-b-[3px] border-[#108B96] font-bold text-sm">
+                Riwayat Sesi
+             </div>
           </div>
-        ) : schedules.length > 0 ? (
-          schedules.map(schedule => {
-            const date = new Date(schedule.schedule_time);
-            const isAttended = !!attendances[schedule.id];
-            
-            return (
-              <Card 
-                key={schedule.id} 
-                className={cn(
-                  "p-0 flex flex-col sm:flex-row items-stretch cursor-pointer transition-all overflow-hidden group",
-                  uiMode === 'clean' 
-                    ? "border border-slate-200 bg-white hover:border-slate-300 shadow-sm"
-                    : "border-2 border-slate-200 hover:border-slate-400 hover:shadow-lg"
-                )}
-                onClick={() => handleOpenSchedule(schedule)}
-              >
-                <div className={cn(
-                  "w-full sm:w-28 p-6 flex flex-row sm:flex-col items-center justify-center shrink-0 gap-3 border-b sm:border-b-0 sm:border-r border-slate-100 bg-slate-50 text-slate-500",
-                  uiMode === 'clean' ? "bg-slate-50" : "bg-slate-50"
-                )}>
-                  <span className={cn("text-sm uppercase", uiMode === 'clean' ? "font-semibold" : "font-bold")}>{date.toLocaleDateString('id-ID', { month: 'short' })}</span>
-                  <span className={cn("text-3xl sm:text-4xl leading-none", uiMode === 'clean' ? "font-bold" : "font-black")}>{date.getDate()}</span>
+          
+          <div className="p-5 sm:p-6 bg-slate-50/50">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              {loading ? (
+                <div className="col-span-full flex flex-col justify-center items-center py-12">
+                  <CenterLoader size="md" />
                 </div>
-                
-                <div className="flex-1 p-6 flex flex-col justify-center">
-                  <div className="flex items-center gap-2 mb-1">
-                    <h3 className={cn("text-xl text-slate-800 transition-colors", uiMode === 'clean' ? "font-semibold group-hover:text-slate-600" : "font-black group-hover:text-slate-600")}>{schedule.title}</h3>
+              ) : schedules.length > 0 ? (
+                schedules.map(schedule => {
+                  const date = new Date(schedule.schedule_time);
+                  const isAttended = !!attendances[schedule.id];
+                  
+                  return (
+                    <div 
+                      key={schedule.id}
+                      onClick={() => handleOpenSchedule(schedule)}
+                      className="bg-white rounded-[16px] border border-slate-200 overflow-hidden flex flex-col sm:flex-row cursor-pointer hover:border-[#108B96]/50 hover:shadow-md transition-all group"
+                    >
+                      <div className={cn(
+                        "w-full sm:w-28 p-5 flex flex-row sm:flex-col items-center justify-center shrink-0 gap-2 border-b sm:border-b-0 sm:border-r border-slate-100 transition-colors",
+                        "bg-slate-50 text-slate-500 group-hover:bg-teal-50 group-hover:text-[#108B96]"
+                      )}>
+                        <span className="text-[11px] font-bold uppercase tracking-wider">{date.toLocaleDateString('id-ID', { month: 'short' })}</span>
+                        <span className="text-3xl sm:text-[32px] font-black leading-none">{date.getDate()}</span>
+                      </div>
+                      
+                      <div className="p-5 flex-1 flex flex-col">
+                        <div className="flex items-start justify-between gap-3 mb-2">
+                          <h3 className="text-[17px] font-black text-slate-800 leading-tight group-hover:text-[#108B96] transition-colors line-clamp-2">{schedule.title}</h3>
+                        </div>
+                        
+                        {schedule.description && (
+                          <p className="text-slate-500 text-[13px] font-medium mb-4 line-clamp-1">{schedule.description}</p>
+                        )}
+                        
+                        <div className="flex flex-wrap items-center gap-2 mt-auto">
+                          <div className="flex items-center gap-1.5 text-[12px] font-bold text-slate-600 bg-slate-50 px-2.5 py-1.5 rounded-[8px] border border-slate-200">
+                            <Clock className="w-3.5 h-3.5 text-[#108B96]" />
+                            {date.toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' })} WIB
+                          </div>
+                          
+                          {isAttended ? (
+                            <div className="flex items-center gap-1.5 text-[12px] font-bold text-emerald-700 bg-emerald-50 px-2.5 py-1.5 rounded-[8px] border border-emerald-100">
+                              <CheckCircle2 className="w-3.5 h-3.5" /> Hadir
+                            </div>
+                          ) : (
+                            <div className="flex items-center gap-1.5 text-[12px] font-bold text-rose-700 bg-rose-50 px-2.5 py-1.5 rounded-[8px] border border-rose-100">
+                              <KeyRound className="w-3.5 h-3.5" /> Tidak Hadir
+                            </div>
+                          )}
+                          
+                          {isAttended && !attendances[schedule.id].rating && (
+                            <div className="flex items-center gap-1.5 text-[12px] font-bold text-[#E87525] bg-orange-50 px-2.5 py-1.5 rounded-[8px] border border-orange-100">
+                              Belum isi rating
+                            </div>
+                          )}
+                          {isAttended && attendances[schedule.id].rating && (
+                            <div className="flex items-center gap-1.5 text-[12px] font-bold text-blue-700 bg-blue-50 px-2.5 py-1.5 rounded-[8px] border border-blue-100">
+                              Sudah isi rating
+                            </div>
+                          )}
+                        </div>
+                      </div>
+                    </div>
+                  );
+                })
+              ) : (
+                <div className="col-span-full text-center py-16 bg-white rounded-[20px] border border-dashed border-slate-200">
+                  <div className="w-24 h-24 bg-slate-50 rounded-full flex items-center justify-center mx-auto mb-4 border border-slate-100">
+                    <Archive className="w-10 h-10 text-slate-300" />
+                  </div>
+                  <h3 className="text-[17px] font-bold text-slate-700 mb-1">Arsip Kosong</h3>
+                  <p className="text-slate-500 text-[13px]">Belum ada sesi les yang berlalu.</p>
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+      ) : (
+        <div className="space-y-4">
+          {/* Legacy UI */}
+          {loading ? (
+            <div className="flex flex-col justify-center items-center py-12">
+              <CenterLoader size="md" />
+            </div>
+          ) : schedules.length > 0 ? (
+            schedules.map(schedule => {
+              const date = new Date(schedule.schedule_time);
+              const isAttended = !!attendances[schedule.id];
+              
+              return (
+                <Card 
+                  key={schedule.id} 
+                  className={cn(
+                    "p-0 flex flex-col sm:flex-row items-stretch cursor-pointer transition-all overflow-hidden group border-2 border-slate-200 hover:border-slate-400 hover:shadow-lg"
+                  )}
+                  onClick={() => handleOpenSchedule(schedule)}
+                >
+                  <div className="w-full sm:w-28 p-6 flex flex-row sm:flex-col items-center justify-center shrink-0 gap-3 border-b sm:border-b-0 sm:border-r border-slate-100 bg-slate-50 text-slate-500">
+                    <span className="text-sm uppercase font-bold">{date.toLocaleDateString('id-ID', { month: 'short' })}</span>
+                    <span className="text-3xl sm:text-4xl leading-none font-black">{date.getDate()}</span>
                   </div>
                   
-                  {schedule.description && (
-                    <p className="text-slate-500 font-medium mb-4 line-clamp-1">{schedule.description}</p>
-                  )}
-                  
-                  <div className="flex flex-wrap items-center gap-3 mt-auto">
-                    <div className="flex items-center gap-1.5 text-sm font-bold text-slate-600 bg-white px-3 py-1.5 rounded-lg border border-slate-200">
-                      <Clock className="w-4 h-4 text-slate-500" />
-                      {date.toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' })} WIB
+                  <div className="flex-1 p-6 flex flex-col justify-center">
+                    <div className="flex items-center gap-2 mb-1">
+                      <h3 className="text-xl text-slate-800 transition-colors font-black group-hover:text-slate-600">{schedule.title}</h3>
                     </div>
                     
-                    {isAttended ? (
-                      <div className="flex items-center gap-1.5 text-sm font-bold text-emerald-700 bg-emerald-50 px-3 py-1.5 rounded-lg border border-emerald-100">
-                        <CheckCircle2 className="w-4 h-4" /> Hadir
-                      </div>
-                    ) : (
-                      <div className="flex items-center gap-1.5 text-sm font-bold text-rose-700 bg-rose-50 px-3 py-1.5 rounded-lg border border-rose-100">
-                        <KeyRound className="w-4 h-4" /> Tidak Hadir
-                      </div>
+                    {schedule.description && (
+                      <p className="text-slate-500 font-medium mb-4 line-clamp-1">{schedule.description}</p>
                     )}
+                    
+                    <div className="flex flex-wrap items-center gap-3 mt-auto">
+                      <div className="flex items-center gap-1.5 text-sm font-bold text-slate-600 bg-white px-3 py-1.5 rounded-lg border border-slate-200">
+                        <Clock className="w-4 h-4 text-slate-500" />
+                        {date.toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' })} WIB
+                      </div>
+                      
+                      {isAttended ? (
+                        <div className="flex items-center gap-1.5 text-sm font-bold text-emerald-700 bg-emerald-50 px-3 py-1.5 rounded-lg border border-emerald-100">
+                          <CheckCircle2 className="w-4 h-4" /> Hadir
+                        </div>
+                      ) : (
+                        <div className="flex items-center gap-1.5 text-sm font-bold text-rose-700 bg-rose-50 px-3 py-1.5 rounded-lg border border-rose-100">
+                          <KeyRound className="w-4 h-4" /> Tidak Hadir
+                        </div>
+                      )}
+                    </div>
                   </div>
-                </div>
-                
-                <div className="hidden sm:flex items-center justify-center p-6 text-slate-300 group-hover:text-slate-500 transition-colors">
-                  <ChevronRight className="w-6 h-6" />
-                </div>
-              </Card>
-            );
-          })
-        ) : (
-          <div className="text-center py-16 bg-slate-50 rounded-3xl border-2 border-dashed border-slate-200">
-            <Archive className="w-12 h-12 text-slate-300 mx-auto mb-4" />
-            <h3 className="text-xl font-bold text-slate-700 mb-1">Arsip Kosong</h3>
-            <p className="text-slate-500">Belum ada sesi les yang berlalu.</p>
-          </div>
-        )}
-      </div>
+                  
+                  <div className="hidden sm:flex items-center justify-center p-6 text-slate-300 group-hover:text-slate-500 transition-colors">
+                    <ChevronRight className="w-6 h-6" />
+                  </div>
+                </Card>
+              );
+            })
+          ) : (
+            <div className="text-center py-16 bg-slate-50 rounded-3xl border-2 border-dashed border-slate-200">
+              <Archive className="w-12 h-12 text-slate-300 mx-auto mb-4" />
+              <h3 className="text-xl font-bold text-slate-700 mb-1">Arsip Kosong</h3>
+              <p className="text-slate-500">Belum ada sesi les yang berlalu.</p>
+            </div>
+          )}
+        </div>
+      )}
 
       <Modal
         isOpen={isModalOpen}
         onClose={() => setIsModalOpen(false)}
         title="Detail Arsip Les"
-        size="lg"
+        size="xl"
       >
         {selectedSchedule && (() => {
           const dateObj = new Date(selectedSchedule.schedule_time);
@@ -247,38 +332,41 @@ export default function ArsipLesPage() {
 
           return (
             <div className="space-y-6">
-              <div className="bg-slate-50 p-5 rounded-2xl border border-slate-100">
-                <h2 className="text-2xl font-black text-slate-800 mb-2">{selectedSchedule.title}</h2>
-                <div className="flex flex-wrap items-center gap-4 text-sm font-bold text-slate-600 mb-4">
-                  <span className="flex items-center gap-1.5">
-                    <Calendar className="w-4 h-4 text-slate-500" />
-                    {dateObj.toLocaleDateString('id-ID', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' })}
-                  </span>
-                  <span className="flex items-center gap-1.5">
-                    <Clock className="w-4 h-4 text-slate-500" />
-                    {dateObj.toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' })} WIB
-                  </span>
+              <div className="bg-slate-50 p-5 rounded-[20px] border border-slate-200/60 shadow-sm flex flex-col md:flex-row gap-5 items-start justify-between">
+                <div>
+                  <h2 className="text-[22px] font-black text-slate-800 mb-1">{selectedSchedule.title}</h2>
+                  {selectedSchedule.description && (
+                    <p className="text-slate-600 font-medium mb-3 text-[14px]">{selectedSchedule.description}</p>
+                  )}
+                  
+                  <div className="flex flex-wrap items-center gap-4 text-[13px] font-bold text-slate-600">
+                    <span className="flex items-center gap-1.5">
+                      <Calendar className="w-4 h-4 text-blue-500" />
+                      {dateObj.toLocaleDateString('id-ID', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' })}
+                    </span>
+                    <span className="flex items-center gap-1.5">
+                      <Clock className="w-4 h-4 text-amber-500" />
+                      {dateObj.toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' })} WIB
+                    </span>
+                  </div>
                 </div>
-                {selectedSchedule.description && (
-                  <p className="text-slate-600">{selectedSchedule.description}</p>
-                )}
               </div>
 
               {selectedSchedule.drive_link && (
                 <div>
-                  <h4 className="text-sm font-black uppercase tracking-wider text-slate-500 mb-2">Bahan Ajar / Materi</h4>
+                  <h4 className="text-xs font-black uppercase tracking-wider text-slate-500 mb-2">Bahan Ajar / Materi</h4>
                   <a 
                     href={selectedSchedule.drive_link} 
                     target="_blank" 
                     rel="noopener noreferrer"
-                    className="flex items-center gap-3 p-4 bg-slate-100 hover:bg-slate-200 border border-slate-200 rounded-xl transition-colors group"
+                    className="flex items-center gap-4 p-4 bg-white hover:bg-slate-50 border border-slate-200 rounded-[16px] shadow-sm transition-colors group"
                   >
-                    <div className="w-10 h-10 bg-slate-500 text-white rounded-lg flex items-center justify-center shrink-0 group-hover:scale-110 transition-transform">
+                    <div className="w-10 h-10 bg-slate-100 text-slate-500 rounded-lg flex items-center justify-center shrink-0 group-hover:scale-110 group-hover:bg-[#108B96] group-hover:text-white transition-all">
                       <Link2 className="w-5 h-5" />
                     </div>
                     <div>
-                      <h5 className="font-bold text-slate-900">Buka Modul di Google Drive</h5>
-                      <p className="text-xs text-slate-600 font-medium">Klik untuk melihat materi pelajaran</p>
+                      <h5 className="font-bold text-slate-800 text-[15px] group-hover:text-[#108B96] transition-colors">Buka Modul di Google Drive</h5>
+                      <p className="text-[13px] text-slate-500 font-medium">Klik untuk melihat materi pelajaran</p>
                     </div>
                   </a>
                 </div>
@@ -287,42 +375,47 @@ export default function ArsipLesPage() {
               {/* Attendance & Rating Section */}
               <div className="border-t border-slate-100 pt-6">
                 {!isAttended ? (
-                  <div className="bg-rose-50 border border-rose-200 p-5 rounded-2xl flex flex-col sm:flex-row gap-4 items-center justify-between">
+                  <div className="bg-rose-50/80 border border-rose-200 p-6 rounded-[20px] flex flex-col sm:flex-row gap-4 items-center justify-between shadow-sm">
                     <div>
-                      <h4 className="font-black text-rose-900 mb-1 flex items-center gap-2">
+                      <h4 className="font-black text-rose-900 mb-1 text-[17px] flex items-center gap-2">
                         <KeyRound className="w-5 h-5 text-rose-600" /> Tidak Hadir
                       </h4>
-                      <p className="text-sm text-rose-800/80 font-medium">Anda belum melakukan presensi untuk sesi ini atau tidak hadir.</p>
+                      <p className="text-[13px] text-rose-800/80 font-semibold">Anda belum melakukan presensi untuk sesi ini atau tidak hadir.</p>
                     </div>
                   </div>
                 ) : (
-                  <div className="bg-emerald-50 border border-emerald-200 p-5 rounded-2xl flex flex-col sm:flex-row gap-4 items-center justify-between">
+                  <div className="bg-amber-50/80 border border-amber-200 p-6 rounded-[20px] flex flex-col sm:flex-row gap-5 items-center justify-between shadow-sm">
                     <div>
-                      <h4 className="font-black text-emerald-900 mb-1 flex items-center gap-2">
-                        <CheckCircle2 className="w-5 h-5 text-emerald-600" /> Anda Hadir
+                      <div className="flex items-center gap-2 mb-2">
+                        <span className="px-2 py-0.5 rounded-[6px] bg-emerald-100 text-emerald-700 text-[10px] font-black uppercase tracking-wider flex items-center gap-1 w-max">
+                          <CheckCircle2 className="w-3 h-3" /> Anda Hadir
+                        </span>
+                      </div>
+                      <h4 className="font-black text-amber-900 text-[17px] mb-1 flex items-center gap-2">
+                        Beri Penilaian
                       </h4>
-                      <p className="text-sm text-emerald-800/80 font-medium">
+                      <p className="text-[13px] text-amber-800/80 font-semibold">
                         {attRecord.rating 
                           ? "Terima kasih atas penilaian Anda." 
-                          : "Beri penilaian untuk sesi pembelajaran ini:"}
+                          : "Bagaimana pengalamanmu belajar di sesi ini?"}
                       </p>
                     </div>
                     
-                    <div className="flex items-center gap-1">
+                    <div className="flex items-center gap-2">
                       {[1, 2, 3, 4, 5].map((star) => {
                         const currentRating = attRecord.rating || 0;
                         const isFilled = star <= (ratingHover || currentRating);
                         return (
                           <button
                             key={star}
-                            disabled={!!attRecord.rating} // disabled if already rated
+                            disabled={!!attRecord.rating}
                             className={`p-1 transition-transform ${!attRecord.rating ? 'hover:scale-110' : 'cursor-default'}`}
                             onMouseEnter={() => !attRecord.rating && setRatingHover(star)}
                             onMouseLeave={() => !attRecord.rating && setRatingHover(0)}
                             onClick={() => handleRate(star)}
                           >
                             <Star 
-                              className={`w-7 h-7 ${isFilled ? 'fill-yellow-400 text-yellow-400 drop-shadow-sm' : 'fill-transparent text-slate-300'}`} 
+                              className={`w-10 h-10 ${isFilled ? 'fill-yellow-400 text-yellow-400 drop-shadow-sm' : 'fill-transparent text-slate-300'}`} 
                             />
                           </button>
                         );
@@ -335,10 +428,10 @@ export default function ArsipLesPage() {
               {/* Meeting Summary Section */}
               {selectedSchedule.summary && (
                 <div className="border-t border-slate-100 pt-6">
-                  <h4 className="text-sm font-black uppercase tracking-wider text-slate-500 mb-3 flex items-center gap-2">
+                  <h4 className="text-xs font-black uppercase tracking-wider text-slate-500 mb-3 flex items-center gap-2">
                     <FileText className="w-4 h-4" /> Ringkasan Pertemuan
                   </h4>
-                  <div className="bg-slate-50 p-4 rounded-xl text-slate-700 text-sm leading-relaxed whitespace-pre-wrap border border-slate-100">
+                  <div className="bg-white p-5 rounded-[16px] text-slate-700 text-[15px] leading-relaxed whitespace-pre-wrap border border-slate-200/60 shadow-sm font-medium">
                     {selectedSchedule.summary}
                   </div>
                 </div>
@@ -348,6 +441,7 @@ export default function ArsipLesPage() {
           );
         })()}
       </Modal>
+    </div>
     </div>
   );
 }

@@ -7,6 +7,8 @@ import { motion } from "framer-motion";
 import { Shield, Users, Trophy, ChevronRight, Loader2, Target, Sword } from "lucide-react";
 import { CenterLoader } from "@/components/ui/center-loader";
 import toast from "react-hot-toast";
+import { useTheme } from "@/lib/theme-context";
+import { cn } from "@/lib/utils";
 
 const FACTIONS = [
   { id: "Alpha", color: "bg-red-500", text: "text-red-500", light: "bg-red-100", icon: "🐺", desc: "Berani dan tak kenal takut. Pemimpin alami." },
@@ -18,6 +20,7 @@ const FACTIONS = [
 export default function FactionPage() {
   const { profile, refreshProfile } = useAuth();
   const supabase = createClient();
+  const { uiMode } = useTheme();
   
   const [loading, setLoading] = useState(true);
   const [leaderboard, setLeaderboard] = useState<any[]>([]);
@@ -100,18 +103,18 @@ export default function FactionPage() {
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: i * 0.1 }}
               onClick={() => !joining && joinFaction(f.id)}
-              className={`bg-white p-8 rounded-3xl border-4 border-slate-100 hover:${f.color} hover:border-transparent group cursor-pointer transition-all hover:shadow-2xl hover:shadow-${f.color.split('-')[1]}-500/30 hover:-translate-y-2 relative overflow-hidden`}
+              className={cn("bg-white p-8 transition-all group cursor-pointer relative overflow-hidden", uiMode === 'clean' ? `rounded-xl border border-slate-200 hover:border-slate-300 hover:shadow-md hover:-translate-y-1` : `rounded-3xl border-4 border-slate-100 hover:${f.color} hover:border-transparent hover:shadow-2xl hover:shadow-${f.color.split('-')[1]}-500/30 hover:-translate-y-2`)}
             >
               <div className={`absolute top-[-20px] right-[-20px] text-9xl opacity-5 group-hover:opacity-20 transition-opacity ${f.text}`}>
                 {f.icon}
               </div>
               <div className="relative z-10">
-                <div className={`w-16 h-16 rounded-2xl ${f.light} ${f.text} flex items-center justify-center text-3xl mb-6 group-hover:bg-white`}>
+                <div className={cn("w-16 h-16 flex items-center justify-center text-3xl mb-6", uiMode === 'clean' ? `rounded-xl ${f.light} ${f.text}` : `rounded-2xl ${f.light} ${f.text} group-hover:bg-white`)}>
                   {f.icon}
                 </div>
-                <h2 className="text-3xl font-black text-slate-800 mb-2 group-hover:text-white">{f.id}</h2>
-                <p className="text-slate-500 font-medium group-hover:text-white/90">{f.desc}</p>
-                <div className="mt-8 flex items-center gap-2 text-sm font-bold text-slate-400 group-hover:text-white">
+                <h2 className={cn("text-3xl font-black mb-2", uiMode === 'clean' ? "text-slate-800" : "text-slate-800 group-hover:text-white")}>{f.id}</h2>
+                <p className={cn("font-medium", uiMode === 'clean' ? "text-slate-500" : "text-slate-500 group-hover:text-white/90")}>{f.desc}</p>
+                <div className={cn("mt-8 flex items-center gap-2 text-sm font-bold", uiMode === 'clean' ? "text-[#108B96]" : "text-slate-400 group-hover:text-white")}>
                   GABUNG SEKARANG <ChevronRight className="w-4 h-4" />
                 </div>
               </div>
@@ -129,18 +132,18 @@ export default function FactionPage() {
   return (
     <div className="max-w-6xl mx-auto space-y-8 pb-10">
       {/* Hero Header */}
-      <div className={`relative overflow-hidden rounded-3xl p-8 md:p-12 ${myFaction?.color} text-white shadow-xl`}>
+      <div className={cn("relative overflow-hidden p-8 md:p-12 transition-all", uiMode === 'clean' ? `rounded-2xl border border-slate-200 bg-slate-50 ${myFaction?.text}` : `rounded-3xl ${myFaction?.color} text-white shadow-xl`)}>
         <div className="absolute top-0 right-0 w-[400px] h-[400px] bg-white/10 rounded-full blur-[80px] -translate-y-1/2 translate-x-1/3" />
         <div className="relative z-10 flex flex-col md:flex-row items-center gap-8">
-          <div className="w-32 h-32 bg-white/20 rounded-full backdrop-blur-md flex items-center justify-center text-7xl border-4 border-white/30 shadow-inner">
+          <div className={cn("w-32 h-32 rounded-full flex items-center justify-center text-7xl", uiMode === 'clean' ? `border-2 border-slate-200 bg-white shadow-sm` : "bg-white/20 backdrop-blur-md border-4 border-white/30 shadow-inner")}>
             {myFaction?.icon}
           </div>
           <div className="text-center md:text-left flex-1">
-            <div className="inline-flex items-center gap-2 bg-white/20 px-4 py-1.5 rounded-full text-sm font-bold tracking-widest uppercase mb-3">
+            <div className={cn("inline-flex items-center gap-2 px-4 py-1.5 rounded-full text-sm font-bold tracking-widest uppercase mb-3", uiMode === 'clean' ? `bg-slate-200/50 ${myFaction?.text}` : "bg-white/20")}>
               <Shield className="w-4 h-4" /> Faksi Kamu
             </div>
-            <h1 className="text-4xl md:text-5xl font-black mb-2">{myFaction?.id}</h1>
-            <p className="text-white/80 font-medium text-lg max-w-xl">{myFaction?.desc}</p>
+            <h1 className={cn("text-4xl md:text-5xl font-black mb-2", uiMode === 'clean' ? "text-slate-800" : "")}>{myFaction?.id}</h1>
+            <p className={cn("font-medium text-lg max-w-xl", uiMode === 'clean' ? "text-slate-500" : "text-white/80")}>{myFaction?.desc}</p>
           </div>
         </div>
       </div>
@@ -155,7 +158,7 @@ export default function FactionPage() {
             <h2 className="text-2xl font-black text-slate-800">Peringkat Faksi</h2>
           </div>
           
-          <div className="bg-white rounded-3xl border-2 border-slate-100 p-6 md:p-8 space-y-8 shadow-sm">
+          <div className={cn("bg-white p-6 md:p-8 space-y-8 transition-all", uiMode === 'clean' ? "rounded-xl border border-slate-200 shadow-sm" : "rounded-3xl border-2 border-slate-100 shadow-sm")}>
             {leaderboard.map((l, idx) => {
               const fac = FACTIONS.find(f => f.id === l.faction_name);
               const percentage = (l.total_xp / maxXp) * 100;
@@ -165,7 +168,7 @@ export default function FactionPage() {
                 <div key={l.faction_name} className="relative">
                   <div className="flex items-center justify-between mb-3">
                     <div className="flex items-center gap-4">
-                      <div className={`w-12 h-12 rounded-2xl flex items-center justify-center text-2xl font-black ${isFirst ? 'bg-yellow-100 text-yellow-600 shadow-lg shadow-yellow-500/20' : 'bg-slate-100 text-slate-400'}`}>
+                      <div className={cn("w-12 h-12 flex items-center justify-center text-2xl font-black", uiMode === 'clean' ? (isFirst ? "rounded-xl bg-yellow-50 text-yellow-600 border border-yellow-200" : "rounded-xl bg-slate-50 text-slate-400 border border-slate-200") : (isFirst ? "rounded-2xl bg-yellow-100 text-yellow-600 shadow-lg shadow-yellow-500/20" : "rounded-2xl bg-slate-100 text-slate-400"))}>
                         {isFirst ? '👑' : `#${idx + 1}`}
                       </div>
                       <div>
@@ -213,9 +216,9 @@ export default function FactionPage() {
               if (members.length === 0) return null;
               
               return (
-                <div key={f.id} className="bg-white rounded-3xl border-2 border-slate-100 p-5 shadow-sm">
+                <div key={f.id} className={cn("bg-white p-5 transition-all", uiMode === 'clean' ? "rounded-xl border border-slate-200 shadow-sm" : "rounded-3xl border-2 border-slate-100 shadow-sm")}>
                   <div className="flex items-center gap-2 mb-4 pb-4 border-b-2 border-slate-100">
-                    <div className={`w-8 h-8 rounded-lg ${f.light} ${f.text} flex items-center justify-center text-sm font-bold`}>
+                    <div className={cn(`w-8 h-8 flex items-center justify-center text-sm font-bold`, uiMode === 'clean' ? `rounded bg-slate-50 border border-slate-200` : `rounded-lg ${f.light} ${f.text}`)}>
                       {f.icon}
                     </div>
                     <h3 className="font-bold text-slate-800">Top {f.id}</h3>

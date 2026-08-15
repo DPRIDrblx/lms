@@ -6,10 +6,12 @@ import { Star, Target, Zap, CheckCircle2, Gift } from "lucide-react";
 import { ProgressBar } from "@/components/ui/progress-bar";
 import { useEffect, useState } from "react";
 import { cn } from "@/lib/utils";
+import { useTheme } from "@/lib/theme-context";
 
 export default function QuestsPage() {
   const { profile } = useAuth();
   const supabase = createClient();
+  const { uiMode } = useTheme();
   const [parentQuests, setParentQuests] = useState<any[]>([]);
 
   useEffect(() => {
@@ -47,7 +49,7 @@ export default function QuestsPage() {
           </h2>
           <div className="space-y-4">
             {parentQuests.map(quest => (
-              <div key={quest.id} className={cn("bg-white rounded-3xl border-2 p-6 shadow-[0_6px_0_rgb(226,232,240)] flex flex-col md:flex-row md:items-center justify-between gap-6", quest.status === 'completed' ? "border-emerald-200 bg-emerald-50" : "border-fuchsia-200")}>
+              <div key={quest.id} className={cn("bg-white p-6 flex flex-col md:flex-row md:items-center justify-between gap-6 transition-all", uiMode === 'clean' ? (quest.status === 'completed' ? "rounded-xl border border-emerald-200 bg-emerald-50/50 shadow-sm" : "rounded-xl border border-slate-200 shadow-sm hover:shadow-md") : (quest.status === 'completed' ? "rounded-3xl border-2 border-emerald-200 bg-emerald-50 shadow-[0_6px_0_rgb(226,232,240)]" : "rounded-3xl border-2 border-fuchsia-200 shadow-[0_6px_0_rgb(226,232,240)]"))}>
                 <div className="flex-1">
                   <div className="flex items-center gap-2 mb-2">
                      <h3 className={cn("text-xl font-black", quest.status === 'completed' ? 'text-emerald-700' : 'text-slate-800')}>{quest.title}</h3>
@@ -62,12 +64,12 @@ export default function QuestsPage() {
                    {quest.status !== 'completed' ? (
                      <button 
                        onClick={() => completeQuest(quest.id, quest.reward_gems)}
-                       className="bg-fuchsia-500 text-white font-black px-6 py-3 rounded-xl border-2 border-fuchsia-600 shadow-[0_4px_0_rgb(192,38,211)] active:translate-y-1 active:shadow-none transition-all"
+                       className={cn("text-white font-black px-6 py-3 transition-all", uiMode === 'clean' ? "bg-[#108B96] hover:bg-[#0d737d] rounded-lg shadow-sm" : "bg-fuchsia-500 rounded-xl border-2 border-fuchsia-600 shadow-[0_4px_0_rgb(192,38,211)] active:translate-y-1 active:shadow-none")}
                      >
                         Klaim Reward
                      </button>
                    ) : (
-                     <button disabled className="bg-emerald-100 text-emerald-600 font-black px-6 py-3 rounded-xl border-2 border-emerald-200">
+                     <button disabled className={cn("font-black px-6 py-3", uiMode === 'clean' ? "bg-emerald-50 text-emerald-600 rounded-lg border border-emerald-200" : "bg-emerald-100 text-emerald-600 rounded-xl border-2 border-emerald-200")}>
                         Selesai
                      </button>
                    )}
@@ -89,8 +91,8 @@ export default function QuestsPage() {
         ].map((quest, i) => {
           const isDone = quest.current >= quest.target;
           return (
-            <div key={i} className={`bg-white rounded-3xl border-2 ${isDone ? 'border-emerald-200 bg-emerald-50' : 'border-slate-200'} p-6 shadow-[0_6px_0_rgb(226,232,240)] flex items-center gap-6`}>
-              <div className={`w-16 h-16 rounded-2xl ${isDone ? 'bg-emerald-100 text-emerald-500 border-2 border-emerald-200' : `${quest.bg} ${quest.color} border-2 ${quest.border}`} flex items-center justify-center shrink-0`}>
+            <div key={i} className={cn("bg-white p-6 flex items-center gap-6 transition-all", uiMode === 'clean' ? (isDone ? "rounded-xl border border-emerald-200 bg-emerald-50/50 shadow-sm" : "rounded-xl border border-slate-200 shadow-sm hover:border-slate-300") : (isDone ? "rounded-3xl border-2 border-emerald-200 bg-emerald-50 shadow-[0_6px_0_rgb(226,232,240)]" : "rounded-3xl border-2 border-slate-200 shadow-[0_6px_0_rgb(226,232,240)]"))}>
+              <div className={cn("w-16 h-16 flex items-center justify-center shrink-0", uiMode === 'clean' ? (isDone ? "rounded-xl bg-emerald-100/50 text-emerald-500 border border-emerald-200" : `rounded-xl ${quest.bg} ${quest.color} border ${quest.border} opacity-80`) : (isDone ? "rounded-2xl bg-emerald-100 text-emerald-500 border-2 border-emerald-200" : `rounded-2xl ${quest.bg} ${quest.color} border-2 ${quest.border}`))}>
                 <quest.icon className="w-8 h-8" />
               </div>
               <div className="flex-1">
@@ -99,7 +101,7 @@ export default function QuestsPage() {
                   <span className="font-bold text-indigo-500">+{quest.xp} XP</span>
                 </div>
                 <div className="h-4 w-full bg-slate-100 rounded-full overflow-hidden">
-                  <div className={`h-full rounded-full transition-all ${isDone ? 'bg-emerald-500' : 'bg-indigo-500'}`} style={{ width: `${Math.min(100, (quest.current / quest.target) * 100)}%` }}></div>
+                  <div className={cn("h-full rounded-full transition-all", uiMode === 'clean' ? (isDone ? "bg-emerald-500" : "bg-[#108B96]") : (isDone ? "bg-emerald-500" : "bg-indigo-500"))} style={{ width: `${Math.min(100, (quest.current / quest.target) * 100)}%` }}></div>
                 </div>
                 <p className="text-right text-sm font-bold text-slate-400 mt-2">{quest.current} / {quest.target}</p>
               </div>

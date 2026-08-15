@@ -24,6 +24,8 @@ import {
 } from "lucide-react";
 import { useEffect, useState, use } from "react";
 import Link from "next/link";
+import { useTheme } from "@/lib/theme-context";
+import { cn } from "@/lib/utils";
 
 const TYPE_ICONS: Record<string, React.ElementType> = {
   text: FileText,
@@ -81,6 +83,7 @@ interface Course {
 
 export default function CourseDetailPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = use(params);
+  const { uiMode } = useTheme();
   const { profile } = useAuth();
   const supabase = createClient();
   const [course, setCourse] = useState<Course | null>(null);
@@ -163,7 +166,7 @@ export default function CourseDetailPage({ params }: { params: Promise<{ id: str
       </Link>
 
       <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }}>
-        <div className="bg-white rounded-[2rem] overflow-hidden border-2 border-slate-200 shadow-[0_8px_0_rgb(226,232,240)]">
+        <div className={cn("bg-white overflow-hidden transition-all", uiMode === 'clean' ? "rounded-2xl border border-slate-200 shadow-sm" : "rounded-[2rem] border-2 border-slate-200 shadow-[0_8px_0_rgb(226,232,240)]")}>
           <div className="h-56 relative overflow-hidden flex items-center px-8 bg-indigo-500">
             {course.cover_image && (
               <>
@@ -177,7 +180,7 @@ export default function CourseDetailPage({ params }: { params: Promise<{ id: str
               <p className="text-sm text-white/90 font-bold drop-shadow-sm">Taught by {course.profiles?.full_name}</p>
             </div>
           </div>
-          <div className="px-8 py-5 border-t-2 border-slate-100 flex items-center gap-6 bg-white">
+          <div className={cn("px-8 py-5 flex items-center gap-6 bg-white", uiMode === 'clean' ? "border-t border-slate-100" : "border-t-2 border-slate-100")}>
             <div className="flex-1">
               <ProgressBar value={doneCount} max={totalCount || 1} showLabel color="#10B981" size="lg" />
             </div>
@@ -206,7 +209,7 @@ export default function CourseDetailPage({ params }: { params: Promise<{ id: str
               return (
                 <div key={chapter.id} className="space-y-3">
                   <div 
-                    className={`flex items-center justify-between p-4 bg-white border-2 rounded-2xl cursor-pointer transition-all group ${isExpanded ? 'border-indigo-200 bg-indigo-50 shadow-[0_4px_0_rgb(199,210,254)]' : 'border-slate-200 shadow-[0_4px_0_rgb(226,232,240)] hover:shadow-[0_6px_0_rgb(226,232,240)] hover:-translate-y-1'}`}
+                    className={cn("flex items-center justify-between p-4 bg-white cursor-pointer transition-all group", uiMode === 'clean' ? (isExpanded ? "border border-[#108B96] bg-slate-50 rounded-xl" : "border border-slate-200 rounded-xl hover:border-slate-300 hover:shadow-sm") : (isExpanded ? "border-2 rounded-2xl border-indigo-200 bg-indigo-50 shadow-[0_4px_0_rgb(199,210,254)]" : "border-2 rounded-2xl border-slate-200 shadow-[0_4px_0_rgb(226,232,240)] hover:shadow-[0_6px_0_rgb(226,232,240)] hover:-translate-y-1"))}
                     onClick={() => toggleChapter(chapter.id)}
                   >
                     <div className="flex items-center gap-4">
@@ -246,7 +249,7 @@ export default function CourseDetailPage({ params }: { params: Promise<{ id: str
                                 )}
                               </div>
                               
-                              <div className={`ml-10 w-full p-4 rounded-2xl border-2 ${done ? 'border-emerald-200 bg-emerald-50' : 'bg-white border-slate-200 shadow-[0_4px_0_rgb(226,232,240)]'}`}>
+                              <div className={cn("ml-10 w-full p-4 transition-all", uiMode === 'clean' ? (done ? "rounded-xl border border-emerald-200 bg-emerald-50/50" : "rounded-xl border border-slate-200 bg-white hover:border-slate-300") : (done ? "rounded-2xl border-2 border-emerald-200 bg-emerald-50" : "rounded-2xl border-2 border-slate-200 bg-white shadow-[0_4px_0_rgb(226,232,240)]"))}>
                                 <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
                                   <div className="flex-1 min-w-0">
                                     <div className="flex items-center gap-2 mb-1">
@@ -265,13 +268,13 @@ export default function CourseDetailPage({ params }: { params: Promise<{ id: str
                                   {profile?.role === "student" && (
                                     isQuiz ? (
                                       <Link href={`/quizzes/${m.id}`}>
-                                        <button className={`px-4 py-2 rounded-xl font-bold text-sm transition-all border-2 ${done ? 'bg-slate-100 text-slate-500 border-slate-200' : 'bg-indigo-500 text-white border-indigo-600 shadow-[0_4px_0_rgb(79,70,229)] hover:-translate-y-1 hover:shadow-[0_6px_0_rgb(79,70,229)] active:translate-y-1 active:shadow-none'} flex items-center gap-1`}>
+                                        <button className={cn("px-4 py-2 font-bold text-sm transition-all flex items-center gap-1", uiMode === 'clean' ? (done ? "rounded-lg border border-slate-200 bg-slate-50 text-slate-500 hover:bg-slate-100" : "rounded-lg border border-transparent bg-[#108B96] text-white hover:bg-[#0d737d]") : (done ? "rounded-xl border-2 bg-slate-100 text-slate-500 border-slate-200" : "rounded-xl border-2 bg-indigo-500 text-white border-indigo-600 shadow-[0_4px_0_rgb(79,70,229)] hover:-translate-y-1 hover:shadow-[0_6px_0_rgb(79,70,229)] active:translate-y-1 active:shadow-none"))}>
                                           {done ? "Lihat Nilai" : "Mulai Ujian"} <ChevronRight className="h-4 w-4" />
                                         </button>
                                       </Link>
                                     ) : (
                                       <Link href={`/courses/${id}/lessons/${m.id}`}>
-                                        <button className={`px-4 py-2 rounded-xl font-bold text-sm transition-all border-2 ${done ? 'bg-slate-100 text-slate-500 border-slate-200' : 'bg-indigo-500 text-white border-indigo-600 shadow-[0_4px_0_rgb(79,70,229)] hover:-translate-y-1 hover:shadow-[0_6px_0_rgb(79,70,229)] active:translate-y-1 active:shadow-none'} flex items-center gap-1`}>
+                                        <button className={cn("px-4 py-2 font-bold text-sm transition-all flex items-center gap-1", uiMode === 'clean' ? (done ? "rounded-lg border border-slate-200 bg-slate-50 text-slate-500 hover:bg-slate-100" : "rounded-lg border border-transparent bg-[#108B96] text-white hover:bg-[#0d737d]") : (done ? "rounded-xl border-2 bg-slate-100 text-slate-500 border-slate-200" : "rounded-xl border-2 bg-indigo-500 text-white border-indigo-600 shadow-[0_4px_0_rgb(79,70,229)] hover:-translate-y-1 hover:shadow-[0_6px_0_rgb(79,70,229)] active:translate-y-1 active:shadow-none"))}>
                                           {done ? "Pelajari Ulang" : btnLabel} <ChevronRight className="h-4 w-4" />
                                         </button>
                                       </Link>
@@ -298,7 +301,7 @@ export default function CourseDetailPage({ params }: { params: Promise<{ id: str
             {missions.filter(m => !m.chapter_id).length > 0 && (
               <div className="space-y-3 mt-6">
                 <div 
-                  className={`flex items-center justify-between p-4 bg-white border-2 rounded-2xl cursor-pointer transition-all group ${expandedChapters.has("assessments") ? 'border-amber-200 bg-amber-50 shadow-[0_4px_0_rgb(253,230,138)]' : 'border-slate-200 shadow-[0_4px_0_rgb(226,232,240)] hover:shadow-[0_6px_0_rgb(226,232,240)] hover:-translate-y-1'}`}
+                  className={cn("flex items-center justify-between p-4 bg-white cursor-pointer transition-all group", uiMode === 'clean' ? (expandedChapters.has("assessments") ? "border border-amber-400 bg-amber-50 rounded-xl" : "border border-slate-200 rounded-xl hover:border-slate-300 hover:shadow-sm") : (expandedChapters.has("assessments") ? "border-2 rounded-2xl border-amber-200 bg-amber-50 shadow-[0_4px_0_rgb(253,230,138)]" : "border-2 rounded-2xl border-slate-200 shadow-[0_4px_0_rgb(226,232,240)] hover:shadow-[0_6px_0_rgb(226,232,240)] hover:-translate-y-1"))}
                   onClick={() => toggleChapter("assessments")}
                 >
                   <div className="flex items-center gap-4">
@@ -356,13 +359,13 @@ export default function CourseDetailPage({ params }: { params: Promise<{ id: str
                                 {profile?.role === "student" && (
                                   isQuiz ? (
                                     <Link href={`/quizzes/${m.id}`}>
-                                      <button className={`px-4 py-2 rounded-xl font-bold text-sm transition-all border-2 ${done ? 'bg-slate-100 text-slate-500 border-slate-200' : 'bg-amber-500 text-white border-amber-600 shadow-[0_4px_0_rgb(217,119,6)] hover:-translate-y-1 hover:shadow-[0_6px_0_rgb(217,119,6)] active:translate-y-1 active:shadow-none'} flex items-center gap-1`}>
+                                      <button className={cn("px-4 py-2 font-bold text-sm transition-all flex items-center gap-1", uiMode === 'clean' ? (done ? "rounded-lg border border-slate-200 bg-slate-50 text-slate-500 hover:bg-slate-100" : "rounded-lg border border-transparent bg-amber-500 text-white hover:bg-amber-600") : (done ? "rounded-xl border-2 bg-slate-100 text-slate-500 border-slate-200" : "rounded-xl border-2 bg-amber-500 text-white border-amber-600 shadow-[0_4px_0_rgb(217,119,6)] hover:-translate-y-1 hover:shadow-[0_6px_0_rgb(217,119,6)] active:translate-y-1 active:shadow-none"))}>
                                         {done ? "Lihat Nilai" : "Mulai Ujian"} <ChevronRight className="h-4 w-4" />
                                       </button>
                                     </Link>
                                   ) : (
                                     <Link href={`/courses/${id}/lessons/${m.id}`}>
-                                      <button className={`px-4 py-2 rounded-xl font-bold text-sm transition-all border-2 ${done ? 'bg-slate-100 text-slate-500 border-slate-200' : 'bg-indigo-500 text-white border-indigo-600 shadow-[0_4px_0_rgb(79,70,229)] hover:-translate-y-1 hover:shadow-[0_6px_0_rgb(79,70,229)] active:translate-y-1 active:shadow-none'} flex items-center gap-1`}>
+                                      <button className={cn("px-4 py-2 font-bold text-sm transition-all flex items-center gap-1", uiMode === 'clean' ? (done ? "rounded-lg border border-slate-200 bg-slate-50 text-slate-500 hover:bg-slate-100" : "rounded-lg border border-transparent bg-[#108B96] text-white hover:bg-[#0d737d]") : (done ? "rounded-xl border-2 bg-slate-100 text-slate-500 border-slate-200" : "rounded-xl border-2 bg-indigo-500 text-white border-indigo-600 shadow-[0_4px_0_rgb(79,70,229)] hover:-translate-y-1 hover:shadow-[0_6px_0_rgb(79,70,229)] active:translate-y-1 active:shadow-none"))}>
                                         {done ? "Pelajari Ulang" : btnLabel} <ChevronRight className="h-4 w-4" />
                                       </button>
                                     </Link>
@@ -418,13 +421,13 @@ export default function CourseDetailPage({ params }: { params: Promise<{ id: str
                         {profile?.role === "student" && (
                           isQuiz ? (
                             <Link href={`/quizzes/${m.id}`}>
-                              <button className={`px-4 py-2 rounded-xl font-bold text-sm transition-all border-2 ${done ? 'bg-slate-100 text-slate-500 border-slate-200' : 'bg-amber-500 text-white border-amber-600 shadow-[0_4px_0_rgb(217,119,6)] hover:-translate-y-1 hover:shadow-[0_6px_0_rgb(217,119,6)] active:translate-y-1 active:shadow-none'} flex items-center gap-1`}>
+                              <button className={cn("px-4 py-2 font-bold text-sm transition-all flex items-center gap-1", uiMode === 'clean' ? (done ? "rounded-lg border border-slate-200 bg-slate-50 text-slate-500 hover:bg-slate-100" : "rounded-lg border border-transparent bg-amber-500 text-white hover:bg-amber-600") : (done ? "rounded-xl border-2 bg-slate-100 text-slate-500 border-slate-200" : "rounded-xl border-2 bg-amber-500 text-white border-amber-600 shadow-[0_4px_0_rgb(217,119,6)] hover:-translate-y-1 hover:shadow-[0_6px_0_rgb(217,119,6)] active:translate-y-1 active:shadow-none"))}>
                                 {done ? "Lihat Nilai" : "Mulai Ujian"} <ChevronRight className="h-4 w-4" />
                               </button>
                             </Link>
                           ) : (
                             <Link href={`/courses/${id}/lessons/${m.id}`}>
-                              <button className={`px-4 py-2 rounded-xl font-bold text-sm transition-all border-2 ${done ? 'bg-slate-100 text-slate-500 border-slate-200' : 'bg-indigo-500 text-white border-indigo-600 shadow-[0_4px_0_rgb(79,70,229)] hover:-translate-y-1 hover:shadow-[0_6px_0_rgb(79,70,229)] active:translate-y-1 active:shadow-none'} flex items-center gap-1`}>
+                              <button className={cn("px-4 py-2 font-bold text-sm transition-all flex items-center gap-1", uiMode === 'clean' ? (done ? "rounded-lg border border-slate-200 bg-slate-50 text-slate-500 hover:bg-slate-100" : "rounded-lg border border-transparent bg-[#108B96] text-white hover:bg-[#0d737d]") : (done ? "rounded-xl border-2 bg-slate-100 text-slate-500 border-slate-200" : "rounded-xl border-2 bg-indigo-500 text-white border-indigo-600 shadow-[0_4px_0_rgb(79,70,229)] hover:-translate-y-1 hover:shadow-[0_6px_0_rgb(79,70,229)] active:translate-y-1 active:shadow-none"))}>
                                 {done ? "Pelajari Ulang" : btnLabel} <ChevronRight className="h-4 w-4" />
                               </button>
                             </Link>

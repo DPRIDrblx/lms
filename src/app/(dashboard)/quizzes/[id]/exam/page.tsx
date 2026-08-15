@@ -8,6 +8,8 @@ import { Clock, Flag, ChevronLeft, ChevronRight, CheckCircle2, AlertTriangle, Al
 import { motion, AnimatePresence } from "framer-motion";
 import { playSound } from "@/lib/audio";
 import { updateQuestProgress } from "@/lib/gamification";
+import { useTheme } from "@/lib/theme-context";
+import { cn } from "@/lib/utils";
 import { Mascot } from "@/components/ui/mascot";
 
 export default function ExamPage({ params }: { params: Promise<{ id: string }> }) {
@@ -15,6 +17,7 @@ export default function ExamPage({ params }: { params: Promise<{ id: string }> }
   const { profile } = useAuth();
   const supabase = createClient();
   const router = useRouter();
+  const { uiMode } = useTheme();
 
   const [quiz, setQuiz] = useState<any>(null);
   const [questions, setQuestions] = useState<any[]>([]);
@@ -653,7 +656,7 @@ export default function ExamPage({ params }: { params: Promise<{ id: string }> }
 
   if (loading || isSubmittingToAI) {
     return (
-      <div className="min-h-screen bg-slate-50 flex flex-col items-center justify-center gap-6 p-4 text-center">
+      <div className={cn("min-h-screen flex flex-col items-center justify-center gap-6 p-4 text-center", uiMode === 'clean' ? 'bg-[var(--bg-secondary)]' : 'bg-slate-50')}>
         <motion.div 
           animate={{ rotate: 360 }} 
           transition={{ repeat: Infinity, duration: 1, ease: "linear" }}
@@ -672,11 +675,11 @@ export default function ExamPage({ params }: { params: Promise<{ id: string }> }
   if (isFinished) {
     const isPassed = finalScore !== null && finalScore >= (quiz?.passing_score || 0);
     return (
-      <div className="min-h-screen bg-slate-50 flex items-center justify-center p-4 font-sans">
+      <div className={cn("min-h-screen flex items-center justify-center p-4 font-sans", uiMode === 'clean' ? 'bg-[var(--bg-secondary)]' : 'bg-slate-50')}>
          <motion.div 
            initial={{ opacity: 0, scale: 0.9, y: 20 }}
            animate={{ opacity: 1, scale: 1, y: 0 }}
-           className="bg-white p-8 md:p-12 max-w-lg w-full text-center rounded-3xl shadow-xl border-2 border-slate-200"
+           className={cn("bg-white p-8 md:p-12 max-w-lg w-full text-center", uiMode === 'clean' ? 'rounded-2xl border border-[var(--border)] shadow-sm' : 'rounded-3xl shadow-xl border-2 border-slate-200')}
          >
             <div className="flex justify-center mb-6">
               {needsManualGrading ? (
@@ -748,7 +751,7 @@ export default function ExamPage({ params }: { params: Promise<{ id: string }> }
   const progressPercent = ((currentIndex + 1) / questions.length) * 100;
 
   return (
-    <div className="min-h-screen bg-white font-sans text-slate-800 flex flex-col relative overflow-hidden">
+    <div className={cn("min-h-screen font-sans text-slate-800 flex flex-col relative overflow-hidden", uiMode === "clean" ? "bg-[var(--bg-secondary)]" : "bg-slate-50")}>
       
       {/* BACKGROUND WATERMARK (REPEATING TILE ON TOP) */}
       <div 
@@ -982,7 +985,7 @@ export default function ExamPage({ params }: { params: Promise<{ id: string }> }
       </AnimatePresence>
 
       {/* HEADER PROGRESS (Duolingo Style) */}
-      <header className="sticky top-0 z-50 bg-white border-b-2 border-slate-100 px-3 py-2 md:py-4 md:px-8 flex items-center gap-3 md:gap-8 shadow-sm landscape:py-2">
+      <header className={cn("sticky top-0 z-50 px-3 py-2 md:py-4 md:px-8 flex items-center gap-3 md:gap-8 shadow-sm landscape:py-2", uiMode === 'clean' ? 'bg-white border-b border-[var(--border)]' : 'bg-white border-b-2 border-slate-100')}>
         <button 
           onClick={() => setConfirmModal({
             show: true, 
@@ -1000,7 +1003,7 @@ export default function ExamPage({ params }: { params: Promise<{ id: string }> }
           <motion.div 
             initial={{ width: 0 }}
             animate={{ width: `${progressPercent}%` }}
-            className="absolute top-0 left-0 h-full bg-green-500 rounded-full"
+            className={cn("absolute top-0 left-0 h-full rounded-full", uiMode === 'clean' ? 'bg-[#108B96]' : 'bg-green-500')}
           >
             <div className="absolute top-1 left-2 right-2 h-1 bg-white/30 rounded-full" />
           </motion.div>
@@ -1092,8 +1095,8 @@ export default function ExamPage({ params }: { params: Promise<{ id: string }> }
                       key={i}
                       disabled={isRevealed}
                       onClick={() => saveAnswer(currentQ.id, opt.text)}
-                      className={`text-left w-full p-4 md:p-5 rounded-2xl border-2 transition-all flex items-center gap-4 ${btnColorClass}`}
-                      style={{
+                      className={cn(`text-left w-full p-4 md:p-5 transition-all flex items-center gap-4 ${btnColorClass}`, uiMode === 'clean' ? 'rounded-xl border' : 'rounded-2xl border-2')}
+                      style={uiMode === 'clean' ? undefined : {
                         borderBottomWidth: isSelected && !isRevealed ? '2px' : '4px',
                         transform: isSelected && !isRevealed ? 'translateY(2px)' : 'none'
                       }}
@@ -1313,7 +1316,7 @@ export default function ExamPage({ params }: { params: Promise<{ id: string }> }
         {/* RIGHT PANEL: NUMBER GRID (Mobile & Desktop) */}
         {!isPracticeMode && (
         <div className="hidden lg:flex flex-col w-full lg:w-80 shrink-0">
-          <div className="bg-white rounded-3xl border-2 border-slate-200 p-6 shadow-sm sticky top-28">
+          <div className={cn("bg-white p-6 sticky top-28", uiMode === 'clean' ? 'rounded-2xl border border-[var(--border)] shadow-sm' : 'rounded-3xl border-2 border-slate-200 shadow-sm')}>
             <h3 className="font-black text-slate-700 mb-6 uppercase tracking-widest text-sm flex items-center justify-between">
               Navigasi Soal
               <span className="px-2 py-1 bg-slate-100 rounded-lg text-xs">{questions.length} total</span>
@@ -1348,7 +1351,8 @@ export default function ExamPage({ params }: { params: Promise<{ id: string }> }
                   <button
                     key={q.id}
                     onClick={() => setCurrentIndex(i)}
-                    className={`aspect-square rounded-xl font-black text-sm flex items-center justify-center border-2 transition-all ${btnStyle}`}
+                    className={cn(`aspect-square font-black text-sm flex items-center justify-center transition-all ${btnStyle}`, uiMode === 'clean' ? 'rounded-lg border' : 'rounded-xl border-2')}
+                    style={uiMode === 'clean' ? undefined : { borderBottomWidth: (isFlagged || isAnswered) ? '4px' : '2px' }}
                   >
                     {i + 1}
                   </button>
@@ -1378,17 +1382,17 @@ export default function ExamPage({ params }: { params: Promise<{ id: string }> }
 
       {/* BOTTOM ACTION BAR (CBT MODE) */}
       {!isPracticeMode && (
-        <div className="fixed bottom-0 left-0 right-0 z-50 bg-white border-t-2 border-slate-200 p-2 md:px-8 shadow-[0_-4px_6px_-1px_rgba(0,0,0,0.05)] landscape:p-2">
+        <div className={cn("fixed bottom-0 left-0 right-0 z-50 bg-white p-2 md:px-8 shadow-[0_-4px_6px_-1px_rgba(0,0,0,0.05)] landscape:p-2", uiMode === 'clean' ? 'border-t border-[var(--border)]' : 'border-t-2 border-slate-200')}>
           <div className="max-w-7xl mx-auto flex items-center justify-between gap-2 md:gap-4">
             <div className="flex items-center gap-1 md:gap-4">
               <button 
                 disabled={currentIndex === 0} 
                 onClick={() => setCurrentIndex(prev => prev - 1)}
-                className={`p-2 md:px-6 md:py-4 rounded-xl md:rounded-2xl font-bold border-b-4 transition-all flex items-center gap-1 md:gap-2 ${
+                className={cn(`p-2 md:px-6 md:py-4 font-bold transition-all flex items-center gap-1 md:gap-2 ${
                   currentIndex === 0 
                     ? 'bg-slate-100 text-slate-400 border-slate-200 cursor-not-allowed' 
-                    : 'bg-white text-slate-600 border-slate-300 hover:bg-slate-50 active:translate-y-1 active:border-b-0'
-                }`}
+                    : 'bg-white text-slate-600 hover:bg-slate-50 active:translate-y-1'
+                }`, uiMode === 'clean' ? 'rounded-xl border' : 'rounded-2xl border-b-4 border-slate-300')}
               >
                 <ChevronLeft className="w-5 h-5 md:w-6 md:h-6" />
                 <span className="hidden md:inline">SEBELUMNYA</span>
@@ -1396,11 +1400,11 @@ export default function ExamPage({ params }: { params: Promise<{ id: string }> }
               
               <button 
                 onClick={() => setFlag(currentQ.id)}
-                className={`p-2 md:px-6 md:py-4 rounded-xl md:rounded-2xl font-bold border-b-4 transition-all flex items-center gap-1 md:gap-2 ${
+                className={cn(`p-2 md:px-6 md:py-4 font-bold transition-all flex items-center gap-1 md:gap-2 ${
                   flags[currentQ.id]
-                    ? 'bg-yellow-400 text-yellow-900 border-yellow-600 active:translate-y-1 active:border-b-0'
-                    : 'bg-white text-slate-600 border-slate-300 hover:bg-slate-50 active:translate-y-1 active:border-b-0'
-                }`}
+                    ? 'bg-yellow-400 text-yellow-900 active:translate-y-1'
+                    : 'bg-white text-slate-600 hover:bg-slate-50 active:translate-y-1'
+                }`, uiMode === 'clean' ? 'rounded-xl border' : `rounded-2xl border-b-4 ${flags[currentQ.id] ? 'border-yellow-600' : 'border-slate-300'}`)}
               >
                 <Flag className={`w-5 h-5 md:w-6 md:h-6 ${flags[currentQ.id] ? 'fill-current' : ''}`} />
                 <span className="hidden md:inline">RAGU-RAGU</span>
@@ -1447,7 +1451,7 @@ export default function ExamPage({ params }: { params: Promise<{ id: string }> }
                       });
                     }
                   }} 
-                  className="px-4 py-2 md:px-8 md:py-4 rounded-xl md:rounded-2xl font-bold text-white bg-green-500 border-b-4 border-green-700 hover:bg-green-400 active:translate-y-1 active:border-b-0 transition-all flex items-center gap-1 md:gap-2 text-sm md:text-lg shadow-lg shadow-green-500/30"
+                  className={cn(`px-4 py-2 md:px-8 md:py-4 font-bold text-white transition-all flex items-center gap-1 md:gap-2 text-sm md:text-lg`, uiMode === 'clean' ? 'bg-[#108B96] hover:bg-[#0d737d] rounded-xl' : 'rounded-2xl bg-green-500 border-b-4 border-green-700 hover:bg-green-400 active:translate-y-1 active:border-b-0 shadow-lg shadow-green-500/30')}
                 >
                   <span className="hidden md:inline">SELESAI</span>
                   <CheckCircle2 className="w-5 h-5 md:w-6 md:h-6" />
@@ -1455,7 +1459,7 @@ export default function ExamPage({ params }: { params: Promise<{ id: string }> }
               ) : (
                 <button 
                   onClick={() => setCurrentIndex(i => i + 1)}
-                  className="px-4 py-2 md:px-8 md:py-4 rounded-xl md:rounded-2xl font-bold text-white bg-blue-500 border-b-4 border-blue-700 hover:bg-blue-400 active:translate-y-1 active:border-b-0 transition-all flex items-center gap-1 md:gap-2 text-sm md:text-lg shadow-lg shadow-blue-500/30"
+                  className={cn(`px-4 py-2 md:px-8 md:py-4 font-bold text-white transition-all flex items-center gap-1 md:gap-2 text-sm md:text-lg`, uiMode === 'clean' ? 'bg-[#108B96] hover:bg-[#0d737d] rounded-xl' : 'rounded-2xl bg-blue-500 border-b-4 border-blue-700 hover:bg-blue-400 active:translate-y-1 active:border-b-0 shadow-lg shadow-blue-500/30')}
                 >
                   <span className="hidden md:inline">LANJUT</span>
                   <ChevronRight className="w-5 h-5 md:w-6 md:h-6" />
@@ -1487,7 +1491,7 @@ export default function ExamPage({ params }: { params: Promise<{ id: string }> }
               <button
                 disabled={!responses[currentQ.id] || (Array.isArray(responses[currentQ.id]) && responses[currentQ.id].length === 0)}
                 onClick={handleCheckAnswer}
-                className="px-4 py-2 md:px-8 md:py-4 rounded-xl md:rounded-2xl font-bold text-white bg-indigo-500 border-b-4 border-indigo-700 hover:bg-indigo-400 active:translate-y-1 active:border-b-0 transition-all flex items-center gap-2 text-sm md:text-lg disabled:opacity-50 disabled:cursor-not-allowed shadow-lg shadow-indigo-500/30"
+                className={cn("px-4 py-2 md:px-8 md:py-4 font-bold text-white transition-all flex items-center gap-2 text-sm md:text-lg disabled:opacity-50 disabled:cursor-not-allowed", uiMode === 'clean' ? 'bg-[#108B96] hover:bg-[#0d737d] rounded-xl' : 'rounded-2xl bg-indigo-500 border-b-4 border-indigo-700 hover:bg-indigo-400 active:translate-y-1 active:border-b-0 shadow-lg shadow-indigo-500/30')}
               >
                 CEK JAWABAN
               </button>

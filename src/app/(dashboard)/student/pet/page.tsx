@@ -7,6 +7,8 @@ import { motion, AnimatePresence } from "framer-motion";
 import { Heart, Loader2, Sparkles, Utensils, ShieldAlert, Coins } from "lucide-react";
 import { CenterLoader } from "@/components/ui/center-loader";
 import toast from "react-hot-toast";
+import { useTheme } from "@/lib/theme-context";
+import { cn } from "@/lib/utils";
 
 const PET_STAGES = {
   1: { emoji: "🥚", name: "Telur Misterius", desc: "Masih dalam bentuk telur. Beri makan agar cepat menetas!" },
@@ -17,6 +19,7 @@ const PET_STAGES = {
 export default function DigitalPetPage() {
   const { profile } = useAuth();
   const supabase = createClient();
+  const { uiMode } = useTheme();
   
   const [pet, setPet] = useState<any>(null);
   const [wallet, setWallet] = useState<any>(null);
@@ -122,7 +125,7 @@ export default function DigitalPetPage() {
 
   return (
     <div className="max-w-4xl mx-auto space-y-8 pb-10">
-      <div className="flex flex-col md:flex-row items-center justify-between gap-4 bg-white p-6 rounded-3xl border-2 border-slate-100 shadow-sm">
+      <div className={cn("flex flex-col md:flex-row items-center justify-between gap-4 bg-white p-6 transition-all", uiMode === 'clean' ? "rounded-xl border border-slate-200 shadow-sm" : "rounded-3xl border-2 border-slate-100 shadow-sm")}>
         <div>
           <h1 className="text-3xl font-black text-slate-800 flex items-center gap-2">Tamagotchi Belajar 🐾</h1>
           <p className="text-slate-500 font-medium mt-1">Rawat peliharaan virtualmu dengan Koin hasil belajarmu!</p>
@@ -133,22 +136,22 @@ export default function DigitalPetPage() {
         </div>
       </div>
 
-      <div className="bg-slate-900 rounded-3xl p-8 relative overflow-hidden shadow-2xl flex flex-col items-center justify-center min-h-[400px]">
+      <div className={cn("p-8 relative overflow-hidden flex flex-col items-center justify-center min-h-[400px] transition-all", uiMode === 'clean' ? "bg-slate-50 border border-slate-200 rounded-xl" : "bg-slate-900 rounded-3xl shadow-2xl")}>
         {/* Environment Decor */}
         <div className="absolute bottom-0 left-0 w-full h-1/3 bg-emerald-900/50 blur-[50px] rounded-t-[100%]" />
         <div className="absolute top-10 left-10 w-20 h-20 bg-amber-500/20 blur-[30px] rounded-full" />
         
         {/* Health Bar */}
         <div className="absolute top-6 w-full max-w-md px-6 z-10 flex items-center gap-3">
-          <Heart className={`w-6 h-6 ${pet.health > 20 ? 'text-rose-500 fill-rose-500' : 'text-slate-500'}`} />
-          <div className="flex-1 h-4 bg-slate-800 rounded-full overflow-hidden border-2 border-slate-700">
+          <Heart className={cn("w-6 h-6", pet.health > 20 ? "text-rose-500 fill-rose-500" : "text-slate-500")} />
+          <div className={cn("flex-1 h-4 rounded-full overflow-hidden", uiMode === 'clean' ? "bg-slate-200" : "bg-slate-800 border-2 border-slate-700")}>
             <motion.div 
               initial={{ width: 0 }}
               animate={{ width: `${pet.health}%` }}
               className={`h-full rounded-full ${pet.health > 50 ? 'bg-emerald-500' : pet.health > 20 ? 'bg-amber-500' : 'bg-rose-500'}`}
             />
           </div>
-          <span className="font-black text-white text-sm w-8">{pet.health}%</span>
+          <span className={cn("font-black text-sm w-8", uiMode === 'clean' ? "text-slate-700" : "text-white")}>{pet.health}%</span>
         </div>
 
         {/* The Pet */}
@@ -171,16 +174,16 @@ export default function DigitalPetPage() {
         {/* Info & Actions */}
         <div className="relative z-10 text-center space-y-6">
           <div>
-            <h2 className="text-3xl font-black text-white flex items-center justify-center gap-2">
+            <h2 className={cn("text-3xl font-black flex items-center justify-center gap-2", uiMode === 'clean' ? "text-slate-800" : "text-white")}>
               {pet.name} <Sparkles className="w-6 h-6 text-amber-400" />
             </h2>
-            <p className="text-slate-400 font-medium mt-2 max-w-md mx-auto">{stageData.desc}</p>
+            <p className={cn("font-medium mt-2 max-w-md mx-auto", uiMode === 'clean' ? "text-slate-500" : "text-slate-400")}>{stageData.desc}</p>
           </div>
 
           <button
             onClick={feedPet}
             disabled={feeding}
-            className="group relative px-8 py-4 bg-emerald-500 hover:bg-emerald-400 active:bg-emerald-600 text-white font-black text-lg rounded-2xl border-b-4 border-emerald-700 active:border-b-0 active:translate-y-1 transition-all flex items-center gap-3 mx-auto"
+            className={cn("group relative px-8 py-4 text-white font-black text-lg transition-all flex items-center gap-3 mx-auto", uiMode === 'clean' ? "bg-[#108B96] hover:bg-[#0d737d] rounded-lg shadow-sm" : "bg-emerald-500 hover:bg-emerald-400 active:bg-emerald-600 rounded-2xl border-b-4 border-emerald-700 active:border-b-0 active:translate-y-1")}
           >
             <Utensils className="w-6 h-6 group-hover:animate-bounce" /> 
             Beri Makan (-50 Koin)

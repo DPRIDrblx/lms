@@ -4,6 +4,7 @@ import { cn } from "@/lib/utils";
 import { motion, AnimatePresence } from "framer-motion";
 import { X } from "lucide-react";
 import { useEffect, type ReactNode } from "react";
+import { useTheme } from "@/lib/theme-context";
 
 interface ModalProps {
   isOpen: boolean;
@@ -11,10 +12,12 @@ interface ModalProps {
   title?: string;
   children: ReactNode;
   className?: string;
-  size?: "sm" | "md" | "lg";
+  size?: "sm" | "md" | "lg" | "xl" | "2xl";
 }
 
 export function Modal({ isOpen, onClose, title, children, className, size = "md" }: ModalProps) {
+  const { uiMode } = useTheme();
+
   useEffect(() => {
     if (isOpen) {
       document.body.style.overflow = "hidden";
@@ -30,6 +33,8 @@ export function Modal({ isOpen, onClose, title, children, className, size = "md"
     sm: "max-w-md",
     md: "max-w-lg",
     lg: "max-w-2xl",
+    xl: "max-w-4xl",
+    "2xl": "max-w-6xl",
   };
 
   return (
@@ -37,7 +42,7 @@ export function Modal({ isOpen, onClose, title, children, className, size = "md"
       {isOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
           <motion.div
-            className="fixed inset-0 bg-black/40 backdrop-blur-sm"
+            className="fixed inset-0 bg-slate-900/40 backdrop-blur-sm"
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
@@ -45,7 +50,10 @@ export function Modal({ isOpen, onClose, title, children, className, size = "md"
           />
           <motion.div
             className={cn(
-              "relative w-full bg-white border-2 border-slate-200 border-b-[6px] rounded-3xl shadow-xl p-6",
+              "relative w-full bg-white shadow-xl max-h-[95vh] overflow-y-auto",
+              uiMode === "clean" 
+                ? "border border-slate-200 rounded-[20px] p-6" 
+                : "border-2 border-slate-200 border-b-[6px] rounded-3xl p-6",
               sizes[size],
               className
             )}
@@ -55,7 +63,7 @@ export function Modal({ isOpen, onClose, title, children, className, size = "md"
             transition={{ type: "spring", bounce: 0.4, duration: 0.5 }}
           >
             {title && (
-              <div className="flex items-center justify-between mb-6">
+              <div className="flex items-center justify-between mb-6 sticky top-0 bg-white/80 backdrop-blur-md z-10 -mx-6 px-6 py-2 -mt-6 pt-6 border-b border-slate-100">
                 <h3 className="text-xl font-black text-slate-800 tracking-tight">{title}</h3>
                 <button
                   onClick={onClose}
@@ -65,7 +73,9 @@ export function Modal({ isOpen, onClose, title, children, className, size = "md"
                 </button>
               </div>
             )}
-            {children}
+            <div className="mt-2">
+              {children}
+            </div>
           </motion.div>
         </div>
       )}

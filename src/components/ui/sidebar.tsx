@@ -25,7 +25,8 @@ import {
   LogOut,
   ShieldAlert,
   Building,
-  UserCheck
+  UserCheck,
+  User
 } from "lucide-react";
 import { useState, useEffect } from "react";
 
@@ -36,6 +37,7 @@ const studentNav = [
   { href: "/finance", label: "Finance & Bills", icon: CreditCard },
   { href: "/attendance/ai", label: "AI Attendance", icon: ScanFace },
   { href: "/attendance/qr/student", label: "QR Check-in", icon: QrCode },
+  { href: "/student/profile", label: "Profile", icon: User },
   { href: "/settings", label: "Settings", icon: Settings },
 ];
 

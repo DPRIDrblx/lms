@@ -156,8 +156,13 @@ export function StudentSidebar() {
       </div>
 
       {/* Mobile Bottom Navigation */}
-      <div className="lg:hidden fixed bottom-0 left-0 w-full h-[80px] bg-white border-t-2 border-slate-200 z-50 flex items-center justify-around px-2 pb-safe">
-        {navItems.filter(item => ["Learn", "Cyber Map", "Social", "Shop"].includes(item.name)).map((item) => {
+      <div className="lg:hidden fixed bottom-0 left-0 w-full h-[80px] bg-white border-t border-slate-200 z-50 flex items-center justify-around px-2 pb-safe">
+        {navItems.filter(item => {
+          if (isCenterStudent) {
+            return ["Learn", "Jadwal Les", "Sosial", "Profile", "Explore"].includes(item.name);
+          }
+          return ["Learn", "Explore", "Social", "Profile"].includes(item.name);
+        }).slice(0, 4).map((item) => {
           const isActive = pathname === item.href;
           return (
             <Link key={item.name} href={item.href} className="flex-1 flex justify-center">

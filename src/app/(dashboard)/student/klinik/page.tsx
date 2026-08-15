@@ -223,7 +223,7 @@ export default function KlinikTanyaTutorPage() {
     <div className="max-w-5xl mx-auto space-y-6 font-sans pb-20">
       {uiMode === 'clean' ? (
         <div className="mb-2">
-          <h1 className="text-[28px] font-black text-slate-800 tracking-tight">Klinik PR</h1>
+          <h1 className="text-[28px] font-black text-slate-800 tracking-tight">Klinik Tanya Tutor</h1>
         </div>
       ) : (
         <div className="bg-gradient-to-r from-teal-500 to-emerald-500 rounded-3xl p-8 text-white relative overflow-hidden shadow-lg border-b-4 border-emerald-600 mb-6">
@@ -270,14 +270,14 @@ export default function KlinikTanyaTutorPage() {
                     </div>
                     <div>
                       <h3 className="text-[#0D6D76] font-bold text-[15px]">Belum ada jadwal yang cocok?</h3>
-                      <p className="text-[#0D6D76]/80 text-[13px] font-medium">Request jadwal Klinik PR di sini!</p>
+                      <p className="text-[#0D6D76]/80 text-[13px] font-medium">Request jadwal Klinik Tanya Tutor di sini!</p>
                     </div>
                   </div>
                   <Button 
                     onClick={() => setIsModalOpen(true)}
                     className="w-full sm:w-auto bg-[#108B96] hover:bg-[#0D6D76] text-white font-bold h-11 px-6 rounded-xl shadow-sm transition-all"
                   >
-                    Request Klinik PR
+                    Request Klinik Tanya Tutor
                   </Button>
                 </div>
                 
@@ -332,7 +332,7 @@ export default function KlinikTanyaTutorPage() {
                             </div>
                             
                             <h3 className="text-[17px] font-black text-slate-800 mb-4 leading-tight">
-                              Klinik PR - {clinic.subject}
+                              Klinik Tanya Tutor - {clinic.subject}
                             </h3>
                             
                             <div className="space-y-2 mb-5">

@@ -168,19 +168,27 @@ export default function CoursesPage() {
             placeholder="Search courses..."
             value={search}
             onChange={(e) => setSearch(e.target.value)}
-            className="w-full h-14 pl-12 pr-4 rounded-2xl bg-white border-2 border-slate-200 text-sm font-bold text-slate-700 placeholder:text-slate-400 focus:outline-none focus:border-indigo-500 transition-all shadow-[0_4px_0_rgb(226,232,240)]"
+            className={cn(
+              "w-full h-14 pl-12 pr-4 transition-all focus:outline-none",
+              uiMode === 'clean' 
+                ? "rounded-xl bg-white border border-slate-200 text-sm text-slate-800 placeholder:text-slate-400 focus:border-[#108B96] focus:ring-1 focus:ring-[#108B96]"
+                : "rounded-2xl bg-white border-2 border-slate-200 text-sm font-bold text-slate-700 placeholder:text-slate-400 focus:border-indigo-500 shadow-[0_4px_0_rgb(226,232,240)]"
+            )}
           />
         </div>
-        <div className="flex gap-1.5 bg-[var(--bg-secondary)] backdrop-blur-md border border-[var(--border)] rounded-2xl p-1.5 shadow-sm overflow-x-auto shrink-0">
+        <div className={cn(
+          "flex gap-1.5 p-1.5 overflow-x-auto shrink-0",
+          uiMode === 'clean' ? "bg-slate-100 rounded-xl" : "bg-[var(--bg-secondary)] backdrop-blur-md border border-[var(--border)] rounded-2xl shadow-sm"
+        )}>
           {(["all", "in-progress", "completed"] as const).map((f) => (
             <button
               key={f}
               onClick={() => setFilter(f)}
               className={cn(
-                "px-4 py-3 rounded-xl text-xs transition-all capitalize whitespace-nowrap",
+                "px-4 py-3 text-xs transition-all capitalize whitespace-nowrap",
                 uiMode === 'clean' 
-                  ? (filter === f ? "bg-blue-600 text-white font-bold shadow-sm" : "bg-transparent text-slate-500 font-medium hover:bg-slate-100")
-                  : `border-2 font-black ${filter === f ? "bg-indigo-500 text-white border-indigo-600 shadow-[0_4px_0_rgb(79,70,229)] transform translate-y-1" : "bg-white text-slate-500 border-slate-200 shadow-[0_4px_0_rgb(226,232,240)] hover:-translate-y-1 hover:shadow-[0_6px_0_rgb(226,232,240)]"}`
+                  ? (filter === f ? "bg-white text-slate-800 font-bold shadow-sm rounded-lg" : "bg-transparent text-slate-500 font-medium hover:text-slate-700 rounded-lg")
+                  : (filter === f ? "rounded-xl border-2 font-black bg-indigo-500 text-white border-indigo-600 shadow-[0_4px_0_rgb(79,70,229)] transform translate-y-1" : "rounded-xl border-2 font-black bg-white text-slate-500 border-slate-200 shadow-[0_4px_0_rgb(226,232,240)] hover:-translate-y-1 hover:shadow-[0_6px_0_rgb(226,232,240)]")
               )}
             >
               {f.replace("-", " ")}

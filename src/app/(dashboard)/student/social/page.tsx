@@ -5,12 +5,15 @@ import { createClient } from "@/lib/supabase";
 import { useState, useEffect } from "react";
 import { Search, Heart, MessageCircle, UserPlus, Image as ImageIcon, Users, ShieldAlert } from "lucide-react";
 import { PostCard } from "@/components/social/post-card";
+import { useTheme } from "@/lib/theme-context";
+import { cn } from "@/lib/utils";
 import Link from "next/link";
 import toast from "react-hot-toast";
 
 export default function SocialPage() {
   const { profile } = useAuth();
   const supabase = createClient();
+  const { uiMode } = useTheme();
   
   const [searchQuery, setSearchQuery] = useState("");
   const [searchResults, setSearchResults] = useState<any[]>([]);
@@ -110,7 +113,7 @@ export default function SocialPage() {
         <h1 className="text-3xl font-black text-slate-800 mb-6">Connect & Share</h1>
 
       {/* Search Bar */}
-      <div className="bg-white p-4 rounded-3xl border-2 border-slate-200 shadow-[0_4px_0_rgb(226,232,240)] mb-8 relative">
+      <div className={cn("bg-white p-4 mb-8 relative transition-all", uiMode === 'clean' ? "rounded-xl border border-slate-200 shadow-sm" : "rounded-3xl border-2 border-slate-200 shadow-[0_4px_0_rgb(226,232,240)]")}>
         <form onSubmit={handleSearch} className="relative">
           <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 w-5 h-5" />
           <input 
@@ -118,7 +121,7 @@ export default function SocialPage() {
             placeholder="Cari teman..." 
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            className="w-full bg-slate-50 border-2 border-slate-200 rounded-2xl py-3 pl-12 pr-4 font-bold text-slate-700 outline-none focus:border-indigo-500 focus:bg-white transition-all"
+            className={cn("w-full bg-slate-50 py-3 pl-12 pr-4 text-slate-700 outline-none transition-all", uiMode === 'clean' ? "border border-slate-200 rounded-lg focus:border-[#108B96] focus:bg-white font-medium" : "border-2 border-slate-200 rounded-2xl font-bold focus:border-indigo-500 focus:bg-white")}
           />
         </form>
 
@@ -145,21 +148,21 @@ export default function SocialPage() {
         )}
       </div>
       {/* Feed Tabs */}
-      <div className="flex bg-slate-100 p-1 rounded-2xl mb-6">
+      <div className={cn("flex bg-slate-100 p-1 mb-6", uiMode === 'clean' ? "rounded-lg" : "rounded-2xl")}>
         <button 
           onClick={() => setFeedTab("saran")}
-          className={`flex-1 py-3 font-black text-sm rounded-xl transition-all ${feedTab === 'saran' ? 'bg-white text-indigo-600 shadow-sm' : 'text-slate-400 hover:text-slate-600'}`}
+          className={cn("flex-1 py-3 text-sm transition-all", uiMode === 'clean' ? (feedTab === 'saran' ? "bg-white text-[#108B96] shadow-sm rounded-md font-semibold" : "text-slate-500 hover:text-slate-700 rounded-md font-semibold") : (feedTab === 'saran' ? "bg-white text-indigo-600 shadow-sm rounded-xl font-black" : "text-slate-400 hover:text-slate-600 rounded-xl font-black"))}
         >
           Saran (Untukmu)
         </button>
         <button 
           onClick={() => setFeedTab("mengikuti")}
-          className={`flex-1 py-3 font-black text-sm rounded-xl transition-all ${feedTab === 'mengikuti' ? 'bg-white text-indigo-600 shadow-sm' : 'text-slate-400 hover:text-slate-600'}`}
+          className={cn("flex-1 py-3 text-sm transition-all", uiMode === 'clean' ? (feedTab === 'mengikuti' ? "bg-white text-[#108B96] shadow-sm rounded-md font-semibold" : "text-slate-500 hover:text-slate-700 rounded-md font-semibold") : (feedTab === 'mengikuti' ? "bg-white text-indigo-600 shadow-sm rounded-xl font-black" : "text-slate-400 hover:text-slate-600 rounded-xl font-black"))}
         >
           Mengikuti
         </button>
         <Link href="/student/social/bounty" className="flex-1">
-          <button className="w-full py-3 font-black text-sm rounded-xl transition-all text-pink-500 hover:bg-pink-50">
+          <button className={cn("w-full py-3 text-sm transition-all text-pink-500 hover:bg-pink-50", uiMode === 'clean' ? "font-semibold rounded-md" : "font-black rounded-xl")}>
             Misi Bounty 💎
           </button>
         </Link>
@@ -174,16 +177,16 @@ export default function SocialPage() {
                 const loserName = challengerWon ? war.defender?.name || 'Netral' : war.challenger?.name;
                 
                 return (
-                   <div key={war.id} className="bg-gradient-to-r from-slate-900 to-indigo-900 rounded-[2rem] p-6 shadow-[0_10px_30px_rgba(99,102,241,0.2)] border-2 border-indigo-500/30 relative overflow-hidden flex items-center gap-6">
+                   <div key={war.id} className={cn("p-6 relative overflow-hidden flex items-center gap-6", uiMode === 'clean' ? "bg-slate-50 border border-slate-200 rounded-xl" : "bg-gradient-to-r from-slate-900 to-indigo-900 rounded-[2rem] shadow-[0_10px_30px_rgba(99,102,241,0.2)] border-2 border-indigo-500/30")}>
                       <div className="absolute inset-0 bg-[url('https://www.transparenttextures.com/patterns/cubes.png')] opacity-10"></div>
                       <div className="w-16 h-16 bg-white/10 backdrop-blur-md rounded-full flex items-center justify-center shrink-0 border border-white/20 z-10">
                          <span className="text-3xl">🔥</span>
                       </div>
                       <div className="z-10 text-white">
-                         <h3 className="font-black text-xl mb-1 text-transparent bg-clip-text bg-gradient-to-r from-amber-200 to-amber-500">
+                         <h3 className={cn("text-xl mb-1", uiMode === 'clean' ? "font-bold text-slate-800" : "font-black text-transparent bg-clip-text bg-gradient-to-r from-amber-200 to-amber-500")}>
                             GLOBAL ANNOUNCEMENT
                          </h3>
-                         <p className="font-medium text-indigo-100">
+                         <p className={cn("font-medium text-sm", uiMode === 'clean' ? "text-slate-600" : "text-indigo-100")}>
                             <span className="font-bold text-white">{winnerName}</span> berhasil merebut <span className="font-bold text-emerald-400">{war.zone?.name || 'Zona Tersembunyi'}</span> dari <span className="text-rose-300">{loserName}</span>!
                          </p>
                       </div>
