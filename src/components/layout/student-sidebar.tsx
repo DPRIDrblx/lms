@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { Home, Shield, Swords, User, Compass, Users, MessageCircle, ShoppingBag, Tent, ShoppingCart, Map, Menu, X, Sparkles, Timer, Notebook, Trophy, PawPrint, Medal } from "lucide-react";
@@ -9,13 +9,34 @@ import { motion, AnimatePresence } from "framer-motion";
 import { useAuth } from "@/lib/auth-context";
 import { useTheme } from "@/lib/theme-context";
 import { FolderOpen, Calendar, Archive, BookOpen, GraduationCap } from "lucide-react";
+import { createClient } from "@/lib/supabase";
 
 export function StudentSidebar() {
   const pathname = usePathname();
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
-  const { isCenterStudent } = useAuth();
+  const { profile, isCenterStudent } = useAuth();
   const { uiMode } = useTheme();
+  const [branchName, setBranchName] = useState("");
+
+  useEffect(() => {
+    if (isCenterStudent && profile?.id && uiMode === 'clean') {
+      const fetchBranch = async () => {
+        const supabase = createClient();
+        const { data } = await supabase
+          .from('center_students')
+          .select('center_branches(name)')
+          .eq('student_id', profile.id)
+          .single();
+        if (data?.center_branches) {
+          setBranchName(data.center_branches.name);
+        } else {
+          setBranchName("Pilih Cabang (Data Kosong)");
+        }
+      };
+      fetchBranch();
+    }
+  }, [isCenterStudent, profile?.id, uiMode]);
 
   let navItems = [
     { name: "Learn", href: "/dashboard", icon: Home },
@@ -61,26 +82,25 @@ export function StudentSidebar() {
     <>
       {/* Desktop Left Sidebar */}
       <div className={cn(
-        "hidden lg:flex flex-col fixed top-0 left-0 h-screen w-[260px] bg-white z-40",
-        uiMode === 'clean' ? "border-r border-slate-200" : "border-r-2 border-slate-200 p-6"
+        "hidden lg:flex flex-col fixed top-0 left-0 h-screen w-[260px] z-40",
+        uiMode === 'clean' ? "border-r border-slate-200 bg-[#F5F7FB] mt-16" : "bg-white border-r-2 border-slate-200 p-6"
       )}>
         {uiMode === 'clean' ? (
-          <div className="p-6 pb-4 border-b border-slate-200/60 mb-2">
-            <div className="flex items-center gap-3">
-              <div className="w-9 h-9 rounded-xl bg-blue-600 text-white flex items-center justify-center shadow-sm">
-                <GraduationCap className="w-5 h-5" />
+          <div className="px-6 py-5 border-b border-slate-200/60 mb-2">
+            <div className="flex items-center gap-3 mb-4">
+              <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-[#0C1E5B] to-[#1E40AF] text-white flex items-center justify-center shadow-sm shrink-0">
+                <GraduationCap className="w-6 h-6 text-orange-400" />
               </div>
-              <div className="flex flex-col">
-                <h1 className="text-xl font-bold tracking-tight text-slate-800 leading-none">
-                  IGNITE<span className="text-blue-600">.</span>
+              <div className="flex flex-col justify-center">
+                <h1 className="text-[16px] font-black tracking-tight text-[#0C1E5B] leading-none mb-1">
+                  IGNITE <br/><span className="text-orange-500">CENTER</span>
                 </h1>
-                <span className="text-[10px] font-medium text-slate-500 uppercase tracking-widest mt-0.5">Ruang Belajar</span>
               </div>
             </div>
             {isCenterStudent && (
-              <div className="mt-4 text-xs font-bold text-blue-700 bg-blue-50 border border-blue-100 px-3 py-1.5 rounded-lg flex items-center gap-2">
-                <Map className="w-3.5 h-3.5" />
-                Bojonegoro - Dr. Cipto
+              <div className="text-xs font-bold text-slate-600 bg-white border border-slate-200 px-3 py-2 rounded-lg flex items-center gap-2 shadow-sm truncate">
+                <Map className="w-3.5 h-3.5 text-[#108B96] shrink-0" />
+                <span className="truncate">{branchName || "Loading..."}</span>
               </div>
             )}
           </div>
@@ -94,7 +114,7 @@ export function StudentSidebar() {
         
         <nav className={cn(
           "flex flex-col flex-1 overflow-y-auto pb-8 scrollbar-hide",
-          uiMode === 'clean' ? "py-4 gap-1 px-4" : "gap-2"
+          uiMode === 'clean' ? "py-4 gap-2 px-4" : "gap-2"
         )}>
           {navItems.map((item) => {
             const isActive = pathname === item.href;
@@ -105,10 +125,10 @@ export function StudentSidebar() {
                     "flex items-center transition-all",
                     uiMode === 'clean'
                       ? [
-                          "gap-3 px-4 py-3 rounded-xl font-semibold text-sm",
+                          "gap-3 px-4 py-3 rounded-[14px] font-semibold text-[13px] tracking-wide",
                           isActive 
-                            ? "bg-blue-50 text-blue-700 relative" 
-                            : "text-slate-600 hover:bg-slate-50 hover:text-slate-900"
+                            ? "bg-[#108B96] text-white shadow-sm" 
+                            : "text-[#4A5568] hover:bg-slate-200/50 hover:text-slate-900"
                         ]
                       : [
                           "gap-4 px-4 py-4 rounded-2xl font-bold text-lg border-2",
@@ -118,18 +138,12 @@ export function StudentSidebar() {
                         ]
                   )}
                 >
-                  {uiMode === 'clean' && isActive && (
-                    <motion.div 
-                      layoutId="activeSidebarIndicator"
-                      className="absolute left-0 top-1/2 -translate-y-1/2 w-1 h-1/2 bg-blue-600 rounded-r-full"
-                    />
-                  )}
                   <item.icon 
                     className={cn(
                       uiMode === 'clean' ? "w-5 h-5 shrink-0" : "w-7 h-7", 
                       isActive 
-                        ? (uiMode === 'clean' ? "text-blue-600" : (isCenterStudent ? "text-red-500" : "text-emerald-500")) 
-                        : (uiMode === 'clean' ? "text-slate-400" : "text-slate-400")
+                        ? (uiMode === 'clean' ? "text-white" : (isCenterStudent ? "text-red-500" : "text-emerald-500")) 
+                        : (uiMode === 'clean' ? "text-[#718096]" : "text-slate-400")
                     )} 
                     strokeWidth={isActive ? (uiMode === 'clean' ? 2.5 : 2.5) : 2} 
                   />

@@ -28,7 +28,9 @@ import {
   ArrowRight,
   Shield,
   ScanFace,
-  QrCode
+  QrCode,
+  Diamond,
+  Gem
 } from "lucide-react";
 import { useEffect, useState, useCallback } from "react";
 import Link from "next/link";
@@ -262,49 +264,94 @@ export default function DashboardPage() {
           )}
         </>
       ) : uiMode === 'clean' ? (
-        <div className="bg-white rounded-3xl p-6 md:p-8 shadow-[0_2px_10px_rgba(0,0,0,0.04)] border border-slate-100 relative overflow-hidden">
-          <div className="relative z-10">
-            <div className="flex items-center justify-between mb-6 border-b border-slate-100 pb-4">
-              <div className="flex items-center gap-4">
-                <div className="w-12 h-12 bg-blue-50 rounded-xl flex items-center justify-center">
-                  <Calendar className="w-6 h-6 text-blue-600" />
+        <div className="space-y-6">
+          <div className="bg-gradient-to-r from-[#0C1E5B] to-[#1E40AF] rounded-[20px] p-6 md:p-8 text-white shadow-sm relative overflow-hidden">
+            <div className="absolute inset-0 bg-[url('https://www.transparenttextures.com/patterns/cubes.png')] opacity-10 mix-blend-overlay"></div>
+            <div className="relative z-10 flex flex-col md:flex-row items-center justify-between gap-6">
+              <div className="flex flex-col md:flex-row items-center gap-6 w-full md:w-auto text-center md:text-left">
+                <div className="w-20 h-20 bg-white/10 rounded-full flex items-center justify-center border-[3px] border-white/20 shrink-0 shadow-lg">
+                  {profile.avatar_url ? (
+                    profile.avatar_url.includes("/avatars/") ? (
+                      <img src={profile.avatar_url} alt="" className="w-full h-full rounded-full object-cover object-top" />
+                    ) : profile.avatar_url.startsWith("http") ? (
+                      <img src={profile.avatar_url} alt="" className="w-full h-full rounded-full object-cover" />
+                    ) : (
+                      <span className="text-3xl">{profile.avatar_url}</span>
+                    )
+                  ) : (
+                    <span className="text-2xl font-bold">{profile.full_name?.[0] || "U"}</span>
+                  )}
                 </div>
                 <div>
-                  <h3 className="font-bold text-xl text-slate-800">Jadwal Sesi Berikutnya</h3>
-                  <p className="text-slate-500 text-sm">Persiapkan dirimu untuk sesi belajar hari ini!</p>
+                  <h2 className="text-2xl md:text-3xl font-black mb-1.5 drop-shadow-sm">{profile.full_name}</h2>
+                  <div className="flex items-center justify-center md:justify-start gap-4 text-sm font-semibold text-blue-100">
+                    <div className="flex items-center gap-1.5"><Diamond className="w-4 h-4 text-blue-300 fill-blue-300" /> {xp} XP</div>
+                    <div className="flex items-center gap-1.5"><Gem className="w-4 h-4 text-amber-300 fill-amber-300" /> {(profile as any).gems || 0} Gems</div>
+                    <div className="flex items-center gap-1.5"><Flame className="w-4 h-4 text-orange-400 fill-orange-400" /> {streak} Hari Aktif</div>
+                  </div>
                 </div>
               </div>
-              <Link href="/student/jadwal-les" className="hidden md:flex px-5 py-2.5 bg-white border border-slate-200 text-blue-600 font-bold rounded-xl hover:bg-slate-50 transition-colors items-center gap-2">
-                Lihat Semua Sesi <ArrowRight className="w-4 h-4" />
+              
+              <div className="hidden md:flex flex-col items-center justify-center px-8 border-l border-white/10">
+                <span className="text-[11px] uppercase tracking-widest text-blue-200/80 mb-1 font-bold">Pangkat / Rank</span>
+                <span className="text-xl font-black text-amber-400 drop-shadow-sm">{rank}</span>
+              </div>
+              
+              <Link href="/student/leaderboard" className="w-full md:w-auto bg-black/20 hover:bg-black/30 transition-colors rounded-[16px] p-4 flex items-center gap-4 cursor-pointer border border-white/5">
+                <div className="w-10 h-10 bg-amber-400/20 rounded-xl flex items-center justify-center">
+                  <Trophy className="w-6 h-6 text-amber-400 drop-shadow-sm" />
+                </div>
+                <div className="flex-1 text-left">
+                  <p className="text-[10px] text-blue-200 uppercase tracking-widest font-bold mb-0.5">Leaderboard</p>
+                  <p className="font-bold text-sm">Lihat Peringkat</p>
+                </div>
+                <ChevronRight className="w-5 h-5 text-white/50" />
+              </Link>
+            </div>
+          </div>
+
+          <div className="bg-white rounded-[20px] p-6 shadow-sm border border-slate-200">
+            <div className="flex items-center justify-between mb-5">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 bg-teal-50 rounded-[12px] flex items-center justify-center">
+                  <Calendar className="w-5 h-5 text-[#108B96]" />
+                </div>
+                <div>
+                  <h3 className="font-bold text-[17px] text-slate-800 leading-tight">Jadwal Sesi Berikutnya</h3>
+                  <p className="text-slate-500 text-[13px] font-medium">Persiapkan dirimu untuk sesi belajar hari ini</p>
+                </div>
+              </div>
+              <Link href="/student/jadwal-les" className="hidden md:flex px-4 py-2 bg-white border border-slate-200 text-slate-600 hover:text-[#108B96] font-semibold text-sm rounded-[10px] hover:bg-slate-50 transition-colors items-center gap-2">
+                Lihat Semua <ArrowRight className="w-4 h-4" />
               </Link>
             </div>
             
             {centerSchedules.length > 0 ? (
               <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                 {centerSchedules.map((schedule) => (
-                  <div key={schedule.id} className="p-5 bg-white rounded-2xl border border-slate-200 flex gap-4 hover:border-blue-400 hover:shadow-md transition-all group cursor-pointer">
-                    <div className="w-14 h-14 bg-blue-50 text-blue-600 rounded-xl flex flex-col items-center justify-center shrink-0">
+                  <div key={schedule.id} className="p-4 bg-white rounded-[16px] border border-slate-200 flex gap-4 hover:border-[#108B96]/50 hover:shadow-sm transition-all group cursor-pointer">
+                    <div className="w-14 h-14 bg-teal-50/50 text-[#108B96] rounded-[12px] flex flex-col items-center justify-center shrink-0 border border-teal-100/50">
                       <span className="text-[10px] font-bold uppercase tracking-wider">{new Date(schedule.schedule_time).toLocaleDateString('id-ID', { month: 'short' })}</span>
-                      <span className="text-xl font-bold leading-none">{new Date(schedule.schedule_time).getDate()}</span>
+                      <span className="text-[22px] font-black leading-none mt-0.5">{new Date(schedule.schedule_time).getDate()}</span>
                     </div>
                     <div className="flex flex-col justify-center flex-1">
-                      <h4 className="font-bold text-slate-800 text-base line-clamp-1 group-hover:text-blue-600 transition-colors">{schedule.title}</h4>
+                      <h4 className="font-bold text-slate-800 text-[15px] line-clamp-1 group-hover:text-[#108B96] transition-colors">{schedule.title}</h4>
                       <div className="flex items-center gap-1.5 mt-1.5">
-                        <Clock className="w-4 h-4 text-slate-400" />
-                        <p className="text-xs font-semibold text-slate-500">{new Date(schedule.schedule_time).toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' })} WIB</p>
+                        <Clock className="w-3.5 h-3.5 text-slate-400" />
+                        <p className="text-[13px] font-medium text-slate-500">{new Date(schedule.schedule_time).toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' })} WIB</p>
                       </div>
                     </div>
                   </div>
                 ))}
               </div>
             ) : (
-              <div className="text-center py-10 bg-slate-50 rounded-2xl border border-dashed border-slate-200">
-                <p className="font-medium text-slate-500">Belum ada jadwal les dalam waktu dekat.</p>
+              <div className="text-center py-8 bg-slate-50 rounded-[16px] border border-dashed border-slate-200">
+                <p className="font-medium text-slate-500 text-sm">Belum ada jadwal les dalam waktu dekat.</p>
               </div>
             )}
             
-            <Link href="/student/jadwal-les" className="md:hidden mt-4 w-full flex px-4 py-3 bg-white border border-slate-200 text-blue-600 font-bold rounded-xl justify-center items-center gap-2">
-              Lihat Semua Sesi <ArrowRight className="w-4 h-4" />
+            <Link href="/student/jadwal-les" className="md:hidden mt-4 w-full flex px-4 py-3 bg-white border border-slate-200 text-slate-600 hover:text-[#108B96] font-semibold text-sm rounded-[10px] justify-center items-center gap-2">
+              Lihat Semua <ArrowRight className="w-4 h-4" />
             </Link>
           </div>
         </div>

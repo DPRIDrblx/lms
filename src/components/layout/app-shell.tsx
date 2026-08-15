@@ -200,21 +200,38 @@ export function AppShell({ children }: { children: React.ReactNode }) {
           )}
         </AnimatePresence>
         
-        <div 
-          className={`min-h-screen pb-24 lg:pb-0 ${uiMode === 'clean' ? 'bg-[#F4F6F8]' : 'bg-slate-50'} text-[var(--text-primary)]`}
-          data-theme={isCenterStudent && uiMode === 'fun' ? "center" : undefined}
-        >
-          <StudentSidebar />
-          <div className="lg:pl-[260px] flex flex-col min-h-screen">
+        {uiMode === 'clean' ? (
+          <div className="min-h-screen bg-[#F4F6F8] text-slate-900 flex flex-col">
             <StudentTopBar />
-            <main className={`flex-1 w-full mx-auto ${uiMode === 'clean' ? 'p-4 sm:p-6 max-w-6xl' : 'p-4 sm:p-6 lg:p-8 max-w-5xl'}`}>
-              <ClassGuard>
-                {children}
-              </ClassGuard>
-            </main>
+            <div className="flex flex-1">
+              <div className="hidden lg:block w-[260px] shrink-0 border-r border-slate-200 bg-[#F5F7FB]">
+                <StudentSidebar />
+              </div>
+              <main className="flex-1 w-full mx-auto p-4 sm:p-6 lg:p-8 max-w-6xl">
+                <ClassGuard>
+                  {children}
+                </ClassGuard>
+              </main>
+            </div>
             <StudentConfidentialityPopup />
           </div>
-        </div>
+        ) : (
+          <div 
+            className="min-h-screen pb-24 lg:pb-0 bg-slate-50 text-[var(--text-primary)]"
+            data-theme={isCenterStudent ? "center" : undefined}
+          >
+            <StudentSidebar />
+            <div className="lg:pl-[260px] flex flex-col min-h-screen">
+              <StudentTopBar />
+              <main className="flex-1 w-full mx-auto p-4 sm:p-6 lg:p-8 max-w-5xl">
+                <ClassGuard>
+                  {children}
+                </ClassGuard>
+              </main>
+              <StudentConfidentialityPopup />
+            </div>
+          </div>
+        )}
       </>
     );
   }
