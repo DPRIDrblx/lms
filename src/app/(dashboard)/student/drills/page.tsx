@@ -264,10 +264,12 @@ export default function DrillsPage() {
     return (
       <div className="min-h-screen bg-slate-50 pb-20">
         {/* Header Gradient */}
-        <div className="bg-gradient-to-r from-blue-700 via-indigo-600 to-purple-600 h-64 md:h-72 w-full absolute top-0 left-0 z-0 overflow-hidden">
-          <div className="absolute top-10 right-10 w-64 h-64 bg-white/5 rounded-full blur-3xl"></div>
-          <div className="absolute -bottom-10 -left-10 w-48 h-48 bg-purple-500/20 rounded-full blur-2xl"></div>
-          <div className="max-w-6xl mx-auto px-6 py-8 relative z-10 flex items-center justify-between text-white">
+        <div className="bg-gradient-to-r from-blue-700 via-indigo-600 to-purple-600 h-64 md:h-72 w-full absolute top-0 left-0 z-0">
+          <div className="absolute inset-0 overflow-hidden">
+            <div className="absolute top-10 right-10 w-64 h-64 bg-white/5 rounded-full blur-3xl"></div>
+            <div className="absolute -bottom-10 -left-10 w-48 h-48 bg-purple-500/20 rounded-full blur-2xl"></div>
+          </div>
+          <div className="max-w-6xl mx-auto px-6 py-8 relative z-20 flex items-center justify-between text-white">
             <h1 className="text-2xl font-bold tracking-tight">Drill Soal</h1>
             
             {/* Level Selector */}
