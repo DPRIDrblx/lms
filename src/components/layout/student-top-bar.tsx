@@ -1,7 +1,7 @@
 "use client";
 
 import { useAuth } from "@/lib/auth-context";
-import { Flame, Diamond, Heart, LogOut, Gem } from "lucide-react";
+import { Flame, Diamond, Heart, LogOut, Gem, User } from "lucide-react";
 import { useEffect, useState, useRef } from "react";
 import { createClient } from "@/lib/supabase";
 import { getInitials, cn } from "@/lib/utils";
@@ -137,6 +137,18 @@ export function StudentTopBar() {
                     <p className="text-sm truncate font-bold text-slate-800">{profile?.full_name}</p>
                     <p className="text-xs capitalize font-medium text-slate-500">{profile?.role}</p>
                   </div>
+                  
+                  <Link 
+                    href="/student/profile"
+                    onClick={() => setDropdownOpen(false)}
+                    className="flex items-center gap-3 w-full px-4 py-2 text-sm font-semibold text-slate-600 hover:bg-slate-50 hover:text-blue-600 transition-colors"
+                  >
+                    <User className="w-4 h-4" />
+                    Profil Saya
+                  </Link>
+
+                  <div className="my-1 border-t border-slate-100"></div>
+
                   <button
                     onClick={() => { signOut(); setDropdownOpen(false); }}
                     className="flex items-center gap-3 w-full px-4 py-2.5 text-sm font-semibold text-rose-600 hover:bg-rose-50 transition-colors"

@@ -201,10 +201,10 @@ export function AppShell({ children }: { children: React.ReactNode }) {
         </AnimatePresence>
         
         {uiMode === 'clean' ? (
-          <div className="min-h-screen bg-[#F4F6F8] text-slate-900 flex flex-col">
+          <div className="min-h-screen bg-[#F4F6F8] text-slate-900 flex flex-col pb-[80px] lg:pb-0">
             <StudentTopBar />
             <div className="flex flex-1">
-              <div className="hidden lg:block w-[260px] shrink-0 border-r border-slate-200 bg-[#F5F7FB]">
+              <div className="lg:w-[260px] shrink-0">
                 <StudentSidebar />
               </div>
               <main className="flex-1 w-full mx-auto p-4 sm:p-6 lg:p-8 max-w-6xl">

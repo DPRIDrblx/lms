@@ -159,7 +159,7 @@ export function StudentSidebar() {
       <div className="lg:hidden fixed bottom-0 left-0 w-full h-[80px] bg-white border-t border-slate-200 z-50 flex items-center justify-around px-2 pb-safe">
         {navItems.filter(item => {
           if (isCenterStudent) {
-            return ["Learn", "Jadwal Les", "Sosial", "Profile", "Explore"].includes(item.name);
+            return ["Learn", "Jadwal Les", "Explore", "Profile"].includes(item.name);
           }
           return ["Learn", "Explore", "Social", "Profile"].includes(item.name);
         }).slice(0, 4).map((item) => {
