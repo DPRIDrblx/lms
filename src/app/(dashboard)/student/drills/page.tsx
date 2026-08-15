@@ -64,8 +64,7 @@ export default function DrillsPage() {
   // Setup States
   const [selectedLevelId, setSelectedLevelId] = useState<string>(TUTORING_TOPICS[6].level); // Default Kelas 7 SMP
   const [selectedSubject, setSelectedSubject] = useState<Subject | null>(null);
-  const [selectedTopic, setSelectedTopic] = useState<Topic | null>(null);
-  const [selectedSubtopics, setSelectedSubtopics] = useState<string[]>([]);
+  const [selectedTopics, setSelectedTopics] = useState<string[]>([]);
   const [questionCount, setQuestionCount] = useState(5);
   const [useTimer, setUseTimer] = useState(false);
   const [timerMinutes, setTimerMinutes] = useState(5);
@@ -153,23 +152,22 @@ export default function DrillsPage() {
 
   const handleStartSetup = (sub: Subject) => {
     setSelectedSubject(sub);
-    setSelectedTopic(null);
-    setSelectedSubtopics([]);
+    setSelectedTopics([]);
     setQuestionCount(5);
     setUseTimer(false);
     setTimerMinutes(5);
     setView('setup');
   };
 
-  const toggleSubtopic = (sub: string) => {
-    setSelectedSubtopics(prev => 
-      prev.includes(sub) ? prev.filter(s => s !== sub) : [...prev, sub]
+  const toggleTopic = (topicName: string) => {
+    setSelectedTopics(prev => 
+      prev.includes(topicName) ? prev.filter(t => t !== topicName) : [...prev, topicName]
     );
   };
 
   const handleGenerate = async () => {
-    if (!selectedSubject || !selectedTopic) {
-      toast.error("Bab/Topik utama wajib dipilih!");
+    if (!selectedSubject || selectedTopics.length === 0) {
+      toast.error("Minimal satu topik wajib dipilih!");
       return;
     }
     
@@ -181,8 +179,8 @@ export default function DrillsPage() {
         body: JSON.stringify({
           jenjang: selectedLevelId,
           subject: selectedSubject.name,
-          topic: selectedTopic.name,
-          subtopics: selectedSubtopics.length > 0 ? selectedSubtopics : selectedTopic.subtopics,
+          topic: "Latihan Campuran",
+          subtopics: selectedTopics,
           questionCount
         })
       });
@@ -244,7 +242,7 @@ export default function DrillsPage() {
         await supabase.from('ai_drill_results').insert({
           student_id: profile.id,
           subject: selectedSubject.name,
-          topic: selectedTopic?.name || "Latihan Campuran",
+          topic: "Latihan Campuran",
           total_questions: questions.length,
           correct_answers: correct,
           score: finalScore,
@@ -457,51 +455,32 @@ export default function DrillsPage() {
                   </div>
                 </div>
 
-                <div className="space-y-4">
-                  {/* Topic Selector Grid */}
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-3 max-h-[300px] overflow-y-auto pr-2 pb-2">
-                    {selectedSubject.topics.map((t) => (
-                      <button
-                        key={t.name}
-                        onClick={() => {
-                          setSelectedTopic(t);
-                          setSelectedSubtopics([]);
-                        }}
-                        className={`text-left p-4 rounded-xl border-2 transition-all ${selectedTopic?.name === t.name ? 'border-blue-500 bg-blue-50 text-blue-700 font-bold' : 'border-slate-200 bg-white hover:border-blue-300 text-slate-700 font-medium'}`}
-                      >
-                        {t.name}
-                      </button>
-                    ))}
-                  </div>
-
-                  {selectedTopic && (
-                    <div className="mt-6 pt-6 border-t border-slate-100">
-                      <label className="block text-sm font-bold text-slate-700 mb-3 flex items-center gap-2">
-                        Pilih Subtopik <span className="bg-blue-100 text-blue-600 px-2 py-0.5 rounded text-[10px] uppercase">Opsional</span>
-                      </label>
-                      <p className="text-xs text-slate-500 mb-4">Jika tidak dipilih, soal akan mencakup seluruh subtopik secara acak.</p>
-                      
-                      <div className="space-y-2">
-                        {selectedTopic.subtopics.map((sub) => {
-                          const isSelected = selectedSubtopics.includes(sub);
-                          return (
-                            <button
-                              key={sub}
-                              onClick={() => toggleSubtopic(sub)}
-                              className={`w-full flex items-center gap-3 p-3 rounded-lg border transition-all text-left ${isSelected ? 'border-blue-200 bg-blue-50 text-blue-700' : 'border-slate-200 hover:bg-slate-50 text-slate-600'}`}
-                            >
-                              {isSelected ? (
-                                <CheckSquare className="w-5 h-5 text-blue-600 shrink-0" />
-                              ) : (
-                                <Square className="w-5 h-5 text-slate-400 shrink-0" />
+                <div className="space-y-6 max-h-[60vh] overflow-y-auto pr-2 pb-2">
+                  {selectedSubject.topics.map((bab) => (
+                    <div key={bab.name} className="space-y-3">
+                      <h3 className="font-bold text-slate-800 border-b border-slate-100 pb-2">{bab.name}</h3>
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                        {bab.subtopics.map((topik) => (
+                          <button
+                            key={topik}
+                            onClick={() => toggleTopic(topik)}
+                            className={`text-left p-3 rounded-xl border-2 transition-all text-sm ${
+                              selectedTopics.includes(topik) 
+                                ? 'border-blue-500 bg-blue-50 text-blue-700 font-bold' 
+                                : 'border-slate-200 bg-white hover:border-blue-300 text-slate-700 font-medium'
+                            }`}
+                          >
+                            <div className="flex items-start justify-between">
+                              <span>{topik}</span>
+                              {selectedTopics.includes(topik) && (
+                                <CheckCircle2 className="w-4 h-4 text-blue-500 shrink-0 mt-0.5" />
                               )}
-                              <span className="text-sm font-medium">{sub}</span>
-                            </button>
-                          )
-                        })}
+                            </div>
+                          </button>
+                        ))}
                       </div>
                     </div>
-                  )}
+                  ))}
                 </div>
               </div>
             </div>
@@ -618,7 +597,7 @@ export default function DrillsPage() {
         <h2 className="text-2xl font-black text-slate-800 mb-3 text-center">AI Sedang Meracik Soal...</h2>
         <p className="text-slate-500 font-medium text-center max-w-sm">
           Menyusun soal pilihan ganda terbaik untuk materi <br/>
-          <span className="font-bold text-blue-600">{selectedSubject?.name}: {selectedTopic?.name}</span>
+          <span className="font-bold text-blue-600">{selectedSubject?.name} {selectedTopics.length > 0 ? `- ${selectedTopics.length} Topik` : ''}</span>
         </p>
       </div>
     );
