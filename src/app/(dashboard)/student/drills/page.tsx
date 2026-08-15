@@ -7,21 +7,34 @@ import { motion, AnimatePresence } from "framer-motion";
 import { 
   BookA, Languages, Dna, Atom, FlaskConical, Telescope, 
   Globe, Landmark, Scale, BrainCircuit, Play, CheckCircle2, 
-  XCircle, ChevronRight, ChevronLeft, RefreshCcw, Sparkles, AlertCircle, ArrowLeft, Star, Clock, Info, Target, History, Trophy, Plus, Minus
+  XCircle, ChevronRight, ChevronLeft, RefreshCcw, Sparkles, 
+  AlertCircle, ArrowLeft, Star, Clock, Info, Target, History, 
+  Trophy, Plus, Minus, Users, ChevronDown, CheckSquare, Square
 } from "lucide-react";
 import toast from "react-hot-toast";
+import Link from "next/link";
+import { TUTORING_TOPICS, EducationLevel, Subject, Topic } from "@/lib/tutoring-topics";
 
-const SUBJECTS = [
-  { id: "Bahasa Indonesia", name: "Bahasa Indonesia", icon: BookA, color: "text-rose-500", bg: "bg-rose-100", border: "border-rose-200" },
-  { id: "Bahasa Inggris", name: "Bahasa Inggris", icon: Languages, color: "text-purple-500", bg: "bg-purple-100", border: "border-purple-200" },
-  { id: "IPA Biologi", name: "IPA Biologi", icon: Dna, color: "text-green-500", bg: "bg-green-100", border: "border-green-200" },
-  { id: "IPA Fisika", name: "IPA Fisika", icon: Atom, color: "text-blue-500", bg: "bg-blue-100", border: "border-blue-200" },
-  { id: "IPA Kimia", name: "IPA Kimia", icon: FlaskConical, color: "text-pink-500", bg: "bg-pink-100", border: "border-pink-200" },
-  { id: "IPA Astronomi", name: "IPA Astronomi", icon: Telescope, color: "text-indigo-500", bg: "bg-indigo-100", border: "border-indigo-200" },
-  { id: "IPA Bumi dan Antariksa", name: "Bumi & Antariksa", icon: Globe, color: "text-cyan-500", bg: "bg-cyan-100", border: "border-cyan-200" },
-  { id: "IPS", name: "IPS", icon: Landmark, color: "text-amber-500", bg: "bg-amber-100", border: "border-amber-200" },
-  { id: "Pendidikan Pancasila", name: "Pendidikan Pancasila", icon: Scale, color: "text-emerald-500", bg: "bg-emerald-100", border: "border-emerald-200" }
-];
+export const getSubjectStyles = (name: string) => {
+  const styles: Record<string, any> = {
+    "Matematika": { icon: BookA, color: "text-blue-500", bg: "bg-blue-100", border: "border-blue-200" },
+    "Bahasa Indonesia": { icon: Languages, color: "text-rose-500", bg: "bg-rose-100", border: "border-rose-200" },
+    "Pendidikan Pancasila (PPKN)": { icon: Scale, color: "text-emerald-500", bg: "bg-emerald-100", border: "border-emerald-200" },
+    "IPAS": { icon: Globe, color: "text-amber-500", bg: "bg-amber-100", border: "border-amber-200" },
+    "IPA Terpadu": { icon: FlaskConical, color: "text-cyan-500", bg: "bg-cyan-100", border: "border-cyan-200" },
+    "IPS Terpadu": { icon: Landmark, color: "text-orange-500", bg: "bg-orange-100", border: "border-orange-200" },
+    "Bahasa Inggris": { icon: Languages, color: "text-purple-500", bg: "bg-purple-100", border: "border-purple-200" },
+    "Informatika": { icon: BrainCircuit, color: "text-indigo-500", bg: "bg-indigo-100", border: "border-indigo-200" },
+    "Biologi": { icon: Dna, color: "text-green-500", bg: "bg-green-100", border: "border-green-200" },
+    "Fisika": { icon: Atom, color: "text-blue-600", bg: "bg-blue-200", border: "border-blue-300" },
+    "Kimia": { icon: FlaskConical, color: "text-pink-500", bg: "bg-pink-100", border: "border-pink-200" },
+    "Sejarah": { icon: Landmark, color: "text-amber-600", bg: "bg-amber-200", border: "border-amber-300" },
+    "Geografi": { icon: Globe, color: "text-emerald-600", bg: "bg-emerald-200", border: "border-emerald-300" },
+    "Sosiologi": { icon: Users, color: "text-purple-600", bg: "bg-purple-200", border: "border-purple-300" },
+    "Ekonomi": { icon: Landmark, color: "text-blue-700", bg: "bg-blue-200", border: "border-blue-300" },
+  };
+  return styles[name] || { icon: BookA, color: "text-slate-500", bg: "bg-slate-100", border: "border-slate-200" };
+};
 
 type Question = {
   question: string;
@@ -49,12 +62,14 @@ export default function DrillsPage() {
   const [isLoadingStats, setIsLoadingStats] = useState(true);
 
   // Setup States
-  const [selectedSubject, setSelectedSubject] = useState<typeof SUBJECTS[0] | null>(null);
-  const [topic, setTopic] = useState("");
-  const [subtopics, setSubtopics] = useState("");
+  const [selectedLevelId, setSelectedLevelId] = useState<string>(TUTORING_TOPICS[6].level); // Default Kelas 7 SMP
+  const [selectedSubject, setSelectedSubject] = useState<Subject | null>(null);
+  const [selectedTopic, setSelectedTopic] = useState<Topic | null>(null);
+  const [selectedSubtopics, setSelectedSubtopics] = useState<string[]>([]);
   const [questionCount, setQuestionCount] = useState(5);
   const [useTimer, setUseTimer] = useState(false);
   const [timerMinutes, setTimerMinutes] = useState(5);
+  const [showLevelDropdown, setShowLevelDropdown] = useState(false);
   
   // Drill States
   const [questions, setQuestions] = useState<Question[]>([]);
@@ -72,6 +87,8 @@ export default function DrillsPage() {
   useEffect(() => {
     if (profile?.id && view === 'dashboard') {
       fetchStats();
+      // Try to auto-select level based on profile class if possible
+      // This is a simplified matching
     }
   }, [profile?.id, view]);
 
@@ -118,7 +135,6 @@ export default function DrillsPage() {
         }
         sStats[row.subject].correct += row.correct_answers || 0;
         sStats[row.subject].total += row.total_questions || 0;
-        // XP roughly based on correct answers
         sStats[row.subject].xp += (row.correct_answers || 0) * 10;
       });
 
@@ -135,19 +151,25 @@ export default function DrillsPage() {
     }
   };
 
-  const handleStartSetup = (sub: typeof SUBJECTS[0]) => {
+  const handleStartSetup = (sub: Subject) => {
     setSelectedSubject(sub);
-    setTopic("");
-    setSubtopics("");
+    setSelectedTopic(null);
+    setSelectedSubtopics([]);
     setQuestionCount(5);
     setUseTimer(false);
     setTimerMinutes(5);
     setView('setup');
   };
 
+  const toggleSubtopic = (sub: string) => {
+    setSelectedSubtopics(prev => 
+      prev.includes(sub) ? prev.filter(s => s !== sub) : [...prev, sub]
+    );
+  };
+
   const handleGenerate = async () => {
-    if (!selectedSubject || !topic.trim()) {
-      toast.error("Topik utama wajib diisi!");
+    if (!selectedSubject || !selectedTopic) {
+      toast.error("Bab/Topik utama wajib dipilih!");
       return;
     }
     
@@ -157,9 +179,10 @@ export default function DrillsPage() {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
+          jenjang: selectedLevelId,
           subject: selectedSubject.name,
-          topic,
-          subtopics: subtopics ? subtopics.split(',').map(s => s.trim()).filter(s => s) : [],
+          topic: selectedTopic.name,
+          subtopics: selectedSubtopics.length > 0 ? selectedSubtopics : selectedTopic.subtopics,
           questionCount
         })
       });
@@ -201,7 +224,7 @@ export default function DrillsPage() {
     const finalScore = Math.round((correct / questions.length) * 100);
     const weakList = Object.keys(weakTracker).sort((a, b) => weakTracker[b] - weakTracker[a]);
     const xpGained = correct * 10;
-    const timeSpent = useTimer ? (timerMinutes * 60) - timeLeft : 0; // If no timer, we don't track accurately in this quick implementation
+    const timeSpent = useTimer ? (timerMinutes * 60) - timeLeft : 0; 
     
     setScore(finalScore);
     setWeakSubtopics(weakList);
@@ -209,13 +232,12 @@ export default function DrillsPage() {
     setDuration(timeSpent);
     setView('result');
     
-    // Save to DB
     if (profile?.id && selectedSubject) {
       try {
         await supabase.from('ai_drill_results').insert({
           student_id: profile.id,
-          subject: selectedSubject.id,
-          topic,
+          subject: selectedSubject.name,
+          topic: selectedTopic?.name || "Latihan Campuran",
           total_questions: questions.length,
           correct_answers: correct,
           score: finalScore,
@@ -227,26 +249,49 @@ export default function DrillsPage() {
     }
   };
 
-  const formatTime = (seconds: number) => {
-    const m = Math.floor(seconds / 60);
-    const s = seconds % 60;
-    return `${m.toString().padStart(2, '0')}:${s.toString().padStart(2, '0')}`;
-  };
-
   // ---------------------------------------------------------
   // Renders
   // ---------------------------------------------------------
 
   if (view === 'dashboard') {
+    const currentLevel = TUTORING_TOPICS.find(l => l.level === selectedLevelId);
+    
     return (
       <div className="min-h-screen bg-slate-50 pb-20">
-        {/* Header Gradient (like Ruangguru) */}
+        {/* Header Gradient */}
         <div className="bg-gradient-to-r from-blue-700 via-indigo-600 to-purple-600 h-64 md:h-72 w-full absolute top-0 left-0 z-0 overflow-hidden">
-          {/* Decorative shapes */}
           <div className="absolute top-10 right-10 w-64 h-64 bg-white/5 rounded-full blur-3xl"></div>
           <div className="absolute -bottom-10 -left-10 w-48 h-48 bg-purple-500/20 rounded-full blur-2xl"></div>
-          <div className="max-w-6xl mx-auto px-6 py-8 relative z-10 flex items-center gap-3 text-white">
+          <div className="max-w-6xl mx-auto px-6 py-8 relative z-10 flex items-center justify-between text-white">
             <h1 className="text-2xl font-bold tracking-tight">Drill Soal</h1>
+            
+            {/* Level Selector */}
+            <div className="relative">
+              <button 
+                onClick={() => setShowLevelDropdown(!showLevelDropdown)}
+                className="flex items-center gap-2 bg-white/10 hover:bg-white/20 px-4 py-2 rounded-full border border-white/20 transition-all font-semibold text-sm backdrop-blur-sm"
+              >
+                {selectedLevelId}
+                <ChevronDown className="w-4 h-4 opacity-70" />
+              </button>
+              
+              {showLevelDropdown && (
+                <div className="absolute right-0 mt-2 w-48 max-h-64 overflow-y-auto bg-white rounded-xl shadow-xl border border-slate-100 z-50 py-2">
+                  {TUTORING_TOPICS.map((level) => (
+                    <button
+                      key={level.level}
+                      onClick={() => {
+                        setSelectedLevelId(level.level);
+                        setShowLevelDropdown(false);
+                      }}
+                      className={`w-full text-left px-4 py-2 text-sm hover:bg-slate-50 transition-colors ${selectedLevelId === level.level ? 'text-blue-600 font-bold bg-blue-50/50' : 'text-slate-700 font-medium'}`}
+                    >
+                      {level.level}
+                    </button>
+                  ))}
+                </div>
+              )}
+            </div>
           </div>
         </div>
 
@@ -306,36 +351,37 @@ export default function DrillsPage() {
             </div>
 
             <div className="flex items-center gap-4 mt-6">
-              <button className="flex-1 py-3 bg-white border-2 border-slate-200 text-slate-700 font-bold rounded-xl hover:bg-slate-50 transition-colors flex items-center justify-center gap-2">
+              <Link href="/student/drills/history" className="flex-1 py-3 bg-white border-2 border-slate-200 text-slate-700 font-bold rounded-xl hover:bg-slate-50 transition-colors flex items-center justify-center gap-2">
                 <History className="w-5 h-5" /> Riwayat
-              </button>
-              <button className="flex-1 py-3 bg-white border-2 border-slate-200 text-slate-700 font-bold rounded-xl hover:bg-slate-50 transition-colors flex items-center justify-center gap-2">
+              </Link>
+              <Link href="/student/drills/leaderboard" className="flex-1 py-3 bg-white border-2 border-slate-200 text-slate-700 font-bold rounded-xl hover:bg-slate-50 transition-colors flex items-center justify-center gap-2">
                 <Trophy className="w-5 h-5 text-amber-500" /> Leaderboard
-              </button>
+              </Link>
             </div>
           </div>
 
           {/* Subject Grid */}
           <div>
-            <h3 className="text-xl font-bold text-slate-800 mb-6">Mau Drill apa hari ini?</h3>
+            <h3 className="text-xl font-bold text-slate-800 mb-6">Pilih Mata Pelajaran ({selectedLevelId})</h3>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              {SUBJECTS.map((sub) => {
-                const subStat = stats.subjectStats[sub.id] || { correct: 0, total: 0, xp: 0 };
+              {currentLevel?.subjects.map((sub) => {
+                const subStat = stats.subjectStats[sub.name] || { correct: 0, total: 0, xp: 0 };
                 const accuracy = subStat.total > 0 ? Math.round((subStat.correct / subStat.total) * 100) : 0;
+                const styling = getSubjectStyles(sub.name);
+                const Icon = styling.icon;
                 
                 return (
                   <button 
-                    key={sub.id}
+                    key={sub.name}
                     onClick={() => handleStartSetup(sub)}
-                    className={`bg-white rounded-2xl p-5 border-2 ${sub.border} shadow-sm hover:shadow-md transition-all text-left flex flex-col group relative overflow-hidden`}
+                    className={`bg-white rounded-2xl p-5 border-2 ${styling.border} shadow-sm hover:shadow-md transition-all text-left flex flex-col group relative overflow-hidden`}
                   >
-                    {/* Background decoration */}
-                    <div className={`absolute -right-6 -bottom-6 w-32 h-32 rounded-full ${sub.bg} opacity-50 transition-transform group-hover:scale-150 duration-500`}></div>
+                    <div className={`absolute -right-6 -bottom-6 w-32 h-32 rounded-full ${styling.bg} opacity-50 transition-transform group-hover:scale-150 duration-500`}></div>
                     
                     <div className="flex items-start justify-between relative z-10 mb-6">
                       <div className="flex items-center gap-3">
-                        <div className={`p-2.5 rounded-xl ${sub.bg} ${sub.color}`}>
-                          <sub.icon className="w-6 h-6" />
+                        <div className={`p-2.5 rounded-xl ${styling.bg} ${styling.color}`}>
+                          <Icon className="w-6 h-6" />
                         </div>
                         <h4 className="font-bold text-slate-800">{sub.name}</h4>
                       </div>
@@ -371,6 +417,9 @@ export default function DrillsPage() {
   }
 
   if (view === 'setup' && selectedSubject) {
+    const styling = getSubjectStyles(selectedSubject.name);
+    const Icon = styling.icon;
+
     return (
       <div className="min-h-screen bg-slate-50 pb-20">
         <div className="bg-gradient-to-r from-blue-700 via-indigo-600 to-purple-600 h-48 w-full absolute top-0 left-0 z-0">
@@ -392,38 +441,60 @@ export default function DrillsPage() {
             <div className="lg:col-span-2 space-y-4">
               <div className="bg-white rounded-2xl p-6 shadow-sm border border-slate-100">
                 <div className="flex items-center gap-3 mb-6">
-                  <div className={`p-2 rounded-xl ${selectedSubject.bg} ${selectedSubject.color}`}>
-                    <selectedSubject.icon className="w-6 h-6" />
+                  <div className={`p-2 rounded-xl ${styling.bg} ${styling.color}`}>
+                    <Icon className="w-6 h-6" />
                   </div>
                   <div>
-                    <h2 className="text-lg font-bold text-slate-800">Pilih Topik Dulu, Ya!</h2>
-                    <p className="text-sm text-slate-500 font-medium">Supaya soal dapat disesuaikan dengan yang kamu inginkan.</p>
+                    <h2 className="text-lg font-bold text-slate-800">Pilih Bab / Topik</h2>
+                    <p className="text-sm text-slate-500 font-medium">Sesuai Kurikulum: {selectedLevelId}</p>
                   </div>
                 </div>
 
-                <div className="space-y-5">
-                  <div>
-                    <label className="block text-sm font-bold text-slate-700 mb-2">Materi / Topik Utama <span className="text-rose-500">*</span></label>
-                    <input 
-                      type="text" 
-                      value={topic}
-                      onChange={(e) => setTopic(e.target.value)}
-                      placeholder="Contoh: Teks Berita, Aljabar, Sel Hewan..."
-                      className="w-full px-4 py-3.5 bg-slate-50 border-2 border-slate-200 focus:border-blue-500 focus:bg-white rounded-xl outline-none font-medium transition-all"
-                    />
+                <div className="space-y-4">
+                  {/* Topic Selector Grid */}
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-3 max-h-[300px] overflow-y-auto pr-2 pb-2">
+                    {selectedSubject.topics.map((t) => (
+                      <button
+                        key={t.name}
+                        onClick={() => {
+                          setSelectedTopic(t);
+                          setSelectedSubtopics([]);
+                        }}
+                        className={`text-left p-4 rounded-xl border-2 transition-all ${selectedTopic?.name === t.name ? 'border-blue-500 bg-blue-50 text-blue-700 font-bold' : 'border-slate-200 bg-white hover:border-blue-300 text-slate-700 font-medium'}`}
+                      >
+                        {t.name}
+                      </button>
+                    ))}
                   </div>
-                  <div>
-                    <label className="block text-sm font-bold text-slate-700 mb-2 flex items-center gap-2">
-                      Fokus Subtopik <span className="bg-blue-100 text-blue-600 px-2 py-0.5 rounded text-[10px] uppercase">Opsional</span>
-                    </label>
-                    <textarea 
-                      value={subtopics}
-                      onChange={(e) => setSubtopics(e.target.value)}
-                      placeholder="Contoh: Struktur Teks, Kaidah Kebahasaan (pisahkan dengan koma)"
-                      rows={2}
-                      className="w-full px-4 py-3 bg-slate-50 border-2 border-slate-200 focus:border-blue-500 focus:bg-white rounded-xl outline-none font-medium transition-all resize-none"
-                    />
-                  </div>
+
+                  {selectedTopic && (
+                    <div className="mt-6 pt-6 border-t border-slate-100">
+                      <label className="block text-sm font-bold text-slate-700 mb-3 flex items-center gap-2">
+                        Pilih Subtopik <span className="bg-blue-100 text-blue-600 px-2 py-0.5 rounded text-[10px] uppercase">Opsional</span>
+                      </label>
+                      <p className="text-xs text-slate-500 mb-4">Jika tidak dipilih, soal akan mencakup seluruh subtopik secara acak.</p>
+                      
+                      <div className="space-y-2">
+                        {selectedTopic.subtopics.map((sub) => {
+                          const isSelected = selectedSubtopics.includes(sub);
+                          return (
+                            <button
+                              key={sub}
+                              onClick={() => toggleSubtopic(sub)}
+                              className={`w-full flex items-center gap-3 p-3 rounded-lg border transition-all text-left ${isSelected ? 'border-blue-200 bg-blue-50 text-blue-700' : 'border-slate-200 hover:bg-slate-50 text-slate-600'}`}
+                            >
+                              {isSelected ? (
+                                <CheckSquare className="w-5 h-5 text-blue-600 shrink-0" />
+                              ) : (
+                                <Square className="w-5 h-5 text-slate-400 shrink-0" />
+                              )}
+                              <span className="text-sm font-medium">{sub}</span>
+                            </button>
+                          )
+                        })}
+                      </div>
+                    </div>
+                  )}
                 </div>
               </div>
             </div>
@@ -540,7 +611,7 @@ export default function DrillsPage() {
         <h2 className="text-2xl font-black text-slate-800 mb-3 text-center">AI Sedang Meracik Soal...</h2>
         <p className="text-slate-500 font-medium text-center max-w-sm">
           Menyusun soal pilihan ganda terbaik untuk materi <br/>
-          <span className="font-bold text-blue-600">{selectedSubject?.name}: {topic}</span>
+          <span className="font-bold text-blue-600">{selectedSubject?.name}: {selectedTopic?.name}</span>
         </p>
       </div>
     );
@@ -595,12 +666,11 @@ export default function DrillsPage() {
               <span className="font-bold text-slate-700">Soal {currentIndex + 1}/{questions.length}</span>
               <div className="flex items-center gap-1">
                 <Star className="w-5 h-5 fill-amber-400 text-amber-400" />
-                <span className="font-bold text-slate-700">0</span>
+                <span className="font-bold text-slate-700">{Object.values(answers).length * 10}</span>
               </div>
             </div>
             <div className="flex items-center gap-4 text-sm font-bold text-slate-600">
-              <div className="flex items-center gap-1.5"><CheckCircle2 className="w-4 h-4 text-emerald-500"/> 0</div>
-              <div className="flex items-center gap-1.5"><XCircle className="w-4 h-4 text-rose-500"/> 0</div>
+              <div className="flex items-center gap-1.5 text-slate-400"><CheckCircle2 className="w-4 h-4"/> N/A</div>
             </div>
           </div>
 

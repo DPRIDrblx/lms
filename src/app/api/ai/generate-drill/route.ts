@@ -13,7 +13,7 @@ export async function POST(req: Request) {
     }
 
     const body = await req.json();
-    const { subject, topic, subtopics, questionCount = 5 } = body;
+    const { jenjang = "Sekolah", subject, topic, subtopics, questionCount = 5 } = body;
 
     if (!subject || !topic) {
       return NextResponse.json({ error: "Mata pelajaran dan topik wajib diisi" }, { status: 400 });
@@ -24,6 +24,7 @@ export async function POST(req: Request) {
 
     const systemPrompt = `Anda adalah seorang ahli pembuat soal ujian untuk siswa sekolah di Indonesia.
 Tugas Anda adalah membuat soal pilihan ganda (4 opsi: A, B, C, D) berdasarkan parameter berikut:
+- Jenjang Pendidikan: ${jenjang}
 - Mata Pelajaran: ${subject}
 - Topik Utama: ${topic}
 - Subtopik: ${subtopics && subtopics.length > 0 ? subtopics.join(', ') : 'Buat secara acak berdasarkan topik utama'}
