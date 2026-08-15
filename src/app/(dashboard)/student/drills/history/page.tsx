@@ -3,7 +3,7 @@
 import { useState, useEffect } from "react";
 import { useAuth } from "@/lib/auth-context";
 import { createClient } from "@/lib/supabase";
-import { ArrowLeft, ChevronDown, CheckCircle2, XCircle, Star, Filter, Info, BookA, Languages, Scale, Globe, FlaskConical, Landmark, BrainCircuit, Dna, Atom, Users } from "lucide-react";
+import { ArrowLeft, ChevronDown, CheckCircle2, XCircle, Star, Filter, Info, BookA, Languages, Scale, Globe, FlaskConical, Landmark, BrainCircuit, Dna, Atom, Users, Sparkles } from "lucide-react";
 import Link from "next/link";
 const getSubjectStyles = (name: string) => {
   const styles: Record<string, any> = {
@@ -22,6 +22,7 @@ const getSubjectStyles = (name: string) => {
     "Geografi": { icon: Globe, color: "text-emerald-600", bg: "bg-emerald-200", border: "border-emerald-300" },
     "Sosiologi": { icon: Users, color: "text-purple-600", bg: "bg-purple-200", border: "border-purple-300" },
     "Ekonomi": { icon: Landmark, color: "text-blue-700", bg: "bg-blue-200", border: "border-blue-300" },
+    "NIA Skill Up": { icon: Sparkles, color: "text-yellow-600", bg: "bg-yellow-100", border: "border-yellow-200" },
   };
   return styles[name] || { icon: BookA, color: "text-slate-500", bg: "bg-slate-100", border: "border-slate-200" };
 };

@@ -32,6 +32,7 @@ const getSubjectStyles = (name: string) => {
     "Geografi": { icon: Globe, color: "text-emerald-600", bg: "bg-emerald-200", border: "border-emerald-300" },
     "Sosiologi": { icon: Users, color: "text-purple-600", bg: "bg-purple-200", border: "border-purple-300" },
     "Ekonomi": { icon: Landmark, color: "text-blue-700", bg: "bg-blue-200", border: "border-blue-300" },
+    "NIA Skill Up": { icon: Sparkles, color: "text-yellow-600", bg: "bg-yellow-100", border: "border-yellow-200" },
   };
   return styles[name] || { icon: BookA, color: "text-slate-500", bg: "bg-slate-100", border: "border-slate-200" };
 };
@@ -476,20 +477,25 @@ export default function DrillsPage() {
     const Icon = styling.icon;
 
     return (
-      <div className="min-h-screen bg-slate-50 pb-20">
-        <div className="bg-gradient-to-r from-blue-700 via-indigo-600 to-purple-600 h-48 w-full absolute top-0 left-0 z-0">
-          <div className="max-w-5xl mx-auto px-6 py-6 relative z-10 flex items-center gap-4 text-white">
+      <motion.div 
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        exit={{ opacity: 0, y: -20 }}
+        className="fixed inset-0 z-[100] bg-slate-50 overflow-y-auto"
+      >
+        <div className="bg-gradient-to-r from-blue-700 via-indigo-600 to-purple-600 pt-8 pb-32 w-full">
+          <div className="max-w-5xl mx-auto px-6 flex items-center gap-4 text-white">
             <button onClick={() => setView('dashboard')} className="w-10 h-10 rounded-full bg-white/20 hover:bg-white/30 flex items-center justify-center transition-colors">
               <ArrowLeft className="w-5 h-5" />
             </button>
             <div>
-              <h1 className="text-xl font-bold">Persiapan</h1>
-              <p className="text-blue-100 text-sm">Drill Soal {selectedSubject.name}</p>
+              <h1 className="text-xl font-bold">Persiapan Latihan</h1>
+              <p className="text-blue-100 text-sm">Topik {selectedSubject.name}</p>
             </div>
           </div>
         </div>
 
-        <div className="max-w-5xl mx-auto px-4 sm:px-6 relative z-10 pt-28">
+        <div className="max-w-5xl mx-auto px-4 sm:px-6 relative z-10 -mt-20 pb-20">
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
             
             {/* Left Column: Topics */}
@@ -630,26 +636,35 @@ export default function DrillsPage() {
             </div>
           </div>
         </div>
-      </div>
+      </motion.div>
     );
   }
 
   if (view === 'loading') {
     return (
-      <div className="min-h-screen bg-slate-50 flex flex-col items-center justify-center p-6">
-        <div className="relative w-24 h-24 mb-8">
+      <motion.div 
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        exit={{ opacity: 0 }}
+        className="fixed inset-0 z-[100] bg-slate-50 flex flex-col items-center justify-center p-6"
+      >
+        <motion.div 
+          animate={{ scale: [1, 1.1, 1] }} 
+          transition={{ repeat: Infinity, duration: 2 }}
+          className="relative w-24 h-24 mb-8"
+        >
           <div className="absolute inset-0 border-4 border-slate-200 rounded-full"></div>
           <div className="absolute inset-0 border-4 border-t-transparent border-blue-600 rounded-full animate-spin"></div>
           <div className="absolute inset-0 flex items-center justify-center">
-            <BrainCircuit className="w-10 h-10 text-blue-600 animate-pulse" />
+            <BookA className="w-10 h-10 text-blue-600" />
           </div>
-        </div>
-        <h2 className="text-2xl font-black text-slate-800 mb-3 text-center">AI Sedang Meracik Soal...</h2>
+        </motion.div>
+        <h2 className="text-2xl font-black text-slate-800 mb-3 text-center">Tutor sedang menyusun soal...</h2>
         <p className="text-slate-500 font-medium text-center max-w-sm">
-          Menyusun soal pilihan ganda terbaik untuk materi <br/>
+          Menyiapkan soal pilihan ganda terbaik untuk materi <br/>
           <span className="font-bold text-blue-600">{selectedSubject?.name} {selectedTopics.length > 0 ? `- ${selectedTopics.length} Topik` : ''}</span>
         </p>
-      </div>
+      </motion.div>
     );
   }
 
@@ -658,7 +673,11 @@ export default function DrillsPage() {
     const isAnswered = answers[currentIndex] !== undefined;
 
     return (
-      <div className="min-h-screen bg-slate-100 flex flex-col">
+      <motion.div 
+        initial={{ opacity: 0, scale: 0.98 }}
+        animate={{ opacity: 1, scale: 1 }}
+        className="fixed inset-0 z-[100] bg-slate-100 flex flex-col overflow-y-auto"
+      >
         {/* Header */}
         <div className="bg-gradient-to-r from-blue-600 via-indigo-600 to-purple-600 text-white px-4 py-4 shadow-md z-10 flex items-center justify-between">
           <div className="flex items-center gap-4">
@@ -711,10 +730,18 @@ export default function DrillsPage() {
           </div>
 
           {/* Question Area */}
-          <div className="bg-white rounded-2xl p-5 sm:p-8 shadow-sm border border-slate-200 flex-1 flex flex-col md:flex-row gap-6 md:gap-8 mb-40 lg:mb-24">
-            
-            <div className="flex-1">
-              <div className="flex items-center gap-2 mb-4">
+          <AnimatePresence mode="wait">
+            <motion.div 
+              key={currentIndex}
+              initial={{ opacity: 0, x: 20 }}
+              animate={{ opacity: 1, x: 0 }}
+              exit={{ opacity: 0, x: -20 }}
+              transition={{ duration: 0.2 }}
+              className="bg-white rounded-2xl p-5 sm:p-8 shadow-sm border border-slate-200 flex-1 flex flex-col md:flex-row gap-6 md:gap-8 mb-40 lg:mb-24"
+            >
+              
+              <div className="flex-1">
+                <div className="flex items-center gap-2 mb-4">
                 <span className="bg-blue-50 text-blue-600 text-xs font-bold px-3 py-1 rounded-md uppercase tracking-wider border border-blue-100">Soal</span>
                 <span className="bg-slate-100 text-slate-600 text-xs font-bold px-2 py-1 rounded border border-slate-200">{currentQ.subtopic}</span>
               </div>
@@ -754,11 +781,12 @@ export default function DrillsPage() {
               })}
             </div>
 
-          </div>
+            </motion.div>
+          </AnimatePresence>
         </div>
 
         {/* Bottom Floating Bar */}
-        <div className="fixed bottom-[80px] lg:bottom-0 left-0 lg:left-[260px] right-0 bg-white border-t border-slate-200 px-4 md:px-6 py-3 md:py-4 shadow-[0_-4px_20px_rgba(0,0,0,0.05)] z-20">
+        <div className="fixed bottom-0 left-0 right-0 bg-white border-t border-slate-200 px-4 md:px-6 py-3 md:py-4 shadow-[0_-4px_20px_rgba(0,0,0,0.05)] z-20">
           <div className="max-w-5xl mx-auto flex items-center justify-between">
             {isAnswered ? (
               <div className="hidden sm:block">
@@ -803,7 +831,7 @@ export default function DrillsPage() {
             </div>
           </div>
         </div>
-      </div>
+      </motion.div>
     );
   }
 
@@ -812,7 +840,11 @@ export default function DrillsPage() {
     const totalWrong = questions.length - totalCorrect;
 
     return (
-      <div className="min-h-screen bg-slate-50 pb-32">
+      <motion.div 
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        className="fixed inset-0 z-[100] bg-slate-50 pb-32 overflow-y-auto"
+      >
         {/* Header */}
         <div className="bg-gradient-to-r from-blue-700 via-indigo-600 to-purple-600 text-white px-4 py-4 shadow-md flex items-center gap-4">
           <button onClick={() => setView('dashboard')} className="w-10 h-10 rounded-full bg-white/20 flex items-center justify-center">
@@ -832,8 +864,8 @@ export default function DrillsPage() {
             
             <div className="flex justify-between items-start relative z-10 mb-8">
               <div className="bg-white/10 px-3 py-1.5 rounded-lg flex items-center gap-2 backdrop-blur-sm border border-white/20">
-                <BrainCircuit className="w-4 h-4" />
-                <span className="text-xs font-bold tracking-widest uppercase">Drill Soal AI</span>
+                <BookA className="w-4 h-4" />
+                <span className="text-xs font-bold tracking-widest uppercase">Latihan Mandiri</span>
               </div>
               <div className="bg-amber-400 text-amber-950 px-3 py-1.5 rounded-full flex items-center gap-1.5 font-black text-sm shadow-lg">
                 +{gainedXP} <Star className="w-4 h-4 fill-amber-950" />
@@ -952,18 +984,22 @@ export default function DrillsPage() {
             </button>
           </div>
         </div>
-      </div>
+      </motion.div>
     );
   }
 
   if (view === 'review') {
     return (
-      <div className="min-h-screen bg-slate-50 pb-24">
+      <motion.div 
+        initial={{ opacity: 0, x: 20 }}
+        animate={{ opacity: 1, x: 0 }}
+        className="fixed inset-0 z-[100] bg-slate-50 pb-24 overflow-y-auto"
+      >
         <div className="bg-white border-b border-slate-200 px-4 py-4 sticky top-0 z-20 flex items-center gap-4 shadow-sm">
           <button onClick={() => setView('result')} className="w-10 h-10 rounded-full hover:bg-slate-100 flex items-center justify-center text-slate-600 transition-colors">
             <ArrowLeft className="w-5 h-5" />
           </button>
-          <h1 className="font-bold text-lg text-slate-800">Pembahasan AI</h1>
+          <h1 className="font-bold text-lg text-slate-800">Pembahasan Tutor</h1>
         </div>
         
         <div className="max-w-3xl mx-auto px-4 py-8 space-y-6">
@@ -999,8 +1035,8 @@ export default function DrillsPage() {
                   
                   <div className="bg-blue-50 border border-blue-100 p-5 rounded-xl">
                     <div className="flex items-center gap-2 mb-2">
-                      <BrainCircuit className="w-4 h-4 text-blue-600" />
-                      <h4 className="text-sm font-bold text-blue-800 uppercase tracking-wider">Penjelasan AI</h4>
+                      <BookA className="w-4 h-4 text-blue-600" />
+                      <h4 className="text-sm font-bold text-blue-800 uppercase tracking-wider">Penjelasan Tutor</h4>
                     </div>
                     <p className="text-sm text-slate-700 leading-relaxed">{q.explanation}</p>
                   </div>
@@ -1009,7 +1045,7 @@ export default function DrillsPage() {
             );
           })}
         </div>
-      </div>
+      </motion.div>
     );
   }
 
