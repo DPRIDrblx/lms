@@ -269,7 +269,7 @@ export default function DrillsPage() {
             <div className="absolute top-10 right-10 w-64 h-64 bg-white/5 rounded-full blur-3xl"></div>
             <div className="absolute -bottom-10 -left-10 w-48 h-48 bg-purple-500/20 rounded-full blur-2xl"></div>
           </div>
-          <div className="max-w-6xl mx-auto px-6 py-8 relative z-20 flex items-center justify-between text-white">
+          <div className="max-w-6xl mx-auto px-6 pt-24 pb-8 relative z-20 flex items-center justify-between text-white">
             <h1 className="text-2xl font-bold tracking-tight">Drill Soal</h1>
             
             {/* Level Selector */}
@@ -322,10 +322,6 @@ export default function DrillsPage() {
                   </div>
                 </div>
               </div>
-              <div className="bg-amber-50 text-amber-700 px-4 py-2 rounded-xl border border-amber-100 flex items-center gap-2 self-start">
-                <Target className="w-5 h-5" />
-                <span className="text-sm font-bold">Target Harian: Belum Tercapai</span>
-              </div>
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-8 pt-6 border-t border-slate-100">
@@ -366,6 +362,54 @@ export default function DrillsPage() {
               </Link>
             </div>
           </div>
+
+            {/* Target Belajar */}
+            <div className="mt-8 pt-6 border-t border-slate-100">
+              <h3 className="font-bold text-slate-800 mb-4">Target Belajar</h3>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                
+                {/* Target Harian */}
+                <div className="bg-white border-2 border-slate-100 rounded-xl p-4">
+                  <div className="flex items-center justify-between mb-2">
+                    <div className="flex items-center gap-2">
+                      <Target className="w-4 h-4 text-orange-500" />
+                      <span className="font-bold text-slate-700 text-sm">Target Harian</span>
+                    </div>
+                    <span className="text-sm font-bold text-slate-500">
+                      {Math.min(stats.totalQuestions, 10)}/10 Soal
+                    </span>
+                  </div>
+                  <div className="w-full bg-slate-100 h-2.5 rounded-full overflow-hidden">
+                    <div 
+                      className="bg-orange-500 h-full rounded-full transition-all duration-1000"
+                      style={{ width: `${Math.min((stats.totalQuestions / 10) * 100, 100)}%` }}
+                    ></div>
+                  </div>
+                  <p className="text-xs text-slate-500 mt-2 font-medium">Kerjakan {Math.max(0, 10 - stats.totalQuestions)} soal lagi untuk capai target hari ini!</p>
+                </div>
+
+                {/* Target Mingguan */}
+                <div className="bg-white border-2 border-slate-100 rounded-xl p-4">
+                  <div className="flex items-center justify-between mb-2">
+                    <div className="flex items-center gap-2">
+                      <Trophy className="w-4 h-4 text-purple-500" />
+                      <span className="font-bold text-slate-700 text-sm">Target Mingguan</span>
+                    </div>
+                    <span className="text-sm font-bold text-slate-500">
+                      {Math.min(stats.totalQuestions, 50)}/50 Soal
+                    </span>
+                  </div>
+                  <div className="w-full bg-slate-100 h-2.5 rounded-full overflow-hidden">
+                    <div 
+                      className="bg-purple-500 h-full rounded-full transition-all duration-1000"
+                      style={{ width: `${Math.min((stats.totalQuestions / 50) * 100, 100)}%` }}
+                    ></div>
+                  </div>
+                  <p className="text-xs text-slate-500 mt-2 font-medium">Masih butuh {Math.max(0, 50 - stats.totalQuestions)} soal untuk target mingguan.</p>
+                </div>
+
+              </div>
+            </div>
 
           {/* Subject Grid */}
           <div>
