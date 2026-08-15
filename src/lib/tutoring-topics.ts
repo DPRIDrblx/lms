@@ -58,7 +58,18 @@ export const TUTORING_TOPICS: EducationLevel[] = [
       {
         name: "NIA Skill Up",
         topics: [
-          { name: "Kegiatan Bulan Ini", subtopics: ["Pertemuan 1 (Minggu Pertama)", "Pertemuan 2 (Minggu Ketiga)", "Materi Skill Up"] }
+          { name: "Bulan 1: Keterampilan Komunikasi Dasar", subtopics: ["Pertemuan 1: Berani Berbicara di Depan Kelas", "Pertemuan 2: Mendengarkan Teman Bercerita"] },
+          { name: "Bulan 2: Kreativitas Tanpa Batas", subtopics: ["Pertemuan 1: Mewarnai Imajinasi", "Pertemuan 2: Membuat Kerajinan dari Barang Bekas"] },
+          { name: "Bulan 3: Kebiasaan Baik Sehari-hari", subtopics: ["Pertemuan 1: Menjaga Kebersihan Diri", "Pertemuan 2: Aturan di Rumah dan Sekolah"] },
+          { name: "Bulan 4: Kerja Sama Tim", subtopics: ["Pertemuan 1: Bermain Bersama Tanpa Bertengkar", "Pertemuan 2: Gotong Royong Membersihkan Kelas"] },
+          { name: "Bulan 5: Mengenal Emosi", subtopics: ["Pertemuan 1: Apa Itu Marah dan Sedih?", "Pertemuan 2: Cara Menenangkan Diri"] },
+          { name: "Bulan 6: Problem Solving Sederhana", subtopics: ["Pertemuan 1: Mencari Solusi Saat Kehilangan Barang", "Pertemuan 2: Meminta Bantuan yang Tepat"] },
+          { name: "Bulan 7: Etika dan Sopan Santun", subtopics: ["Pertemuan 1: Mengucapkan Tolong, Maaf, dan Terima Kasih", "Pertemuan 2: Menghormati Guru dan Orang Tua"] },
+          { name: "Bulan 8: Mengenal Alam Sitar", subtopics: ["Pertemuan 1: Mengapa Harus Menjaga Tanaman?", "Pertemuan 2: Membuang Sampah pada Tempatnya"] },
+          { name: "Bulan 9: Konsentrasi dan Fokus", subtopics: ["Pertemuan 1: Permainan Melatih Fokus Mata", "Pertemuan 2: Belajar Tanpa Mudah Teralihkan"] },
+          { name: "Bulan 10: Pengenalan Hobi", subtopics: ["Pertemuan 1: Mengenal Berbagai Macam Hobi", "Pertemuan 2: Menceritakan Hobi Sendiri"] },
+          { name: "Bulan 11: Kemandirian", subtopics: ["Pertemuan 1: Merapikan Alat Tulis Sendiri", "Pertemuan 2: Memakai Sepatu Sendiri"] },
+          { name: "Bulan 12: Apresiasi Diri", subtopics: ["Pertemuan 1: Bangga Terhadap Diri Sendiri", "Pertemuan 2: Merayakan Keberhasilan Kecil"] }
         ]
       }
     ]
@@ -100,7 +111,18 @@ export const TUTORING_TOPICS: EducationLevel[] = [
       {
         name: "NIA Skill Up",
         topics: [
-          { name: "Kegiatan Bulan Ini", subtopics: ["Pertemuan 1 (Minggu Pertama)", "Pertemuan 2 (Minggu Ketiga)", "Materi Skill Up"] }
+          { name: "Bulan 1: Percaya Diri", subtopics: ["Pertemuan 1: Tampil Membaca Puisi", "Pertemuan 2: Berani Menjawab Pertanyaan Guru"] },
+          { name: "Bulan 2: Empati dan Kepedulian", subtopics: ["Pertemuan 1: Menolong Teman yang Jatuh", "Pertemuan 2: Berbagi Makanan"] },
+          { name: "Bulan 3: Etika Digital Sederhana", subtopics: ["Pertemuan 1: Waktu yang Tepat Bermain Gadget", "Pertemuan 2: Menjaga Mata dari Layar"] },
+          { name: "Bulan 4: Berpikir Kritis Dasar", subtopics: ["Pertemuan 1: Mengapa Langit Berwarna Biru?", "Pertemuan 2: Bertanya 'Mengapa' pada Hal Baru"] },
+          { name: "Bulan 5: Mengelola Waktu", subtopics: ["Pertemuan 1: Kapan Waktu Bermain dan Belajar", "Pertemuan 2: Membuat Jadwal Harian Sederhana"] },
+          { name: "Bulan 6: Menyelesaikan Konflik", subtopics: ["Pertemuan 1: Memaafkan Teman", "Pertemuan 2: Cara Meminta Maaf yang Benar"] },
+          { name: "Bulan 7: Pengenalan Uang", subtopics: ["Pertemuan 1: Mengenal Nilai Uang", "Pertemuan 2: Belajar Menabung di Celengan"] },
+          { name: "Bulan 8: Keterampilan Bercerita", subtopics: ["Pertemuan 1: Menyusun Cerita dari Gambar", "Pertemuan 2: Menceritakan Dongeng Kesukaan"] },
+          { name: "Bulan 9: Kerja Kelompok", subtopics: ["Pertemuan 1: Membagi Tugas dengan Adil", "Pertemuan 2: Menerima Pendapat Teman"] },
+          { name: "Bulan 10: Kebiasaan Sehat", subtopics: ["Pertemuan 1: Pentingnya Cuci Tangan", "Pertemuan 2: Makan Sayur dan Buah"] },
+          { name: "Bulan 11: Keamanan Diri", subtopics: ["Pertemuan 1: Mengenal Bagian Tubuh yang Tidak Boleh Disentuh Orang Lain", "Pertemuan 2: Menghindari Orang Tidak Dikenal"] },
+          { name: "Bulan 12: Resolusi Sederhana", subtopics: ["Pertemuan 1: Apa yang Ingin Dicapai Tahun Depan?", "Pertemuan 2: Menggambar Cita-cita"] }
         ]
       }
     ]
@@ -144,7 +166,18 @@ export const TUTORING_TOPICS: EducationLevel[] = [
       {
         name: "NIA Skill Up",
         topics: [
-          { name: "Kegiatan Bulan Ini", subtopics: ["Pertemuan 1 (Minggu Pertama)", "Pertemuan 2 (Minggu Ketiga)", "Materi Skill Up"] }
+          { name: "Bulan 1: Publik Speaking Pemula", subtopics: ["Pertemuan 1: Memperkenalkan Teman Sebangku", "Pertemuan 2: Menceritakan Pengalaman Liburan dengan Detail"] },
+          { name: "Bulan 2: Literasi Digital", subtopics: ["Pertemuan 1: Menonton YouTube yang Bermanfaat", "Pertemuan 2: Bahaya Menyebarkan Informasi Palsu (Hoax Sederhana)"] },
+          { name: "Bulan 3: Berpikir Kreatif", subtopics: ["Pertemuan 1: Mencari Kegunaan Lain dari Benda Sehari-hari", "Pertemuan 2: Membuat Cerita dari 3 Kata Acak"] },
+          { name: "Bulan 4: Tanggung Jawab", subtopics: ["Pertemuan 1: Mengerjakan PR Tepat Waktu", "Pertemuan 2: Menjaga Barang Pinjaman"] },
+          { name: "Bulan 5: Literasi Finansial Dasar", subtopics: ["Pertemuan 1: Bedanya Kebutuhan dan Keinginan", "Pertemuan 2: Simulasi Jajan Cerdas"] },
+          { name: "Bulan 6: Pemecahan Masalah", subtopics: ["Pertemuan 1: Jika Tertinggal di Tempat Umum", "Pertemuan 2: Mengatasi Rasa Bosan Tanpa Gadget"] },
+          { name: "Bulan 7: Kesadaran Lingkungan", subtopics: ["Pertemuan 1: Memisahkan Sampah Plastik dan Kertas", "Pertemuan 2: Berhemat Air dan Listrik"] },
+          { name: "Bulan 8: Pemahaman Emosi Lanjutan", subtopics: ["Pertemuan 1: Mengekspresikan Kekecewaan Tanpa Menyakiti", "Pertemuan 2: Mengenali Emosi Orang Lain"] },
+          { name: "Bulan 9: Kepemimpinan Diri", subtopics: ["Pertemuan 1: Menjadi Ketua Kelas Sehari", "Pertemuan 2: Memimpin Doa atau Barisan"] },
+          { name: "Bulan 10: Kerja Sama Lanjutan", subtopics: ["Pertemuan 1: Membuat Proyek Seni Bersama", "Pertemuan 2: Membantu Teman yang Kesulitan Belajar"] },
+          { name: "Bulan 11: Kemampuan Mengingat", subtopics: ["Pertemuan 1: Trik Mengingat Nama dan Benda", "Pertemuan 2: Permainan Memori Visual"] },
+          { name: "Bulan 12: Evaluasi Diri", subtopics: ["Pertemuan 1: Apa Sifat Baikku?", "Pertemuan 2: Apa Sifat yang Harus Aku Perbaiki?"] }
         ]
       }
     ]
@@ -193,7 +226,18 @@ export const TUTORING_TOPICS: EducationLevel[] = [
       {
         name: "NIA Skill Up",
         topics: [
-          { name: "Kegiatan Bulan Ini", subtopics: ["Pertemuan 1 (Minggu Pertama)", "Pertemuan 2 (Minggu Ketiga)", "Materi Skill Up"] }
+          { name: "Bulan 1: Keterampilan Presentasi", subtopics: ["Pertemuan 1: Postur Tubuh Saat Presentasi", "Pertemuan 2: Menggunakan Alat Peraga Sederhana"] },
+          { name: "Bulan 2: Logika dan Komputasi Dasar", subtopics: ["Pertemuan 1: Bermain Game Instruksi (Algoritma Tanpa Komputer)", "Pertemuan 2: Memecahkan Teka-Teki Logika"] },
+          { name: "Bulan 3: Literasi Membaca", subtopics: ["Pertemuan 1: Membaca Cepat dan Menemukan Ide Pokok", "Pertemuan 2: Merangkum Isi Buku Cerita"] },
+          { name: "Bulan 4: Keterampilan Menulis Cermat", subtopics: ["Pertemuan 1: Menulis Jurnal Harian", "Pertemuan 2: Membuat Surat untuk Teman/Keluarga"] },
+          { name: "Bulan 5: Etika di Internet Sederhana", subtopics: ["Pertemuan 1: Kata-kata Baik di Media Sosial", "Pertemuan 2: Melindungi Password Diri Sendiri"] },
+          { name: "Bulan 6: Manajemen Waktu Belajar", subtopics: ["Pertemuan 1: Membuat Jadwal Belajar Mingguan", "Pertemuan 2: Mengatur Alarm Belajar (Teknik Pomodoro Anak)"] },
+          { name: "Bulan 7: Sikap Pantang Menyerah (Resilience)", subtopics: ["Pertemuan 1: Apa yang Harus Dilakukan Saat Gagal Ujian?", "Pertemuan 2: Cerita Tokoh Sukses yang Pernah Gagal"] },
+          { name: "Bulan 8: Kemandirian Mengurus Diri", subtopics: ["Pertemuan 1: Menyiapkan Buku Pelajaran Sendiri", "Pertemuan 2: Membantu Pekerjaan Rumah Sederhana"] },
+          { name: "Bulan 9: Mengenal Keragaman Budaya", subtopics: ["Pertemuan 1: Makanan dan Pakaian Tradisional", "Pertemuan 2: Belajar Toleransi Antar Suku/Agama"] },
+          { name: "Bulan 10: Dasar Kewirausahaan", subtopics: ["Pertemuan 1: Ide Barang Bekas yang Bisa Dijual", "Pertemuan 2: Simulasi Jual Beli di Kelas"] },
+          { name: "Bulan 11: Kesehatan Mental Anak", subtopics: ["Pertemuan 1: Mengapa Kita Merasa Cemas Sebelum Ujian?", "Pertemuan 2: Cara Mengurangi Rasa Gugup"] },
+          { name: "Bulan 12: Refleksi Pencapaian", subtopics: ["Pertemuan 1: Menulis Surat untuk Diri Sendiri di Masa Depan", "Pertemuan 2: Membuat Papan Visi (Vision Board)"] }
         ]
       }
     ]
@@ -244,7 +288,18 @@ export const TUTORING_TOPICS: EducationLevel[] = [
       {
         name: "NIA Skill Up",
         topics: [
-          { name: "Kegiatan Bulan Ini", subtopics: ["Pertemuan 1 (Minggu Pertama)", "Pertemuan 2 (Minggu Ketiga)", "Materi Skill Up"] }
+          { name: "Bulan 1: Public Speaking & Storytelling", subtopics: ["Pertemuan 1: Mengatur Intonasi Suara", "Pertemuan 2: Bercerita dengan Gaya Menarik"] },
+          { name: "Bulan 2: Pemahaman Berita (Anti-Hoax)", subtopics: ["Pertemuan 1: Cara Membedakan Fakta dan Opini", "Pertemuan 2: Mengecek Kebenaran Berita yang Viral"] },
+          { name: "Bulan 3: Kolaborasi Digital", subtopics: ["Pertemuan 1: Menggunakan Google Docs Bersama", "Pertemuan 2: Etika Mengirim Email/Pesan ke Guru"] },
+          { name: "Bulan 4: Kreativitas dalam Seni", subtopics: ["Pertemuan 1: Menggambar Mind Map (Peta Konsep)", "Pertemuan 2: Desain Poster Sederhana (Manual)"] },
+          { name: "Bulan 5: Kepemimpinan Kelompok", subtopics: ["Pertemuan 1: Mengatur Diskusi Kelompok", "Pertemuan 2: Menyatukan Pendapat yang Berbeda"] },
+          { name: "Bulan 6: Financial Literacy (Menabung)", subtopics: ["Pertemuan 1: Menyisihkan Uang Jajan Secara Konsisten", "Pertemuan 2: Membuat Catatan Pengeluaran Sederhana"] },
+          { name: "Bulan 7: Empati Sosial", subtopics: ["Pertemuan 1: Memahami Sudut Pandang Teman yang Dibully", "Pertemuan 2: Menjadi Pembela (Upstander) Melawan Bullying"] },
+          { name: "Bulan 8: Pemahaman Diri (Self-Awareness)", subtopics: ["Pertemuan 1: Mengetahui Kekuatan dan Kelemahan Diri", "Pertemuan 2: Gaya Belajar: Visual, Auditori, atau Kinestetik?"] },
+          { name: "Bulan 9: Basic Coding Mindset", subtopics: ["Pertemuan 1: Pengenalan Algoritma dalam Resep Masakan", "Pertemuan 2: Mencoba Game Logika (Code.org)"] },
+          { name: "Bulan 10: Berpikir Kritis Terhadap Iklan", subtopics: ["Pertemuan 1: Mengapa Iklan Dibuat Menarik?", "Pertemuan 2: Menghindari Pola Konsumtif Akibat Iklan"] },
+          { name: "Bulan 11: Kemandirian Transportasi", subtopics: ["Pertemuan 1: Aturan Keselamatan di Jalan Raya", "Pertemuan 2: Mengenal Rambu Lalu Lintas Utama"] },
+          { name: "Bulan 12: Menghadapi Transisi Kelas", subtopics: ["Pertemuan 1: Persiapan Menjadi Kakak Kelas (Kelas 6)", "Pertemuan 2: Menyusun Target Nilai"] }
         ]
       }
     ]
@@ -297,7 +352,18 @@ export const TUTORING_TOPICS: EducationLevel[] = [
       {
         name: "NIA Skill Up",
         topics: [
-          { name: "Kegiatan Bulan Ini", subtopics: ["Pertemuan 1 (Minggu Pertama)", "Pertemuan 2 (Minggu Ketiga)", "Materi Skill Up"] }
+          { name: "Bulan 1: Persiapan Mental Ujian Akhir", subtopics: ["Pertemuan 1: Mengelola Stres Ujian", "Pertemuan 2: Teknik Relaksasi Pernapasan"] },
+          { name: "Bulan 2: Teknik Belajar Efektif (Study Skills)", subtopics: ["Pertemuan 1: Cara Membuat Ringkasan yang Baik", "Pertemuan 2: Teknik Pomodoro untuk Fokus"] },
+          { name: "Bulan 3: Keterampilan Debat Pemula", subtopics: ["Pertemuan 1: Menyampaikan Pendapat dengan Alasan Logis", "Pertemuan 2: Menghargai Argumen Lawan Bicara"] },
+          { name: "Bulan 4: Pembuatan Keputusan (Decision Making)", subtopics: ["Pertemuan 1: Menimbang Pro dan Kontra", "Pertemuan 2: Memilih Sekolah Lanjutan (SMP)"] },
+          { name: "Bulan 5: Kewarganegaraan Global", subtopics: ["Pertemuan 1: Isu Pemanasan Global Sederhana", "Pertemuan 2: Apa yang Bisa Kita Lakukan untuk Bumi?"] },
+          { name: "Bulan 6: Literasi Data Sederhana", subtopics: ["Pertemuan 1: Membaca Grafik dan Tabel", "Pertemuan 2: Membuat Survei Sederhana di Kelas"] },
+          { name: "Bulan 7: Manajemen Konflik Lanjutan", subtopics: ["Pertemuan 1: Mediasi Perkelahian Teman", "Pertemuan 2: Mengendalikan Amarah Saat Diprovokasi"] },
+          { name: "Bulan 8: Dasar Desain Grafis Digital", subtopics: ["Pertemuan 1: Pengenalan Aplikasi Canva", "Pertemuan 2: Membuat Presentasi Menarik"] },
+          { name: "Bulan 9: Etika Media Sosial", subtopics: ["Pertemuan 1: Jejak Digital Tidak Bisa Dihapus", "Pertemuan 2: Bahaya Oversharing Data Pribadi"] },
+          { name: "Bulan 10: Pengenalan Bakat", subtopics: ["Pertemuan 1: Menemukan Bakat Tersembunyi", "Pertemuan 2: Cara Mengembangkan Bakat"] },
+          { name: "Bulan 11: Financial Literacy (Target Menabung)", subtopics: ["Pertemuan 1: Menabung untuk Membeli Barang Impian", "Pertemuan 2: Menghindari Hutang / Pinjam Uang Teman"] },
+          { name: "Bulan 12: Farewell & Future Outlook", subtopics: ["Pertemuan 1: Mengenang Masa SD dengan Positif", "Pertemuan 2: Persiapan Menghadapi Dunia SMP"] }
         ]
       }
     ]
@@ -373,7 +439,18 @@ export const TUTORING_TOPICS: EducationLevel[] = [
       {
         name: "NIA Skill Up",
         topics: [
-          { name: "Kegiatan Bulan Ini", subtopics: ["Pertemuan 1 (Minggu Pertama)", "Pertemuan 2 (Minggu Ketiga)", "Materi Skill Up"] }
+          { name: "Bulan 1: Adaptasi Lingkungan Baru", subtopics: ["Pertemuan 1: Menghadapi Perubahan dari SD ke SMP", "Pertemuan 2: Membangun Lingkaran Pertemanan Sehat"] },
+          { name: "Bulan 2: Manajemen Waktu Remaja", subtopics: ["Pertemuan 1: Skala Prioritas (Penting vs Mendesak)", "Pertemuan 2: Mengatasi Prokrastinasi (Suka Menunda)"] },
+          { name: "Bulan 3: Digital Citizenship", subtopics: ["Pertemuan 1: UU ITE Sederhana dan Etika Berkomentar", "Pertemuan 2: Menghindari Cyberbullying di Grup Chat"] },
+          { name: "Bulan 4: Keterampilan Merangkum (Mind Mapping)", subtopics: ["Pertemuan 1: Struktur Mind Map yang Efektif", "Pertemuan 2: Meringkas Bab Sejarah Menggunakan Mind Map"] },
+          { name: "Bulan 5: Dasar Pemrograman (Pengenalan Logika)", subtopics: ["Pertemuan 1: Konsep Algoritma Kehidupan", "Pertemuan 2: Flowchart Sederhana Memecahkan Masalah"] },
+          { name: "Bulan 6: Kesadaran Emosional Remaja", subtopics: ["Pertemuan 1: Memahami Perubahan Emosi Masa Pubertas", "Pertemuan 2: Mengomunikasikan Perasaan ke Orang Tua"] },
+          { name: "Bulan 7: Critical Thinking (Identifikasi Hoax)", subtopics: ["Pertemuan 1: Anatomi Berita Hoax", "Pertemuan 2: Tools untuk Fact Checking"] },
+          { name: "Bulan 8: Keterampilan Presentasi SMP", subtopics: ["Pertemuan 1: Menyusun Slide Presentasi Minimalis", "Pertemuan 2: Mengatasi Stage Fright (Demam Panggung)"] },
+          { name: "Bulan 9: Literasi Finansial (Uang Saku)", subtopics: ["Pertemuan 1: Mengelola Uang Saku Bulanan/Mingguan", "Pertemuan 2: Membedakan Diskon Asli dan Trik Marketing"] },
+          { name: "Bulan 10: Kerjasama Tim dalam Proyek", subtopics: ["Pertemuan 1: Pembagian Peran dalam Kerja Kelompok", "Pertemuan 2: Menghadapi Teman yang 'Free Rider' (Tidak Kerja)"] },
+          { name: "Bulan 11: Kemandirian dan Tanggung Jawab", subtopics: ["Pertemuan 1: Mencuci Pakaian dan Sepatu Sendiri", "Pertemuan 2: Mengakui Kesalahan Tanpa Mencari Alasan"] },
+          { name: "Bulan 12: Evaluasi Akhir Tahun", subtopics: ["Pertemuan 1: Merefleksikan Nilai Rapor", "Pertemuan 2: Menyusun Strategi Belajar untuk Kelas 8"] }
         ]
       }
     ]
@@ -525,7 +602,18 @@ export const TUTORING_TOPICS: EducationLevel[] = [
       {
         name: "NIA Skill Up",
         topics: [
-          { name: "Kegiatan Bulan Ini", subtopics: ["Pertemuan 1 (Minggu Pertama)", "Pertemuan 2 (Minggu Ketiga)", "Materi Skill Up"] }
+          { name: "Bulan 1: Leadership & Pengaruh Teman Sebaya", subtopics: ["Pertemuan 1: Menghindari Peer Pressure Negatif (Narkoba/Rokok)", "Pertemuan 2: Menjadi Role Model di Kelas"] },
+          { name: "Bulan 2: Kreativitas Digital (Content Creation)", subtopics: ["Pertemuan 1: Dasar Fotografi/Videografi Menggunakan HP", "Pertemuan 2: Etika Membuat Konten TikTok/Reels"] },
+          { name: "Bulan 3: Problem Solving (Design Thinking Dasar)", subtopics: ["Pertemuan 1: Empati dan Mendefinisikan Masalah", "Pertemuan 2: Brainstorming Ide Solusi"] },
+          { name: "Bulan 4: Keterampilan Menulis Esai/Artikel", subtopics: ["Pertemuan 1: Menyusun Paragraf Argumentasi", "Pertemuan 2: Menulis Artikel Opini tentang Isu Sekolah"] },
+          { name: "Bulan 5: Keamanan Siber Dasar (Cybersecurity)", subtopics: ["Pertemuan 1: Ancaman Phishing dan Malware", "Pertemuan 2: Keamanan Akun Sosial Media (2FA)"] },
+          { name: "Bulan 6: Pemahaman Minat dan Bakat", subtopics: ["Pertemuan 1: Eksplorasi Ekstrakurikuler yang Sesuai", "Pertemuan 2: Mengikuti Lomba Sesuai Bidang Minat"] },
+          { name: "Bulan 7: Komunikasi Asertif", subtopics: ["Pertemuan 1: Berani Berkata 'TIDAK' dengan Sopan", "Pertemuan 2: Menyampaikan Kritik Tanpa Menyakiti (Sandwich Method)"] },
+          { name: "Bulan 8: Dasar-Dasar Wirausaha Remaja", subtopics: ["Pertemuan 1: Mengenal Bisnis Dropship/Reseller", "Pertemuan 2: Cara Menjual Barang Pre-loved/Bekas"] },
+          { name: "Bulan 9: Pemecahan Konflik (Conflict Resolution)", subtopics: ["Pertemuan 1: Mediasi Konflik Antar Teman", "Pertemuan 2: Kompromi dalam Perbedaan Pendapat"] },
+          { name: "Bulan 10: Pengenalan Spreadsheet/Excel", subtopics: ["Pertemuan 1: Mengatur Data Siswa/Tugas", "Pertemuan 2: Menggunakan Rumus SUM, AVERAGE Dasar"] },
+          { name: "Bulan 11: Kesehatan Mental (Self-Care)", subtopics: ["Pertemuan 1: Tanda-tanda Burnout Belajar", "Pertemuan 2: Aktivitas Me-Time yang Menyehatkan"] },
+          { name: "Bulan 12: Menyiapkan Diri untuk Kelas 9", subtopics: ["Pertemuan 1: Pola Belajar Menuju Ujian", "Pertemuan 2: Menetapkan Target SMA Impian"] }
         ]
       }
     ]
@@ -597,7 +685,18 @@ export const TUTORING_TOPICS: EducationLevel[] = [
       {
         name: "NIA Skill Up",
         topics: [
-          { name: "Kegiatan Bulan Ini", subtopics: ["Pertemuan 1 (Minggu Pertama)", "Pertemuan 2 (Minggu Ketiga)", "Materi Skill Up"] }
+          { name: "Bulan 1: Fokus dan Motivasi Belajar Ujian", subtopics: ["Pertemuan 1: Menemukan 'Why' dalam Belajar", "Pertemuan 2: Mengelola Distraksi Gadget Menjelang Ujian"] },
+          { name: "Bulan 2: Strategi Memilih SMA/SMK", subtopics: ["Pertemuan 1: Perbedaan SMA, SMK, dan MA", "Pertemuan 2: Menyesuaikan Minat dengan Jurusan SMK"] },
+          { name: "Bulan 3: Time Management Intensif", subtopics: ["Pertemuan 1: Membagi Waktu Antara Try Out dan Tugas", "Pertemuan 2: Teknik Belajar Spaced Repetition"] },
+          { name: "Bulan 4: Keterampilan Wawancara Dasar", subtopics: ["Pertemuan 1: Persiapan Wawancara Masuk SMA/SMK", "Pertemuan 2: Menjawab Pertanyaan 'Kelebihan/Kekurangan Diri'"] },
+          { name: "Bulan 5: Personal Branding Remaja", subtopics: ["Pertemuan 1: Membangun Citra Positif di Media Sosial", "Pertemuan 2: Membuat Portofolio Karya Sederhana"] },
+          { name: "Bulan 6: Literasi Keuangan (Investasi Pemula)", subtopics: ["Pertemuan 1: Konsep Bunga Majemuk dalam Tabungan", "Pertemuan 2: Bedanya Menabung dan Investasi (Dasar)"] },
+          { name: "Bulan 7: Public Speaking (Pidato/Orasi)", subtopics: ["Pertemuan 1: Teknik Eye Contact dan Body Language", "Pertemuan 2: Membawakan Pidato Kelulusan (Simulasi)"] },
+          { name: "Bulan 8: Critical Reading untuk Ujian", subtopics: ["Pertemuan 1: Skimming dan Scanning Soal Panjang", "Pertemuan 2: Menganalisis Pilihan Ganda Menjebak"] },
+          { name: "Bulan 9: Manajemen Stres Tingkat Lanjut", subtopics: ["Pertemuan 1: Mengatasi Kecemasan Saat Try Out", "Pertemuan 2: Pentingnya Tidur Cukup Sebelum Ujian"] },
+          { name: "Bulan 10: Pengenalan AI Tools untuk Belajar", subtopics: ["Pertemuan 1: Cara Bertanya pada ChatGPT (Prompting)", "Pertemuan 2: Etika Menggunakan AI Tanpa Plagiasi"] },
+          { name: "Bulan 11: Kemandirian Administrasi", subtopics: ["Pertemuan 1: Mengurus Dokumen Kelulusan", "Pertemuan 2: Memahami Alur Pendaftaran PPDB"] },
+          { name: "Bulan 12: Orientasi Masa Depan", subtopics: ["Pertemuan 1: Mental Banting Setir Jika Tidak Lolos Sekolah Impian", "Pertemuan 2: Rencana Aksi Kelas 10"] }
         ]
       }
     ]
@@ -682,7 +781,18 @@ export const TUTORING_TOPICS: EducationLevel[] = [
       {
         name: "NIA Skill Up",
         topics: [
-          { name: "Kegiatan Bulan Ini", subtopics: ["Pertemuan 1 (Minggu Pertama)", "Pertemuan 2 (Minggu Ketiga)", "Materi Skill Up"] }
+          { name: "Bulan 1: Penyesuaian Sistem SKS/Fase SMA", subtopics: ["Pertemuan 1: Memahami Kurikulum Merdeka (Fase E)", "Pertemuan 2: Tanggung Jawab Belajar Mandiri"] },
+          { name: "Bulan 2: Pengenalan Potensi Karir", subtopics: ["Pertemuan 1: Tes Kepribadian (MBTI/Holland) dan Karir", "Pertemuan 2: Pemetaan Jurusan Kuliah vs Pekerjaan"] },
+          { name: "Bulan 3: Digital Productivity Tools", subtopics: ["Pertemuan 1: Manajemen Proyek dengan Notion/Trello", "Pertemuan 2: Kolaborasi Canggih dengan Google Workspace"] },
+          { name: "Bulan 4: Keterampilan Riset & Penulisan Makalah", subtopics: ["Pertemuan 1: Cara Mencari Jurnal/Sumber Valid di Internet", "Pertemuan 2: Format Penulisan Sitasi/Daftar Pustaka"] },
+          { name: "Bulan 5: Kepemimpinan & Organisasi (OSIS/Ekskul)", subtopics: ["Pertemuan 1: Cara Menyusun Proposal Kegiatan", "Pertemuan 2: Memimpin Rapat yang Efektif"] },
+          { name: "Bulan 6: Literasi Keuangan (Manajemen Anggaran)", subtopics: ["Pertemuan 1: Membuat Anggaran Bulanan (Budgeting)", "Pertemuan 2: Menghindari Perangkap Pinjol/Paylater (Edukasi)"] },
+          { name: "Bulan 7: Public Speaking (Debat Formal)", subtopics: ["Pertemuan 1: Struktur Argumen (A-R-E-L)", "Pertemuan 2: Menanggapi Interupsi (Point of Information)"] },
+          { name: "Bulan 8: Etika Profesional Dasar", subtopics: ["Pertemuan 1: Cara Mengirim Email Formal", "Pertemuan 2: Etika Berkomunikasi di Lingkungan Kerja/Magang"] },
+          { name: "Bulan 9: Basic Data Analysis", subtopics: ["Pertemuan 1: Pengolahan Data Kuesioner dengan Excel/Google Sheets", "Pertemuan 2: Membuat Grafik Data yang Menarik (Data Viz)"] },
+          { name: "Bulan 10: Kecerdasan Emosional (EQ)", subtopics: ["Pertemuan 1: Kesadaran Sosial dan Empati Mendalam", "Pertemuan 2: Manajemen Resolusi Konflik Tingkat Lanjut"] },
+          { name: "Bulan 11: Pemahaman Isu Global", subtopics: ["Pertemuan 1: Memahami SDGs (Sustainable Development Goals)", "Pertemuan 2: Diskusi Isu Lingkungan dan Ekonomi Global"] },
+          { name: "Bulan 12: Evaluasi Minat Pemilihan Mata Pelajaran", subtopics: ["Pertemuan 1: Refleksi Nilai Rapor dan Minat Bakat", "Pertemuan 2: Memilih Mata Pelajaran Pilihan untuk Kelas 11 (Fase F)"] }
         ]
       }
     ]
@@ -773,7 +883,18 @@ export const TUTORING_TOPICS: EducationLevel[] = [
       {
         name: "NIA Skill Up",
         topics: [
-          { name: "Kegiatan Bulan Ini", subtopics: ["Pertemuan 1 (Minggu Pertama)", "Pertemuan 2 (Minggu Ketiga)", "Materi Skill Up"] }
+          { name: "Bulan 1: Fokus Penjurusan & Perencanaan Kuliah", subtopics: ["Pertemuan 1: Menyelaraskan Pilihan Mata Pelajaran dengan Jurusan PTN", "Pertemuan 2: Mengenal Jalur SNBP, SNBT, dan Mandiri"] },
+          { name: "Bulan 2: Kewirausahaan & Inovasi (Start-Up Mindset)", subtopics: ["Pertemuan 1: Membuat Business Model Canvas (BMC)", "Pertemuan 2: Pitching Ide Bisnis"] },
+          { name: "Bulan 3: Persiapan UTBK (Literasi Bahasa & Penalaran)", subtopics: ["Pertemuan 1: Strategi Mengerjakan Penalaran Umum", "Pertemuan 2: Literasi Bahasa Indonesia & Inggris Tingkat Lanjut"] },
+          { name: "Bulan 4: Keterampilan Desain Grafis / UI/UX Dasar", subtopics: ["Pertemuan 1: Prinsip UI/UX Aplikasi", "Pertemuan 2: Membuat Prototyping di Figma"] },
+          { name: "Bulan 5: Critical Thinking (Pemecahan Kasus Nyata)", subtopics: ["Pertemuan 1: Analisis Kasus (Case Study Analysis)", "Pertemuan 2: Menggunakan Kerangka Fishbone / 5 Whys"] },
+          { name: "Bulan 6: Literasi Investasi (Saham & Reksadana Dasar)", subtopics: ["Pertemuan 1: Mengenal Profil Risiko Investasi", "Pertemuan 2: Cara Kerja Reksadana dan Saham Secara Sederhana"] },
+          { name: "Bulan 7: Copywriting & Content Marketing", subtopics: ["Pertemuan 1: Seni Menulis untuk Menjual (Copywriting)", "Pertemuan 2: Strategi Konten di Instagram/TikTok"] },
+          { name: "Bulan 8: Karya Tulis Ilmiah (KTI)", subtopics: ["Pertemuan 1: Menentukan Latar Belakang dan Rumusan Masalah", "Pertemuan 2: Metodologi Penelitian Sederhana"] },
+          { name: "Bulan 9: Kesehatan Mental & Manajemen Burnout", subtopics: ["Pertemuan 1: Menyeimbangkan Akademik, Organisasi, dan Kehidupan Pribadi", "Pertemuan 2: Kapan Harus Mencari Bantuan Profesional?"] },
+          { name: "Bulan 10: Pengenalan Dunia Kerja & CV", subtopics: ["Pertemuan 1: Membangun Profil LinkedIn untuk Siswa", "Pertemuan 2: Membuat Curriculum Vitae (CV) ATS Friendly"] },
+          { name: "Bulan 11: Simulasi Wawancara (Beasiswa / Kampus)", subtopics: ["Pertemuan 1: Menjawab Pertanyaan Situasional (STAR Method)", "Pertemuan 2: Latihan Mock Interview"] },
+          { name: "Bulan 12: Pemantapan Pilihan Jurusan", subtopics: ["Pertemuan 1: Riset Passing Grade dan Ketetatan PTN", "Pertemuan 2: Konsolidasi Rencana A, B, dan C"] }
         ]
       }
     ]
@@ -862,7 +983,18 @@ export const TUTORING_TOPICS: EducationLevel[] = [
       {
         name: "NIA Skill Up",
         topics: [
-          { name: "Kegiatan Bulan Ini", subtopics: ["Pertemuan 1 (Minggu Pertama)", "Pertemuan 2 (Minggu Ketiga)", "Materi Skill Up"] }
+          { name: "Bulan 1: Mental Baja Menghadapi Ujian & Seleksi", subtopics: ["Pertemuan 1: Mengubah Insecurity Menjadi Motivasi", "Pertemuan 2: Manajemen Waktu Sisa Menuju SNBT"] },
+          { name: "Bulan 2: Bedah Strategi SNBP & SNBT", subtopics: ["Pertemuan 1: Analisis Peluang Lolos SNBP Berdasarkan Nilai", "Pertemuan 2: Latihan Soal TPS (Penalaran Kuantitatif) Cepat"] },
+          { name: "Bulan 3: Survival Skills di Dunia Perkuliahan / Kerja", subtopics: ["Pertemuan 1: Perbedaan Siswa dan Mahasiswa", "Pertemuan 2: Manajemen Keuangan Anak Kos"] },
+          { name: "Bulan 4: Bahasa Inggris untuk Akademik & TOEFL Dasar", subtopics: ["Pertemuan 1: Strategi Reading Comprehension TOEFL", "Pertemuan 2: Listening Practice untuk Lingkungan Kampus"] },
+          { name: "Bulan 5: Keterampilan Menulis Esai Beasiswa (Motivation Letter)", subtopics: ["Pertemuan 1: Struktur Motivation Letter yang Memikat", "Pertemuan 2: Menceritakan Kelemahan Sebagai Kekuatan"] },
+          { name: "Bulan 6: Pemecahan Masalah Ekstrem (Crisis Management)", subtopics: ["Pertemuan 1: Plan B Jika Gagal Masuk Universitas Impian", "Pertemuan 2: Alternatif Kampus Swasta, Kedinasan, atau Gap Year"] },
+          { name: "Bulan 7: Etiket Profesional & Networking", subtopics: ["Pertemuan 1: Cara Menghubungi Dosen/Atasan dengan Etika", "Pertemuan 2: Membangun Relasi Bermakna (Networking)"] },
+          { name: "Bulan 8: Pengenalan AI Lanjut (ChatGPT untuk Riset)", subtopics: ["Pertemuan 1: Memanfaatkan AI untuk Membantu Riset Tugas Akhir", "Pertemuan 2: Prompt Engineering Lanjutan"] },
+          { name: "Bulan 9: Kemampuan Negosiasi", subtopics: ["Pertemuan 1: Prinsip Win-Win Solution", "Pertemuan 2: Simulasi Tawar Menawar/Negosiasi Kepentingan"] },
+          { name: "Bulan 10: Legalitas Dasar Warga Negara", subtopics: ["Pertemuan 1: Pemahaman Pajak Dasar (NPWP)", "Pertemuan 2: Hak dan Kewajiban Pekerja Sederhana (UU Tenaga Kerja)"] },
+          { name: "Bulan 11: Kesiapan Menuju Dunia Dewasa (Adulting 101)", subtopics: ["Pertemuan 1: Mengurus Administrasi Dokumen Sendiri (KTP, SIM, Rekening)", "Pertemuan 2: Kesadaran Kesehatan Jangka Panjang"] },
+          { name: "Bulan 12: Pelepasan & Merangkul Perubahan", subtopics: ["Pertemuan 1: Mengelola Rasa Kehilangan (Goodbye High School)", "Pertemuan 2: Menyambut Babak Baru Kehidupan Secara Positif"] }
         ]
       }
     ]
