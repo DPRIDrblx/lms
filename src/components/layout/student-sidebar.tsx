@@ -169,11 +169,13 @@ export function StudentSidebar() {
               <div 
                 className={cn(
                   "flex flex-col items-center justify-center p-2 rounded-2xl transition-all",
-                  isActive ? "bg-emerald-100/50 text-emerald-600" : "text-slate-400"
+                  isActive 
+                    ? (uiMode === 'clean' ? "bg-[#108B96]/10 text-[#108B96]" : "bg-emerald-100/50 text-emerald-600")
+                    : "text-slate-400"
                 )}
               >
-                <item.icon className={cn("w-7 h-7 mb-1", isActive ? "text-emerald-500" : "text-slate-400")} strokeWidth={isActive ? 2.5 : 2} />
-                <span className={cn("text-[10px] font-bold", isActive ? "text-emerald-600" : "text-slate-400")}>
+                <item.icon className={cn("w-7 h-7 mb-1", isActive ? (uiMode === 'clean' ? "text-[#108B96]" : "text-emerald-500") : "text-slate-400")} strokeWidth={isActive ? 2.5 : 2} />
+                <span className={cn("text-[10px] font-bold", isActive ? (uiMode === 'clean' ? "text-[#108B96]" : "text-emerald-600") : "text-slate-400")}>
                   {item.name}
                 </span>
               </div>
@@ -183,7 +185,7 @@ export function StudentSidebar() {
         
         {/* Menu Button */}
         <button onClick={() => setIsMobileMenuOpen(true)} className="flex-1 flex justify-center">
-          <div className="flex flex-col items-center justify-center p-2 rounded-2xl transition-all text-slate-400 hover:text-emerald-500">
+          <div className="flex flex-col items-center justify-center p-2 rounded-2xl transition-all text-slate-400 hover:text-slate-600">
              <Menu className="w-7 h-7 mb-1" strokeWidth={2} />
              <span className="text-[10px] font-bold">More</span>
           </div>
@@ -202,8 +204,11 @@ export function StudentSidebar() {
           >
             <div className="p-6">
               <div className="flex items-center justify-between mb-8">
-                <h1 className={cn("text-2xl font-black tracking-tight", isCenterStudent ? "text-red-600" : "text-emerald-500")}>
-                  IGNITE {isCenterStudent && <span className="text-blue-600">Center</span>}
+                <h1 className={cn(
+                  "text-2xl font-black tracking-tight", 
+                  uiMode === 'clean' ? "text-[#0C1E5B]" : (isCenterStudent ? "text-red-600" : "text-emerald-500")
+                )}>
+                  IGNITE {isCenterStudent && <span className={cn(uiMode === 'clean' ? "text-orange-500" : "text-blue-600")}>Center</span>}
                 </h1>
                 <button onClick={() => setIsMobileMenuOpen(false)} className="p-2 hover:bg-slate-100 rounded-full">
                   <X className="w-6 h-6 text-slate-500" />
@@ -220,11 +225,22 @@ export function StudentSidebar() {
                         className={cn(
                           "flex items-center gap-4 px-4 py-3.5 rounded-2xl font-bold text-base transition-all",
                           isActive 
-                            ? (isCenterStudent ? "bg-red-100/50 text-red-600" : "bg-emerald-100/50 text-emerald-600")
+                            ? (uiMode === 'clean' 
+                                ? "bg-[#108B96] text-white shadow-sm" 
+                                : (isCenterStudent ? "bg-red-100/50 text-red-600" : "bg-emerald-100/50 text-emerald-600")
+                              )
                             : "text-slate-500 hover:bg-slate-100"
                         )}
                       >
-                        <item.icon className={cn("w-6 h-6", isActive ? (isCenterStudent ? "text-red-500" : "text-emerald-500") : "text-slate-400")} strokeWidth={isActive ? 2.5 : 2} />
+                        <item.icon 
+                          className={cn(
+                            "w-6 h-6", 
+                            isActive 
+                              ? (uiMode === 'clean' ? "text-white" : (isCenterStudent ? "text-red-500" : "text-emerald-500")) 
+                              : "text-slate-400"
+                          )} 
+                          strokeWidth={isActive ? (uiMode === 'clean' ? 2.5 : 2.5) : 2} 
+                        />
                         {item.name}
                       </div>
                     </Link>
