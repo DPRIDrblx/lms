@@ -15,7 +15,7 @@ import toast from "react-hot-toast";
 import Link from "next/link";
 import { TUTORING_TOPICS, EducationLevel, Subject, Topic } from "@/lib/tutoring-topics";
 
-export const getSubjectStyles = (name: string) => {
+const getSubjectStyles = (name: string) => {
   const styles: Record<string, any> = {
     "Matematika": { icon: BookA, color: "text-blue-500", bg: "bg-blue-100", border: "border-blue-200" },
     "Bahasa Indonesia": { icon: Languages, color: "text-rose-500", bg: "bg-rose-100", border: "border-rose-200" },

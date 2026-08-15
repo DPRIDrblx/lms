@@ -3,9 +3,28 @@
 import { useState, useEffect } from "react";
 import { useAuth } from "@/lib/auth-context";
 import { createClient } from "@/lib/supabase";
-import { ArrowLeft, ChevronDown, CheckCircle2, XCircle, Star, Filter, Info } from "lucide-react";
+import { ArrowLeft, ChevronDown, CheckCircle2, XCircle, Star, Filter, Info, BookA, Languages, Scale, Globe, FlaskConical, Landmark, BrainCircuit, Dna, Atom, Users } from "lucide-react";
 import Link from "next/link";
-import { getSubjectStyles } from "../page";
+const getSubjectStyles = (name: string) => {
+  const styles: Record<string, any> = {
+    "Matematika": { icon: BookA, color: "text-blue-500", bg: "bg-blue-100", border: "border-blue-200" },
+    "Bahasa Indonesia": { icon: Languages, color: "text-rose-500", bg: "bg-rose-100", border: "border-rose-200" },
+    "Pendidikan Pancasila (PPKN)": { icon: Scale, color: "text-emerald-500", bg: "bg-emerald-100", border: "border-emerald-200" },
+    "IPAS": { icon: Globe, color: "text-amber-500", bg: "bg-amber-100", border: "border-amber-200" },
+    "IPA Terpadu": { icon: FlaskConical, color: "text-cyan-500", bg: "bg-cyan-100", border: "border-cyan-200" },
+    "IPS Terpadu": { icon: Landmark, color: "text-orange-500", bg: "bg-orange-100", border: "border-orange-200" },
+    "Bahasa Inggris": { icon: Languages, color: "text-purple-500", bg: "bg-purple-100", border: "border-purple-200" },
+    "Informatika": { icon: BrainCircuit, color: "text-indigo-500", bg: "bg-indigo-100", border: "border-indigo-200" },
+    "Biologi": { icon: Dna, color: "text-green-500", bg: "bg-green-100", border: "border-green-200" },
+    "Fisika": { icon: Atom, color: "text-blue-600", bg: "bg-blue-200", border: "border-blue-300" },
+    "Kimia": { icon: FlaskConical, color: "text-pink-500", bg: "bg-pink-100", border: "border-pink-200" },
+    "Sejarah": { icon: Landmark, color: "text-amber-600", bg: "bg-amber-200", border: "border-amber-300" },
+    "Geografi": { icon: Globe, color: "text-emerald-600", bg: "bg-emerald-200", border: "border-emerald-300" },
+    "Sosiologi": { icon: Users, color: "text-purple-600", bg: "bg-purple-200", border: "border-purple-300" },
+    "Ekonomi": { icon: Landmark, color: "text-blue-700", bg: "bg-blue-200", border: "border-blue-300" },
+  };
+  return styles[name] || { icon: BookA, color: "text-slate-500", bg: "bg-slate-100", border: "border-slate-200" };
+};
 
 type DrillResult = {
   id: string;
