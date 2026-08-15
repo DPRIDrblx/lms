@@ -1,4 +1,6 @@
-"use client";
+const fs = require('fs');
+
+const fileContent = `"use client";
 
 import { useAuth } from "@/lib/auth-context";
 import { createClient } from "@/lib/supabase";
@@ -75,11 +77,11 @@ export default function KlinikTanyaTutorPage() {
     // Fetch user's clinics
     const { data: clinicData } = await supabase
       .from("tutor_clinics")
-      .select(`
+      .select(\`
         *,
         tutor:profiles!tutor_clinics_tutor_id_fkey(id, full_name),
         branch:nia_branches(id, name)
-      `)
+      \`)
       .eq("student_id", profile.id)
       .order("created_at", { ascending: false });
       
@@ -346,8 +348,8 @@ export default function KlinikTanyaTutorPage() {
                                 setSelectedClinic(clinic);
                                 setIsDetailModalOpen(true);
                               }}
-                              variant="ghost"
-                              className={cn("border-2 border-slate-200 text-slate-700 hover:bg-slate-50 hover:border-slate-300 w-full h-10 rounded-[10px] text-[13px] font-bold", clinic.status === 'completed' && !clinic.rating ? "col-span-1" : "col-span-2")}
+                              variant="outline"
+                              className={cn("w-full h-10 rounded-[10px] text-[13px] font-bold", clinic.status === 'completed' && !clinic.rating ? "col-span-1" : "col-span-2")}
                             >
                               Lihat Detail
                             </Button>
@@ -410,7 +412,7 @@ export default function KlinikTanyaTutorPage() {
                     </span>
                   </div>
                 </div>
-                <span className={`px-4 py-2 rounded-full text-sm font-bold border ${getStatusColor(selectedClinic.status)}`}>
+                <span className={\`px-4 py-2 rounded-full text-sm font-bold border \${getStatusColor(selectedClinic.status)}\`}>
                   {getStatusLabel(selectedClinic.status)}
                 </span>
               </div>
@@ -482,13 +484,13 @@ export default function KlinikTanyaTutorPage() {
                           <button
                             key={star}
                             disabled={!!selectedClinic.rating}
-                            className={`p-1 transition-transform ${!selectedClinic.rating ? 'hover:scale-110' : 'cursor-default'}`}
+                            className={\`p-1 transition-transform \${!selectedClinic.rating ? 'hover:scale-110' : 'cursor-default'}\`}
                             onMouseEnter={() => !selectedClinic.rating && setRatingHover(star)}
                             onMouseLeave={() => !selectedClinic.rating && setRatingHover(0)}
                             onClick={() => handleRate(star)}
                           >
                             <Star 
-                              className={`w-10 h-10 ${isFilled ? 'fill-yellow-400 text-yellow-400 drop-shadow-sm' : 'fill-transparent text-slate-300'}`} 
+                              className={\`w-10 h-10 \${isFilled ? 'fill-yellow-400 text-yellow-400 drop-shadow-sm' : 'fill-transparent text-slate-300'}\`} 
                             />
                           </button>
                         );
@@ -631,3 +633,5 @@ export default function KlinikTanyaTutorPage() {
     </div>
   );
 }
+`;
+fs.writeFileSync('src/app/(dashboard)/student/klinik/page.tsx', fileContent);

@@ -1,4 +1,6 @@
-"use client";
+const fs = require('fs');
+
+const fileContent = `"use client";
 
 import { useAuth } from "@/lib/auth-context";
 import { createClient } from "@/lib/supabase";
@@ -479,13 +481,13 @@ export default function JadwalLesPage() {
                           <button
                             key={star}
                             disabled={!!attendanceData.rating}
-                            className={`p-1 transition-transform ${!attendanceData.rating ? 'hover:scale-110' : 'cursor-default'}`}
+                            className={\`p-1 transition-transform \${!attendanceData.rating ? 'hover:scale-110' : 'cursor-default'}\`}
                             onMouseEnter={() => !attendanceData.rating && setRatingHover(star)}
                             onMouseLeave={() => !attendanceData.rating && setRatingHover(0)}
                             onClick={() => handleRate(star)}
                           >
                             <Star 
-                              className={`w-10 h-10 ${isFilled ? 'fill-yellow-400 text-yellow-400 drop-shadow-sm' : 'fill-transparent text-slate-300'}`} 
+                              className={\`w-10 h-10 \${isFilled ? 'fill-yellow-400 text-yellow-400 drop-shadow-sm' : 'fill-transparent text-slate-300'}\`} 
                             />
                           </button>
                         );
@@ -502,3 +504,5 @@ export default function JadwalLesPage() {
     </div>
   );
 }
+`;
+fs.writeFileSync('src/app/(dashboard)/student/jadwal-les/page.tsx', fileContent);
