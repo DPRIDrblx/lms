@@ -21,6 +21,7 @@ export function NiaShell({ children }: { children: React.ReactNode }) {
     ...(profile?.role === "tutor" ? [
       { name: "Jadwal Ajar", href: "/tutor/schedules", icon: BookOpen },
       { name: "Materi Modul", href: "/tutor/modules", icon: BookOpen },
+      { name: "Klinik Tutor", href: "/tutor/klinik", icon: BookOpen },
     ] : []),
     ...(profile?.role === "pengurus_nia" ? [
       { name: "Manajemen Materi", href: "/pengurus-nia/courses", icon: BookOpen },
@@ -32,6 +33,7 @@ export function NiaShell({ children }: { children: React.ReactNode }) {
       { name: "Cabang Center", href: "/operator-les/branches", icon: MapPin },
       { name: "Promo Voucher", href: "/operator-les/promos", icon: Sparkles },
       { name: "Manajemen Tutor", href: "/operator-les/tutors", icon: User },
+      { name: "Klinik Tutor", href: "/operator-les/klinik", icon: BookOpen },
     ] : []),
   ];
 
