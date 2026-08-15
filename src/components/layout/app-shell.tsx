@@ -201,7 +201,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
         </AnimatePresence>
         
         <div 
-          className={`min-h-screen pb-24 lg:pb-0 ${uiMode === 'clean' ? 'bg-[#f4f7f6]' : 'bg-slate-50'} text-[var(--text-primary)]`}
+          className={`min-h-screen pb-24 lg:pb-0 ${uiMode === 'clean' ? 'bg-[#F4F6F8]' : 'bg-slate-50'} text-[var(--text-primary)]`}
           data-theme={isCenterStudent && uiMode === 'fun' ? "center" : undefined}
         >
           <StudentSidebar />

@@ -65,19 +65,21 @@ export function StudentSidebar() {
         uiMode === 'clean' ? "border-r border-slate-200" : "border-r-2 border-slate-200 p-6"
       )}>
         {uiMode === 'clean' ? (
-          <div className="p-6 pb-2 border-b border-transparent">
-            <div className="flex items-center gap-2 mb-4">
-              <div className="w-10 h-10 rounded-lg bg-emerald-50 text-emerald-600 flex items-center justify-center">
-                <GraduationCap className="w-6 h-6" />
+          <div className="p-6 pb-4 border-b border-slate-200/60 mb-2">
+            <div className="flex items-center gap-3">
+              <div className="w-9 h-9 rounded-xl bg-blue-600 text-white flex items-center justify-center shadow-sm">
+                <GraduationCap className="w-5 h-5" />
               </div>
-              <div>
-                <h1 className="text-xl font-bold tracking-tight text-slate-800 leading-tight">
-                  IGNITE <br/><span className="text-emerald-500 font-black">CENTER</span>
+              <div className="flex flex-col">
+                <h1 className="text-xl font-bold tracking-tight text-slate-800 leading-none">
+                  IGNITE<span className="text-blue-600">.</span>
                 </h1>
+                <span className="text-[10px] font-medium text-slate-500 uppercase tracking-widest mt-0.5">Ruang Belajar</span>
               </div>
             </div>
             {isCenterStudent && (
-              <div className="text-xs font-bold text-emerald-600 bg-emerald-50 px-3 py-1.5 rounded-full inline-block">
+              <div className="mt-4 text-xs font-bold text-blue-700 bg-blue-50 border border-blue-100 px-3 py-1.5 rounded-lg flex items-center gap-2">
+                <Map className="w-3.5 h-3.5" />
                 Bojonegoro - Dr. Cipto
               </div>
             )}
@@ -103,10 +105,10 @@ export function StudentSidebar() {
                     "flex items-center transition-all",
                     uiMode === 'clean'
                       ? [
-                          "gap-4 px-4 py-3 rounded-xl font-semibold text-base",
+                          "gap-3 px-4 py-3 rounded-xl font-semibold text-sm",
                           isActive 
-                            ? "bg-teal-50 text-teal-700" 
-                            : "text-slate-600 hover:bg-slate-50"
+                            ? "bg-blue-50 text-blue-700 relative" 
+                            : "text-slate-600 hover:bg-slate-50 hover:text-slate-900"
                         ]
                       : [
                           "gap-4 px-4 py-4 rounded-2xl font-bold text-lg border-2",
@@ -116,16 +118,22 @@ export function StudentSidebar() {
                         ]
                   )}
                 >
+                  {uiMode === 'clean' && isActive && (
+                    <motion.div 
+                      layoutId="activeSidebarIndicator"
+                      className="absolute left-0 top-1/2 -translate-y-1/2 w-1 h-1/2 bg-blue-600 rounded-r-full"
+                    />
+                  )}
                   <item.icon 
                     className={cn(
-                      uiMode === 'clean' ? "w-5 h-5" : "w-7 h-7", 
+                      uiMode === 'clean' ? "w-5 h-5 shrink-0" : "w-7 h-7", 
                       isActive 
-                        ? (uiMode === 'clean' ? "text-teal-600" : (isCenterStudent ? "text-red-500" : "text-emerald-500")) 
-                        : (uiMode === 'clean' ? "text-teal-500/70" : "text-slate-400")
+                        ? (uiMode === 'clean' ? "text-blue-600" : (isCenterStudent ? "text-red-500" : "text-emerald-500")) 
+                        : (uiMode === 'clean' ? "text-slate-400" : "text-slate-400")
                     )} 
-                    strokeWidth={isActive ? (uiMode === 'clean' ? 2 : 2.5) : 2} 
+                    strokeWidth={isActive ? (uiMode === 'clean' ? 2.5 : 2.5) : 2} 
                   />
-                  {item.name}
+                  <span className="truncate">{item.name}</span>
                 </div>
               </Link>
             );

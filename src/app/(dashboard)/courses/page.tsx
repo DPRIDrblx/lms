@@ -142,16 +142,17 @@ export default function CoursesPage() {
       )}
 
       {goldenHourActive && profile?.role === 'student' && uiMode === 'clean' && (
-         <div className="w-full rounded-2xl p-6 md:p-8 bg-gradient-to-r from-amber-500 to-orange-500 text-white shadow-sm mb-8 flex flex-col md:flex-row justify-between items-center gap-6">
-            <div>
-               <div className="inline-flex items-center gap-2 px-3 py-1 bg-white/20 rounded-full text-xs font-bold uppercase tracking-wider mb-3">
-                  <Sparkles className="w-4 h-4" /> Event Harian
+         <div className="w-full rounded-3xl p-6 md:p-8 bg-gradient-to-br from-blue-600 via-blue-500 to-cyan-500 text-white shadow-[0_4px_20px_rgba(37,99,235,0.2)] mb-8 flex flex-col md:flex-row justify-between items-center gap-6 relative overflow-hidden">
+            <div className="absolute inset-0 bg-[url('https://www.transparenttextures.com/patterns/cubes.png')] opacity-10"></div>
+            <div className="relative z-10">
+               <div className="inline-flex items-center gap-2 px-3 py-1 bg-white/20 backdrop-blur-sm rounded-full text-xs font-bold uppercase tracking-wider mb-4 border border-white/30">
+                  <Sparkles className="w-4 h-4 text-yellow-300" /> Event Spesial
                </div>
-               <h2 className="text-2xl font-bold mb-1">The Golden Hour</h2>
-               <p className="text-sm text-white/90 max-w-lg">Masuk ke portal kuis harian dan menangkan Gems secara acak!</p>
+               <h2 className="text-3xl font-bold mb-2">The Golden Hour</h2>
+               <p className="text-sm text-blue-50 max-w-lg leading-relaxed">Masuk ke portal kuis harian dan menangkan <span className="font-bold text-yellow-300">Gems</span> secara acak!</p>
             </div>
-            <Link href="/student/golden-hour">
-               <button className="flex items-center gap-2 px-6 py-3 bg-white text-orange-600 rounded-lg font-bold hover:bg-orange-50 transition-colors">
+            <Link href="/student/golden-hour" className="relative z-10 shrink-0">
+               <button className="flex items-center gap-2 px-8 py-3.5 bg-yellow-400 text-yellow-900 rounded-xl font-bold hover:bg-yellow-300 transition-colors shadow-sm">
                   <PlayCircle className="w-5 h-5" /> Masuk Portal
                </button>
             </Link>
@@ -176,9 +177,9 @@ export default function CoursesPage() {
               key={f}
               onClick={() => setFilter(f)}
               className={cn(
-                "px-4 py-3 rounded-2xl text-xs transition-all capitalize whitespace-nowrap",
+                "px-4 py-3 rounded-xl text-xs transition-all capitalize whitespace-nowrap",
                 uiMode === 'clean' 
-                  ? (filter === f ? "bg-indigo-500 text-white font-bold" : "bg-transparent text-slate-500 font-medium hover:bg-slate-100")
+                  ? (filter === f ? "bg-blue-600 text-white font-bold shadow-sm" : "bg-transparent text-slate-500 font-medium hover:bg-slate-100")
                   : `border-2 font-black ${filter === f ? "bg-indigo-500 text-white border-indigo-600 shadow-[0_4px_0_rgb(79,70,229)] transform translate-y-1" : "bg-white text-slate-500 border-slate-200 shadow-[0_4px_0_rgb(226,232,240)] hover:-translate-y-1 hover:shadow-[0_6px_0_rgb(226,232,240)]"}`
               )}
             >
@@ -210,18 +211,18 @@ export default function CoursesPage() {
               >
                 <Link href={`/courses/${course.id}`} className="block h-full group">
                   <div className={cn(
-                    "bg-white overflow-hidden flex flex-col h-full transition-all",
+                    "bg-white overflow-hidden flex flex-col h-full transition-all group",
                     uiMode === 'clean'
-                      ? "rounded-2xl border border-slate-200 shadow-sm hover:border-indigo-400"
+                      ? "rounded-2xl border border-slate-100 shadow-[0_2px_10px_rgba(0,0,0,0.04)] hover:shadow-[0_8px_30px_rgba(0,0,0,0.08)] hover:-translate-y-1"
                       : "rounded-3xl border-2 border-slate-200 shadow-[0_8px_0_rgb(226,232,240)] transform duration-150 hover:-translate-y-1 active:translate-y-2 active:shadow-none"
                   )}>
-                    <div className="aspect-[16/9] flex items-center justify-center relative bg-indigo-50 overflow-hidden">
+                    <div className="aspect-[16/9] flex items-center justify-center relative bg-blue-50 overflow-hidden">
                       {course.cover_image ? (
                         <img src={course.cover_image} alt="" className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700" />
                       ) : (
-                        <BookOpen className="h-12 w-12 text-slate-300 dark:text-slate-600" />
+                        <BookOpen className={cn("h-12 w-12", uiMode === 'clean' ? "text-blue-300" : "text-slate-300")} />
                       )}
-                      <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent opacity-80"></div>
+                      <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-black/10 to-transparent opacity-90 transition-opacity group-hover:opacity-100"></div>
                       <div className="absolute top-3 right-3">
                         <span className={`px-2.5 py-1 rounded-md text-[10px] font-bold uppercase tracking-wider shadow-sm border ${done === total && total > 0 ? 'bg-emerald-500/90 text-white border-emerald-400' : 'bg-indigo-500/90 text-white border-indigo-400'}`}>
                           {done === total && total > 0 ? "Completed" : `${done}/${total} Lessons`}
@@ -233,16 +234,16 @@ export default function CoursesPage() {
                         </span>
                       </div>
                     </div>
-                    <div className="p-6 flex-1 flex flex-col bg-white">
-                      <h2 className={cn("mb-2 line-clamp-2 leading-snug group-hover:text-indigo-500 transition-colors", uiMode === 'clean' ? "text-lg font-bold text-slate-800" : "text-base sm:text-xl font-black text-slate-800")}>{course.title}</h2>
-                      <p className={cn("text-sm text-slate-500 line-clamp-2 mb-6 flex-1 leading-relaxed", uiMode === 'clean' ? "font-medium" : "font-bold")}>{course.description}</p>
-                      <div className="pt-4 border-t border-[var(--border)]">
+                    <div className="p-5 flex-1 flex flex-col bg-white">
+                      <h2 className={cn("mb-2 line-clamp-2 leading-snug group-hover:text-blue-600 transition-colors", uiMode === 'clean' ? "text-base font-bold text-slate-800" : "text-base sm:text-xl font-black text-slate-800")}>{course.title}</h2>
+                      <p className={cn("text-xs text-slate-500 line-clamp-2 mb-6 flex-1 leading-relaxed", uiMode === 'clean' ? "font-medium" : "text-sm font-bold")}>{course.description}</p>
+                      <div className="pt-4 border-t border-slate-100">
                         <div className="flex items-center justify-between mb-2">
-                          <p className="text-xs font-medium text-[var(--text-tertiary)] truncate mr-2">By <span className="font-semibold text-[var(--text-secondary)]">{course.profiles?.full_name}</span></p>
-                          <p className="text-xs font-black text-indigo-600 dark:text-indigo-400">{progressPercent}%</p>
+                          <p className="text-xs font-medium text-slate-500 truncate mr-2">Oleh <span className="font-semibold text-slate-700">{course.profiles?.full_name}</span></p>
+                          <p className={cn("text-xs", uiMode === 'clean' ? "font-bold text-blue-600" : "font-black text-indigo-600")}>{progressPercent}%</p>
                         </div>
-                        <div className="h-2 w-full bg-[var(--bg-tertiary)] rounded-full overflow-hidden">
-                           <div className="h-full bg-indigo-500 rounded-full transition-all duration-1000 ease-out" style={{ width: `${progressPercent}%` }}></div>
+                        <div className="h-1.5 w-full bg-slate-100 rounded-full overflow-hidden">
+                           <div className={cn("h-full rounded-full transition-all duration-1000 ease-out", uiMode === 'clean' ? "bg-blue-500" : "bg-indigo-500")} style={{ width: `${progressPercent}%` }}></div>
                         </div>
                       </div>
                     </div>
