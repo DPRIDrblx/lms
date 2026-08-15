@@ -262,13 +262,17 @@ export default function DrillsPage() {
     const currentLevel = TUTORING_TOPICS.find(l => l.level === selectedLevelId);
     
     return (
-      <div className="min-h-screen bg-slate-50 pb-20">
-        {/* Header Gradient */}
-        <div className="bg-gradient-to-r from-blue-700 via-indigo-600 to-purple-600 h-64 md:h-72 w-full absolute top-0 left-0 z-0">
+      <div className="min-h-screen bg-slate-50 pb-20 relative">
+        {/* Header Gradient Background */}
+        <div className="bg-gradient-to-r from-blue-700 via-indigo-600 to-purple-600 h-72 md:h-80 w-full absolute top-0 inset-x-0 z-0 pointer-events-none">
           <div className="absolute inset-0 overflow-hidden">
             <div className="absolute top-10 right-10 w-64 h-64 bg-white/5 rounded-full blur-3xl"></div>
             <div className="absolute -bottom-10 -left-10 w-48 h-48 bg-purple-500/20 rounded-full blur-2xl"></div>
           </div>
+        </div>
+
+        <div className="relative z-10">
+
           <div className="max-w-6xl mx-auto px-6 pt-24 pb-8 relative z-20 flex items-center justify-between text-white">
             <h1 className="text-2xl font-bold tracking-tight">Drill Soal</h1>
             
@@ -300,9 +304,8 @@ export default function DrillsPage() {
               )}
             </div>
           </div>
-        </div>
 
-        <div className="max-w-5xl mx-auto px-4 sm:px-6 relative z-10 pt-20">
+          <div className="max-w-5xl mx-auto px-4 sm:px-6">
           {/* Profile & Stats Card */}
           <div className="bg-white rounded-2xl shadow-sm border border-slate-100 p-6 mb-8">
             <div className="flex flex-col md:flex-row md:items-start justify-between gap-6">
@@ -463,6 +466,7 @@ export default function DrillsPage() {
             </div>
           </div>
         </div>
+      </div>
       </div>
     );
   }
