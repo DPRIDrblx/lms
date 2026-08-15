@@ -1,4 +1,6 @@
-"use client";
+const fs = require('fs');
+
+const fileContent = `"use client";
 
 import { useAuth } from "@/lib/auth-context";
 import { createClient } from "@/lib/supabase";
@@ -160,3 +162,5 @@ export default function EModulPage() {
     </div>
   );
 }
+`;
+fs.writeFileSync('src/app/(dashboard)/student/e-modul/page.tsx', fileContent);
