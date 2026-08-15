@@ -420,6 +420,65 @@ export const TUTORING_TOPICS: EducationLevel[] = [
           { name: "Kebangkitan Nasional 1908", subtopics: ["Kondisi Bangsa Indonesia Sebelum 1908", "Perintis Kebangkitan Nasional", "Mewujudkan Persatuan dan Kebanggaan Nasional"] },
           { name: "Sumpah Pemuda dalam Bingkai Bhinneka Tunggal Ika", subtopics: ["Arti dan Makna Sumpah Pemuda", "Memaknai Semangat Kejuangan Pemuda", "Nilai Semangat Sumpah Pemuda Masa Kini"] }
         ]
+      },
+      {
+        name: "Dasar Pemrograman (Python & Scratch)",
+        topics: [
+          { name: "Pengenalan Scratch", subtopics: ["Antarmuka & Blok Kode Scratch", "Menggerakkan Sprite & Animasi", "Event & Trigger (When Flag Clicked)", "Variabel & Scoring dalam Game Sederhana", "Looping & Kondisional (If-Else) di Scratch"] },
+          { name: "Pengenalan Python", subtopics: ["Instalasi Python & Editor (IDLE/VS Code)", "Sintaks Dasar & Fungsi print()", "Tipe Data (Integer, String, Float, Boolean)", "Variabel & Input dari User"] },
+          { name: "Struktur Kontrol Python", subtopics: ["Percabangan (If, Elif, Else)", "Operator Logika (And, Or, Not)", "Perulangan (For Loop & While Loop)", "Break & Continue"] },
+          { name: "Struktur Data Dasar Python", subtopics: ["List (Menambah, Menghapus, Mengakses Elemen)", "Tuple & Perbedaannya dengan List", "Dictionary (Key-Value Pair)"] },
+          { name: "Fungsi (Function) Python", subtopics: ["Mendefinisikan Fungsi (def)", "Parameter & Argumen", "Return Value (Nilai Kembalian)"] },
+          { name: "Mini Project Pemrograman", subtopics: ["Membuat Kalkulator Sederhana", "Game Tebak Angka", "Aplikasi Kuis Interaktif Berbasis Teks"] }
+        ]
+      },
+      {
+        name: "Pengembangan Game Komputer Dasar",
+        topics: [
+          { name: "Konsep Dasar Game Development", subtopics: ["Genre Game & Game Mechanics", "Alur Pembuatan Game (Pre-production, Production, Post)", "Aset Game (Sprite, Sound, Music, UI)"] },
+          { name: "Game Engine Pemula (Construct 3 / GDevelop)", subtopics: ["Pengenalan Interface & Workspace", "Memasukkan Objek & Karakter", "Menambahkan Behavior (Platformer, 8-Direction)"] },
+          { name: "Logika Event dalam Game", subtopics: ["Event Sheet & Actions", "Sistem Tabrakan (Collision Detection)", "Spawning & Destroying Objects"] },
+          { name: "Sistem Level & UI", subtopics: ["Membuat Start Menu & Game Over Screen", "Sistem Nyawa (Health/Lives) & Skor", "Berpindah Antar Level (Scene/Layout)"] },
+          { name: "Game Publishing", subtopics: ["Export Game ke HTML5", "Bermain Game di Web Browser", "Mencari Feedback dari Tester"] }
+        ]
+      },
+      {
+        name: "Logika & Algoritma Digital",
+        topics: [
+          { name: "Konsep Algoritma", subtopics: ["Apa itu Algoritma?", "Ciri-ciri Algoritma yang Baik", "Penerapan Algoritma di Kehidupan Sehari-hari"] },
+          { name: "Penyajian Algoritma", subtopics: ["Pseudocode (Kode Semu)", "Flowchart (Diagram Alir) & Simbol-simbolnya", "Membaca & Membuat Flowchart Sederhana"] },
+          { name: "Berpikir Komputasional", subtopics: ["Dekomposisi (Memecah Masalah)", "Pengenalan Pola (Pattern Recognition)", "Abstraksi (Menyaring Informasi Penting)", "Perancangan Algoritma"] },
+          { name: "Logika Proposisi & Gerbang Logika Dasar", subtopics: ["Pernyataan Benar (True) & Salah (False)", "Operator AND, OR, NOT", "Tabel Kebenaran Sederhana", "Gerbang Logika (Logic Gates)"] }
+        ]
+      },
+      {
+        name: "Desain Grafis & UI/UX Aplikasi",
+        topics: [
+          { name: "Prinsip Dasar Desain Grafis", subtopics: ["Warna (Color Theory, RGB vs CMYK)", "Tipografi (Font Serif, Sans-serif, Script)", "Layout & Komposisi (Rule of Thirds, Grid)", "Keseimbangan (Balance) & Kontras"] },
+          { name: "Pengenalan Aplikasi Desain (Canva / Figma)", subtopics: ["Workspace & Tools Dasar", "Menggunakan Shapes, Teks, dan Gambar", "Layers & Grouping"] },
+          { name: "Konsep UI (User Interface)", subtopics: ["Apa itu UI?", "Elemen UI (Tombol, Ikon, Input Field)", "Konsistensi Visual & Hierarki Desain", "Membuat Wireframe (Sketsa Kasar)"] },
+          { name: "Konsep UX (User Experience)", subtopics: ["Memahami Kebutuhan Pengguna", "User Flow (Alur Pengguna)", "Membuat Prototipe Sederhana", "Testing Prototipe Aplikasi"] },
+          { name: "Proyek Desain Aplikasi", subtopics: ["Merancang Tampilan Halaman Login", "Merancang Halaman Beranda (Home Screen)", "Membuat Interaksi (Click/Hover) di Figma"] }
+        ]
+      },
+      {
+        name: "Pengenalan IoT & Sistem Sensor",
+        topics: [
+          { name: "Dasar Internet of Things (IoT)", subtopics: ["Apa itu IoT?", "Contoh Penerapan IoT di Rumah (Smart Home)", "Komponen Utama IoT (Sensor, Perangkat, Jaringan, Cloud)"] },
+          { name: "Pengenalan Mikrokontroler (Arduino/ESP8266)", subtopics: ["Apa itu Arduino?", "Memahami Pin Input & Output", "Rangkaian Elektronika Dasar (Breadboard, LED, Resistor)", "Cara Mengupload Kode ke Papan"] },
+          { name: "Jenis-jenis Sensor Dasar", subtopics: ["Sensor Suhu & Kelembaban (DHT11)", "Sensor Jarak (Ultrasonik)", "Sensor Cahaya (LDR)", "Sensor Gerak (PIR)"] },
+          { name: "Pemrograman Perangkat Keras", subtopics: ["Membaca Data Analog & Digital", "Mengontrol LED dengan Sensor Cahaya", "Membunyikan Buzzer Saat Ada Jarak Dekat"] },
+          { name: "Menghubungkan Perangkat ke Internet", subtopics: ["Konsep Wi-Fi pada Mikrokontroler", "Mengirim Data Sensor ke Platform IoT (Thingspeak / Blynk)", "Mengontrol Lampu via Smartphone"] }
+        ]
+      },
+      {
+        name: "Keamanan Siber Dasar (Cybersecurity)",
+        topics: [
+          { name: "Pengenalan Keamanan Siber", subtopics: ["Apa itu Cybersecurity?", "Ancaman di Dunia Maya (Malware, Virus, Trojan)", "Pentingnya Melindungi Data Pribadi"] },
+          { name: "Praktik Aman Berinternet", subtopics: ["Membuat Password yang Kuat & Password Manager", "Autentikasi Dua Langkah (2FA)", "Mengenali Phishing (Email/Link Palsu)", "Bahaya Public Wi-Fi"] },
+          { name: "Jejak Digital & Etika Online", subtopics: ["Apa itu Jejak Digital (Digital Footprint)?", "Dampak Postingan di Media Sosial", "Cyberbullying & Cara Mencegahnya"] },
+          { name: "Kriptografi Sederhana", subtopics: ["Konsep Enkripsi & Dekripsi", "Sandi Caesar (Caesar Cipher)", "Pentingnya Enkripsi pada Aplikasi Chatting"] }
+        ]
       }
     ]
   },

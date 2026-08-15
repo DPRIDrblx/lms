@@ -7,7 +7,7 @@ import { Home, Shield, Swords, User, Compass, Users, MessageCircle, ShoppingBag,
 import { cn } from "@/lib/utils";
 import { motion, AnimatePresence } from "framer-motion";
 import { useAuth } from "@/lib/auth-context";
-import { FolderOpen, Calendar } from "lucide-react";
+import { FolderOpen, Calendar, Archive } from "lucide-react";
 
 export function StudentSidebar() {
   const pathname = usePathname();
@@ -41,12 +41,14 @@ export function StudentSidebar() {
     if (exploreIndex !== -1) {
       navItems.splice(exploreIndex + 1, 0, 
         { name: "E-Modul", href: "/student/e-modul", icon: FolderOpen },
-        { name: "Jadwal Les", href: "/student/jadwal-les", icon: Calendar }
+        { name: "Jadwal Les", href: "/student/jadwal-les", icon: Calendar },
+        { name: "Arsip Les", href: "/student/arsip-les", icon: Archive }
       );
     } else {
       navItems.push(
         { name: "E-Modul", href: "/student/e-modul", icon: FolderOpen },
-        { name: "Jadwal Les", href: "/student/jadwal-les", icon: Calendar }
+        { name: "Jadwal Les", href: "/student/jadwal-les", icon: Calendar },
+        { name: "Arsip Les", href: "/student/arsip-les", icon: Archive }
       );
     }
   }
