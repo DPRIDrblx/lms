@@ -3,7 +3,7 @@
 import { useState, useEffect } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Home, Shield, Swords, User, Compass, Users, MessageCircle, ShoppingBag, Tent, ShoppingCart, Map, Menu, X, Sparkles, Timer, Notebook, Trophy, PawPrint, Medal } from "lucide-react";
+import { Home, Shield, Swords, User, Compass, Users, MessageCircle, ShoppingBag, Tent, ShoppingCart, Map, Menu, X, Sparkles, Timer, Notebook, Trophy, PawPrint, Medal, Target } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { motion, AnimatePresence } from "framer-motion";
 import { useAuth } from "@/lib/auth-context";
@@ -49,6 +49,7 @@ export function StudentSidebar() {
     { name: "Social", href: "/student/social", icon: Users },
     { name: "Messages", href: "/student/messages", icon: MessageCircle },
     { name: "Explore", href: "/courses", icon: Compass },
+    { name: "Latihan", href: "/student/drills", icon: Target },
     { name: "Study Room", href: "/student/study-room", icon: Timer },
     { name: "Smart Notes", href: "/student/notes", icon: Notebook },
     { name: "Market", href: "/student/market", icon: ShoppingCart },
