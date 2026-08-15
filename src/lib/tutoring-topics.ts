@@ -54,6 +54,12 @@ export const TUTORING_TOPICS: EducationLevel[] = [
           { name: "Benda di Sekitarku", subtopics: ["Mengenal benda hidup (hewan, tumbuhan, manusia)", "Mengenal benda tak hidup (meja, buku, batu)", "Ciri-ciri benda (warna, bentuk, ukuran)"] },
           { name: "Lingkungan Sehat & Tidak Sehat", subtopics: ["Ciri rumah yang bersih", "Ciri rumah yang kotor", "Cara menjaga kebersihan lingkungan sekolah"] }
         ]
+      },
+      {
+        name: "NIA Skill Up",
+        topics: [
+          { name: "Kegiatan Bulan Ini", subtopics: ["Pertemuan 1 (Minggu Pertama)", "Pertemuan 2 (Minggu Ketiga)", "Materi Skill Up"] }
+        ]
       }
     ]
   },
@@ -89,6 +95,12 @@ export const TUTORING_TOPICS: EducationLevel[] = [
         topics: [
           { name: "Hewan & Tumbuhan di Sekitarku", subtopics: ["Bagian-bagian tubuh hewan", "Bagian-bagian tumbuhan (akar, batang, daun)", "Hewan peliharaan dan cara merawatnya", "Hewan liar dan berbahaya"] },
           { name: "Wujud & Sifat Benda", subtopics: ["Ciri benda padat", "Ciri benda cair", "Ciri benda gas", "Perubahan wujud (es mencair)"] }
+        ]
+      },
+      {
+        name: "NIA Skill Up",
+        topics: [
+          { name: "Kegiatan Bulan Ini", subtopics: ["Pertemuan 1 (Minggu Pertama)", "Pertemuan 2 (Minggu Ketiga)", "Materi Skill Up"] }
         ]
       }
     ]
@@ -127,6 +139,12 @@ export const TUTORING_TOPICS: EducationLevel[] = [
           { name: "Cuaca & Iklim", subtopics: ["Jenis-jenis cuaca (Cerah, Berawan, Mendung, Hujan)", "Pengaruh cuaca terhadap kegiatan manusia", "Pakaian & makanan yang cocok untuk berbagai cuaca"] },
           { name: "Energi & Perubahannya", subtopics: ["Sumber energi terbesar (Matahari)", "Energi angin dan air", "Perubahan energi listrik menjadi panas/cahaya/gerak", "Cara menghemat energi listrik"] },
           { name: "Perkembangbiakan Makhluk Hidup", subtopics: ["Daur hidup kupu-kupu & katak", "Pertumbuhan ayam & kucing", "Cara tumbuhan berkembang biak (Biji, Tunas)"] }
+        ]
+      },
+      {
+        name: "NIA Skill Up",
+        topics: [
+          { name: "Kegiatan Bulan Ini", subtopics: ["Pertemuan 1 (Minggu Pertama)", "Pertemuan 2 (Minggu Ketiga)", "Materi Skill Up"] }
         ]
       }
     ]
@@ -170,6 +188,12 @@ export const TUTORING_TOPICS: EducationLevel[] = [
         topics: [
           { name: "Sumber Daya Alam", subtopics: ["SDA yang dapat diperbarui (Tumbuhan, Hewan, Air, Angin)", "SDA yang tidak dapat diperbarui (Batu bara, Minyak bumi, Emas)", "Pemanfaatan SDA untuk ekonomi", "Dampak eksploitasi SDA berlebihan"] },
           { name: "Kerajaan Hindu-Buddha & Islam", subtopics: ["Peninggalan kerajaan Tarumanegara & Kutai", "Peninggalan kerajaan Sriwijaya & Majapahit", "Kerajaan Samudera Pasai & Demak", "Tokoh-tokoh pahlawan masa kerajaan"] }
+        ]
+      },
+      {
+        name: "NIA Skill Up",
+        topics: [
+          { name: "Kegiatan Bulan Ini", subtopics: ["Pertemuan 1 (Minggu Pertama)", "Pertemuan 2 (Minggu Ketiga)", "Materi Skill Up"] }
         ]
       }
     ]
@@ -215,6 +239,12 @@ export const TUTORING_TOPICS: EducationLevel[] = [
         topics: [
           { name: "Geografi Indonesia", subtopics: ["Letak geografis & astronomis Indonesia", "Kondisi geografis pulau-pulau besar (Sumatra, Jawa, Kalimantan, dll)", "Dampak letak geografis (Iklim & Flora Fauna)"] },
           { name: "Sejarah Penjajahan & Proklamasi", subtopics: ["Masa penjajahan Belanda & VOC", "Masa penjajahan Jepang (Romusha)", "Persiapan kemerdekaan (BPUPKI & PPKI)", "Peristiwa Rengasdengklok & Detik-detik Proklamasi"] }
+        ]
+      },
+      {
+        name: "NIA Skill Up",
+        topics: [
+          { name: "Kegiatan Bulan Ini", subtopics: ["Pertemuan 1 (Minggu Pertama)", "Pertemuan 2 (Minggu Ketiga)", "Materi Skill Up"] }
         ]
       }
     ]
@@ -262,6 +292,12 @@ export const TUTORING_TOPICS: EducationLevel[] = [
           { name: "Negara-negara ASEAN", subtopics: ["Letak geografis & batas wilayah ASEAN", "Ibukota & Mata uang negara ASEAN", "Keadaan alam, ekonomi, & budaya negara ASEAN"] },
           { name: "Peran Indonesia Era Globalisasi", subtopics: ["Dampak positif & negatif globalisasi", "Barang ekspor & impor Indonesia", "Kerja sama internasional Indonesia (PBB, GNB)"] },
           { name: "Perjuangan Mempertahankan Kemerdekaan", subtopics: ["Pertempuran 10 November di Surabaya", "Bandung Lautan Api & Ambarawa", "Perjanjian Linggajati, Renville, Roem-Royen", "Konferensi Meja Bundar (KMB)"] }
+        ]
+      },
+      {
+        name: "NIA Skill Up",
+        topics: [
+          { name: "Kegiatan Bulan Ini", subtopics: ["Pertemuan 1 (Minggu Pertama)", "Pertemuan 2 (Minggu Ketiga)", "Materi Skill Up"] }
         ]
       }
     ]
@@ -332,6 +368,12 @@ export const TUTORING_TOPICS: EducationLevel[] = [
           { name: "Norma dalam Masyarakat", subtopics: ["Norma Agama, Kesusilaan, Kesopanan, Hukum", "Sanksi pelanggaran norma", "Pentingnya norma untuk keadilan"] },
           { name: "Keberagaman SARA", subtopics: ["Faktor keberagaman di Indonesia", "Suku, Agama, Ras, Antargolongan", "Toleransi & Bhinneka Tunggal Ika"] },
           { name: "Daerah dalam NKRI", subtopics: ["Makna otonomi daerah", "Peran daerah melawan penjajah", "Menjaga keutuhan NKRI"] }
+        ]
+      },
+      {
+        name: "NIA Skill Up",
+        topics: [
+          { name: "Kegiatan Bulan Ini", subtopics: ["Pertemuan 1 (Minggu Pertama)", "Pertemuan 2 (Minggu Ketiga)", "Materi Skill Up"] }
         ]
       }
     ]
@@ -479,6 +521,12 @@ export const TUTORING_TOPICS: EducationLevel[] = [
           { name: "Jejak Digital & Etika Online", subtopics: ["Apa itu Jejak Digital (Digital Footprint)?", "Dampak Postingan di Media Sosial", "Cyberbullying & Cara Mencegahnya"] },
           { name: "Kriptografi Sederhana", subtopics: ["Konsep Enkripsi & Dekripsi", "Sandi Caesar (Caesar Cipher)", "Pentingnya Enkripsi pada Aplikasi Chatting"] }
         ]
+      },
+      {
+        name: "NIA Skill Up",
+        topics: [
+          { name: "Kegiatan Bulan Ini", subtopics: ["Pertemuan 1 (Minggu Pertama)", "Pertemuan 2 (Minggu Ketiga)", "Materi Skill Up"] }
+        ]
       }
     ]
   },
@@ -544,6 +592,12 @@ export const TUTORING_TOPICS: EducationLevel[] = [
           { name: "Perubahan Sosial Budaya & Globalisasi", subtopics: ["Bentuk Perubahan Sosial (Evolusi, Revolusi, Direncanakan, Tidak Direncanakan)", "Faktor Pendorong & Penghambat Perubahan Sosial", "Globalisasi di Bidang Ekonomi, Komunikasi, IPTEK, Budaya", "Dampak Positif & Negatif Globalisasi (Westernisasi, Kesenjangan Sosial)"] },
           { name: "Ketergantungan Antarruang & Kesejahteraan", subtopics: ["Perdagangan Internasional (Teori Keunggulan Mutlak & Komparatif)", "Kebijakan Perdagangan Internasional (Proteksi, Kuota, Tarif, Dumping)", "Ekonomi Kreatif (Gagasan, Potensi, Pusat Keunggulan Ekonomi)", "Pasar Bebas (MEA, AFTA, APEC, MEE, WTO)"] },
           { name: "Masa Kemerdekaan Hingga Reformasi", subtopics: ["Masa Kemerdekaan (1945-1950) & Mempertahankan Kemerdekaan", "Masa Demokrasi Parlementer (Liberal) (1950-1959)", "Masa Demokrasi Terpimpin (1959-1965) (Dekrit Presiden, Trikora)", "Masa Orde Baru (1966-1998) (Supersemar, Pembangunan Lima Tahun)", "Masa Reformasi (1998-Sekarang)"] }
+        ]
+      },
+      {
+        name: "NIA Skill Up",
+        topics: [
+          { name: "Kegiatan Bulan Ini", subtopics: ["Pertemuan 1 (Minggu Pertama)", "Pertemuan 2 (Minggu Ketiga)", "Materi Skill Up"] }
         ]
       }
     ]
@@ -623,6 +677,12 @@ export const TUTORING_TOPICS: EducationLevel[] = [
           { name: "Teks Negosiasi", subtopics: ["Struktur Negosiasi (Orientasi, Pengajuan, Penawaran, Persetujuan)", "Kalimat Persuasif & Sopan santun tawar-menawar", "Mendemonstrasikan negosiasi bisnis/konflik"] },
           { name: "Teks Biografi", subtopics: ["Struktur (Orientasi, Kejadian Penting, Reorientasi)", "Karakter Unggul Tokoh", "Penggunaan Pronomina Persona Ketiga & Kata Kerja Tindakan"] },
           { name: "Puisi (Batin & Fisik)", subtopics: ["Diksi, Imaji, Kata Konkret, Majas, Rima/Ritma", "Tema, Perasaan, Nada, Amanat", "Musikalisasi Puisi & Mendemonstrasikan Puisi"] }
+        ]
+      },
+      {
+        name: "NIA Skill Up",
+        topics: [
+          { name: "Kegiatan Bulan Ini", subtopics: ["Pertemuan 1 (Minggu Pertama)", "Pertemuan 2 (Minggu Ketiga)", "Materi Skill Up"] }
         ]
       }
     ]
@@ -709,6 +769,12 @@ export const TUTORING_TOPICS: EducationLevel[] = [
           { name: "Explanation Text", subtopics: ["Generic Structure (General statement, Sequenced explanation)", "Passive Voice usage in Explanation text", "Explaining natural and social phenomena"] },
           { name: "Passive Voice (Advanced)", subtopics: ["Passive voice in Perfect Tenses", "Passive voice with Modals", "Causative Verbs (Have/Get something done)"] }
         ]
+      },
+      {
+        name: "NIA Skill Up",
+        topics: [
+          { name: "Kegiatan Bulan Ini", subtopics: ["Pertemuan 1 (Minggu Pertama)", "Pertemuan 2 (Minggu Ketiga)", "Materi Skill Up"] }
+        ]
       }
     ]
   },
@@ -791,6 +857,12 @@ export const TUTORING_TOPICS: EducationLevel[] = [
           { name: "Caption & Visual Information", subtopics: ["How to write a good caption for pictures/graphs", "Interpreting charts, graphs, and tables", "Message within a photo"] },
           { name: "Review Text", subtopics: ["Critiquing artworks, movies, and literature", "Structure: Orientation, Evaluation, Interpretative Recount, Evaluative Summation"] },
           { name: "UTBK/SNBT Preparation", subtopics: ["Literasi Bahasa Inggris: Reading Comprehension Deep Dive", "Finding implicit meaning and author's tone", "Synthesizing information from multiple texts", "Advanced Vocabulary & Idioms"] }
+        ]
+      },
+      {
+        name: "NIA Skill Up",
+        topics: [
+          { name: "Kegiatan Bulan Ini", subtopics: ["Pertemuan 1 (Minggu Pertama)", "Pertemuan 2 (Minggu Ketiga)", "Materi Skill Up"] }
         ]
       }
     ]
