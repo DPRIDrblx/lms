@@ -711,7 +711,7 @@ export default function DrillsPage() {
           </div>
 
           {/* Question Area */}
-          <div className="bg-white rounded-2xl p-6 sm:p-8 shadow-sm border border-slate-200 flex-1 flex flex-col md:flex-row gap-8 mb-24">
+          <div className="bg-white rounded-2xl p-5 sm:p-8 shadow-sm border border-slate-200 flex-1 flex flex-col md:flex-row gap-6 md:gap-8 mb-40 lg:mb-24">
             
             <div className="flex-1">
               <div className="flex items-center gap-2 mb-4">
@@ -732,7 +732,7 @@ export default function DrillsPage() {
                   <button
                     key={idx}
                     onClick={() => setAnswers(prev => ({ ...prev, [currentIndex]: idx }))}
-                    className={`w-full flex items-center gap-4 p-5 rounded-2xl border-2 transition-all text-left group
+                    className={`w-full flex items-center gap-3 md:gap-4 p-4 md:p-5 rounded-2xl border-2 transition-all text-left group
                       ${isSelected 
                         ? 'border-blue-500 bg-blue-50' 
                         : 'border-slate-200 hover:border-blue-300 hover:bg-slate-50 bg-white'
@@ -758,7 +758,7 @@ export default function DrillsPage() {
         </div>
 
         {/* Bottom Floating Bar */}
-        <div className="fixed bottom-0 left-0 right-0 bg-white border-t border-slate-200 px-6 py-4 shadow-[0_-4px_20px_rgba(0,0,0,0.05)] z-20">
+        <div className="fixed bottom-[80px] lg:bottom-0 left-0 lg:left-[260px] right-0 bg-white border-t border-slate-200 px-4 md:px-6 py-3 md:py-4 shadow-[0_-4px_20px_rgba(0,0,0,0.05)] z-20">
           <div className="max-w-5xl mx-auto flex items-center justify-between">
             {isAnswered ? (
               <div className="hidden sm:block">
@@ -771,11 +771,11 @@ export default function DrillsPage() {
               </div>
             )}
 
-            <div className="flex items-center gap-3 ml-auto w-full sm:w-auto">
+            <div className="flex items-center gap-2 md:gap-3 ml-auto w-full sm:w-auto">
               {currentIndex > 0 && (
                 <button
                   onClick={() => setCurrentIndex(prev => prev - 1)}
-                  className="px-6 py-3.5 rounded-xl font-bold border-2 border-slate-200 text-slate-600 hover:bg-slate-50 flex-1 sm:flex-none text-center"
+                  className="px-4 md:px-6 py-3 md:py-3.5 rounded-xl font-bold border-2 border-slate-200 text-slate-600 hover:bg-slate-50 flex-1 sm:flex-none text-center"
                 >
                   Kembali
                 </button>
@@ -784,7 +784,7 @@ export default function DrillsPage() {
               {currentIndex === questions.length - 1 ? (
                 <button
                   onClick={() => handleFinish(answers)}
-                  className={`px-10 py-3.5 rounded-xl font-bold text-white transition-all shadow-lg flex-1 sm:flex-none
+                  className={`px-6 md:px-10 py-3 md:py-3.5 rounded-xl font-bold text-white transition-all shadow-lg flex-1 sm:flex-none
                     ${isAnswered ? 'bg-[#F97316] hover:bg-[#EA580C] shadow-orange-500/25' : 'bg-slate-300 cursor-not-allowed'}`}
                   disabled={!isAnswered}
                 >
@@ -793,7 +793,7 @@ export default function DrillsPage() {
               ) : (
                 <button
                   onClick={() => setCurrentIndex(prev => prev + 1)}
-                  className={`px-10 py-3.5 rounded-xl font-bold text-white transition-all shadow-lg flex-1 sm:flex-none
+                  className={`px-6 md:px-10 py-3 md:py-3.5 rounded-xl font-bold text-white transition-all shadow-lg flex-1 sm:flex-none
                     ${isAnswered ? 'bg-[#F97316] hover:bg-[#EA580C] shadow-orange-500/25' : 'bg-slate-300 cursor-not-allowed'}`}
                   disabled={!isAnswered}
                 >
