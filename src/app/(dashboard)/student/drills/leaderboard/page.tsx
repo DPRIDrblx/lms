@@ -31,7 +31,30 @@ export default function DrillLeaderboardPage() {
   const fetchLeaderboard = async () => {
     setIsLoading(true);
     try {
-      // Fetch all results and profiles for a simple client-side aggregation
+      // 1. Coba ambil dari View di database agar perhitungan (agregasi) dilakukan di server
+      const { data: viewData, error: viewError } = await supabase
+        .from('ai_drill_leaderboard')
+        .select('*')
+        .order('total_xp', { ascending: false })
+        .limit(100);
+
+      if (!viewError && viewData) {
+        let arr = viewData.map((v: any, idx: number) => ({
+          student_id: v.student_id,
+          name: v.full_name || 'Siswa',
+          avatar: v.avatar_url || `https://api.dicebear.com/7.x/avataaars/svg?seed=${v.full_name}`,
+          total_correct: v.total_correct || 0,
+          total_xp: v.total_xp || 0,
+          rank: idx + 1
+        }));
+        setEntries(arr.filter((e: LeaderboardEntry) => e.total_xp > 0));
+        setIsLoading(false);
+        return;
+      }
+
+      // 2. Fallback: Fetch all results and profiles for a simple client-side aggregation
+      // (Digunakan jika view 'ai_drill_leaderboard' belum dibuat di database)
+      console.warn("View ai_drill_leaderboard not found, falling back to local aggregation");
       const { data: results, error: resError } = await supabase
         .from('ai_drill_results')
         .select('student_id, correct_answers');
