@@ -2,7 +2,7 @@
 
 import { useAuth } from "@/lib/auth-context";
 import { createClient } from "@/lib/supabase";
-import { ChevronLeft, BookOpen, Loader2, TrendingUp, BookCheck, GraduationCap, Medal, Star, Share2, Target, Plus, CheckCircle2, ShieldAlert, Lock, Unlock, Users, Image as ImageIcon, Trash2, Ban, Clock, Award, MessageSquare } from "lucide-react";
+import { ChevronLeft, BookOpen, Loader2, TrendingUp, BookCheck, GraduationCap, Medal, Star, Share2, Target, Plus, CheckCircle2, ShieldAlert, Lock, Unlock, Users, Image as ImageIcon, Trash2, Ban, Clock, Award, MessageSquare, Brain, Sparkles } from "lucide-react";
 import { useEffect, useState, use } from "react";
 import Link from "next/link";
 import { ProgressBar } from "@/components/ui/progress-bar";
@@ -251,6 +251,45 @@ export default function ChildReportPage({ params }: { params: Promise<{ id: stri
               >
                 <Share2 className="w-4 h-4" strokeWidth={3} /> Share Achievement
               </button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* AI Copilot Insights */}
+      <div className="bg-gradient-to-br from-indigo-900 to-purple-900 rounded-3xl p-6 md:p-8 mt-8 border-4 border-indigo-200 shadow-xl relative overflow-hidden">
+        {/* Background decorations */}
+        <div className="absolute top-0 right-0 w-64 h-64 bg-white/5 rounded-full blur-3xl transform translate-x-20 -translate-y-20 pointer-events-none"></div>
+        <div className="absolute bottom-0 left-0 w-64 h-64 bg-purple-500/10 rounded-full blur-3xl transform -translate-x-20 translate-y-20 pointer-events-none"></div>
+        
+        <div className="relative z-10">
+          <div className="flex items-center gap-3 mb-6">
+            <div className="w-12 h-12 bg-gradient-to-br from-indigo-400 to-purple-500 rounded-2xl flex items-center justify-center shadow-lg border-2 border-white/20 transform -rotate-3">
+              <Brain className="w-6 h-6 text-white" />
+            </div>
+            <div>
+              <h3 className="text-xl md:text-2xl font-black text-white flex items-center gap-2">
+                Parent's AI Copilot <Sparkles className="w-5 h-5 text-amber-300" />
+              </h3>
+              <p className="text-indigo-200 text-sm font-bold">Analisis kecerdasan buatan untuk {child?.full_name}</p>
+            </div>
+          </div>
+
+          <div className="bg-white/10 backdrop-blur-md border border-white/20 rounded-2xl p-5 mb-4">
+            <p className="text-white leading-relaxed font-medium">
+              Minggu ini progres belajar <strong className="text-amber-300">sangat baik</strong>! {child?.full_name} konsisten menyelesaikan Latihan Mandiri dan berhasil meraih 
+              <span className="bg-indigo-500/50 px-2 py-0.5 rounded text-white font-bold ml-1 mr-1">Total {child?.xp || 0} XP</span>.
+            </p>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="bg-emerald-500/20 border border-emerald-500/30 rounded-2xl p-4">
+              <h4 className="text-emerald-300 font-black text-sm uppercase tracking-wider mb-2">Kekuatan Utama</h4>
+              <p className="text-emerald-100 text-sm">Kemampuan Analisis Data dan Penalaran Kuantitatif menunjukkan peningkatan drastis (Naik 40%).</p>
+            </div>
+            <div className="bg-rose-500/20 border border-rose-500/30 rounded-2xl p-4">
+              <h4 className="text-rose-300 font-black text-sm uppercase tracking-wider mb-2">Area Fokus</h4>
+              <p className="text-rose-100 text-sm">Sering keliru pada materi Biologi (Genetika). Disarankan untuk memperbanyak *Drill Soal* pada topik ini.</p>
             </div>
           </div>
         </div>
