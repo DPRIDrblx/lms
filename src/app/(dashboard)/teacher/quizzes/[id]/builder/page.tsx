@@ -36,11 +36,11 @@ import { RichTextEditor } from "@/components/ui/rich-text-editor";
 interface Question {
   id: string;
   question_text: string;
-  question_type: "mcq" | "essay" | "complex_mcq" | "matching";
-  options: { text: string; is_correct?: boolean; match_pair?: string }[] | null;
+  question_type: "mcq" | "essay" | "complex_mcq" | "matching" | "matrix";
+  options: { text: string; is_correct?: boolean; match_pair?: string; match_pairs?: string[] }[] | null;
   points: number;
   order_index: number;
-  criteria?: { minLength?: number; maxLength?: number } | null;
+  criteria?: { minLength?: number; maxLength?: number; cols?: string[] } | null;
   explanation?: string | null;
 }
 
@@ -117,7 +117,7 @@ export default function CBTBuilderPage() {
     fetchData();
   }, [id, supabase]);
 
-  const addQuestion = (type: "mcq" | "essay" | "complex_mcq" | "matching") => {
+  const addQuestion = (type: "mcq" | "essay" | "complex_mcq" | "matching" | "matrix") => {
     const newQ: Question = {
       id: `temp-${Date.now()}`,
       question_text: "",
@@ -130,8 +130,11 @@ export default function CBTBuilderPage() {
       ] : type === "matching" ? [
         { text: "Term 1", match_pair: "Definition 1" },
         { text: "Term 2", match_pair: "Definition 2" }
+      ] : type === "matrix" ? [
+        { text: "Pernyataan 1", match_pairs: ["Benar"] },
+        { text: "Pernyataan 2", match_pairs: ["Salah"] }
       ] : null,
-      criteria: type === "essay" ? { minLength: 250 } : null
+      criteria: type === "essay" ? { minLength: 250 } : type === "matrix" ? { cols: ["Benar", "Salah"] } : null
     };
     setQuestions([...questions, newQ]);
   };
@@ -387,6 +390,10 @@ export default function CBTBuilderPage() {
                 <Plus className="h-4 w-4 mr-2 text-[var(--accent)]" />
                 Essay
               </Button>
+              <Button variant="secondary" className="justify-start border-[var(--border)] bg-white dark:bg-[var(--bg-secondary)] shadow-sm" onClick={() => addQuestion("matrix")}>
+                <Plus className="h-4 w-4 mr-2 text-[var(--accent)]" />
+                Matrix / Tabel
+              </Button>
               <Button variant="secondary" className="justify-start border-blue-200 bg-blue-50 text-blue-700 hover:bg-blue-100 hover:text-blue-800 mt-4 shadow-sm" onClick={openBankModal}>
                 <Download className="h-4 w-4 mr-2" />
                 Impor dari Bank Soal
@@ -411,6 +418,7 @@ export default function CBTBuilderPage() {
                         {q.question_type === "mcq" && <HelpCircle className="h-3 w-3" />}
                         {q.question_type === "complex_mcq" && <CheckSquare className="h-3 w-3" />}
                         {q.question_type === "matching" && <LinkIcon className="h-3 w-3" />}
+                        {q.question_type === "matrix" && <LayoutGrid className="h-3 w-3" />}
                         {q.question_type === "essay" && <Type className="h-3 w-3" />}
                         {q.question_type.toUpperCase().replace("_", " ")}
                       </Badge>
@@ -581,6 +589,120 @@ export default function CBTBuilderPage() {
                         >
                           <Plus className="h-3 w-3 mr-1" /> Add Pair
                         </Button>
+                      </div>
+                    )}
+
+                    {/* Matrix Option */}
+                    {q.question_type === "matrix" && q.options && (
+                      <div className="space-y-4 bg-[var(--bg-tertiary)] p-4 rounded border border-[var(--border)]">
+                        <div>
+                          <label className="text-sm font-semibold text-[var(--text-primary)] block mb-2">Kolom Pilihan (Opsi per baris)</label>
+                          <div className="flex flex-wrap gap-2">
+                            {q.criteria?.cols?.map((col, cIdx) => (
+                              <div key={cIdx} className="flex items-center gap-1 bg-white border border-[var(--border)] rounded px-2 py-1">
+                                <input
+                                  className="text-sm border-none bg-transparent focus:ring-0 p-1 w-24"
+                                  value={col}
+                                  onChange={(e) => {
+                                    const newCols = [...(q.criteria?.cols || [])];
+                                    newCols[cIdx] = e.target.value;
+                                    updateQuestion(q.id, { criteria: { ...q.criteria, cols: newCols } });
+                                  }}
+                                />
+                                {q.criteria!.cols!.length > 2 && (
+                                  <button onClick={() => {
+                                    const newCols = q.criteria!.cols!.filter((_, i) => i !== cIdx);
+                                    // Remove the deleted col from match_pairs as well
+                                    const newOpts = q.options!.map(opt => ({
+                                      ...opt,
+                                      match_pairs: (opt.match_pairs || []).filter(mp => mp !== col)
+                                    }));
+                                    updateQuestion(q.id, { criteria: { ...q.criteria, cols: newCols }, options: newOpts });
+                                  }} className="text-[var(--text-tertiary)] hover:text-red-500">
+                                    <X className="w-4 h-4" />
+                                  </button>
+                                )}
+                              </div>
+                            ))}
+                            <Button size="sm" variant="outline" className="h-8" onClick={() => {
+                              const newCols = [...(q.criteria?.cols || []), `Kolom ${q.criteria!.cols!.length + 1}`];
+                              updateQuestion(q.id, { criteria: { ...q.criteria, cols: newCols } });
+                            }}>
+                              <Plus className="w-3 h-3 mr-1" /> Kolom
+                            </Button>
+                          </div>
+                        </div>
+
+                        <div>
+                          <label className="text-sm font-semibold text-[var(--text-primary)] block mb-2">Baris Pernyataan & Kunci Jawaban</label>
+                          <p className="text-xs text-[var(--text-tertiary)] mb-3">Pilih kolom yang benar untuk setiap pernyataan (bisa lebih dari satu opsi yang benar per baris).</p>
+                          <div className="space-y-2">
+                            {q.options.map((opt, oIdx) => (
+                              <div key={oIdx} className="flex flex-col gap-2 bg-white dark:bg-[var(--bg-secondary)] p-3 rounded border border-[var(--border)] shadow-sm">
+                                <div className="flex items-center gap-2">
+                                  <input
+                                    className="flex-1 text-sm bg-slate-50 border border-[var(--border)] rounded p-2 focus:ring-1 focus:ring-[var(--accent)] outline-none"
+                                    value={opt.text}
+                                    placeholder="Masukkan pernyataan..."
+                                    onChange={(e) => {
+                                      const newOpts = [...q.options!];
+                                      newOpts[oIdx].text = e.target.value;
+                                      updateQuestion(q.id, { options: newOpts });
+                                    }}
+                                  />
+                                  {q.options!.length > 1 && (
+                                    <button 
+                                      onClick={() => {
+                                        const newOpts = q.options!.filter((_, i) => i !== oIdx);
+                                        updateQuestion(q.id, { options: newOpts });
+                                      }}
+                                      className="text-[var(--text-tertiary)] hover:text-[var(--error)] p-2"
+                                    >
+                                      <Trash2 className="h-4 w-4" />
+                                    </button>
+                                  )}
+                                </div>
+                                <div className="flex flex-wrap gap-2 px-1 mt-1">
+                                  <span className="text-xs font-semibold text-[var(--text-secondary)] mt-1.5 mr-2">Kunci:</span>
+                                  {q.criteria?.cols?.map((col, cIdx) => {
+                                    const isSelected = (opt.match_pairs || []).includes(col);
+                                    return (
+                                      <label key={cIdx} className="flex items-center gap-1.5 text-sm cursor-pointer hover:bg-slate-50 px-2 py-1 rounded">
+                                        <input 
+                                          type="checkbox" 
+                                          checked={isSelected}
+                                          onChange={(e) => {
+                                            const newOpts = [...q.options!];
+                                            let currentPairs = [...(opt.match_pairs || [])];
+                                            if (e.target.checked) {
+                                              currentPairs.push(col);
+                                            } else {
+                                              currentPairs = currentPairs.filter(p => p !== col);
+                                            }
+                                            newOpts[oIdx].match_pairs = currentPairs;
+                                            updateQuestion(q.id, { options: newOpts });
+                                          }}
+                                          className="w-4 h-4 text-[var(--accent)] rounded border-slate-300" 
+                                        />
+                                        <span>{col}</span>
+                                      </label>
+                                    );
+                                  })}
+                                </div>
+                              </div>
+                            ))}
+                            <Button 
+                              variant="secondary" 
+                              size="sm" 
+                              className="mt-2 bg-white dark:bg-[var(--bg-secondary)] border-[var(--border)]"
+                              onClick={() => {
+                                updateQuestion(q.id, { options: [...q.options!, { text: `Pernyataan ${q.options!.length + 1}`, match_pairs: [] }] });
+                              }}
+                            >
+                              <Plus className="h-3 w-3 mr-1" /> Tambah Baris
+                            </Button>
+                          </div>
+                        </div>
                       </div>
                     )}
 

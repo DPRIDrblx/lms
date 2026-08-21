@@ -488,6 +488,64 @@ export default function QuizReviewPage({ params }: { params: Promise<{ id: strin
                               );
                             })}
                           </div>
+                        ) : q.question_type === 'matrix' ? (
+                          <div className="overflow-x-auto rounded-xl border border-slate-200 mt-2">
+                            <table className="w-full text-left border-collapse min-w-[500px]">
+                              <thead>
+                                <tr className="bg-slate-50 border-b border-slate-200">
+                                  <th className="p-3 font-semibold text-slate-500 text-sm w-1/3">Pernyataan</th>
+                                  {q.criteria?.cols?.map((col: string, cIdx: number) => (
+                                    <th key={cIdx} className="p-3 font-semibold text-slate-700 text-center text-sm border-l border-slate-200">
+                                      {col}
+                                    </th>
+                                  ))}
+                                </tr>
+                              </thead>
+                              <tbody>
+                                {q.options?.map((row: any, rIdx: number) => {
+                                  const userSelections = studentAnswer ? (studentAnswer[row.text] || []) : [];
+                                  const correctSelections = row.match_pairs || [];
+                                  
+                                  return (
+                                    <tr key={rIdx} className="border-b border-slate-100 last:border-b-0">
+                                      <td className="p-3 text-sm text-slate-700">{row.text}</td>
+                                      {q.criteria?.cols?.map((col: string, cIdx: number) => {
+                                        const isSelected = userSelections.includes(col);
+                                        const isCorrectOption = correctSelections.includes(col);
+                                        
+                                        let cellBg = '';
+                                        let checkColor = 'border-slate-300';
+                                        
+                                        if (quiz.show_answers) {
+                                          if (isCorrectOption) {
+                                            cellBg = 'bg-green-50';
+                                            checkColor = 'bg-green-500 border-green-500 text-white';
+                                          } else if (isSelected && !isCorrectOption) {
+                                            cellBg = 'bg-red-50';
+                                            checkColor = 'bg-red-500 border-red-500 text-white';
+                                          }
+                                        } else {
+                                          if (isSelected) {
+                                            checkColor = 'bg-blue-500 border-blue-500 text-white';
+                                          }
+                                        }
+
+                                        return (
+                                          <td key={cIdx} className={`p-3 text-center border-l border-slate-100 ${cellBg}`}>
+                                            <div className={`w-5 h-5 mx-auto rounded flex items-center justify-center border-2 ${checkColor}`}>
+                                              {((quiz.show_answers && isCorrectOption) || (!quiz.show_answers && isSelected) || (quiz.show_answers && isSelected && !isCorrectOption)) && (
+                                                <CheckCircle2 className="w-3.5 h-3.5" />
+                                              )}
+                                            </div>
+                                          </td>
+                                        );
+                                      })}
+                                    </tr>
+                                  );
+                                })}
+                              </tbody>
+                            </table>
+                          </div>
                         ) : (
                           <div className="p-4 bg-slate-50 border border-slate-200 rounded-xl">
                             <p className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-2">Jawaban Anda (Essay)</p>

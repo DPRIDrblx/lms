@@ -347,6 +347,15 @@ export default function ExamPage({ params }: { params: Promise<{ id: string }> }
         if (answersMap[o.text] !== o.match_pair) allCorrect = false;
       });
       if (allCorrect) correct = true;
+    } else if (currentQ.question_type === 'matrix') {
+      const answersMap = answer || {};
+      let allCorrect = true;
+      currentQ.options?.forEach((o: any) => {
+        const correctCols = [...(o.match_pairs || [])].sort().join(',');
+        const userCols = [...(answersMap[o.text] || [])].sort().join(',');
+        if (correctCols !== userCols) allCorrect = false;
+      });
+      if (allCorrect) correct = true;
     }
 
     setIsCorrect(correct);
@@ -470,6 +479,16 @@ export default function ExamPage({ params }: { params: Promise<{ id: string }> }
           if (userMatches[o.text] === o.match_pair) matches++;
         });
         totalScore += (matches / totalPairs) * q.points;
+      } else if (q.question_type === "matrix") {
+        const userMatches = responses[q.id] || {};
+        const totalRows = q.options?.length || 1;
+        let correctRows = 0;
+        q.options?.forEach((o: any) => {
+          const correctCols = [...(o.match_pairs || [])].sort().join(',');
+          const userCols = [...(userMatches[o.text] || [])].sort().join(',');
+          if (correctCols === userCols) correctRows++;
+        });
+        totalScore += (correctRows / totalRows) * q.points;
       } else if (q.question_type === "essay") {
         hasEssay = true;
       }
@@ -1288,6 +1307,99 @@ export default function ExamPage({ params }: { params: Promise<{ id: string }> }
               );
             })()}
 
+            {/* MATRIX / GRID */}
+            {currentQ?.question_type === 'matrix' && (() => {
+              const answersMap = responses[currentQ.id] || {}; // { [row_text]: string[] }
+              const rows = currentQ.options || [];
+              const cols = currentQ.criteria?.cols || [];
+              const isRevealed = isPracticeMode && isAnswerRevealed[currentQ.id];
+
+              return (
+                <div className="overflow-x-auto bg-white rounded-2xl border-2 border-slate-200">
+                  <table className="w-full text-left border-collapse min-w-[600px]">
+                    <thead>
+                      <tr className="bg-slate-50 border-b-2 border-slate-200">
+                        <th className="p-4 font-bold text-slate-500 uppercase tracking-wider text-sm w-1/3">Pernyataan</th>
+                        {cols.map((col: string, cIdx: number) => (
+                          <th key={cIdx} className="p-4 font-bold text-slate-700 text-center text-sm border-l border-slate-200">
+                            {col}
+                          </th>
+                        ))}
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {rows.map((row: any, rIdx: number) => {
+                        const userSelections = answersMap[row.text] || [];
+                        const correctSelections = row.match_pairs || [];
+                        const isRowCorrect = [...userSelections].sort().join(',') === [...correctSelections].sort().join(',');
+
+                        return (
+                          <tr key={rIdx} className="border-b border-slate-100 last:border-b-0 hover:bg-slate-50 transition-colors">
+                            <td className="p-4 font-medium text-slate-700">
+                              {row.text}
+                              {isRevealed && !isRowCorrect && (
+                                <div className="text-xs font-bold text-red-500 mt-1 flex items-center gap-1">
+                                  <AlertCircle className="w-3 h-3" /> Jawaban yang benar: {correctSelections.join(', ') || '-'}
+                                </div>
+                              )}
+                              {isRevealed && isRowCorrect && (
+                                <div className="text-xs font-bold text-green-500 mt-1 flex items-center gap-1">
+                                  <CheckCircle2 className="w-3 h-3" /> Benar
+                                </div>
+                              )}
+                            </td>
+                            {cols.map((col: string, cIdx: number) => {
+                              const isSelected = userSelections.includes(col);
+                              const isCorrectOption = correctSelections.includes(col);
+                              
+                              let cellBg = '';
+                              let checkColor = 'border-slate-300';
+                              
+                              if (isRevealed) {
+                                if (isCorrectOption) {
+                                  cellBg = 'bg-green-50';
+                                  checkColor = 'bg-green-500 border-green-500 text-white';
+                                } else if (isSelected && !isCorrectOption) {
+                                  cellBg = 'bg-red-50';
+                                  checkColor = 'bg-red-500 border-red-500 text-white';
+                                }
+                              } else if (isSelected) {
+                                checkColor = 'bg-blue-500 border-blue-500 text-white';
+                              }
+
+                              return (
+                                <td 
+                                  key={cIdx} 
+                                  className={`p-4 text-center border-l border-slate-100 cursor-pointer ${cellBg} ${!isRevealed ? 'hover:bg-blue-50' : ''}`}
+                                  onClick={() => {
+                                    if (isRevealed) return;
+                                    const newSelections = [...userSelections];
+                                    if (isSelected) {
+                                      const idx = newSelections.indexOf(col);
+                                      if (idx > -1) newSelections.splice(idx, 1);
+                                    } else {
+                                      newSelections.push(col);
+                                    }
+                                    saveAnswer(currentQ.id, { ...answersMap, [row.text]: newSelections });
+                                  }}
+                                >
+                                  <div className={`w-6 h-6 mx-auto rounded flex items-center justify-center border-2 transition-all ${checkColor}`}>
+                                    {((isRevealed && isCorrectOption) || (!isRevealed && isSelected) || (isRevealed && isSelected && !isCorrectOption)) && (
+                                      <CheckCircle2 className="w-4 h-4" />
+                                    )}
+                                  </div>
+                                </td>
+                              );
+                            })}
+                          </tr>
+                        );
+                      })}
+                    </tbody>
+                  </table>
+                </div>
+              );
+            })()}
+
             {/* ESSAY */}
             {currentQ?.question_type === 'essay' && (
               <div>
@@ -1330,7 +1442,7 @@ export default function ExamPage({ params }: { params: Promise<{ id: string }> }
                   isAnswered = !!ans && ans.length > 0;
                 } else if (q.question_type === 'complex_mcq') {
                   isAnswered = Array.isArray(ans) && ans.length > 0;
-                } else if (q.question_type === 'matching') {
+                } else if (q.question_type === 'matching' || q.question_type === 'matrix') {
                   isAnswered = ans && Object.keys(ans).length > 0;
                 }
 

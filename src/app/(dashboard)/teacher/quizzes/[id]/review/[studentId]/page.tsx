@@ -186,6 +186,17 @@ export default function TeacherQuizGradingPage({ params }: { params: Promise<{ i
              earnedPoints = (matches / (q.options?.length || 1)) * q.points;
              isCorrect = matches === q.options?.length;
              showCorrectness = false; // Partial points possible
+          } else if (q.question_type === "matrix") {
+             let correctRows = 0;
+             const totalRows = q.options?.length || 1;
+             q.options?.forEach((opt: any) => {
+                const correctCols = [...(opt.match_pairs || [])].sort().join(',');
+                const userCols = [...(ans?.[opt.text] || [])].sort().join(',');
+                if (correctCols === userCols) correctRows++;
+             });
+             earnedPoints = (correctRows / totalRows) * q.points;
+             isCorrect = correctRows === totalRows;
+             showCorrectness = false;
           } else if (q.question_type === "essay") {
              showCorrectness = false;
              earnedPoints = parseFloat(essayGrades[q.id] || "0") || 0;
@@ -239,6 +250,56 @@ export default function TeacherQuizGradingPage({ params }: { params: Promise<{ i
                           );
                        })}
                     </div>
+                 ) : q.question_type === "matrix" ? (
+                     <div className="overflow-x-auto rounded-xl border border-[var(--border)] mt-2">
+                        <table className="w-full text-left border-collapse min-w-[500px] text-sm">
+                           <thead>
+                              <tr className="bg-[var(--bg-tertiary)] border-b border-[var(--border)]">
+                                 <th className="p-3 font-semibold text-[var(--text-secondary)] w-1/3">Pernyataan</th>
+                                 {q.criteria?.cols?.map((col: string, cIdx: number) => (
+                                    <th key={cIdx} className="p-3 font-semibold text-center border-l border-[var(--border)] text-[var(--text-secondary)]">{col}</th>
+                                 ))}
+                              </tr>
+                           </thead>
+                           <tbody>
+                              {q.options?.map((row: any, rIdx: number) => {
+                                 const userSelections = ans ? (ans[row.text] || []) : [];
+                                 const correctSelections = row.match_pairs || [];
+                                 const isRowCorrect = [...userSelections].sort().join(',') === [...correctSelections].sort().join(',');
+                                 return (
+                                    <tr key={rIdx} className="border-b border-[var(--border)] last:border-b-0">
+                                       <td className="p-3 text-[var(--text-primary)] font-medium">
+                                          {row.text}
+                                          {!isRowCorrect && <div className="text-[10px] text-[var(--error)] mt-1 font-bold">Salah (Kunci: {correctSelections.join(', ') || '-'})</div>}
+                                       </td>
+                                       {q.criteria?.cols?.map((col: string, cIdx: number) => {
+                                          const isSelected = userSelections.includes(col);
+                                          const isCorrectOption = correctSelections.includes(col);
+                                          let cellBg = '';
+                                          let checkColor = 'border-slate-300';
+                                          
+                                          if (isCorrectOption) {
+                                             cellBg = 'bg-green-50';
+                                             checkColor = 'bg-[var(--success)] border-[var(--success)] text-white';
+                                          } else if (isSelected && !isCorrectOption) {
+                                             cellBg = 'bg-red-50';
+                                             checkColor = 'bg-[var(--error)] border-[var(--error)] text-white';
+                                          }
+                                          
+                                          return (
+                                             <td key={cIdx} className={`p-3 text-center border-l border-[var(--border)] ${cellBg}`}>
+                                                <div className={`w-4 h-4 mx-auto rounded flex items-center justify-center border ${checkColor}`}>
+                                                   {(isCorrectOption || isSelected) && <CheckCircle2 className="w-3 h-3" />}
+                                                </div>
+                                             </td>
+                                          )
+                                       })}
+                                    </tr>
+                                 )
+                              })}
+                           </tbody>
+                        </table>
+                     </div>
                  ) : (
                     <div>
                        <p className="text-sm leading-relaxed whitespace-pre-wrap font-medium">{ans || <span className="italic opacity-50">No answer provided</span>}</p>
