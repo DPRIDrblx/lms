@@ -1,0 +1,98 @@
+[
+  {
+    "id": 1,
+    "question": "Di sebuah pesta, Anda biasanya akan...",
+    "options": [
+      { "id": "A", "text": "Berinteraksi dengan banyak orang, termasuk yang belum Anda kenal.", "dimension": "E", "value": 1, "color": "bg-emerald-50 text-emerald-600 border-emerald-200 hover:border-emerald-400" },
+      { "id": "B", "text": "Berinteraksi dengan sedikit orang, yang sudah Anda kenal baik.", "dimension": "I", "value": 1, "color": "bg-blue-50 text-blue-600 border-blue-200 hover:border-blue-400" }
+    ]
+  },
+  {
+    "id": 2,
+    "question": "Anda lebih suka berteman dengan orang yang...",
+    "options": [
+      { "id": "A", "text": "Realistis dan berpijak pada kenyataan.", "dimension": "S", "value": 1, "color": "bg-amber-50 text-amber-600 border-amber-200 hover:border-amber-400" },
+      { "id": "B", "text": "Penuh imajinasi dan ide-ide baru.", "dimension": "N", "value": 1, "color": "bg-purple-50 text-purple-600 border-purple-200 hover:border-purple-400" }
+    ]
+  },
+  {
+    "id": 3,
+    "question": "Dalam mengambil keputusan yang sulit, Anda lebih mengandalkan...",
+    "options": [
+      { "id": "A", "text": "Logika dan analisis objektif.", "dimension": "T", "value": 1, "color": "bg-slate-50 text-slate-600 border-slate-200 hover:border-slate-400" },
+      { "id": "B", "text": "Perasaan dan nilai-nilai kemanusiaan.", "dimension": "F", "value": 1, "color": "bg-rose-50 text-rose-600 border-rose-200 hover:border-rose-400" }
+    ]
+  },
+  {
+    "id": 4,
+    "question": "Dalam pekerjaan atau tugas sehari-hari, Anda lebih suka...",
+    "options": [
+      { "id": "A", "text": "Menyelesaikannya jauh sebelum tenggat waktu agar tenang.", "dimension": "J", "value": 1, "color": "bg-indigo-50 text-indigo-600 border-indigo-200 hover:border-indigo-400" },
+      { "id": "B", "text": "Menyelesaikannya mendekati tenggat waktu untuk mendapatkan ide spontan.", "dimension": "P", "value": 1, "color": "bg-orange-50 text-orange-600 border-orange-200 hover:border-orange-400" }
+    ]
+  },
+  {
+    "id": 5,
+    "question": "Jika sedang lelah setelah hari yang panjang, energi Anda kembali dengan...",
+    "options": [
+      { "id": "A", "text": "Nongkrong bersama teman atau beraktivitas di luar.", "dimension": "E", "value": 1, "color": "bg-emerald-50 text-emerald-600 border-emerald-200 hover:border-emerald-400" },
+      { "id": "B", "text": "Menghabiskan waktu sendiri menonton atau membaca.", "dimension": "I", "value": 1, "color": "bg-blue-50 text-blue-600 border-blue-200 hover:border-blue-400" }
+    ]
+  },
+  {
+    "id": 6,
+    "question": "Saat mendengarkan seseorang bercerita, Anda lebih fokus pada...",
+    "options": [
+      { "id": "A", "text": "Fakta dan detail dari cerita tersebut.", "dimension": "S", "value": 1, "color": "bg-amber-50 text-amber-600 border-amber-200 hover:border-amber-400" },
+      { "id": "B", "text": "Makna tersembunyi atau pola di balik cerita.", "dimension": "N", "value": 1, "color": "bg-purple-50 text-purple-600 border-purple-200 hover:border-purple-400" }
+    ]
+  },
+  {
+    "id": 7,
+    "question": "Mana yang merupakan pujian lebih baik bagi Anda?",
+    "options": [
+      { "id": "A", "text": "\"Kamu sangat logis dan berpikiran tajam.\"", "dimension": "T", "value": 1, "color": "bg-slate-50 text-slate-600 border-slate-200 hover:border-slate-400" },
+      { "id": "B", "text": "\"Kamu sangat pengertian dan hangat.\"", "dimension": "F", "value": 1, "color": "bg-rose-50 text-rose-600 border-rose-200 hover:border-rose-400" }
+    ]
+  },
+  {
+    "id": 8,
+    "question": "Saat akan liburan, Anda cenderung...",
+    "options": [
+      { "id": "A", "text": "Membuat jadwal kegiatan yang rinci.", "dimension": "J", "value": 1, "color": "bg-indigo-50 text-indigo-600 border-indigo-200 hover:border-indigo-400" },
+      { "id": "B", "text": "Menjalani saja apa yang terjadi hari itu (spontan).", "dimension": "P", "value": 1, "color": "bg-orange-50 text-orange-600 border-orange-200 hover:border-orange-400" }
+    ]
+  },
+  {
+    "id": 9,
+    "question": "Di kelas atau saat meeting, Anda biasanya...",
+    "options": [
+      { "id": "A", "text": "Cepat merespons dan aktif berbicara.", "dimension": "E", "value": 1, "color": "bg-emerald-50 text-emerald-600 border-emerald-200 hover:border-emerald-400" },
+      { "id": "B", "text": "Berpikir matang dulu sebelum akhirnya berbicara.", "dimension": "I", "value": 1, "color": "bg-blue-50 text-blue-600 border-blue-200 hover:border-blue-400" }
+    ]
+  },
+  {
+    "id": 10,
+    "question": "Anda lebih mempercayai...",
+    "options": [
+      { "id": "A", "text": "Pengalaman nyata dan hal-hal yang sudah pasti.", "dimension": "S", "value": 1, "color": "bg-amber-50 text-amber-600 border-amber-200 hover:border-amber-400" },
+      { "id": "B", "text": "Firasat dan firasat tentang apa yang mungkin terjadi di masa depan.", "dimension": "N", "value": 1, "color": "bg-purple-50 text-purple-600 border-purple-200 hover:border-purple-400" }
+    ]
+  },
+  {
+    "id": 11,
+    "question": "Saat melihat teman yang sedang tertimpa masalah, Anda cenderung...",
+    "options": [
+      { "id": "A", "text": "Membantu memikirkan solusi yang logis.", "dimension": "T", "value": 1, "color": "bg-slate-50 text-slate-600 border-slate-200 hover:border-slate-400" },
+      { "id": "B", "text": "Mendengarkan dan memberikan dukungan emosional.", "dimension": "F", "value": 1, "color": "bg-rose-50 text-rose-600 border-rose-200 hover:border-rose-400" }
+    ]
+  },
+  {
+    "id": 12,
+    "question": "Anda lebih merasa nyaman memiliki meja kerja yang...",
+    "options": [
+      { "id": "A", "text": "Rapi, tertata, dan semuanya pada tempatnya.", "dimension": "J", "value": 1, "color": "bg-indigo-50 text-indigo-600 border-indigo-200 hover:border-indigo-400" },
+      { "id": "B", "text": "Sedikit berantakan tapi Anda tahu persis letak barang Anda.", "dimension": "P", "value": 1, "color": "bg-orange-50 text-orange-600 border-orange-200 hover:border-orange-400" }
+    ]
+  }
+]

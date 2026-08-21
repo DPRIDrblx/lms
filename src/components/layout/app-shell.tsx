@@ -2,6 +2,7 @@
 
 import { Sidebar } from "@/components/ui/sidebar";
 import { TopBar } from "@/components/ui/top-bar";
+import { cn } from "@/lib/utils";
 import { StudentSidebar } from "./student-sidebar";
 import { StudentTopBar } from "./student-top-bar";
 import { ParentSidebar } from "./parent-sidebar";
@@ -16,6 +17,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { Button } from "@/components/ui/button";
 import { createClient } from "@/lib/supabase";
 import { useTheme } from "@/lib/theme-context";
+import { useSidebarStore } from "@/lib/sidebar-store";
 
 export function AppShell({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
@@ -26,6 +28,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
   const isExam = pathname?.includes("/exam");
   const [isUpdatingCenter, setIsUpdatingCenter] = useState(false);
   const [updateProgress, setUpdateProgress] = useState(0);
+  const { isCollapsed } = useSidebarStore();
 
   useEffect(() => {
     if (isCenterStudent && profile && profile.has_seen_center_update === false) {
@@ -203,8 +206,8 @@ export function AppShell({ children }: { children: React.ReactNode }) {
         {uiMode === 'clean' ? (
           <div className="min-h-screen bg-[#F4F6F8] text-slate-900 flex flex-col pb-[80px] lg:pb-0">
             <StudentTopBar />
-            <div className="flex flex-1">
-              <div className="lg:w-[260px] shrink-0">
+            <div className="flex flex-1 transition-all duration-300">
+              <div className={cn("shrink-0 transition-all duration-300 hidden lg:block", isCollapsed ? "w-[80px]" : "w-[260px]")}>
                 <StudentSidebar />
               </div>
               <main className="flex-1 w-full mx-auto p-4 sm:p-6 lg:p-8 max-w-6xl">
@@ -217,11 +220,11 @@ export function AppShell({ children }: { children: React.ReactNode }) {
           </div>
         ) : (
           <div 
-            className="min-h-screen pb-24 lg:pb-0 bg-slate-50 text-[var(--text-primary)]"
+            className="min-h-screen pb-24 lg:pb-0 bg-slate-50 text-[var(--text-primary)] transition-all duration-300"
             data-theme={isCenterStudent ? "center" : undefined}
           >
             <StudentSidebar />
-            <div className="lg:pl-[260px] flex flex-col min-h-screen">
+            <div className={cn("flex flex-col min-h-screen transition-all duration-300", isCollapsed ? "lg:pl-[80px]" : "lg:pl-[260px]")}>
               <StudentTopBar />
               <main className="flex-1 w-full mx-auto p-4 sm:p-6 lg:p-8 max-w-5xl">
                 <ClassGuard>

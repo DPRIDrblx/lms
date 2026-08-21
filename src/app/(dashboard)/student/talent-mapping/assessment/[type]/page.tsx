@@ -1,42 +1,140 @@
 "use client";
 
-import { useState } from "react";
-import { ArrowLeft, CheckCircle2 } from "lucide-react";
+import { useState, useEffect } from "react";
+import { ArrowLeft, CheckCircle2, Loader2 } from "lucide-react";
 import Link from "next/link";
 import { motion } from "framer-motion";
 import { useParams, useRouter } from "next/navigation";
+import { useAuth } from "@/lib/auth-context";
+import { createClient } from "@/lib/supabase";
 
-const dummyQuestions = [
-  {
-    id: 1,
-    question: "Ketika diberikan tugas kelompok, peran apa yang paling kamu sukai?",
-    options: [
-      { id: 'A', text: "Menjadi pemimpin dan mengatur tugas teman-teman.", color: "bg-red-50 text-red-600 border-red-200 hover:border-red-400" },
-      { id: 'B', text: "Mencari ide-ide baru dan kreatif untuk proyek tersebut.", color: "bg-emerald-50 text-emerald-600 border-emerald-200 hover:border-emerald-400" },
-      { id: 'C', text: "Memastikan semua detail tugas dikerjakan dengan rapi dan teliti.", color: "bg-blue-50 text-blue-600 border-blue-200 hover:border-blue-400" },
-      { id: 'D', text: "Membantu teman yang kesulitan dan menjaga kekompakan.", color: "bg-amber-50 text-amber-600 border-amber-400 shadow-sm", selected: true } // Simulated selected state style
-    ]
-  }
-];
+import mbtiQuestions from "@/data/mbti-questions.json";
+import riasecQuestions from "@/data/riasec-questions.json";
 
 export default function AssessmentTest() {
   const params = useParams();
   const router = useRouter();
   const type = params.type as string; // 'minat-bakat' or 'mbti'
+  const { profile } = useAuth();
+  const supabase = createClient();
 
   const [currentQ, setCurrentQ] = useState(0);
-  const [selectedOpt, setSelectedOpt] = useState<string | null>('D'); // mock initial state
+  const [selectedOpt, setSelectedOpt] = useState<string | null>(null);
+  const [answers, setAnswers] = useState<any[]>([]);
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
-  const q = dummyQuestions[currentQ];
-  const totalQ = 20;
-  const progress = ((currentQ + 1) / totalQ) * 100;
+  const questions = type === 'mbti' ? mbtiQuestions : riasecQuestions;
+  const q = questions[currentQ];
+  const totalQ = questions.length;
+  const progress = ((currentQ) / totalQ) * 100;
 
   let title = "Skill Test";
-  if (type === 'minat-bakat') title = "Tes Minat Bakat";
-  if (type === 'mbti') title = "Tes MBTI";
+  if (type === 'minat-bakat') title = "Tes Minat Bakat (RIASEC)";
+  if (type === 'mbti') title = "Tes Kepribadian (MBTI)";
+
+  const calculateResult = async (finalAnswers: any[]) => {
+    setIsSubmitting(true);
+    let resultStr = "";
+    let details = {};
+
+    if (type === 'mbti') {
+      const scores: Record<string, number> = { E: 0, I: 0, S: 0, N: 0, T: 0, F: 0, J: 0, P: 0 };
+      finalAnswers.forEach(ans => {
+        scores[ans.dimension] += ans.value;
+      });
+      const EorI = scores.E > scores.I ? 'E' : 'I';
+      const SorN = scores.S > scores.N ? 'S' : 'N';
+      const TorF = scores.T > scores.F ? 'T' : 'F';
+      const JorP = scores.J > scores.P ? 'J' : 'P';
+      resultStr = `${EorI}${SorN}${TorF}${JorP}`;
+      details = scores;
+    } else {
+      const scores: Record<string, number> = { R: 0, I: 0, A: 0, S: 0, E: 0, C: 0 };
+      finalAnswers.forEach(ans => {
+        scores[ans.dimension] += ans.value;
+      });
+      // Sort by score
+      const sorted = Object.entries(scores).sort((a, b) => b[1] - a[1]);
+      // Top 3 for RIASEC
+      resultStr = sorted.slice(0, 3).map(i => i[0]).join("");
+      details = scores;
+    }
+
+    if (profile?.id) {
+      try {
+        // Upsert progress
+        await supabase.from('tm_progress').upsert({
+          student_id: profile.id,
+          assessment_type: type,
+          progress_percentage: 100,
+          is_completed: true,
+          updated_at: new Date().toISOString()
+        }, { onConflict: 'student_id, assessment_type' });
+
+        // Upsert results
+        const { data: existingResult } = await supabase
+          .from('tm_results')
+          .select('id')
+          .eq('student_id', profile.id)
+          .single();
+
+        if (existingResult) {
+          const updateData: any = { updated_at: new Date().toISOString() };
+          if (type === 'mbti') {
+            updateData.mbti_result = resultStr;
+            updateData.mbti_details = details;
+          } else {
+            updateData.riasec_result = resultStr;
+            updateData.riasec_details = details;
+          }
+          await supabase.from('tm_results').update(updateData).eq('id', existingResult.id);
+        } else {
+          const insertData: any = { student_id: profile.id };
+          if (type === 'mbti') {
+            insertData.mbti_result = resultStr;
+            insertData.mbti_details = details;
+          } else {
+            insertData.riasec_result = resultStr;
+            insertData.riasec_details = details;
+          }
+          await supabase.from('tm_results').insert(insertData);
+        }
+      } catch (err) {
+        console.error("Error saving assessment result", err);
+      }
+    }
+
+    router.replace('/student/talent-mapping/assessment');
+  };
+
+  const handleNext = () => {
+    if (!selectedOpt) return;
+    const optObj = q.options.find(o => o.id === selectedOpt);
+    
+    const newAnswers = [...answers, { qId: q.id, ...optObj }];
+    setAnswers(newAnswers);
+
+    if (currentQ < totalQ - 1) {
+      setCurrentQ(prev => prev + 1);
+      setSelectedOpt(null);
+    } else {
+      // Finished
+      calculateResult(newAnswers);
+    }
+  };
+
+  if (isSubmitting) {
+    return (
+      <div className="flex flex-col items-center justify-center h-[calc(100vh-64px)] bg-white text-center p-6">
+        <Loader2 className="w-12 h-12 animate-spin text-amber-500 mb-4" />
+        <h2 className="text-xl font-bold text-slate-800 mb-2">Menghitung Hasil...</h2>
+        <p className="text-slate-500">Menganalisis jawabanmu untuk menemukan rekomendasi terbaik.</p>
+      </div>
+    );
+  }
 
   return (
-    <div className="flex flex-col h-[calc(100vh-64px)] overflow-hidden bg-white">
+    <div className="flex flex-col h-[calc(100vh-64px)] lg:h-[calc(100vh-120px)] overflow-hidden bg-white max-w-3xl mx-auto w-full lg:rounded-3xl lg:border lg:border-slate-200 lg:shadow-sm">
       
       {/* Top Header */}
       <div className="flex items-center justify-between p-4 border-b border-slate-100 z-10 relative">
@@ -54,7 +152,7 @@ export default function AssessmentTest() {
           {/* Progress */}
           <div className="mb-8">
             <div className="flex justify-between text-xs font-bold text-slate-400 mb-2">
-              <span className="text-amber-500">⭐ {currentQ + 1}</span>
+              <span className="text-amber-500">⭐ Soal {currentQ + 1}</span>
               <span>{currentQ + 1}/{totalQ}</span>
             </div>
             <div className="w-full bg-slate-100 h-2.5 rounded-full overflow-hidden">
@@ -118,6 +216,7 @@ export default function AssessmentTest() {
           {/* Next Button */}
           <div className="pt-6 pb-4">
             <button 
+              onClick={handleNext}
               disabled={!selectedOpt}
               className={`w-full py-4 rounded-2xl font-bold text-lg transition-all ${
                 selectedOpt 
@@ -125,7 +224,7 @@ export default function AssessmentTest() {
                   : 'bg-slate-100 text-slate-400 cursor-not-allowed'
               }`}
             >
-              Lanjut
+              {currentQ === totalQ - 1 ? 'Selesai & Lihat Hasil' : 'Lanjut'}
             </button>
           </div>
         </div>

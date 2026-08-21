@@ -1,0 +1,56 @@
+[
+  {
+    "id": 1,
+    "question": "Seberapa tertarik Anda merakit perangkat keras, memperbaiki mesin, atau bekerja dengan tangan?",
+    "options": [
+      { "id": "A", "text": "Sangat Tertarik", "dimension": "R", "value": 3, "color": "bg-slate-50 text-slate-700 border-slate-200" },
+      { "id": "B", "text": "Biasa Saja", "dimension": "R", "value": 1, "color": "bg-slate-50 text-slate-600 border-slate-100" },
+      { "id": "C", "text": "Tidak Tertarik", "dimension": "R", "value": 0, "color": "bg-slate-50 text-slate-400 border-slate-100" }
+    ]
+  },
+  {
+    "id": 2,
+    "question": "Seberapa tertarik Anda meneliti fenomena alam, melakukan eksperimen lab, atau memecahkan soal matematika/sains rumit?",
+    "options": [
+      { "id": "A", "text": "Sangat Tertarik", "dimension": "I", "value": 3, "color": "bg-blue-50 text-blue-700 border-blue-200" },
+      { "id": "B", "text": "Biasa Saja", "dimension": "I", "value": 1, "color": "bg-blue-50 text-blue-600 border-blue-100" },
+      { "id": "C", "text": "Tidak Tertarik", "dimension": "I", "value": 0, "color": "bg-blue-50 text-blue-400 border-blue-100" }
+    ]
+  },
+  {
+    "id": 3,
+    "question": "Seberapa tertarik Anda mendesain sesuatu (grafis/baju/ruangan), menulis cerita, atau bermain musik?",
+    "options": [
+      { "id": "A", "text": "Sangat Tertarik", "dimension": "A", "value": 3, "color": "bg-fuchsia-50 text-fuchsia-700 border-fuchsia-200" },
+      { "id": "B", "text": "Biasa Saja", "dimension": "A", "value": 1, "color": "bg-fuchsia-50 text-fuchsia-600 border-fuchsia-100" },
+      { "id": "C", "text": "Tidak Tertarik", "dimension": "A", "value": 0, "color": "bg-fuchsia-50 text-fuchsia-400 border-fuchsia-100" }
+    ]
+  },
+  {
+    "id": 4,
+    "question": "Seberapa tertarik Anda mengajar orang lain, menjadi relawan sosial, atau menjadi konselor tempat teman curhat?",
+    "options": [
+      { "id": "A", "text": "Sangat Tertarik", "dimension": "S", "value": 3, "color": "bg-emerald-50 text-emerald-700 border-emerald-200" },
+      { "id": "B", "text": "Biasa Saja", "dimension": "S", "value": 1, "color": "bg-emerald-50 text-emerald-600 border-emerald-100" },
+      { "id": "C", "text": "Tidak Tertarik", "dimension": "S", "value": 0, "color": "bg-emerald-50 text-emerald-400 border-emerald-100" }
+    ]
+  },
+  {
+    "id": 5,
+    "question": "Seberapa tertarik Anda memimpin sebuah tim, bernegosiasi bisnis, atau meyakinkan orang lain untuk membeli produk?",
+    "options": [
+      { "id": "A", "text": "Sangat Tertarik", "dimension": "E", "value": 3, "color": "bg-amber-50 text-amber-700 border-amber-200" },
+      { "id": "B", "text": "Biasa Saja", "dimension": "E", "value": 1, "color": "bg-amber-50 text-amber-600 border-amber-100" },
+      { "id": "C", "text": "Tidak Tertarik", "dimension": "E", "value": 0, "color": "bg-amber-50 text-amber-400 border-amber-100" }
+    ]
+  },
+  {
+    "id": 6,
+    "question": "Seberapa tertarik Anda merapikan dokumen, melakukan perhitungan akuntansi, atau memastikan prosedur diikuti dengan teliti?",
+    "options": [
+      { "id": "A", "text": "Sangat Tertarik", "dimension": "C", "value": 3, "color": "bg-slate-50 text-slate-700 border-slate-200" },
+      { "id": "B", "text": "Biasa Saja", "dimension": "C", "value": 1, "color": "bg-slate-50 text-slate-600 border-slate-100" },
+      { "id": "C", "text": "Tidak Tertarik", "dimension": "C", "value": 0, "color": "bg-slate-50 text-slate-400 border-slate-100" }
+    ]
+  }
+]

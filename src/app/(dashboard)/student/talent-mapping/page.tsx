@@ -12,8 +12,8 @@ export default function TalentMappingDashboard() {
   const supabase = createClient();
   
   const [totalXp, setTotalXp] = useState(0);
-  const [mbti, setMbti] = useState("INTJ");
-  const [targetCampus, setTargetCampus] = useState({ name: "Universitas Indonesia", major: "Ilmu Komputer", passingGrade: 85 });
+  const [mbti, setMbti] = useState("Belum Tes");
+  const [targetCampus, setTargetCampus] = useState({ name: "Belum Ditentukan", major: "Belum Ditentukan", passingGrade: 85 });
   
   // Dummy data for progress
   const progressData = {
@@ -26,8 +26,13 @@ export default function TalentMappingDashboard() {
     const fetchData = async () => {
       if (!profile?.id) return;
       try {
-        const { data: pData } = await supabase.from('profiles').select('assessment_result').eq('id', profile.id).single();
-        if (pData?.assessment_result) setMbti(pData.assessment_result);
+        const { data: tmData } = await supabase.from('tm_results').select('*').eq('student_id', profile.id).single();
+        if (tmData) {
+          if (tmData.mbti_result) setMbti(tmData.mbti_result);
+          if (tmData.ptn_target && tmData.major_target) {
+            setTargetCampus({ name: tmData.ptn_target, major: tmData.major_target, passingGrade: 85 });
+          }
+        }
 
         const { data: xpData } = await supabase.from('ai_drill_leaderboard').select('total_xp').eq('student_id', profile.id).single();
         if (xpData) setTotalXp(xpData.total_xp || 0);

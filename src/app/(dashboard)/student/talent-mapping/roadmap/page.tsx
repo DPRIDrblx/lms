@@ -1,46 +1,111 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { ArrowLeft, LayoutGrid, Map, User, Target, ChevronRight, Lock, CheckCircle2, PlayCircle } from "lucide-react";
 import Link from "next/link";
 import { motion } from "framer-motion";
 import PilihPTNModal from "@/components/talent-mapping/PilihPTNModal";
-
-const dummyMissions = [
-  {
-    id: 1,
-    title: "Pengenalan UTBK",
-    desc: "Pahami struktur dan jenis soal yang diujikan.",
-    status: "completed", // completed, active, locked
-    type: "Materi"
-  },
-  {
-    id: 2,
-    title: "Penalaran Umum Dasar",
-    desc: "Latihan logika dan pemahaman bacaan tingkat awal.",
-    status: "active",
-    type: "Latihan Belajar",
-    progress: 40
-  },
-  {
-    id: 3,
-    title: "Simulasi TryOut 1",
-    desc: "Uji kemampuan awalmu dengan format yang mirip aslinya.",
-    status: "locked",
-    type: "TryOut"
-  },
-  {
-    id: 4,
-    title: "Strategi Lolos PTN",
-    desc: "Tips jitu memilih prodi dan manajemen waktu belajar.",
-    status: "locked",
-    type: "Materi Belajar"
-  }
-];
+import { useAuth } from "@/lib/auth-context";
+import { createClient } from "@/lib/supabase";
 
 export default function RoadmapPage() {
+  const { profile } = useAuth();
+  const supabase = createClient();
   const [isModalOpen, setIsModalOpen] = useState(false);
-  const [targetCampus, setTargetCampus] = useState({ ptn: "Universitas Indonesia", major: "Ilmu Komputer (S-1)" });
+  const [targetCampus, setTargetCampus] = useState({ ptn: "Belum Ditentukan", major: "Pilih Jurusan" });
+  const [tmResult, setTmResult] = useState<any>(null);
+
+  useEffect(() => {
+    async function fetchData() {
+      if (!profile?.id) return;
+      const { data } = await supabase
+        .from('tm_results')
+        .select('*')
+        .eq('student_id', profile.id)
+        .single();
+      
+      if (data) {
+        setTmResult(data);
+        if (data.ptn_target && data.major_target) {
+          setTargetCampus({ ptn: data.ptn_target, major: data.major_target });
+        }
+      }
+    }
+    fetchData();
+  }, [profile, supabase]);
+
+  const handleSelectPTN = async (ptn: string, major: string) => {
+    setTargetCampus({ ptn, major });
+    
+    if (profile?.id) {
+      if (tmResult?.id) {
+        await supabase.from('tm_results').update({ ptn_target: ptn, major_target: major }).eq('id', tmResult.id);
+      } else {
+        const { data } = await supabase.from('tm_results').insert({
+          student_id: profile.id,
+          ptn_target: ptn,
+          major_target: major
+        }).select().single();
+        if (data) setTmResult(data);
+      }
+    }
+  };
+
+  // Generate dynamic missions based on MBTI or RIASEC
+  const generateMissions = () => {
+    let missions = [
+      {
+        id: 1,
+        title: "Pengenalan UTBK",
+        desc: "Pahami struktur dan jenis soal yang diujikan.",
+        status: "completed",
+        type: "Materi"
+      },
+      {
+        id: 2,
+        title: "Penalaran Umum Dasar",
+        desc: "Latihan logika dan pemahaman bacaan tingkat awal.",
+        status: "active",
+        type: "Latihan Belajar",
+        progress: 40
+      }
+    ];
+
+    if (tmResult?.mbti_result === 'INTJ' || tmResult?.mbti_result === 'INTP') {
+      missions.push({
+        id: 3,
+        title: "Simulasi Logika Ekstra",
+        desc: "Latihan penalaran analitik untuk tipe pemikir analitis.",
+        status: "locked",
+        type: "Latihan Belajar",
+        progress: 0
+      });
+    }
+
+    if (targetCampus.ptn.includes("Indonesia") || targetCampus.ptn.includes("Gadjah Mada") || targetCampus.ptn.includes("Bandung")) {
+      missions.push({
+        id: 4,
+        title: "Persiapan PTN Top Tier",
+        desc: "Latihan soal HOTS (High Order Thinking Skills).",
+        status: "locked",
+        type: "Materi Belajar",
+        progress: 0
+      });
+    }
+
+    missions.push({
+      id: 5,
+      title: "Strategi Lolos PTN",
+      desc: "Tips jitu memilih prodi dan manajemen waktu belajar.",
+      status: "locked",
+      type: "Materi Belajar",
+      progress: 0
+    });
+
+    return missions;
+  };
+
+  const dynamicMissions = generateMissions();
 
   return (
     <div className="flex flex-col h-[calc(100vh-64px)] overflow-hidden bg-white">
@@ -51,8 +116,8 @@ export default function RoadmapPage() {
           <Link href="/student/talent-mapping" className="p-2 -ml-2 rounded-full hover:bg-slate-100 transition-colors">
             <ArrowLeft className="w-5 h-5 text-slate-700" />
           </Link>
-          <h1 className="font-bold text-slate-800 text-lg flex items-center gap-2">
-            <span className="text-amber-500">✨</span> IGNITE Skill Test
+          <h1 className="font-bold text-slate-800 text-sm flex items-center gap-1.5">
+            <span className="text-amber-500 text-xs">✨</span> IGNITE Skill Test
           </h1>
         </div>
         <div className="w-8 h-8 rounded-full bg-slate-200 border-2 border-white shadow-sm overflow-hidden flex items-center justify-center">
@@ -106,7 +171,7 @@ export default function RoadmapPage() {
           <div className="px-6 relative before:absolute before:inset-0 before:ml-[39px] before:-translate-x-px md:before:ml-[43px] before:h-full before:w-1 before:bg-slate-100">
             
             <div className="space-y-8 relative">
-              {dummyMissions.map((mission, index) => {
+              {dynamicMissions.map((mission, index) => {
                 
                 let Icon = Lock;
                 let iconColor = "text-slate-400";
@@ -194,7 +259,7 @@ export default function RoadmapPage() {
       <PilihPTNModal 
         isOpen={isModalOpen}
         onClose={() => setIsModalOpen(false)}
-        onSelect={(ptn, major) => setTargetCampus({ ptn, major })}
+        onSelect={handleSelectPTN}
       />
 
       {/* Bottom Navigation */}

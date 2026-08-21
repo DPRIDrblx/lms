@@ -8,8 +8,9 @@ import { cn } from "@/lib/utils";
 import { motion, AnimatePresence } from "framer-motion";
 import { useAuth } from "@/lib/auth-context";
 import { useTheme } from "@/lib/theme-context";
-import { FolderOpen, Calendar, Archive, BookOpen, GraduationCap } from "lucide-react";
+import { FolderOpen, Calendar, Archive, BookOpen, GraduationCap, ChevronLeft, ChevronRight } from "lucide-react";
 import { createClient } from "@/lib/supabase";
+import { useSidebarStore } from "@/lib/sidebar-store";
 
 export function StudentSidebar() {
   const pathname = usePathname();
@@ -18,6 +19,7 @@ export function StudentSidebar() {
   const { profile, isCenterStudent } = useAuth();
   const { uiMode } = useTheme();
   const [branchName, setBranchName] = useState("");
+  const { isCollapsed, toggleCollapse } = useSidebarStore();
 
   useEffect(() => {
     if (isCenterStudent && profile?.id && uiMode === 'clean') {
@@ -84,22 +86,36 @@ export function StudentSidebar() {
     <>
       {/* Desktop Left Sidebar */}
       <div className={cn(
-        "hidden lg:flex flex-col fixed top-0 left-0 h-screen w-[260px] z-40",
+        "hidden lg:flex flex-col fixed top-0 left-0 h-screen z-40 transition-all duration-300",
+        isCollapsed ? "w-[80px]" : "w-[260px]",
         uiMode === 'clean' ? "border-r border-slate-200 bg-[#F5F7FB] mt-16" : "bg-white border-r-2 border-slate-200 p-6"
       )}>
+        {/* Toggle Button */}
+        <button 
+          onClick={toggleCollapse}
+          className={cn(
+            "absolute -right-3.5 top-1/2 -translate-y-1/2 w-7 h-7 bg-white border border-slate-200 rounded-full flex items-center justify-center text-slate-500 hover:text-amber-500 hover:border-amber-200 shadow-sm transition-all z-50",
+            uiMode === 'clean' && "top-[10%]"
+          )}
+        >
+          {isCollapsed ? <ChevronRight className="w-4 h-4" /> : <ChevronLeft className="w-4 h-4" />}
+        </button>
+
         {uiMode === 'clean' ? (
-          <div className="px-6 py-5 border-b border-slate-200/60 mb-2">
-            <div className="flex items-center gap-3 mb-4">
+          <div className={cn("px-6 py-5 border-b border-slate-200/60 mb-2", isCollapsed && "px-2 py-4 flex flex-col items-center")}>
+            <div className={cn("flex items-center gap-3 mb-4", isCollapsed && "mb-0")}>
               <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-[#0C1E5B] to-[#1E40AF] text-white flex items-center justify-center shadow-sm shrink-0">
                 <GraduationCap className="w-6 h-6 text-orange-400" />
               </div>
-              <div className="flex flex-col justify-center">
-                <h1 className="text-[16px] font-black tracking-tight text-[#0C1E5B] leading-none mb-1">
-                  IGNITE <br/><span className="text-orange-500">CENTER</span>
-                </h1>
-              </div>
+              {!isCollapsed && (
+                <div className="flex flex-col justify-center">
+                  <h1 className="text-[16px] font-black tracking-tight text-[#0C1E5B] leading-none mb-1">
+                    IGNITE <br/><span className="text-orange-500">CENTER</span>
+                  </h1>
+                </div>
+              )}
             </div>
-            {isCenterStudent && (
+            {isCenterStudent && !isCollapsed && (
               <div className="text-xs font-bold text-slate-600 bg-white border border-slate-200 px-3 py-2 rounded-lg flex items-center gap-2 shadow-sm truncate">
                 <Map className="w-3.5 h-3.5 text-[#108B96] shrink-0" />
                 <span className="truncate">{branchName || "Loading..."}</span>
@@ -107,9 +123,9 @@ export function StudentSidebar() {
             )}
           </div>
         ) : (
-          <div className="mb-8 px-4">
-            <h1 className={cn("text-3xl font-black tracking-tight", isCenterStudent ? "text-red-600" : "text-emerald-500")}>
-              IGNITE {isCenterStudent && <span className="text-blue-600">Center</span>}
+          <div className={cn("mb-8 px-4", isCollapsed && "px-0 text-center")}>
+            <h1 className={cn("text-3xl font-black tracking-tight", isCenterStudent ? "text-red-600" : "text-emerald-500", isCollapsed && "text-xl")}>
+              {isCollapsed ? "IG" : <>IGNITE {isCenterStudent && <span className="text-blue-600">Center</span>}</>}
             </h1>
           </div>
         )}
@@ -121,19 +137,21 @@ export function StudentSidebar() {
           {navItems.map((item) => {
             const isActive = pathname === item.href;
             return (
-              <Link key={item.name} href={item.href}>
+              <Link key={item.name} href={item.href} title={isCollapsed ? item.name : undefined}>
                 <div 
                   className={cn(
                     "flex items-center transition-all",
                     uiMode === 'clean'
                       ? [
-                          "gap-3 px-4 py-3 rounded-[14px] font-semibold text-[13px] tracking-wide",
+                          "gap-3 py-3 rounded-[14px] font-semibold text-[13px] tracking-wide",
+                          isCollapsed ? "px-0 justify-center mx-2" : "px-4",
                           isActive 
                             ? "bg-[#108B96] text-white shadow-sm" 
                             : "text-[#4A5568] hover:bg-slate-200/50 hover:text-slate-900"
                         ]
                       : [
-                          "gap-4 px-4 py-4 rounded-2xl font-bold text-lg border-2",
+                          "gap-4 py-4 rounded-2xl font-bold text-lg border-2",
+                          isCollapsed ? "px-0 justify-center mx-1" : "px-4",
                           isActive 
                             ? (isCenterStudent ? "bg-red-100/50 border-red-200 text-red-600" : "bg-emerald-100/50 border-emerald-200 text-emerald-600")
                             : "border-transparent text-slate-500 hover:bg-slate-100 hover:text-slate-700"
@@ -142,14 +160,14 @@ export function StudentSidebar() {
                 >
                   <item.icon 
                     className={cn(
-                      uiMode === 'clean' ? "w-5 h-5 shrink-0" : "w-7 h-7", 
+                      uiMode === 'clean' ? "w-5 h-5 shrink-0" : "w-7 h-7 shrink-0", 
                       isActive 
                         ? (uiMode === 'clean' ? "text-white" : (isCenterStudent ? "text-red-500" : "text-emerald-500")) 
                         : (uiMode === 'clean' ? "text-[#718096]" : "text-slate-400")
                     )} 
                     strokeWidth={isActive ? (uiMode === 'clean' ? 2.5 : 2.5) : 2} 
                   />
-                  <span className="truncate">{item.name}</span>
+                  {!isCollapsed && <span className="truncate">{item.name}</span>}
                 </div>
               </Link>
             );
