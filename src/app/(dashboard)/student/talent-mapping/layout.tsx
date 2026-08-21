@@ -1,15 +1,25 @@
-import { Metadata } from "next";
+"use client";
 
-export const metadata: Metadata = {
-  title: "Talent Mapping | LMS",
-  description: "AI Career & Talent Mapping Dashboard",
-};
+import { useAuth } from "@/lib/auth-context";
+import { useRouter } from "next/navigation";
+import { useEffect } from "react";
 
 export default function TalentMappingLayout({
   children,
 }: {
   children: React.ReactNode;
 }) {
+  const { isCenterStudent, loading } = useAuth();
+  const router = useRouter();
+
+  useEffect(() => {
+    if (!loading && !isCenterStudent) {
+      router.push("/student/dashboard");
+    }
+  }, [loading, isCenterStudent, router]);
+
+  if (loading || !isCenterStudent) return null; // Or a loading spinner
+
   return (
     <div className="min-h-screen bg-slate-950 font-sans selection:bg-purple-500/30">
       <div className="max-w-md mx-auto min-h-screen bg-slate-50 relative shadow-2xl overflow-hidden">

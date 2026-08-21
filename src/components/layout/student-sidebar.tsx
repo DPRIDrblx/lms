@@ -55,6 +55,7 @@ export function StudentSidebar() {
     { name: "Market", href: "/student/market", icon: ShoppingCart },
     { name: "Shop", href: "/student/shop", icon: ShoppingBag },
     { name: "Golden Hour", href: "/student/golden-hour", icon: Sparkles },
+    ...(isCenterStudent ? [{ name: "Talent Mapping", href: "/student/talent-mapping", icon: Map }] : []),
     { name: "Profile", href: "/student/profile", icon: User },
   ];
 
