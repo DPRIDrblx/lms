@@ -25,7 +25,9 @@ import {
   Award,
   Flag,
   Library,
-  Download
+  Download,
+  AlertCircle,
+  LayoutGrid
 } from "lucide-react";
 import Link from "next/link";
 import { useParams, useRouter } from "next/navigation";
