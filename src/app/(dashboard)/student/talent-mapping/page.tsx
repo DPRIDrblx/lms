@@ -15,12 +15,11 @@ export default function TalentMappingDashboard() {
   const [mbti, setMbti] = useState("Belum Tes");
   const [targetCampus, setTargetCampus] = useState({ name: "Belum Ditentukan", major: "Belum Ditentukan", passingGrade: 85 });
   
-  // Dummy data for progress
-  const progressData = {
-    math: 75,
-    indo: 40,
-    dailyStreak: 3
-  };
+  const [progressData, setProgressData] = useState({
+    math: 0,
+    indo: 0,
+    dailyStreak: 0
+  });
 
   useEffect(() => {
     const fetchData = async () => {
@@ -36,6 +35,57 @@ export default function TalentMappingDashboard() {
 
         const { data: xpData } = await supabase.from('ai_drill_leaderboard').select('total_xp').eq('student_id', profile.id).single();
         if (xpData) setTotalXp(xpData.total_xp || 0);
+
+        // Progress Belajar (Matematika & Bahasa Indonesia)
+        let mathTotal = 0;
+        let mathCount = 0;
+        let indoTotal = 0;
+        let indoCount = 0;
+
+        const { data: scoresData } = await supabase
+          .from('student_scores')
+          .select('score, assessment_categories(name)')
+          .eq('student_id', profile.id);
+
+        if (scoresData) {
+          scoresData.forEach((s: any) => {
+            const catName = s.assessment_categories?.name?.toLowerCase() || "";
+            if (catName.includes('matematika') || catName.includes('math')) {
+              mathTotal += (s.score || 0);
+              mathCount++;
+            }
+            if (catName.includes('indonesia') || catName.includes('indo')) {
+              indoTotal += (s.score || 0);
+              indoCount++;
+            }
+          });
+        }
+        
+        // Also check drills
+        const { data: drillsData } = await supabase
+          .from('drill_submissions')
+          .select('score, drills(title)')
+          .eq('student_id', profile.id);
+          
+        if (drillsData) {
+          drillsData.forEach((d: any) => {
+            const title = d.drills?.title?.toLowerCase() || "";
+            if (title.includes('matematika') || title.includes('math')) {
+              mathTotal += (d.score || 0);
+              mathCount++;
+            }
+            if (title.includes('indonesia') || title.includes('indo')) {
+              indoTotal += (d.score || 0);
+              indoCount++;
+            }
+          });
+        }
+
+        setProgressData({
+          math: mathCount > 0 ? Math.round(mathTotal / mathCount) : 0,
+          indo: indoCount > 0 ? Math.round(indoTotal / indoCount) : 0,
+          dailyStreak: 3
+        });
       } catch (err) {
         console.error(err);
       }
