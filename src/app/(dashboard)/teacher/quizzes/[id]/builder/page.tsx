@@ -626,7 +626,7 @@ export default function CBTBuilderPage() {
                                 )}
                               </div>
                             ))}
-                            <Button size="sm" variant="outline" className="h-8" onClick={() => {
+                            <Button size="sm" variant="secondary" className="h-8 border-[var(--border)]" onClick={() => {
                               const newCols = [...(q.criteria?.cols || []), `Kolom ${q.criteria!.cols!.length + 1}`];
                               updateQuestion(q.id, { criteria: { ...q.criteria, cols: newCols } });
                             }}>
