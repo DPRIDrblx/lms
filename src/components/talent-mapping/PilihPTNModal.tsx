@@ -59,18 +59,19 @@ export default function PilihPTNModal({ isOpen, onClose, onSelect }: PilihPTNMod
             className="fixed inset-0 bg-slate-900/40 backdrop-blur-sm z-50"
           />
 
-          {/* Modal */}
-          <motion.div 
-            initial={{ y: "100%" }}
-            animate={{ y: 0 }}
-            exit={{ y: "100%" }}
-            transition={{ type: "spring", damping: 25, stiffness: 200 }}
-            className="fixed inset-x-0 bottom-0 h-[85vh] bg-white rounded-t-[2rem] z-50 flex flex-col shadow-2xl"
-          >
-            {/* Handle */}
-            <div className="flex justify-center pt-3 pb-2">
-              <div className="w-12 h-1.5 bg-slate-200 rounded-full" />
-            </div>
+          {/* Modal Wrapper */}
+          <div className="fixed inset-x-0 bottom-0 md:inset-x-auto md:bottom-auto md:top-1/2 md:left-1/2 md:-translate-x-1/2 md:-translate-y-1/2 z-[60] flex flex-col w-full md:w-[600px] h-[85vh] md:h-[80vh] pointer-events-none">
+            <motion.div 
+              initial={{ opacity: 0, y: "100%", scale: 1 }}
+              animate={{ opacity: 1, y: 0, scale: 1 }}
+              exit={{ opacity: 0, y: "100%" }}
+              transition={{ type: "spring", damping: 25, stiffness: 200 }}
+              className="w-full h-full bg-white rounded-t-[2rem] md:rounded-[2rem] flex flex-col shadow-2xl overflow-hidden origin-bottom pointer-events-auto"
+            >
+              {/* Handle - hidden on desktop */}
+              <div className="flex md:hidden justify-center pt-3 pb-2">
+                <div className="w-12 h-1.5 bg-slate-200 rounded-full" />
+              </div>
 
             {/* Header */}
             <div className="px-6 pb-4 border-b border-slate-100 flex items-center justify-between">
@@ -233,6 +234,7 @@ export default function PilihPTNModal({ isOpen, onClose, onSelect }: PilihPTNMod
               </button>
             </div>
           </motion.div>
+        </div>
         </>
       )}
     </AnimatePresence>
