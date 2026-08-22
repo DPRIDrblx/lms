@@ -50,7 +50,7 @@ export default function EModuleResponses() {
     // 2. Fetch Responses with User info
     const { data: respData, error: respError } = await supabase
       .from("e_module_responses")
-      .select("*, users(id, full_name)")
+      .select("*, profiles!student_id(id, full_name)")
       .eq("e_module_id", id)
       .order("created_at", { ascending: false });
       
@@ -129,7 +129,7 @@ export default function EModuleResponses() {
                 className={`w-full text-left p-3 rounded-xl transition-all border ${selectedResponse?.id === resp.id ? 'bg-indigo-50 border-indigo-200' : 'bg-white border-transparent hover:border-slate-200 hover:bg-slate-50'}`}
               >
                 <div className="flex items-center justify-between mb-1">
-                  <span className="font-bold text-sm text-slate-700 line-clamp-1">{resp.users?.full_name}</span>
+                  <span className="font-bold text-sm text-slate-700 line-clamp-1">{resp.profiles?.full_name}</span>
                   {resp.xp_awarded !== null ? (
                     <CheckCircle2 className="w-4 h-4 text-emerald-500 shrink-0" />
                   ) : (
@@ -167,7 +167,7 @@ export default function EModuleResponses() {
                 <div className="flex items-center gap-4">
                   <div className="bg-indigo-50 px-3 py-1.5 rounded-lg border border-indigo-100">
                     <span className="text-[10px] uppercase font-bold text-indigo-400 block leading-none mb-1">Siswa</span>
-                    <span className="text-sm font-black text-indigo-900 leading-none">{selectedResponse.users?.full_name}</span>
+                    <span className="text-sm font-black text-indigo-900 leading-none">{selectedResponse.profiles?.full_name}</span>
                   </div>
                   
                   <div className="flex items-center gap-2 ml-4">
