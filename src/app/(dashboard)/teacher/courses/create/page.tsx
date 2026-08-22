@@ -23,7 +23,7 @@ export default function CreateCoursePage() {
     description: "",
     category: "General",
     cover_image: "",
-    class_id: "",
+    target_class_ids: [] as string[],
   });
 
   useEffect(() => {
@@ -75,7 +75,7 @@ export default function CreateCoursePage() {
         description: formData.description,
         category: formData.category,
         cover_image: formData.cover_image || null,
-        class_id: formData.class_id || null,
+        target_class_ids: formData.target_class_ids.length > 0 ? formData.target_class_ids : [],
         is_published: false,
       })
       .select()
@@ -105,18 +105,31 @@ export default function CreateCoursePage() {
         <form onSubmit={handleSubmit} className="space-y-6">
           <div className="space-y-4">
             <div>
-              <label className="block text-sm font-medium text-[var(--text-primary)] mb-1.5">Target Class</label>
-              <select
-                required
-                value={formData.class_id}
-                onChange={(e) => setFormData({ ...formData, class_id: e.target.value })}
-                className="w-full h-11 px-4 rounded-xl bg-[var(--bg-secondary)] border border-[var(--border)] text-sm text-[var(--text-primary)] focus:outline-none focus:ring-2 focus:ring-[var(--accent)] transition-all"
-              >
-                <option value="">Select Target Class...</option>
-                {classes.map(c => (
-                  <option key={c.id} value={c.id}>Class {c.name}</option>
-                ))}
-              </select>
+              <label className="block text-sm font-medium text-[var(--text-primary)] mb-1.5">Target Classes</label>
+              <div className="flex flex-wrap gap-2">
+                {classes.map(c => {
+                  const isSelected = formData.target_class_ids.includes(c.id);
+                  return (
+                    <button
+                      key={c.id}
+                      type="button"
+                      onClick={() => {
+                        const newIds = isSelected
+                          ? formData.target_class_ids.filter(id => id !== c.id)
+                          : [...formData.target_class_ids, c.id];
+                        setFormData({ ...formData, target_class_ids: newIds });
+                      }}
+                      className={`px-3 py-1.5 rounded-full text-sm font-medium transition-colors border ${
+                        isSelected 
+                          ? 'bg-[var(--accent)] text-white border-[var(--accent)]' 
+                          : 'bg-[var(--bg-secondary)] text-[var(--text-secondary)] border-[var(--border)] hover:border-[var(--accent)]'
+                      }`}
+                    >
+                      Class {c.name}
+                    </button>
+                  );
+                })}
+              </div>
             </div>
 
             <div>

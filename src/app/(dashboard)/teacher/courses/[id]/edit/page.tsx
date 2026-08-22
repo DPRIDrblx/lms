@@ -72,6 +72,7 @@ export default function EditCoursePage() {
   const [chapters, setChapters] = useState<Chapter[]>([]);
   const [lessons, setLessons] = useState<Lesson[]>([]);
   const [quizzes, setQuizzes] = useState<Quiz[]>([]);
+  const [classes, setClasses] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   
   const [showLessonModal, setShowLessonModal] = useState(false);
@@ -90,15 +91,18 @@ export default function EditCoursePage() {
     description: "",
     category: "",
     cover_image: "",
+    target_class_ids: [] as string[],
   });
   const [uploadingBanner, setUploadingBanner] = useState(false);
 
   const fetchData = useCallback(async () => {
+    const { data: classData } = await supabase.from("classes").select("*").order("name");
     const { data: courseData } = await supabase.from("courses").select("*").eq("id", id).single();
     const { data: chapterData } = await supabase.from("chapters").select("*").eq("course_id", id).order("order_index", { ascending: true });
     const { data: lessonData } = await supabase.from("lessons").select("*").eq("course_id", id).order("order_index", { ascending: true });
     const { data: quizData } = await supabase.from("quizzes").select("*").eq("course_id", id);
     
+    if (classData) setClasses(classData);
     if (courseData) setCourse(courseData);
     if (chapterData) {
       setChapters(chapterData);
@@ -184,7 +188,8 @@ export default function EditCoursePage() {
         title: courseFormData.title,
         description: courseFormData.description,
         category: courseFormData.category,
-        cover_image: courseFormData.cover_image
+        cover_image: courseFormData.cover_image,
+        target_class_ids: courseFormData.target_class_ids.length > 0 ? courseFormData.target_class_ids : []
       }).eq('id', id);
       if (error) throw error;
       toast.success("Info course berhasil diupdate!");
@@ -263,7 +268,7 @@ export default function EditCoursePage() {
                 {course?.is_published ? "Published" : "Draft"}
               </Badge>
             </div>
-            <p className="text-xs text-[var(--text-secondary)] mt-0.5">Academic Session • {course?.class_id ? "Class Linked" : "No Class Assigned"}</p>
+            <p className="text-xs text-[var(--text-secondary)] mt-0.5">Academic Session • {course?.target_class_ids?.length ? `${course.target_class_ids.length} Classes Linked` : "No Class Assigned"}</p>
           </div>
         </div>
         
@@ -317,6 +322,7 @@ export default function EditCoursePage() {
                       description: course?.description || "",
                       category: course?.category || "General",
                       cover_image: course?.cover_image || "",
+                      target_class_ids: course?.target_class_ids || [],
                     });
                     setShowCourseModal(true);
                   }}>
@@ -830,6 +836,33 @@ export default function EditCoursePage() {
       {/* Edit Course Info Modal */}
       <Modal isOpen={showCourseModal} onClose={() => setShowCourseModal(false)} title="Edit Course Info">
         <form onSubmit={handleSaveCourseInfo} className="space-y-4 p-1">
+          <div>
+            <label className="block text-sm font-medium text-[var(--text-primary)] mb-1.5">Target Classes</label>
+            <div className="flex flex-wrap gap-2">
+              {classes.map(c => {
+                const isSelected = courseFormData.target_class_ids.includes(c.id);
+                return (
+                  <button
+                    key={c.id}
+                    type="button"
+                    onClick={() => {
+                      const newIds = isSelected
+                        ? courseFormData.target_class_ids.filter(id => id !== c.id)
+                        : [...courseFormData.target_class_ids, c.id];
+                      setCourseFormData({ ...courseFormData, target_class_ids: newIds });
+                    }}
+                    className={`px-3 py-1.5 rounded-full text-sm font-medium transition-colors border ${
+                      isSelected 
+                        ? 'bg-[var(--accent)] text-white border-[var(--accent)]' 
+                        : 'bg-[var(--bg-secondary)] text-[var(--text-secondary)] border-[var(--border)] hover:border-[var(--accent)]'
+                    }`}
+                  >
+                    Class {c.name}
+                  </button>
+                );
+              })}
+            </div>
+          </div>
           <div>
             <label className="block text-sm font-medium text-[var(--text-primary)] mb-1.5">Course Title</label>
             <input

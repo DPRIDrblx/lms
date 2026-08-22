@@ -46,7 +46,7 @@ export default function CoursesPage() {
         .eq("is_published", true);
 
       if (profile?.role === "student" && profile.class_id) {
-        query.eq("class_id", profile.class_id);
+        query.contains("target_class_ids", [profile.class_id]);
       }
 
       const { data: coursesData } = await query;

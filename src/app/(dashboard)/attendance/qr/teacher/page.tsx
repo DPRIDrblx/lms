@@ -77,12 +77,13 @@ export default function QRTeacherPage() {
     if (data) setLogs(data as unknown as LogEntry[]);
   }, [supabase]);
 
-  const fetchStudents = useCallback(async (classId: string) => {
+  const fetchStudents = useCallback(async (classIds: string[]) => {
+    if (!classIds || classIds.length === 0) return;
     const { data } = await supabase
       .from("profiles")
       .select("id, full_name, avatar_url")
       .eq("role", "student")
-      .eq("class_id", classId);
+      .in("class_id", classIds);
     if (data) setAllStudents(data as any);
   }, [supabase]);
 
@@ -95,11 +96,11 @@ export default function QRTeacherPage() {
   useEffect(() => {
     if (!activeSession) return;
     
-    // We need the class_id to filter students
+    // We need the class_ids to filter students
     const fetchSessionClassStudents = async () => {
-       const { data: courseData } = await supabase.from("courses").select("class_id").eq("id", (activeSession as any).course_id).maybeSingle();
-       if (courseData?.class_id) {
-          fetchStudents(courseData.class_id);
+       const { data: courseData } = await supabase.from("courses").select("target_class_ids").eq("id", (activeSession as any).course_id).maybeSingle();
+       if (courseData?.target_class_ids) {
+          fetchStudents(courseData.target_class_ids);
        }
     };
     fetchSessionClassStudents();

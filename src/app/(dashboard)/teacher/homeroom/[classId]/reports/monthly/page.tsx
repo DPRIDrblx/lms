@@ -92,7 +92,7 @@ export default function MonthlyReportPage({ params }: { params: Promise<{ classI
   const handleSyncGrades = async () => {
     setSyncing(true);
     // Fetch all courses for this class
-    const { data: courses } = await supabase.from("courses").select("id, title").eq("class_id", classId);
+    const { data: courses } = await supabase.from("courses").select("id, title").contains("target_class_ids", [classId]);
     
     // Fetch scores for all students in this class (final course scores from advanced gradebook)
     const { data: scores } = await supabase

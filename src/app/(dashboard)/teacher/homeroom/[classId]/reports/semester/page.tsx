@@ -82,7 +82,7 @@ function RapotInputContent() {
     setSaving(true);
     
     // Fetch all courses for this class
-    const { data: courses } = await supabase.from("courses").select("id, title").eq("class_id", classId);
+    const { data: courses } = await supabase.from("courses").select("id, title").contains("target_class_ids", [classId]);
     
     // Fetch scores for the student
     const { data: scores } = await supabase
