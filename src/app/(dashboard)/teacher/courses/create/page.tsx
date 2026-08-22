@@ -5,7 +5,7 @@ import { createClient } from "@/lib/supabase";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { motion } from "framer-motion";
-import { ChevronLeft, Save, Image as ImageIcon, Loader2 } from "lucide-react";
+import { ChevronLeft, Save, Image as ImageIcon, Loader2, Upload } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState, useEffect } from "react";
@@ -16,6 +16,7 @@ export default function CreateCoursePage() {
   const router = useRouter();
   
   const [loading, setLoading] = useState(false);
+  const [uploadingBanner, setUploadingBanner] = useState(false);
   const [classes, setClasses] = useState<any[]>([]);
   const [formData, setFormData] = useState({
     title: "",
@@ -32,6 +33,34 @@ export default function CreateCoursePage() {
     };
     fetchClasses();
   }, []);
+
+  const handleUploadBanner = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    setUploadingBanner(true);
+    try {
+      const fileExt = file.name.split('.').pop();
+      const fileName = `${Math.random().toString(36).substring(2, 15)}_${Date.now()}.${fileExt}`;
+      const filePath = `banners/${fileName}`;
+
+      const { error: uploadError } = await supabase.storage
+        .from('course_banners')
+        .upload(filePath, file);
+
+      if (uploadError) throw uploadError;
+
+      const { data } = supabase.storage
+        .from('course_banners')
+        .getPublicUrl(filePath);
+
+      setFormData(prev => ({ ...prev, cover_image: data.publicUrl }));
+    } catch (error: any) {
+      alert(`Upload failed: ${error.message}`);
+    } finally {
+      setUploadingBanner(false);
+    }
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -130,16 +159,30 @@ export default function CreateCoursePage() {
                 </select>
               </div>
               <div>
-                <label className="block text-sm font-medium text-[var(--text-primary)] mb-1.5">Cover Image URL</label>
-                <div className="relative">
-                  <input
-                    type="url"
-                    value={formData.cover_image}
-                    onChange={(e) => setFormData({ ...formData, cover_image: e.target.value })}
-                    placeholder="https://..."
-                    className="w-full h-11 pl-11 pr-4 rounded-xl bg-[var(--bg-secondary)] border border-[var(--border)] text-sm text-[var(--text-primary)] placeholder:text-[var(--text-tertiary)] focus:outline-none focus:ring-2 focus:ring-[var(--accent)] transition-all"
-                  />
-                  <ImageIcon className="absolute left-4 top-3.5 h-4 w-4 text-[var(--text-tertiary)]" />
+                <label className="block text-sm font-medium text-[var(--text-primary)] mb-1.5">Cover Image (Upload / URL)</label>
+                <div className="flex gap-2">
+                  <div className="relative flex-1">
+                    <input
+                      type="url"
+                      value={formData.cover_image}
+                      onChange={(e) => setFormData({ ...formData, cover_image: e.target.value })}
+                      placeholder="https://..."
+                      className="w-full h-11 pl-11 pr-4 rounded-xl bg-[var(--bg-secondary)] border border-[var(--border)] text-sm text-[var(--text-primary)] placeholder:text-[var(--text-tertiary)] focus:outline-none focus:ring-2 focus:ring-[var(--accent)] transition-all"
+                    />
+                    <ImageIcon className="absolute left-4 top-3.5 h-4 w-4 text-[var(--text-tertiary)]" />
+                  </div>
+                  <div className="relative">
+                     <input 
+                        type="file" 
+                        accept="image/*" 
+                        className="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10"
+                        onChange={handleUploadBanner}
+                        disabled={uploadingBanner}
+                     />
+                     <Button type="button" variant="secondary" className="h-11 px-4 relative z-0 border-[var(--border)]" disabled={uploadingBanner}>
+                        {uploadingBanner ? <Loader2 className="h-4 w-4 animate-spin" /> : <Upload className="h-4 w-4" />}
+                     </Button>
+                  </div>
                 </div>
               </div>
             </div>

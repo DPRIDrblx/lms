@@ -24,7 +24,9 @@ import {
   ChevronDown,
   ChevronUp,
   Presentation,
-  X
+  X,
+  Image as ImageIcon,
+  Upload
 } from "lucide-react";
 import Link from "next/link";
 import toast from "react-hot-toast";
@@ -82,6 +84,15 @@ export default function EditCoursePage() {
   const [gameTopic, setGameTopic] = useState("");
   const [gameInstruction, setGameInstruction] = useState("");
 
+  const [showCourseModal, setShowCourseModal] = useState(false);
+  const [courseFormData, setCourseFormData] = useState({
+    title: "",
+    description: "",
+    category: "",
+    cover_image: "",
+  });
+  const [uploadingBanner, setUploadingBanner] = useState(false);
+
   const fetchData = useCallback(async () => {
     const { data: courseData } = await supabase.from("courses").select("*").eq("id", id).single();
     const { data: chapterData } = await supabase.from("chapters").select("*").eq("course_id", id).order("order_index", { ascending: true });
@@ -135,6 +146,55 @@ export default function EditCoursePage() {
     if (!confirm("Deleting this chapter will un-group its materials. Continue?")) return;
     await supabase.from("chapters").delete().eq("id", cId);
     fetchData();
+  };
+
+  const handleUploadBanner = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    setUploadingBanner(true);
+    try {
+      const fileExt = file.name.split('.').pop();
+      const fileName = `${Math.random().toString(36).substring(2, 15)}_${Date.now()}.${fileExt}`;
+      const filePath = `banners/${fileName}`;
+
+      const { error: uploadError } = await supabase.storage
+        .from('course_banners')
+        .upload(filePath, file);
+
+      if (uploadError) throw uploadError;
+
+      const { data } = supabase.storage
+        .from('course_banners')
+        .getPublicUrl(filePath);
+
+      setCourseFormData(prev => ({ ...prev, cover_image: data.publicUrl }));
+    } catch (error: any) {
+      toast.error(`Upload failed: ${error.message}`);
+    } finally {
+      setUploadingBanner(false);
+    }
+  };
+
+  const handleSaveCourseInfo = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setSaving(true);
+    try {
+      const { error } = await supabase.from('courses').update({
+        title: courseFormData.title,
+        description: courseFormData.description,
+        category: courseFormData.category,
+        cover_image: courseFormData.cover_image
+      }).eq('id', id);
+      if (error) throw error;
+      toast.success("Info course berhasil diupdate!");
+      setShowCourseModal(false);
+      fetchData();
+    } catch (e: any) {
+      toast.error(`Gagal update: ${e.message}`);
+    } finally {
+      setSaving(false);
+    }
   };
 
   const handleSaveLesson = async () => {
@@ -251,6 +311,17 @@ export default function EditCoursePage() {
               <Card className="p-5 space-y-4">
                 <h3 className="font-bold text-[var(--text-primary)]">Quick Actions</h3>
                 <div className="space-y-2">
+                  <Button variant="secondary" className="w-full justify-start" icon={<Edit3 className="h-4 w-4" />} onClick={() => {
+                    setCourseFormData({
+                      title: course?.title || "",
+                      description: course?.description || "",
+                      category: course?.category || "General",
+                      cover_image: course?.cover_image || "",
+                    });
+                    setShowCourseModal(true);
+                  }}>
+                    Edit Course Info
+                  </Button>
                   <Link href={`/teacher/quizzes/create?course_id=${id}`}>
                     <Button variant="secondary" className="w-full justify-start" icon={<HelpCircle className="h-4 w-4" />}>
                       New Assessment
@@ -754,6 +825,77 @@ export default function EditCoursePage() {
 
           <Button className="w-full" onClick={handleSaveLesson} loading={saving}>Save Material</Button>
         </div>
+      </Modal>
+
+      {/* Edit Course Info Modal */}
+      <Modal isOpen={showCourseModal} onClose={() => setShowCourseModal(false)} title="Edit Course Info">
+        <form onSubmit={handleSaveCourseInfo} className="space-y-4 p-1">
+          <div>
+            <label className="block text-sm font-medium text-[var(--text-primary)] mb-1.5">Course Title</label>
+            <input
+              required
+              type="text"
+              value={courseFormData.title}
+              onChange={(e) => setCourseFormData({ ...courseFormData, title: e.target.value })}
+              className="w-full h-11 px-4 rounded-xl bg-[var(--bg-secondary)] border border-[var(--border)] text-sm focus:outline-none focus:ring-2 focus:ring-[var(--accent)]"
+            />
+          </div>
+          <div>
+            <label className="block text-sm font-medium text-[var(--text-primary)] mb-1.5">Description</label>
+            <textarea
+              required
+              rows={4}
+              value={courseFormData.description}
+              onChange={(e) => setCourseFormData({ ...courseFormData, description: e.target.value })}
+              className="w-full px-4 py-3 rounded-xl bg-[var(--bg-secondary)] border border-[var(--border)] text-sm focus:outline-none focus:ring-2 focus:ring-[var(--accent)] resize-none"
+            />
+          </div>
+          <div>
+            <label className="block text-sm font-medium text-[var(--text-primary)] mb-1.5">Category</label>
+            <select
+              value={courseFormData.category}
+              onChange={(e) => setCourseFormData({ ...courseFormData, category: e.target.value })}
+              className="w-full h-11 px-4 rounded-xl bg-[var(--bg-secondary)] border border-[var(--border)] text-sm focus:outline-none focus:ring-2 focus:ring-[var(--accent)]"
+            >
+              <option value="General">General</option>
+              <option value="Science">Science</option>
+              <option value="Math">Math</option>
+              <option value="History">History</option>
+              <option value="Arts">Arts</option>
+            </select>
+          </div>
+          <div>
+            <label className="block text-sm font-medium text-[var(--text-primary)] mb-1.5">Cover Image (Upload / URL)</label>
+            <div className="flex gap-2">
+              <div className="relative flex-1">
+                <input
+                  type="url"
+                  value={courseFormData.cover_image}
+                  onChange={(e) => setCourseFormData({ ...courseFormData, cover_image: e.target.value })}
+                  placeholder="https://..."
+                  className="w-full h-11 pl-11 pr-4 rounded-xl bg-[var(--bg-secondary)] border border-[var(--border)] text-sm focus:outline-none focus:ring-2 focus:ring-[var(--accent)]"
+                />
+                <ImageIcon className="absolute left-4 top-3.5 h-4 w-4 text-[var(--text-tertiary)]" />
+              </div>
+              <div className="relative">
+                 <input 
+                    type="file" 
+                    accept="image/*" 
+                    className="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10"
+                    onChange={handleUploadBanner}
+                    disabled={uploadingBanner}
+                 />
+                 <Button type="button" variant="secondary" className="h-11 px-4 relative z-0 border-[var(--border)]" disabled={uploadingBanner}>
+                    {uploadingBanner ? <Loader2 className="h-4 w-4 animate-spin" /> : <Upload className="h-4 w-4" />}
+                 </Button>
+              </div>
+            </div>
+          </div>
+          <div className="flex justify-end gap-3 pt-4 border-t border-[var(--border)]">
+            <Button variant="ghost" type="button" onClick={() => setShowCourseModal(false)}>Cancel</Button>
+            <Button type="submit" loading={saving} icon={<Save className="h-4 w-4" />}>Save Changes</Button>
+          </div>
+        </form>
       </Modal>
     </div>
   );
