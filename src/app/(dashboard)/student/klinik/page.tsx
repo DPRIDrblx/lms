@@ -3,7 +3,7 @@
 import { useAuth } from "@/lib/auth-context";
 import { createClient } from "@/lib/supabase";
 import { useEffect, useState, useMemo } from "react";
-import { BookOpen, Calendar, Clock, CheckCircle2, ChevronRight, Star, AlertCircle, Plus, Users, Beaker, User } from "lucide-react";
+import { BookOpen, Calendar, Clock, CheckCircle2, ChevronRight, Star, AlertCircle, Plus, Users, Beaker, User, Loader2 } from "lucide-react";
 import { CenterLoader } from "@/components/ui/center-loader";
 import { Card } from "@/components/ui/card";
 import { Modal } from "@/components/ui/modal";
@@ -499,7 +499,7 @@ export default function KlinikTanyaTutorPage() {
                                 setRescheduleTime(clinic.schedule_time.substring(0, 5));
                                 setIsRescheduleModalOpen(true);
                               }}
-                              variant="outline"
+                              variant="secondary"
                               className="w-full border-slate-200 text-slate-700 hover:bg-slate-50 hover:border-slate-300 h-11 rounded-[12px] text-[13px] font-bold"
                             >
                               Ubah Jadwal
