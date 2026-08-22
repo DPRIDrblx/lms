@@ -22,7 +22,9 @@ const PREDEFINED_BANNERS = [
   "PENGENALAN IOT & SENSOR.png",
   "PPKN.png",
   "TES MINAT BAKAT.png",
-  "TRYOUT.png"
+  "TRYOUT.png",
+  "NTC SKILL UP.png",
+  "Skill Up Agustusan.png"
 ];
 
 export default function CenterSchedulesManager() {

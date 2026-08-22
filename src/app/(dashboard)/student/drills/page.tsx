@@ -275,7 +275,10 @@ export default function DrillsPage() {
         <div className="relative z-10">
 
           <div className="max-w-6xl mx-auto px-6 pt-24 pb-8 relative z-20 flex items-center justify-between text-white">
-            <h1 className="text-2xl font-bold tracking-tight">Drill Soal</h1>
+            <div className="flex items-center gap-3">
+              <img src="/logo-skill-up.png" alt="Skill Up" className="h-8 object-contain drop-shadow-md" />
+              <h1 className="text-2xl font-bold tracking-tight">Drill Soal</h1>
+            </div>
             
             {/* Level Selector */}
             <div className="relative">

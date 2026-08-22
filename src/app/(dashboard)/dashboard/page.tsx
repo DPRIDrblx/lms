@@ -456,7 +456,7 @@ export default function DashboardPage() {
                             ? (isCompleted ? 'bg-slate-100 rounded-xl' : 'bg-orange-50 rounded-xl')
                             : (isCompleted ? 'bg-emerald-100 rounded-2xl' : 'bg-amber-100 animate-pulse rounded-2xl')
                         )}>
-                          {isCompleted ? <Trophy className={cn("w-7 h-7", uiMode === 'clean' ? "text-slate-400" : "text-emerald-500")} /> : <Flame className={cn("w-7 h-7", uiMode === 'clean' ? "text-orange-500" : "text-amber-500")} />}
+                          {isCompleted ? <Trophy className={cn("w-7 h-7", uiMode === 'clean' ? "text-slate-400" : "text-emerald-500")} /> : <img src="/logo-skill-up.png" className="w-8 h-8 object-contain" alt="Skill Up" />}
                         </div>
                         <div>
                           <h3 className={cn("text-lg mb-1", uiMode === 'clean' ? "font-bold text-slate-800" : "font-black text-slate-800 text-xl")}>{drill.title}</h3>

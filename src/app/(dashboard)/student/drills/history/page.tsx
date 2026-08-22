@@ -85,7 +85,10 @@ export default function DrillHistoryPage() {
           <Link href="/student/drills" className="w-10 h-10 rounded-full bg-white/20 hover:bg-white/30 flex items-center justify-center transition-colors">
             <ArrowLeft className="w-5 h-5" />
           </Link>
-          <h1 className="text-xl font-bold">Riwayat Drill Soal</h1>
+          <div className="flex items-center gap-3">
+            <img src="/logo-skill-up.png" alt="Skill Up" className="h-6 object-contain drop-shadow-md" />
+            <h1 className="text-xl font-bold">Riwayat Drill Soal</h1>
+          </div>
         </div>
       </div>
 
