@@ -19,6 +19,7 @@ export default function CenterEModulesManager() {
   const [pdfFile, setPdfFile] = useState<File | null>(null);
   const [classId, setClassId] = useState("");
   const [isUploading, setIsUploading] = useState(false);
+  const [migratingId, setMigratingId] = useState<string | null>(null);
 
   const fetchData = async () => {
     setLoading(true);
@@ -100,6 +101,38 @@ export default function CenterEModulesManager() {
     } else {
       toast.success("E-Modul berhasil dihapus");
       fetchData();
+    }
+  };
+
+  const handleMigratePDF = async (id: string, file: File) => {
+    setMigratingId(id);
+    try {
+      const fileExt = file.name.split('.').pop();
+      const fileName = `${Math.random().toString(36).substring(2, 15)}_${Date.now()}.${fileExt}`;
+      const filePath = `emodules/${fileName}`;
+
+      const { error: uploadError } = await supabase.storage
+        .from('e_modules_pdfs')
+        .upload(filePath, file);
+
+      if (uploadError) throw uploadError;
+
+      const { data: publicUrlData } = supabase.storage
+        .from('e_modules_pdfs')
+        .getPublicUrl(filePath);
+
+      const { error } = await supabase.from("e_modules").update({
+        pdf_url: publicUrlData.publicUrl
+      }).eq("id", id);
+
+      if (error) throw error;
+
+      toast.success("Berhasil mengubah ke modul interaktif!");
+      fetchData();
+    } catch (err: any) {
+      toast.error(err.message || "Gagal mengunggah PDF");
+    } finally {
+      setMigratingId(null);
     }
   };
 
@@ -218,14 +251,31 @@ export default function CenterEModulesManager() {
                         </Link>
                       </>
                     ) : (
-                      <a 
-                        href={m.drive_link} 
-                        target="_blank" 
-                        rel="noopener noreferrer"
-                        className="inline-flex items-center gap-2 text-sm font-bold text-indigo-600 hover:text-indigo-700 bg-indigo-50 hover:bg-indigo-100 px-4 py-2 rounded-xl transition-colors"
-                      >
-                        Buka Link (Legacy)
-                      </a>
+                      <div className="flex gap-2">
+                        <a 
+                          href={m.drive_link} 
+                          target="_blank" 
+                          rel="noopener noreferrer"
+                          className="inline-flex items-center gap-2 text-sm font-bold text-slate-600 hover:text-slate-800 bg-slate-100 hover:bg-slate-200 px-4 py-2 rounded-xl transition-colors"
+                        >
+                          Buka Link Lama
+                        </a>
+                        
+                        <label className={`inline-flex items-center gap-2 text-sm font-bold text-emerald-600 hover:text-emerald-700 bg-emerald-50 hover:bg-emerald-100 px-4 py-2 rounded-xl transition-colors cursor-pointer ${migratingId === m.id ? 'opacity-50 pointer-events-none' : ''}`}>
+                          {migratingId === m.id ? <Loader2 className="w-4 h-4 animate-spin" /> : <Upload className="w-4 h-4" />} 
+                          Ubah ke PDF
+                          <input 
+                            type="file" 
+                            accept="application/pdf" 
+                            className="hidden" 
+                            onChange={(e) => {
+                              if (e.target.files?.[0]) {
+                                handleMigratePDF(m.id, e.target.files[0]);
+                              }
+                            }}
+                          />
+                        </label>
+                      </div>
                     )}
                   </div>
                 </Card>
