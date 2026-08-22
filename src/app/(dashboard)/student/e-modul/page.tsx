@@ -4,6 +4,7 @@ import { useAuth } from "@/lib/auth-context";
 import { createClient } from "@/lib/supabase";
 import { useEffect, useState } from "react";
 import { FolderOpen, ExternalLink, BookOpen, Search, BookText, Bookmark } from "lucide-react";
+import Link from "next/link";
 import { CenterLoader } from "@/components/ui/center-loader";
 import { Button } from "@/components/ui/button";
 import { useTheme } from "@/lib/theme-context";
@@ -138,11 +139,19 @@ export default function EModulPage() {
                 <h3 className="text-[15px] font-bold text-slate-800 line-clamp-1 group-hover:text-[#108B96] transition-colors">{mod.title}</h3>
                 <p className="text-[13px] font-semibold text-slate-500 mt-1">Modul Pembelajaran</p>
                 <div className="mt-4 opacity-0 group-hover:opacity-100 transition-opacity">
-                  <a href={mod.drive_link} target="_blank" rel="noopener noreferrer">
-                    <Button variant="ghost" className="w-full h-9 border-2 border-slate-200 text-[#108B96] font-bold text-[12px] hover:bg-[#108B96] hover:text-white hover:border-[#108B96] rounded-[10px]">
-                      Buka Modul <ExternalLink className="w-3.5 h-3.5 ml-2" />
-                    </Button>
-                  </a>
+                  {mod.pdf_url ? (
+                    <Link href={`/student/e-modul/${mod.id}`}>
+                      <Button variant="ghost" className="w-full h-9 border-2 border-slate-200 text-[#108B96] font-bold text-[12px] hover:bg-[#108B96] hover:text-white hover:border-[#108B96] rounded-[10px]">
+                        Buka E-Modul Interaktif
+                      </Button>
+                    </Link>
+                  ) : (
+                    <a href={mod.drive_link} target="_blank" rel="noopener noreferrer">
+                      <Button variant="ghost" className="w-full h-9 border-2 border-slate-200 text-[#108B96] font-bold text-[12px] hover:bg-[#108B96] hover:text-white hover:border-[#108B96] rounded-[10px]">
+                        Buka Modul Lama <ExternalLink className="w-3.5 h-3.5 ml-2" />
+                      </Button>
+                    </a>
+                  )}
                 </div>
               </div>
             </div>

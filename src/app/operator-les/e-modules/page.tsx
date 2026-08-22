@@ -4,8 +4,9 @@ import { useEffect, useState } from "react";
 import { createClient } from "@/lib/supabase";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { BookOpen, Trash2, Plus, Users, ExternalLink, Link2 } from "lucide-react";
+import { BookOpen, Trash2, Plus, Users, Upload, PenTool, LayoutList, Loader2 } from "lucide-react";
 import toast from "react-hot-toast";
+import Link from "next/link";
 
 export default function CenterEModulesManager() {
   const supabase = createClient();
@@ -15,8 +16,9 @@ export default function CenterEModulesManager() {
   
   // Form State
   const [title, setTitle] = useState("");
-  const [driveLink, setDriveLink] = useState("");
+  const [pdfFile, setPdfFile] = useState<File | null>(null);
   const [classId, setClassId] = useState("");
+  const [isUploading, setIsUploading] = useState(false);
 
   const fetchData = async () => {
     setLoading(true);
@@ -41,24 +43,51 @@ export default function CenterEModulesManager() {
 
   const handleAddModule = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!title || !driveLink || !classId) {
+    if (!title || !classId) {
       toast.error("Mohon lengkapi semua field wajib");
       return;
     }
+    
+    if (!pdfFile) {
+      toast.error("Mohon pilih file PDF");
+      return;
+    }
 
-    const { error } = await supabase.from("e_modules").insert({
-      title,
-      drive_link: driveLink,
-      class_id: classId
-    });
+    setIsUploading(true);
 
-    if (error) {
-      toast.error(error.message);
-    } else {
+    try {
+      // 1. Upload PDF
+      const fileExt = pdfFile.name.split('.').pop();
+      const fileName = `${Math.random().toString(36).substring(2, 15)}_${Date.now()}.${fileExt}`;
+      const filePath = `emodules/${fileName}`;
+
+      const { error: uploadError } = await supabase.storage
+        .from('e_modules_pdfs')
+        .upload(filePath, pdfFile);
+
+      if (uploadError) throw uploadError;
+
+      const { data: publicUrlData } = supabase.storage
+        .from('e_modules_pdfs')
+        .getPublicUrl(filePath);
+
+      // 2. Insert to database
+      const { error } = await supabase.from("e_modules").insert({
+        title,
+        pdf_url: publicUrlData.publicUrl,
+        class_id: classId
+      });
+
+      if (error) throw error;
+
       toast.success("E-Modul berhasil ditambahkan");
       setTitle("");
-      setDriveLink("");
+      setPdfFile(null);
       fetchData();
+    } catch (err: any) {
+      toast.error(err.message || "Gagal mengunggah E-Modul");
+    } finally {
+      setIsUploading(false);
     }
   };
 
@@ -119,22 +148,21 @@ export default function CenterEModulesManager() {
               </div>
 
               <div>
-                <label className="block text-sm font-bold text-slate-700 mb-1">Link Google Drive / Tautan File</label>
+                <label className="block text-sm font-bold text-slate-700 mb-1">File PDF E-Modul</label>
                 <div className="relative">
-                  <Link2 className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
+                  <Upload className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
                   <input 
-                    type="url"
-                    placeholder="https://drive.google.com/..."
-                    className="w-full pl-10 pr-3 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500"
-                    value={driveLink}
-                    onChange={(e) => setDriveLink(e.target.value)}
+                    type="file"
+                    accept="application/pdf"
+                    className="w-full pl-10 pr-3 py-2.5 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 text-sm file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-xs file:font-bold file:bg-indigo-50 file:text-indigo-700 hover:file:bg-indigo-100 transition-all cursor-pointer"
+                    onChange={(e) => setPdfFile(e.target.files?.[0] || null)}
                     required
                   />
                 </div>
               </div>
 
-              <Button type="submit" className="w-full py-6 rounded-xl bg-indigo-600 hover:bg-indigo-700 font-bold text-white shadow-lg shadow-indigo-500/20">
-                Simpan E-Modul
+              <Button disabled={isUploading} type="submit" className="w-full py-6 rounded-xl bg-indigo-600 hover:bg-indigo-700 font-bold text-white shadow-lg shadow-indigo-500/20">
+                {isUploading ? <Loader2 className="w-5 h-5 animate-spin" /> : "Upload E-Modul"}
               </Button>
             </form>
           </Card>
@@ -175,14 +203,31 @@ export default function CenterEModulesManager() {
                     <h3 className="font-black text-lg text-slate-800 ml-2 mb-2 leading-tight line-clamp-2">{m.title}</h3>
                   </div>
 
-                  <a 
-                    href={m.drive_link} 
-                    target="_blank" 
-                    rel="noopener noreferrer"
-                    className="ml-2 mt-4 inline-flex items-center gap-2 text-sm font-bold text-indigo-600 hover:text-indigo-700 bg-indigo-50 hover:bg-indigo-100 px-4 py-2 rounded-xl transition-colors self-start"
-                  >
-                    Buka File <ExternalLink className="w-4 h-4" />
-                  </a>
+                  <div className="ml-2 mt-4 flex flex-wrap gap-2 self-start">
+                    {m.pdf_url ? (
+                      <>
+                        <Link href={`/operator-les/e-modules/${m.id}/builder`}>
+                          <Button size="sm" className="bg-indigo-100 hover:bg-indigo-200 text-indigo-700" variant="secondary">
+                            <PenTool className="w-3.5 h-3.5 mr-1.5" /> Interactive Builder
+                          </Button>
+                        </Link>
+                        <Link href={`/operator-les/e-modules/${m.id}/responses`}>
+                          <Button size="sm" variant="ghost" className="border border-indigo-200 text-indigo-600 hover:bg-indigo-50">
+                            <LayoutList className="w-3.5 h-3.5 mr-1.5" /> Responses & Grading
+                          </Button>
+                        </Link>
+                      </>
+                    ) : (
+                      <a 
+                        href={m.drive_link} 
+                        target="_blank" 
+                        rel="noopener noreferrer"
+                        className="inline-flex items-center gap-2 text-sm font-bold text-indigo-600 hover:text-indigo-700 bg-indigo-50 hover:bg-indigo-100 px-4 py-2 rounded-xl transition-colors"
+                      >
+                        Buka Link (Legacy)
+                      </a>
+                    )}
+                  </div>
                 </Card>
               ))}
             </div>
