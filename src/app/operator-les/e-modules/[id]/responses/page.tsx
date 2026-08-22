@@ -98,7 +98,7 @@ export default function EModuleResponses() {
   const totalMaxXp = elements.reduce((acc: number, el: any) => acc + (el.xp || 0), 0);
 
   return (
-    <div className="h-[calc(100vh-4rem)] flex flex-col -m-6 md:-m-10 bg-slate-50">
+    <div className="h-[calc(100vh-4rem)] flex flex-col bg-slate-50">
       {/* Header */}
       <div className="bg-white border-b border-slate-200 px-6 py-3 flex items-center justify-between z-20 shadow-sm shrink-0">
         <div className="flex items-center gap-4">

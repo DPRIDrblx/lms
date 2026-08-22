@@ -141,7 +141,7 @@ export default function EModuleBuilder() {
   const currentPageElements = elements.filter(el => el.page === pageNumber);
 
   return (
-    <div className="h-[calc(100vh-4rem)] flex flex-col -m-6 md:-m-10">
+    <div className="h-[calc(100vh-4rem)] flex flex-col bg-slate-50">
       {/* Header */}
       <div className="bg-white border-b border-slate-200 px-6 py-3 flex items-center justify-between z-10 shadow-sm">
         <div className="flex items-center gap-4">
