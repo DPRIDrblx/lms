@@ -21,8 +21,9 @@ export default function CenterEModulesManager() {
   const fetchData = async () => {
     setLoading(true);
     // Fetch classes (filter for center classes only)
-    const { data: clsData } = await supabase.from("classes").select("*").in("name", ["7E", "8E", "9E"]).order("name");
-    if (clsData) setClasses(clsData);
+    const { data: clsData } = await supabase.from("classes").select("*").order("name");
+    const regularClasses = ["7A", "7B", "7C", "7D", "8A", "8B", "8C", "8D", "9A", "9B", "9C", "9D"];
+    if (clsData) setClasses(clsData.filter((c: any) => !regularClasses.includes(c.name)));
 
     // Fetch E-Modules
     const { data: modData } = await supabase

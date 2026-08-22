@@ -190,7 +190,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     await clearSessionAndLogout();
   };
 
-  const isCenterStudent = profile?.role === "student" && (profile?.class_name === "7E" || profile?.class_name === "8E" || profile?.class_name === "9E");
+  const regularClasses = ["7A", "7B", "7C", "7D", "8A", "8B", "8C", "8D", "9A", "9B", "9C", "9D"];
+  const isCenterStudent = Boolean(profile?.role === "student" && profile?.class_name && !regularClasses.includes(profile.class_name));
 
   return (
     <AuthContext.Provider value={{ 

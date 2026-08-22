@@ -70,5 +70,6 @@ export function generateQRPayload(): string {
 export function showLogo(className?: string | null): boolean {
   if (!className) return false;
   const upper = className.toUpperCase();
-  return ['7E', '8E', '9E'].includes(upper);
+  const regularClasses = ["7A", "7B", "7C", "7D", "8A", "8B", "8C", "8D", "9A", "9B", "9C", "9D"];
+  return !regularClasses.includes(upper);
 }
