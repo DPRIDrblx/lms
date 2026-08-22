@@ -218,15 +218,29 @@ export default function JadwalLesPage() {
                     <div 
                       key={schedule.id}
                       onClick={() => handleOpenSchedule(schedule)}
-                      className="bg-white rounded-[16px] border border-slate-200 overflow-hidden flex flex-col sm:flex-row cursor-pointer hover:border-[#108B96]/50 hover:shadow-md transition-all group"
+                      className="bg-white rounded-[16px] border border-slate-200 overflow-hidden flex flex-col cursor-pointer hover:border-[#108B96]/50 hover:shadow-md transition-all group"
                     >
-                      <div className={cn(
-                        "w-full sm:w-28 p-5 flex flex-row sm:flex-col items-center justify-center shrink-0 gap-2 border-b sm:border-b-0 sm:border-r border-slate-100 transition-colors",
-                        isToday ? "bg-teal-50 text-[#108B96]" : "bg-slate-50 text-slate-500 group-hover:bg-teal-50 group-hover:text-[#108B96]"
-                      )}>
-                        <span className="text-[11px] font-bold uppercase tracking-wider">{date.toLocaleDateString('id-ID', { month: 'short' })}</span>
-                        <span className="text-3xl sm:text-[32px] font-black leading-none">{date.getDate()}</span>
-                      </div>
+                      {schedule.banner_url ? (
+                        <div className="w-full aspect-[21/9] bg-slate-100 relative">
+                          <img src={schedule.banner_url} alt={schedule.title} className="w-full h-full object-cover" />
+                          <div className={cn(
+                            "absolute top-3 left-3 px-3 py-1.5 rounded-lg shadow-sm flex items-center gap-1.5 border",
+                            isToday ? "bg-teal-50 text-[#108B96] border-teal-200" : "bg-white text-slate-600 border-slate-200"
+                          )}>
+                            <Calendar className="w-3.5 h-3.5" />
+                            <span className="text-xs font-bold">{date.toLocaleDateString('id-ID', { day: 'numeric', month: 'short' })}</span>
+                          </div>
+                        </div>
+                      ) : (
+                        <div className={cn(
+                          "w-full h-16 sm:h-auto sm:w-28 p-3 sm:p-5 flex flex-row sm:flex-col items-center justify-center shrink-0 gap-2 border-b sm:border-b-0 sm:border-r border-slate-100 transition-colors",
+                          isToday ? "bg-teal-50 text-[#108B96]" : "bg-slate-50 text-slate-500 group-hover:bg-teal-50 group-hover:text-[#108B96]"
+                        )}>
+                          <span className="text-[11px] font-bold uppercase tracking-wider hidden sm:block">{date.toLocaleDateString('id-ID', { month: 'short' })}</span>
+                          <span className="text-2xl sm:text-[32px] font-black leading-none">{date.getDate()}</span>
+                          <span className="text-[11px] font-bold uppercase tracking-wider sm:hidden">{date.toLocaleDateString('id-ID', { month: 'short' })}</span>
+                        </div>
+                      )}
                       
                       <div className="p-5 flex-1 flex flex-col">
                         <div className="flex items-start justify-between gap-3 mb-2">

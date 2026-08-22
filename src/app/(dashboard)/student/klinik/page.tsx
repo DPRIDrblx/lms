@@ -302,13 +302,21 @@ export default function KlinikTanyaTutorPage() {
                     if (clinic.status === 'completed' || clinic.status === 'rejected') {
                       return (
                         <div key={clinic.id} className="bg-white rounded-[20px] border border-slate-200 overflow-hidden flex flex-col shadow-sm hover:shadow-md transition-all">
-                          <div className="h-32 bg-[#70C16C] relative overflow-hidden flex items-end p-5">
-                            <div className="absolute inset-0 opacity-10" style={{backgroundImage: 'radial-gradient(circle at 2px 2px, white 1px, transparent 0)', backgroundSize: '16px 16px'}}></div>
-                            <div className="absolute right-2 bottom-0 opacity-20 pointer-events-none">
-                              <Users className="w-32 h-32 text-white -mr-4 -mb-4" />
+                          {clinic.banner_url ? (
+                            <div className="h-32 relative overflow-hidden flex items-end p-5">
+                              <img src={clinic.banner_url} alt={clinic.subject} className="absolute inset-0 w-full h-full object-cover" />
+                              <div className="absolute inset-0 bg-gradient-to-t from-black/80 to-transparent"></div>
+                              <h2 className="text-white font-black text-3xl tracking-tight relative z-10">{clinic.subject}</h2>
                             </div>
-                            <h2 className="text-white font-black text-3xl tracking-tight relative z-10">{clinic.subject}</h2>
-                          </div>
+                          ) : (
+                            <div className="h-32 bg-[#70C16C] relative overflow-hidden flex items-end p-5">
+                              <div className="absolute inset-0 opacity-10" style={{backgroundImage: 'radial-gradient(circle at 2px 2px, white 1px, transparent 0)', backgroundSize: '16px 16px'}}></div>
+                              <div className="absolute right-2 bottom-0 opacity-20 pointer-events-none">
+                                <Users className="w-32 h-32 text-white -mr-4 -mb-4" />
+                              </div>
+                              <h2 className="text-white font-black text-3xl tracking-tight relative z-10">{clinic.subject}</h2>
+                            </div>
+                          )}
                           <div className="p-5 flex-1 flex flex-col">
                             <div className="flex flex-wrap gap-2 mb-3">
                               <span className="px-2.5 py-1 rounded-[6px] text-[10px] font-bold bg-slate-100 text-slate-500 uppercase tracking-wider">
@@ -389,17 +397,31 @@ export default function KlinikTanyaTutorPage() {
                     
                     return (
                       <div key={clinic.id} className="bg-white rounded-[20px] border border-slate-200 overflow-hidden flex flex-col shadow-sm hover:shadow-md hover:border-[#108B96]/30 transition-all">
-                        <div className="h-28 bg-[#E6F6F4] relative overflow-hidden flex items-center justify-center">
-                           <div className="absolute inset-0 opacity-20 bg-[url('https://www.transparenttextures.com/patterns/cubes.png')] mix-blend-overlay"></div>
-                           <Beaker className="w-14 h-14 text-[#108B96]/30" />
-                           <div className="absolute top-3 left-3">
-                             <span className={cn("px-2.5 py-1 rounded-[8px] text-[10px] font-black uppercase tracking-wider", 
-                               clinic.status === 'approved' ? "bg-blue-100 text-blue-700" : "bg-amber-100 text-amber-700"
-                             )}>
-                               {getStatusLabel(clinic.status)}
-                             </span>
-                           </div>
-                        </div>
+                        {clinic.banner_url ? (
+                          <div className="h-28 relative overflow-hidden flex items-center justify-center">
+                            <img src={clinic.banner_url} alt={clinic.subject} className="absolute inset-0 w-full h-full object-cover" />
+                            <div className="absolute inset-0 bg-black/20"></div>
+                            <div className="absolute top-3 left-3 relative z-10">
+                              <span className={cn("px-2.5 py-1 rounded-[8px] text-[10px] font-black uppercase tracking-wider", 
+                                clinic.status === 'approved' ? "bg-blue-100 text-blue-700" : "bg-amber-100 text-amber-700"
+                              )}>
+                                {getStatusLabel(clinic.status)}
+                              </span>
+                            </div>
+                          </div>
+                        ) : (
+                          <div className="h-28 bg-[#E6F6F4] relative overflow-hidden flex items-center justify-center">
+                             <div className="absolute inset-0 opacity-20 bg-[url('https://www.transparenttextures.com/patterns/cubes.png')] mix-blend-overlay"></div>
+                             <Beaker className="w-14 h-14 text-[#108B96]/30" />
+                             <div className="absolute top-3 left-3">
+                               <span className={cn("px-2.5 py-1 rounded-[8px] text-[10px] font-black uppercase tracking-wider", 
+                                 clinic.status === 'approved' ? "bg-blue-100 text-blue-700" : "bg-amber-100 text-amber-700"
+                               )}>
+                                 {getStatusLabel(clinic.status)}
+                               </span>
+                             </div>
+                          </div>
+                        )}
                         <div className="p-5 flex-1 flex flex-col">
                           <h3 className="text-[17px] font-black text-slate-800 mb-1 leading-tight">{clinic.subject}</h3>
                           <p className="text-slate-500 text-[13px] font-medium line-clamp-2 mb-4 flex-1">{clinic.topic}</p>

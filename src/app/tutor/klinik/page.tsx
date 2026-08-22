@@ -6,8 +6,25 @@ import { createClient } from "@/lib/supabase";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Modal } from "@/components/ui/modal";
-import { Loader2, BookOpen, User, Calendar, Clock, Users, Edit3, CheckCircle2, Star, MapPin } from "lucide-react";
+import { Loader2, BookOpen, User, Calendar, Clock, Users, Edit3, CheckCircle2, Star, MapPin, ImageIcon } from "lucide-react";
 import toast from "react-hot-toast";
+
+const PREDEFINED_BANNERS = [
+  "BAHASA INDONESIA.png",
+  "BAHASA INGGRIS.png",
+  "DASAR PEMROGRAMAN.png",
+  "DESIGN GRAFIS & UI_UX APLIKASI.png",
+  "IPA.png",
+  "IPS.png",
+  "KEAMANAN SIBER.png",
+  "LOGIKA & ALGORITMA DIGITAL.png",
+  "Matematika.png",
+  "PENGEMBANGAN GAME KOMPUTER DASAR.png",
+  "PENGENALAN IOT & SENSOR.png",
+  "PPKN.png",
+  "TES MINAT BAKAT.png",
+  "TRYOUT.png"
+];
 
 export default function TutorKlinikPage() {
   const { profile } = useAuth();
@@ -19,10 +36,12 @@ export default function TutorKlinikPage() {
   const [selectedClinic, setSelectedClinic] = useState<any>(null);
   const [isPlanModalOpen, setIsPlanModalOpen] = useState(false);
   const [isReportModalOpen, setIsReportModalOpen] = useState(false);
+  const [isBannerModalOpen, setIsBannerModalOpen] = useState(false);
   
   // Form states
   const [clinicPlan, setClinicPlan] = useState("");
   const [clinicReport, setClinicReport] = useState("");
+  const [bannerUrl, setBannerUrl] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   const fetchClinics = async () => {
@@ -90,6 +109,26 @@ export default function TutorKlinikPage() {
     } else {
       toast.success("Klinik berhasil diselesaikan!");
       setIsReportModalOpen(false);
+      fetchClinics();
+    }
+  };
+  const handleSaveBanner = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!selectedClinic) return;
+    
+    setIsSubmitting(true);
+    const { error } = await supabase
+      .from("tutor_clinics")
+      .update({ banner_url: bannerUrl || null })
+      .eq("id", selectedClinic.id);
+
+    setIsSubmitting(false);
+
+    if (error) {
+      toast.error(error.message);
+    } else {
+      toast.success("Banner berhasil diubah!");
+      setIsBannerModalOpen(false);
       fetchClinics();
     }
   };
@@ -174,6 +213,17 @@ export default function TutorKlinikPage() {
                 )}
 
                 <div className="mt-auto pt-4 border-t border-slate-100 flex flex-col gap-2">
+                  <Button
+                    onClick={() => {
+                      setSelectedClinic(clinic);
+                      setBannerUrl(clinic.banner_url || "");
+                      setIsBannerModalOpen(true);
+                    }}
+                    variant="ghost"
+                    className="w-full border border-slate-200 hover:bg-slate-50 text-slate-700"
+                  >
+                    <ImageIcon className="w-4 h-4 mr-2 text-slate-400" /> Ubah Banner
+                  </Button>
                   {!isCompleted && (
                     <>
                       <Button 
@@ -269,6 +319,36 @@ export default function TutorKlinikPage() {
             {selectedClinic?.status !== 'completed' && (
               <Button type="submit" disabled={isSubmitting} className="bg-emerald-500 hover:bg-emerald-600 text-white">Selesaikan Klinik</Button>
             )}
+          </div>
+        </form>
+      </Modal>
+
+      {/* Banner Modal */}
+      <Modal isOpen={isBannerModalOpen} onClose={() => setIsBannerModalOpen(false)} title="Pilih Banner">
+        <form onSubmit={handleSaveBanner} className="space-y-4">
+          <div>
+            <label className="block text-sm font-bold text-slate-700 mb-1">Pilih Banner</label>
+            <select
+              className="w-full p-3 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500"
+              value={bannerUrl}
+              onChange={(e) => setBannerUrl(e.target.value)}
+            >
+              <option value="">-- Tanpa Banner --</option>
+              {PREDEFINED_BANNERS.map(b => (
+                <option key={b} value={`/banners/${b}`}>{b.replace('.png', '')}</option>
+              ))}
+            </select>
+          </div>
+          {bannerUrl && (
+            <div className="w-full aspect-video rounded-xl bg-slate-100 overflow-hidden relative">
+              <img src={bannerUrl} alt="Preview Banner" className="w-full h-full object-cover" />
+            </div>
+          )}
+          <div className="flex justify-end gap-3 pt-4">
+            <Button type="button" variant="ghost" onClick={() => setIsBannerModalOpen(false)}>Batal</Button>
+            <Button type="submit" className="bg-blue-600 hover:bg-blue-700 text-white" disabled={isSubmitting}>
+              {isSubmitting ? <Loader2 className="w-4 h-4 animate-spin" /> : "Simpan Banner"}
+            </Button>
           </div>
         </form>
       </Modal>

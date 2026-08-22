@@ -8,6 +8,23 @@ import { Calendar, Clock, Trash2, Plus, Users, Link2, KeyRound, FileText, Chevro
 import toast from "react-hot-toast";
 import { Modal } from "@/components/ui/modal";
 
+const PREDEFINED_BANNERS = [
+  "BAHASA INDONESIA.png",
+  "BAHASA INGGRIS.png",
+  "DASAR PEMROGRAMAN.png",
+  "DESIGN GRAFIS & UI_UX APLIKASI.png",
+  "IPA.png",
+  "IPS.png",
+  "KEAMANAN SIBER.png",
+  "LOGIKA & ALGORITMA DIGITAL.png",
+  "Matematika.png",
+  "PENGEMBANGAN GAME KOMPUTER DASAR.png",
+  "PENGENALAN IOT & SENSOR.png",
+  "PPKN.png",
+  "TES MINAT BAKAT.png",
+  "TRYOUT.png"
+];
+
 export default function CenterSchedulesManager() {
   const supabase = createClient();
   const [schedules, setSchedules] = useState<any[]>([]);
@@ -21,6 +38,7 @@ export default function CenterSchedulesManager() {
   const [description, setDescription] = useState("");
   const [classId, setClassId] = useState("");
   const [driveLink, setDriveLink] = useState("");
+  const [bannerUrl, setBannerUrl] = useState("");
 
   // Summary Modal State
   const [isSummaryModalOpen, setIsSummaryModalOpen] = useState(false);
@@ -73,7 +91,8 @@ export default function CenterSchedulesManager() {
       description,
       class_id: classId,
       drive_link: driveLink,
-      attendance_code: attendanceCode
+      attendance_code: attendanceCode,
+      banner_url: bannerUrl || null
     });
 
     if (error) {
@@ -85,6 +104,7 @@ export default function CenterSchedulesManager() {
       setScheduleTime("");
       setDescription("");
       setDriveLink("");
+      setBannerUrl("");
       fetchData();
     }
   };
@@ -155,6 +175,20 @@ export default function CenterSchedulesManager() {
                   <option value="">-- Pilih Kelas --</option>
                   {classes.map(c => (
                     <option key={c.id} value={c.id}>{c.name}</option>
+                  ))}
+                </select>
+              </div>
+
+              <div>
+                <label className="block text-sm font-bold text-slate-700 mb-1">Banner Pilihan (Opsional)</label>
+                <select 
+                  className="w-full p-3 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500"
+                  value={bannerUrl}
+                  onChange={(e) => setBannerUrl(e.target.value)}
+                >
+                  <option value="">-- Tanpa Banner --</option>
+                  {PREDEFINED_BANNERS.map(b => (
+                    <option key={b} value={`/banners/${b}`}>{b.replace('.png', '')}</option>
                   ))}
                 </select>
               </div>
