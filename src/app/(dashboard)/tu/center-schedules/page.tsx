@@ -4,7 +4,7 @@ import { useEffect, useState } from "react";
 import { createClient } from "@/lib/supabase";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Calendar, Clock, Trash2, Plus, Users, Link2, KeyRound, FileText, ChevronRight } from "lucide-react";
+import { Calendar, Clock, Trash2, Plus, Users, Link2, KeyRound, FileText, ChevronRight, Edit3 } from "lucide-react";
 import toast from "react-hot-toast";
 import { Modal } from "@/components/ui/modal";
 
