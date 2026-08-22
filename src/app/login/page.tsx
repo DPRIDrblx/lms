@@ -98,11 +98,6 @@ export default function LoginPage() {
             </div>
           </div>
 
-          {/* Logo */}
-          <div className="mb-8">
-            <img src="/logo-lms.png" alt="LMS Logo" className="h-12 w-auto object-contain" />
-          </div>
-
           {/* Title Area */}
           <div className="mb-10 relative">
             <h1 className="text-4xl md:text-5xl font-extrabold text-slate-900 tracking-tight">

@@ -4,7 +4,7 @@ import { useAuth } from "@/lib/auth-context";
 import { Flame, Diamond, Heart, LogOut, Gem, User } from "lucide-react";
 import { useEffect, useState, useRef } from "react";
 import { createClient } from "@/lib/supabase";
-import { getInitials, cn } from "@/lib/utils";
+import { getInitials, cn, showLogo } from "@/lib/utils";
 import { motion, AnimatePresence } from "framer-motion";
 import { GraduationCap, Glasses } from "lucide-react";
 import { useTheme } from "@/lib/theme-context";
@@ -83,7 +83,13 @@ export function StudentTopBar() {
           <div className="flex items-center gap-10">
             {/* Ruangguru-style Logo */}
             <Link href="/dashboard" className="flex items-center gap-2">
-              <img src="/logo-lms.png" alt="LMS Logo" className="h-8 w-auto object-contain" />
+              {showLogo(profile?.class_name) ? (
+                <img src="/logo-lms.png" alt="LMS Logo" className="h-8 w-auto object-contain" />
+              ) : (
+                <div className="flex items-center bg-blue-600 text-white rounded-lg px-2.5 py-1 font-black text-xl tracking-tighter">
+                  <span>IGNITE</span>
+                </div>
+              )}
             </Link>
             
             {/* Top Navigation Links */}

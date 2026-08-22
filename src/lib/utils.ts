@@ -66,3 +66,9 @@ export function getNextRank(xp: number): { name: string; xpNeeded: number; progr
 export function generateQRPayload(): string {
   return `IGNITE-${Date.now()}-${Math.random().toString(36).substring(2, 8).toUpperCase()}`;
 }
+
+export function showLogo(className?: string | null): boolean {
+  if (!className) return false;
+  const upper = className.toUpperCase();
+  return ['7E', '8E', '9E'].includes(upper);
+}

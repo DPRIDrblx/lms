@@ -4,6 +4,7 @@ import React, { useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useAuth } from "@/lib/auth-context";
+import { showLogo } from "@/lib/utils";
 import { Sparkles, BookOpen, User, LogOut, Menu, X, LayoutDashboard, Settings, MapPin, CreditCard, GraduationCap } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 
@@ -42,8 +43,19 @@ export function NiaShell({ children }: { children: React.ReactNode }) {
       {/* Desktop Sidebar */}
       <aside className="hidden lg:flex w-72 flex-col bg-white border-r border-slate-200 shadow-sm fixed h-full z-40">
         <div className="p-4 border-b border-slate-100 flex flex-col gap-1">
-          <img src="/logo-nia-tutoring.png" alt="NIA Tutoring" className="h-12 w-auto object-contain" />
-          <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest pl-1">{profile?.role?.replace('_', ' ')}</p>
+          {showLogo(profile?.class_name) ? (
+            <img src="/logo-nia-tutoring.png" alt="NIA Tutoring" className="h-12 w-auto object-contain" />
+          ) : (
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-blue-600 to-indigo-800 flex items-center justify-center shadow-lg shadow-blue-500/20 shrink-0">
+                <GraduationCap className="w-6 h-6 text-white" />
+              </div>
+              <div>
+                <h1 className="font-black text-xl text-slate-900 tracking-tight">NIA Tutoring <span className="text-blue-600">AKSES</span></h1>
+              </div>
+            </div>
+          )}
+          <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest pl-1 mt-1">{profile?.role?.replace('_', ' ')}</p>
         </div>
 
         <nav className="flex-1 p-4 space-y-2 overflow-y-auto">
@@ -90,7 +102,16 @@ export function NiaShell({ children }: { children: React.ReactNode }) {
       {/* Mobile Header */}
       <header className="lg:hidden fixed top-0 w-full h-16 bg-white border-b border-slate-200 z-50 flex items-center justify-between px-4">
         <div className="flex items-center gap-2">
-          <img src="/logo-nia-tutoring.png" alt="NIA Tutoring" className="h-8 w-auto object-contain" />
+          {showLogo(profile?.class_name) ? (
+            <img src="/logo-nia-tutoring.png" alt="NIA Tutoring" className="h-8 w-auto object-contain" />
+          ) : (
+            <>
+              <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-blue-600 to-indigo-800 flex items-center justify-center shrink-0">
+                <GraduationCap className="w-4 h-4 text-white" />
+              </div>
+              <span className="font-black text-lg text-slate-900">NIA Tutoring <span className="text-blue-600">AKSES</span></span>
+            </>
+          )}
         </div>
         <button onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)} className="p-2 -mr-2 text-slate-600">
           {isMobileMenuOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
