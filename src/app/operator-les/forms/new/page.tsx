@@ -41,14 +41,14 @@ export default function NewFormPage() {
       alert("Gagal membuat form.");
       setLoading(false);
     } else {
-      router.push(`/tu/forms/${data.id}/builder`);
+      router.push(`/operator-les/forms/${data.id}/builder`);
     }
   };
 
   return (
     <div className="p-6 max-w-4xl mx-auto space-y-6">
       <div className="flex items-center gap-4">
-        <Link href="/tu/forms" className="p-2 hover:bg-gray-100 rounded-full transition-colors">
+        <Link href="/operator-les/forms" className="p-2 hover:bg-gray-100 rounded-full transition-colors">
           <ArrowLeft className="w-5 h-5 text-gray-600" />
         </Link>
         <div>

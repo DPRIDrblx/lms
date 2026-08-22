@@ -42,7 +42,7 @@ export default function FormsPage() {
           <p className="text-gray-500">Kelola dan buat formulir dinamis berstandar korporat.</p>
         </div>
         <button
-          onClick={() => router.push("/tu/forms/new")}
+          onClick={() => router.push("/operator-les/forms/new")}
           className="flex items-center gap-2 bg-indigo-600 text-white px-4 py-2 rounded-xl text-sm font-bold shadow-md hover:bg-indigo-700 transition-colors"
         >
           <Plus className="w-5 h-5" />
@@ -97,13 +97,13 @@ export default function FormsPage() {
 
               <div className="mt-6 flex gap-3">
                 <button 
-                  onClick={() => router.push(`/tu/forms/${form.id}/builder`)}
+                  onClick={() => router.push(`/operator-les/forms/${form.id}/builder`)}
                   className="flex-1 flex justify-center items-center gap-2 bg-indigo-50 text-indigo-700 py-2 rounded-lg text-sm font-semibold hover:bg-indigo-100 transition-colors"
                 >
                   <Edit className="w-4 h-4" /> Edit
                 </button>
                 <button 
-                  onClick={() => router.push(`/tu/forms/${form.id}/responses`)}
+                  onClick={() => router.push(`/operator-les/forms/${form.id}/responses`)}
                   className="flex-1 flex justify-center items-center gap-2 bg-gray-50 text-gray-700 py-2 rounded-lg text-sm font-semibold hover:bg-gray-100 transition-colors"
                 >
                   <Eye className="w-4 h-4" /> Hasil

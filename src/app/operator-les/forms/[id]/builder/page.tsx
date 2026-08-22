@@ -137,7 +137,7 @@ export default function FormBuilderPage() {
       {/* Header */}
       <div className="bg-white border-b border-gray-200 px-6 py-4 flex items-center justify-between sticky top-0 z-20 shadow-sm">
         <div className="flex items-center gap-4">
-          <button onClick={() => router.push("/tu/forms")} className="p-2 hover:bg-gray-100 rounded-full">
+          <button onClick={() => router.push("/operator-les/forms")} className="p-2 hover:bg-gray-100 rounded-full">
             <ArrowLeft className="w-5 h-5 text-gray-600" />
           </button>
           <div>

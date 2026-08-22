@@ -16,10 +16,12 @@ import {
   AlertCircle,
   X,
   MoreVertical,
-  Link2
+  Link2,
+  Plus
 } from "lucide-react";
 import { useEffect, useState } from "react";
 import toast from "react-hot-toast";
+import { Modal } from "@/components/ui/modal";
 
 export default function TUClassroomManager() {
   const supabase = createClient();
@@ -32,6 +34,10 @@ export default function TUClassroomManager() {
   const [selectedClass, setSelectedClass] = useState<any>(null);
   const [isAssignOpen, setIsAssignOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
+  
+  // New Class State
+  const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
+  const [newClassName, setNewClassName] = useState("");
 
   useEffect(() => {
     fetchData();
@@ -141,6 +147,27 @@ export default function TUClassroomManager() {
     }
   };
 
+  const handleCreateClass = async () => {
+    if (!newClassName.trim()) {
+      toast.error("Nama kelas tidak boleh kosong!");
+      return;
+    }
+
+    const toastId = toast.loading("Membuat kelas baru...");
+    const { error } = await supabase
+      .from("classes")
+      .insert([{ name: newClassName }]);
+
+    if (error) {
+      toast.error(`Gagal membuat kelas: ${error.message}`, { id: toastId });
+    } else {
+      toast.success(`Kelas ${newClassName} berhasil dibuat!`, { id: toastId });
+      setNewClassName("");
+      setIsCreateModalOpen(false);
+      fetchData();
+    }
+  };
+
   if (loading) return <div className="p-12 text-center text-[var(--text-tertiary)]">Synchronizing Academy Roster...</div>;
 
   return (
@@ -152,6 +179,7 @@ export default function TUClassroomManager() {
         </div>
         <div className="flex gap-3">
           <Button variant="secondary" className="rounded-xl"><Building2 className="h-4 w-4 mr-2" /> Sync School Data</Button>
+          <Button onClick={() => setIsCreateModalOpen(true)} className="rounded-xl bg-[var(--accent)] hover:bg-[var(--accent)]/90 text-white"><Plus className="h-4 w-4 mr-2" /> Tambah Kelas</Button>
         </div>
       </header>
 
@@ -383,18 +411,40 @@ export default function TUClassroomManager() {
               </motion.div>
             </AnimatePresence>
           ) : (
-            <div className="h-full flex flex-col items-center justify-center py-20 text-center">
-              <div className="h-24 w-24 rounded-full bg-[var(--bg-secondary)] flex items-center justify-center mb-6">
-                <GraduationCap className="h-12 w-12 text-[var(--text-tertiary)] opacity-20" />
+            <div className="flex flex-col items-center justify-center h-96 bg-[var(--bg-secondary)] rounded-[2.5rem] border-2 border-dashed border-[var(--border)] p-8 text-center">
+              <div className="h-24 w-24 rounded-full bg-[var(--bg-tertiary)] flex items-center justify-center mb-6">
+                <Users className="h-10 w-10 text-[var(--text-tertiary)]" />
               </div>
-              <h3 className="text-xl font-bold text-[var(--text-primary)]">Select a class to manage</h3>
-              <p className="text-sm text-[var(--text-secondary)] max-w-xs mx-auto mt-2">
-                Click on a class from the list on the left to start assigning students and Wali Kelas.
+              <h3 className="text-xl font-bold text-[var(--text-secondary)]">No Class Selected</h3>
+              <p className="text-[var(--text-tertiary)] max-w-sm mt-2 text-sm leading-relaxed">
+                Select a class from the left panel to manage its roster, assign teachers, or view statistics.
               </p>
             </div>
           )}
         </div>
       </div>
+
+      {/* Create Class Modal */}
+      <Modal isOpen={isCreateModalOpen} onClose={() => setIsCreateModalOpen(false)} title="Tambah Kelas Baru">
+        <div className="space-y-4 pt-4">
+          <div className="space-y-2">
+            <label className="text-sm font-bold text-slate-700">Nama Kelas</label>
+            <input 
+              type="text" 
+              value={newClassName}
+              onChange={(e) => setNewClassName(e.target.value)}
+              placeholder="Contoh: 10A, Ilmu Komputer Dasar"
+              className="w-full px-4 py-3 bg-slate-50 border-2 border-slate-200 rounded-xl focus:border-blue-500 focus:outline-none focus:ring-4 focus:ring-blue-500/20 font-medium transition-all"
+            />
+            <p className="text-xs text-slate-500">Kelas baru ini akan secara otomatis mendukung fitur Drill Soal dan fitur les lainnya layaknya kelas 7E, 8E, atau 9E.</p>
+          </div>
+          <div className="flex gap-3 pt-4 border-t border-slate-100">
+            <Button variant="secondary" className="flex-1" onClick={() => setIsCreateModalOpen(false)}>Batal</Button>
+            <Button className="flex-1 bg-blue-600 hover:bg-blue-700 text-white" onClick={handleCreateClass}>Simpan Kelas</Button>
+          </div>
+        </div>
+      </Modal>
+
     </div>
   );
 }
