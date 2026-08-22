@@ -207,7 +207,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
           <div className="min-h-screen bg-[#F4F6F8] text-slate-900 flex flex-col pb-[80px] lg:pb-0">
             <StudentTopBar />
             <div className="flex flex-1 transition-all duration-300">
-              <div className={cn("shrink-0 transition-all duration-300 hidden lg:block", isCollapsed ? "w-[80px]" : "w-[260px]")}>
+              <div className={cn("shrink-0 transition-all duration-300 w-0 lg:w-auto", isCollapsed ? "lg:w-[80px]" : "lg:w-[260px]")}>
                 <StudentSidebar />
               </div>
               <main className="flex-1 w-full mx-auto p-4 sm:p-6 lg:p-8 max-w-6xl">

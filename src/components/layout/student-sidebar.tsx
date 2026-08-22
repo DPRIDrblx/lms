@@ -110,7 +110,7 @@ export function StudentSidebar() {
               {!isCollapsed && (
                 <div className="flex flex-col justify-center">
                   {showLogo(profile?.class_name) ? (
-                    <img src="/logo-lms.png" alt="LMS Logo" className="h-8 w-auto object-contain mb-1" />
+                    <img src="/logo-lms.png" alt="LMS Logo" className="h-10 scale-125 origin-left w-auto object-contain mb-1" />
                   ) : (
                     <h1 className="text-[16px] font-black tracking-tight text-[#0C1E5B] leading-none mb-1">
                       IGNITE <br/><span className="text-orange-500">CENTER</span>
@@ -130,9 +130,9 @@ export function StudentSidebar() {
           <div className={cn("mb-8 px-4", isCollapsed && "px-0 text-center flex justify-center")}>
             {showLogo(profile?.class_name) ? (
               isCollapsed ? (
-                <img src="/logo-lms.png" alt="IG" className="h-6 w-auto object-contain" />
+                <img src="/logo-lms.png" alt="IG" className="h-8 scale-110 w-auto object-contain" />
               ) : (
-                <img src="/logo-lms.png" alt="LMS Logo" className="h-8 w-auto object-contain" />
+                <img src="/logo-lms.png" alt="LMS Logo" className="h-12 scale-125 w-auto object-contain" />
               )
             ) : (
               <h1 className={cn("text-3xl font-black tracking-tight", isCenterStudent ? "text-red-600" : "text-emerald-500", isCollapsed && "text-xl")}>

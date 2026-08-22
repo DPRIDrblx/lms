@@ -84,7 +84,7 @@ export function StudentTopBar() {
             {/* Ruangguru-style Logo */}
             <Link href="/dashboard" className="flex items-center gap-2">
               {showLogo(profile?.class_name) ? (
-                <img src="/logo-lms.png" alt="LMS Logo" className="h-8 w-auto object-contain" />
+                <img src="/logo-lms.png" alt="LMS Logo" className="h-10 scale-125 origin-left w-auto object-contain" />
               ) : (
                 <div className="flex items-center bg-blue-600 text-white rounded-lg px-2.5 py-1 font-black text-xl tracking-tighter">
                   <span>IGNITE</span>
