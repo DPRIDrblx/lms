@@ -109,9 +109,7 @@ export function StudentSidebar() {
               </div>
               {!isCollapsed && (
                 <div className="flex flex-col justify-center">
-                  <h1 className="text-[16px] font-black tracking-tight text-[#0C1E5B] leading-none mb-1">
-                    IGNITE <br/><span className="text-orange-500">CENTER</span>
-                  </h1>
+                  <img src="/logo-lms.png" alt="LMS Logo" className="h-8 w-auto object-contain mb-1" />
                 </div>
               )}
             </div>
@@ -123,10 +121,12 @@ export function StudentSidebar() {
             )}
           </div>
         ) : (
-          <div className={cn("mb-8 px-4", isCollapsed && "px-0 text-center")}>
-            <h1 className={cn("text-3xl font-black tracking-tight", isCenterStudent ? "text-red-600" : "text-emerald-500", isCollapsed && "text-xl")}>
-              {isCollapsed ? "IG" : <>IGNITE {isCenterStudent && <span className="text-blue-600">Center</span>}</>}
-            </h1>
+          <div className={cn("mb-8 px-4", isCollapsed && "px-0 flex justify-center")}>
+            {isCollapsed ? (
+              <img src="/logo-lms.png" alt="IG" className="h-6 w-auto object-contain" />
+            ) : (
+              <img src="/logo-lms.png" alt="LMS Logo" className="h-8 w-auto object-contain" />
+            )}
           </div>
         )}
         

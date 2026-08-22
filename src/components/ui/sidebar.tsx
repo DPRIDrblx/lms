@@ -122,16 +122,11 @@ const SidebarContent = ({ navItems, pathname, profile, setMobileOpen, onSignOut 
     <div className={cn("flex flex-col h-full", sidebarBg)}>
       {/* Logo */}
       <div className={cn("p-5 border-b", borderClass)}>
-        <Link href={getLinkHref()} className="flex items-center gap-3">
-          <div className={cn("w-9 h-9 rounded-xl flex items-center justify-center shadow-lg", iconBg, isEducator && "shadow-teal-500/20", isParent && "shadow-pink-500/20", isStaff && "shadow-cyan-500/20")}>
-            <GraduationCap className="h-5 w-5 text-white" />
-          </div>
-          <div>
-            <h1 className={cn("text-sm font-bold leading-tight", titleColor)}>IGNITE</h1>
-            <p className={cn("text-[10px] font-bold uppercase tracking-wider", subtitleColor)}>
-              {getSubTitle()}
-            </p>
-          </div>
+        <Link href={getLinkHref()} className="flex flex-col gap-1 items-start">
+          <img src="/logo-lms.png" alt="LMS Logo" className="h-8 w-auto object-contain" />
+          <p className={cn("text-[10px] font-bold uppercase tracking-wider pl-1", subtitleColor)}>
+            {getSubTitle()}
+          </p>
         </Link>
       </div>
 

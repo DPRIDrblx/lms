@@ -83,9 +83,7 @@ export function StudentTopBar() {
           <div className="flex items-center gap-10">
             {/* Ruangguru-style Logo */}
             <Link href="/dashboard" className="flex items-center gap-2">
-              <div className="flex items-center bg-blue-600 text-white rounded-lg px-2.5 py-1 font-black text-xl tracking-tighter">
-                <span>IGNITE</span>
-              </div>
+              <img src="/logo-lms.png" alt="LMS Logo" className="h-8 w-auto object-contain" />
             </Link>
             
             {/* Top Navigation Links */}
