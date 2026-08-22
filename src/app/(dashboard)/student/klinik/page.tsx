@@ -68,6 +68,11 @@ export default function KlinikTanyaTutorPage() {
   const [isDetailModalOpen, setIsDetailModalOpen] = useState(false);
   const [ratingHover, setRatingHover] = useState(0);
 
+  // Reschedule Modal State
+  const [isRescheduleModalOpen, setIsRescheduleModalOpen] = useState(false);
+  const [rescheduleDate, setRescheduleDate] = useState("");
+  const [rescheduleTime, setRescheduleTime] = useState("");
+
   const fetchData = async () => {
     if (!profile?.id) return;
     setLoading(true);
@@ -181,6 +186,50 @@ export default function KlinikTanyaTutorPage() {
     } else {
       toast.success("Terima kasih atas penilaianmu!");
       setSelectedClinic({ ...selectedClinic, rating });
+      fetchData();
+    }
+  };
+
+  const handleReschedule = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!selectedClinic || !rescheduleDate || !rescheduleTime) {
+      toast.error("Mohon lengkapi tanggal dan waktu baru");
+      return;
+    }
+
+    setIsSubmitting(true);
+    
+    // Check quota if date is changed
+    if (rescheduleDate !== selectedClinic.schedule_date) {
+      const { data: todayClinics } = await supabase
+        .from("tutor_clinics")
+        .select("id")
+        .eq("branch_id", selectedClinic.branch_id)
+        .eq("schedule_date", rescheduleDate);
+        
+      if (todayClinics && todayClinics.length >= 15) {
+        toast.error("Maaf, kuota klinik tanya tutor di cabang ini untuk tanggal tersebut sudah penuh (maks 15).");
+        setIsSubmitting(false);
+        return;
+      }
+    }
+
+    const { error } = await supabase
+      .from("tutor_clinics")
+      .update({ 
+        schedule_date: rescheduleDate, 
+        schedule_time: rescheduleTime + ":00",
+        status: "pending" 
+      })
+      .eq("id", selectedClinic.id);
+
+    setIsSubmitting(false);
+
+    if (error) {
+      toast.error(error.message);
+    } else {
+      toast.success("Berhasil mengubah jadwal! Menunggu persetujuan tutor.");
+      setIsRescheduleModalOpen(false);
       fetchData();
     }
   };
@@ -441,7 +490,20 @@ export default function KlinikTanyaTutorPage() {
                             </div>
                           </div>
                           
-                          <div className="mt-auto">
+                          <div className="mt-auto grid grid-cols-2 gap-2">
+                            <Button 
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                setSelectedClinic(clinic);
+                                setRescheduleDate(clinic.schedule_date);
+                                setRescheduleTime(clinic.schedule_time.substring(0, 5));
+                                setIsRescheduleModalOpen(true);
+                              }}
+                              variant="outline"
+                              className="w-full border-slate-200 text-slate-700 hover:bg-slate-50 hover:border-slate-300 h-11 rounded-[12px] text-[13px] font-bold"
+                            >
+                              Ubah Jadwal
+                            </Button>
                             <Button 
                               onClick={() => {
                                 setSelectedClinic(clinic);
@@ -716,8 +778,53 @@ export default function KlinikTanyaTutorPage() {
               {isSubmitting ? 'Mengirim...' : 'Kirim Permintaan'}
             </Button>
           </div>
-        </form>
-      </Modal>
+          </form>
+        </Modal>
+
+      {/* Reschedule Modal */}
+      {selectedClinic && (
+        <Modal isOpen={isRescheduleModalOpen} onClose={() => setIsRescheduleModalOpen(false)} title="Ubah Jadwal Klinik">
+          <form onSubmit={handleReschedule} className="space-y-4">
+            <div className="p-4 bg-amber-50 border border-amber-200 rounded-xl mb-4">
+              <p className="text-sm text-amber-800 font-medium">
+                Mengubah jadwal akan mengembalikan status klinik menjadi <strong>Menunggu Persetujuan</strong>.
+              </p>
+            </div>
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <label className="block text-sm font-bold text-slate-700 mb-1">Tanggal Baru</label>
+                <input 
+                  type="date"
+                  className="w-full p-3 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500/20"
+                  value={rescheduleDate}
+                  onChange={(e) => setRescheduleDate(e.target.value)}
+                  min={new Date().toISOString().split('T')[0]}
+                  required
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-bold text-slate-700 mb-1">Jam Mulai Baru</label>
+                <input 
+                  type="time"
+                  className="w-full p-3 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500/20"
+                  value={rescheduleTime}
+                  onChange={(e) => setRescheduleTime(e.target.value)}
+                  required
+                />
+              </div>
+            </div>
+            
+            <div className="pt-4 border-t border-slate-100 flex justify-end gap-3">
+              <Button type="button" variant="ghost" onClick={() => setIsRescheduleModalOpen(false)}>
+                Batal
+              </Button>
+              <Button type="submit" disabled={isSubmitting} className="bg-blue-600 hover:bg-blue-700 text-white min-w-[120px]">
+                {isSubmitting ? <Loader2 className="w-5 h-5 animate-spin mx-auto" /> : "Simpan Perubahan"}
+              </Button>
+            </div>
+          </form>
+        </Modal>
+      )}
     </div>
   );
 }

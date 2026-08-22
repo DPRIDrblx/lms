@@ -39,6 +39,7 @@ export default function CenterSchedulesManager() {
   const [classId, setClassId] = useState("");
   const [driveLink, setDriveLink] = useState("");
   const [bannerUrl, setBannerUrl] = useState("");
+  const [editingId, setEditingId] = useState<string | null>(null);
 
   // Summary Modal State
   const [isSummaryModalOpen, setIsSummaryModalOpen] = useState(false);
@@ -75,7 +76,7 @@ export default function CenterSchedulesManager() {
     return code;
   };
 
-  const handleAddSchedule = async (e: React.FormEvent) => {
+  const handleAddOrEditSchedule = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!title || !scheduleDate || !scheduleTime || !classId) {
       toast.error("Mohon lengkapi semua field wajib");
@@ -83,30 +84,70 @@ export default function CenterSchedulesManager() {
     }
 
     const timestamp = new Date(`${scheduleDate}T${scheduleTime}`).toISOString();
-    const attendanceCode = generateAttendanceCode();
+    
+    if (editingId) {
+      const { error } = await supabase.from("center_schedules").update({
+        title,
+        schedule_time: timestamp,
+        description,
+        class_id: classId,
+        drive_link: driveLink,
+        banner_url: bannerUrl || null
+      }).eq("id", editingId);
 
-    const { error } = await supabase.from("center_schedules").insert({
-      title,
-      schedule_time: timestamp,
-      description,
-      class_id: classId,
-      drive_link: driveLink,
-      attendance_code: attendanceCode,
-      banner_url: bannerUrl || null
-    });
-
-    if (error) {
-      toast.error(error.message);
+      if (error) {
+        toast.error(error.message);
+      } else {
+        toast.success("Jadwal Les berhasil diubah");
+        resetForm();
+        fetchData();
+      }
     } else {
-      toast.success("Jadwal Les berhasil ditambahkan");
-      setTitle("");
-      setScheduleDate("");
-      setScheduleTime("");
-      setDescription("");
-      setDriveLink("");
-      setBannerUrl("");
-      fetchData();
+      const attendanceCode = generateAttendanceCode();
+      const { error } = await supabase.from("center_schedules").insert({
+        title,
+        schedule_time: timestamp,
+        description,
+        class_id: classId,
+        drive_link: driveLink,
+        attendance_code: attendanceCode,
+        banner_url: bannerUrl || null
+      });
+
+      if (error) {
+        toast.error(error.message);
+      } else {
+        toast.success("Jadwal Les berhasil ditambahkan");
+        resetForm();
+        fetchData();
+      }
     }
+  };
+
+  const resetForm = () => {
+    setTitle("");
+    setScheduleDate("");
+    setScheduleTime("");
+    setDescription("");
+    setDriveLink("");
+    setBannerUrl("");
+    setClassId("");
+    setEditingId(null);
+  };
+
+  const handleEditClick = (schedule: any) => {
+    const d = new Date(schedule.schedule_time);
+    setTitle(schedule.title);
+    setScheduleDate(d.toISOString().split('T')[0]);
+    setScheduleTime(d.toTimeString().substring(0, 5));
+    setDescription(schedule.description || "");
+    setClassId(schedule.class_id);
+    setDriveLink(schedule.drive_link || "");
+    setBannerUrl(schedule.banner_url || "");
+    setEditingId(schedule.id);
+    
+    // Scroll to form (mobile friendly)
+    window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
   const handleDelete = async (id: string) => {
@@ -159,11 +200,17 @@ export default function CenterSchedulesManager() {
         {/* LEFT PANEL: Form */}
         <div className="lg:col-span-1 space-y-6">
           <Card className="p-6 border-slate-200 shadow-sm rounded-2xl">
-            <h2 className="text-xl font-bold text-slate-800 mb-6 flex items-center gap-2">
-              <Plus className="w-5 h-5 text-blue-500" /> Tambah Jadwal Baru
-            </h2>
+            <div className="flex items-center justify-between mb-6">
+              <h2 className="text-xl font-bold text-slate-800 flex items-center gap-2">
+                {editingId ? <Edit3 className="w-5 h-5 text-blue-500" /> : <Plus className="w-5 h-5 text-blue-500" />}
+                {editingId ? "Ubah Jadwal" : "Tambah Jadwal Baru"}
+              </h2>
+              {editingId && (
+                <Button variant="ghost" size="sm" onClick={resetForm} className="text-slate-500">Batal</Button>
+              )}
+            </div>
             
-            <form onSubmit={handleAddSchedule} className="space-y-4">
+            <form onSubmit={handleAddOrEditSchedule} className="space-y-4">
               <div>
                 <label className="block text-sm font-bold text-slate-700 mb-1">Target Kelas</label>
                 <select 
@@ -252,8 +299,8 @@ export default function CenterSchedulesManager() {
                 />
               </div>
 
-              <Button type="submit" className="w-full py-6 rounded-xl bg-blue-600 hover:bg-blue-700 font-bold text-white shadow-lg shadow-blue-500/20">
-                Simpan Jadwal Les
+              <Button type="submit" className="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-6 rounded-xl">
+                {editingId ? "Simpan Perubahan" : "Simpan Jadwal"}
               </Button>
             </form>
           </Card>
@@ -284,13 +331,22 @@ export default function CenterSchedulesManager() {
                           <Users className="w-3 h-3" />
                           {s.classes?.name || "Semua Kelas"}
                         </div>
-                        <button 
-                          onClick={() => handleDelete(s.id)}
-                          className="p-2 text-red-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors"
-                          title="Hapus Jadwal"
-                        >
-                          <Trash2 className="w-4 h-4" />
-                        </button>
+                        <div className="flex gap-1">
+                          <button 
+                            onClick={() => handleEditClick(s)}
+                            className="p-2 text-blue-400 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
+                            title="Ubah Jadwal"
+                          >
+                            <Edit3 className="w-4 h-4" />
+                          </button>
+                          <button 
+                            onClick={() => handleDelete(s.id)}
+                            className="p-2 text-red-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors"
+                            title="Hapus Jadwal"
+                          >
+                            <Trash2 className="w-4 h-4" />
+                          </button>
+                        </div>
                       </div>
 
                       <h3 className="font-black text-lg text-slate-800 ml-2 mb-3 leading-tight">{s.title}</h3>

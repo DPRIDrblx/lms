@@ -45,6 +45,8 @@ export default function JadwalLesPage() {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [attendanceCodeInput, setAttendanceCodeInput] = useState("");
   const [isSubmittingAttendance, setIsSubmittingAttendance] = useState(false);
+  const [attendanceMode, setAttendanceMode] = useState<'hadir' | 'izin'>('hadir');
+  const [excuseReason, setExcuseReason] = useState("");
   const [ratingHover, setRatingHover] = useState(0);
 
   const fetchData = async () => {
@@ -94,6 +96,8 @@ export default function JadwalLesPage() {
   const handleOpenSchedule = (schedule: any) => {
     setSelectedSchedule(schedule);
     setAttendanceCodeInput("");
+    setAttendanceMode("hadir");
+    setExcuseReason("");
     setIsModalOpen(true);
   };
 
@@ -125,6 +129,35 @@ export default function JadwalLesPage() {
       toast.error(error.message);
     } else {
       toast.success("Berhasil presensi!");
+      setAttendances(prev => ({ ...prev, [selectedSchedule.id]: data }));
+    }
+  };
+
+  const handleExcuse = async () => {
+    if (!selectedSchedule) return;
+    if (!excuseReason) {
+      toast.error("Pilih alasan izin");
+      return;
+    }
+
+    setIsSubmittingAttendance(true);
+    const { data, error } = await supabase
+      .from("center_schedule_attendances")
+      .insert({
+        schedule_id: selectedSchedule.id,
+        student_id: profile?.id,
+        status: "izin",
+        excuse_reason: excuseReason
+      })
+      .select()
+      .single();
+
+    setIsSubmittingAttendance(false);
+
+    if (error) {
+      toast.error(error.message);
+    } else {
+      toast.success("Berhasil mengajukan izin!");
       setAttendances(prev => ({ ...prev, [selectedSchedule.id]: data }));
     }
   };
@@ -263,8 +296,17 @@ export default function JadwalLesPage() {
                           </div>
                           
                           {isAttended ? (
-                            <div className="flex items-center gap-1.5 text-[12px] font-bold text-emerald-700 bg-emerald-50 px-2.5 py-1.5 rounded-[8px] border border-emerald-100">
-                              <CheckCircle2 className="w-3.5 h-3.5" /> Hadir
+                            <div className={cn(
+                              "flex items-center gap-1.5 text-[12px] font-bold px-2.5 py-1.5 rounded-[8px] border",
+                              attendances[schedule.id].status === 'izin' 
+                                ? "text-amber-700 bg-amber-50 border-amber-100" 
+                                : "text-emerald-700 bg-emerald-50 border-emerald-100"
+                            )}>
+                              {attendances[schedule.id].status === 'izin' ? (
+                                <>Izin: {attendances[schedule.id].excuse_reason}</>
+                              ) : (
+                                <><CheckCircle2 className="w-3.5 h-3.5" /> Hadir</>
+                              )}
                             </div>
                           ) : isToday ? (
                             <div className="flex items-center gap-1.5 text-[12px] font-bold text-amber-700 bg-amber-50 px-2.5 py-1.5 rounded-[8px] border border-amber-100">
@@ -436,29 +478,87 @@ export default function JadwalLesPage() {
               {/* Attendance Section */}
               <div className="border-t border-slate-100 pt-6">
                 {!isAttended ? (
-                  <div className="bg-amber-50 border border-amber-200 p-5 rounded-2xl">
-                    <h4 className="font-black text-amber-900 mb-2 flex items-center gap-2">
-                      <KeyRound className="w-5 h-5 text-amber-600" /> Presensi Kehadiran
-                    </h4>
-                    <p className="text-sm text-amber-800 font-medium mb-4">
-                      Masukkan 6 digit kode dari Tutor/TU untuk mencatat kehadiranmu.
-                    </p>
-                    <div className="flex gap-3">
-                      <input 
-                        type="text" 
-                        placeholder="Kode Presensi"
-                        maxLength={6}
-                        value={attendanceCodeInput}
-                        onChange={(e) => setAttendanceCodeInput(e.target.value.toUpperCase())}
-                        className="flex-1 px-4 py-3 rounded-xl border border-amber-300 focus:border-amber-500 outline-none font-black text-center tracking-[0.3em] uppercase bg-white text-slate-800"
-                      />
-                      <Button 
-                        onClick={handleAttend}
-                        disabled={isSubmittingAttendance || attendanceCodeInput.length < 4}
-                        className="bg-amber-500 hover:bg-amber-600 text-white font-bold px-8 h-auto rounded-xl"
+                  <div className="bg-slate-50 border border-slate-200 p-5 rounded-2xl">
+                    <div className="flex items-center gap-2 mb-4 p-1 bg-white rounded-lg border border-slate-200 w-fit">
+                      <button 
+                        onClick={() => setAttendanceMode('hadir')}
+                        className={cn("px-4 py-2 rounded-md text-sm font-bold transition-all", attendanceMode === 'hadir' ? "bg-amber-100 text-amber-700" : "text-slate-500 hover:text-slate-700")}
                       >
-                        {isSubmittingAttendance ? <CenterLoader size="sm" /> : "Hadir"}
-                      </Button>
+                        Presensi Kehadiran
+                      </button>
+                      <button 
+                        onClick={() => setAttendanceMode('izin')}
+                        className={cn("px-4 py-2 rounded-md text-sm font-bold transition-all", attendanceMode === 'izin' ? "bg-amber-100 text-amber-700" : "text-slate-500 hover:text-slate-700")}
+                      >
+                        Izin Absen
+                      </button>
+                    </div>
+
+                    {attendanceMode === 'hadir' ? (
+                      <div>
+                        <h4 className="font-black text-amber-900 mb-2 flex items-center gap-2">
+                          <KeyRound className="w-5 h-5 text-amber-600" /> Presensi Kehadiran
+                        </h4>
+                        <p className="text-sm text-amber-800 font-medium mb-4">
+                          Masukkan 6 digit kode dari Tutor/TU untuk mencatat kehadiranmu.
+                        </p>
+                        <div className="flex gap-3">
+                          <input 
+                            type="text" 
+                            placeholder="Kode Presensi"
+                            maxLength={6}
+                            value={attendanceCodeInput}
+                            onChange={(e) => setAttendanceCodeInput(e.target.value.toUpperCase())}
+                            className="flex-1 px-4 py-3 rounded-xl border border-amber-300 focus:border-amber-500 outline-none font-black text-center tracking-[0.3em] uppercase bg-white text-slate-800"
+                          />
+                          <Button 
+                            onClick={handleAttend}
+                            disabled={isSubmittingAttendance || attendanceCodeInput.length < 4}
+                            className="bg-amber-500 hover:bg-amber-600 text-white font-bold px-8 h-auto rounded-xl"
+                          >
+                            {isSubmittingAttendance ? <CenterLoader size="sm" /> : "Hadir"}
+                          </Button>
+                        </div>
+                      </div>
+                    ) : (
+                      <div>
+                        <h4 className="font-black text-amber-900 mb-2 flex items-center gap-2">
+                          Ajukan Izin
+                        </h4>
+                        <p className="text-sm text-amber-800 font-medium mb-4">
+                          Pilih alasan kenapa kamu tidak bisa hadir.
+                        </p>
+                        <div className="flex flex-col gap-3">
+                          <select 
+                            className="w-full p-3 rounded-xl border border-amber-300 bg-white text-slate-700 font-medium outline-none focus:border-amber-500"
+                            value={excuseReason}
+                            onChange={(e) => setExcuseReason(e.target.value)}
+                          >
+                            <option value="">-- Pilih Alasan --</option>
+                            <option value="Sakit">Sakit</option>
+                            <option value="Acara Keluarga">Acara Keluarga</option>
+                            <option value="Acara Sekolah">Acara Sekolah</option>
+                            <option value="Lainnya">Lainnya</option>
+                          </select>
+                          <Button 
+                            onClick={handleExcuse}
+                            disabled={isSubmittingAttendance || !excuseReason}
+                            className="bg-amber-500 hover:bg-amber-600 text-white font-bold w-full rounded-xl"
+                          >
+                            {isSubmittingAttendance ? <CenterLoader size="sm" /> : "Kirim Izin"}
+                          </Button>
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                ) : attendanceData.status === 'izin' ? (
+                  <div className="bg-amber-50 border border-amber-200 p-5 rounded-2xl flex items-center gap-4">
+                    <div className="w-12 h-12 bg-amber-100 rounded-full flex items-center justify-center shrink-0">
+                      <Calendar className="w-6 h-6 text-amber-600" />
+                    </div>
+                    <div>
+                      <h4 className="font-black text-amber-900 mb-0.5">Izin Tercatat</h4>
+                      <p className="text-sm text-amber-800 font-medium">Alasan: {attendanceData.excuse_reason}</p>
                     </div>
                   </div>
                 ) : (
