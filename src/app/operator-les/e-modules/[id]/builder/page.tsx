@@ -402,8 +402,7 @@ export default function EModuleBuilder() {
             {/* Floating Nav Buttons */}
             <div className="fixed md:absolute inset-y-0 left-0 flex items-center z-30 pointer-events-none">
               <Button 
-                variant="default" 
-                size="icon" 
+                variant="primary" 
                 disabled={pageNumber <= 1} 
                 onClick={() => setPageNumber(p => p - 1)} 
                 className="pointer-events-auto h-12 w-10 md:h-16 md:w-12 rounded-r-2xl rounded-l-none bg-indigo-600/80 hover:bg-indigo-700 shadow-xl border border-indigo-500/50 backdrop-blur-sm -ml-1 transition-transform"
@@ -413,8 +412,7 @@ export default function EModuleBuilder() {
             </div>
             <div className="fixed md:absolute inset-y-0 right-0 flex items-center z-30 pointer-events-none">
               <Button 
-                variant="default" 
-                size="icon" 
+                variant="primary" 
                 disabled={pageNumber >= numPages} 
                 onClick={() => setPageNumber(p => p + 1)} 
                 className="pointer-events-auto h-12 w-10 md:h-16 md:w-12 rounded-l-2xl rounded-r-none bg-indigo-600/80 hover:bg-indigo-700 shadow-xl border border-indigo-500/50 backdrop-blur-sm -mr-1 transition-transform"
