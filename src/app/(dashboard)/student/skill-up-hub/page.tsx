@@ -17,30 +17,57 @@ import { cn } from "@/lib/utils";
 // Dummy joyful fallback data if DB is empty or fails
 const FALLBACK_MISSIONS = [
   {
-    id: "m1",
-    title: "Literasi Keuangan Dasar",
-    description: "Belajar mengatur uang jajan agar tidak boros!",
+    id: "m1000000-0000-0000-0000-000000000001",
+    title: "Keterampilan Komunikasi Dasar",
+    description: "Belajar berani berbicara di depan kelas dan menjadi pendengar yang baik.",
     tasks: [
-      { id: "t1", title: "Membedakan Kebutuhan & Keinginan", reward_coins: 10, is_completed: true },
-      { id: "t2", title: "Catat Pengeluaran Pertamamu", reward_coins: 15, is_completed: false },
-      { id: "t3", title: "Tantangan Menabung 1 Minggu", reward_coins: 50, is_completed: false }
+      { id: "t1", title: "Berani Berbicara di Depan Kelas", reward_coins: 10, is_completed: true },
+      { id: "t2", title: "Mendengarkan Teman Bercerita", reward_coins: 15, is_completed: false }
     ]
   },
   {
-    id: "m2",
-    title: "Public Speaking",
-    description: "Berani tampil dan berbicara di depan umum dengan percaya diri.",
+    id: "m1000000-0000-0000-0000-000000000002",
+    title: "Literasi Finansial Dasar",
+    description: "Bedakan kebutuhan dan keinginan agar uang jajanmu awet!",
     tasks: [
-      { id: "t4", title: "Berlatih di depan cermin", reward_coins: 10, is_completed: false },
-      { id: "t5", title: "Merekam suara selama 1 menit", reward_coins: 20, is_completed: false }
+      { id: "t4", title: "Bedanya Kebutuhan dan Keinginan", reward_coins: 10, is_completed: false },
+      { id: "t5", title: "Simulasi Jajan Cerdas", reward_coins: 20, is_completed: false },
+      { id: "t6", title: "Mulai Menabung", reward_coins: 30, is_completed: false }
     ]
   },
   {
-    id: "m3",
-    title: "Kesehatan Mental",
-    description: "Kenali emosimu dan cara menenangkan diri saat ujian.",
+    id: "m1000000-0000-0000-0000-000000000003",
+    title: "Literasi Digital & Anti-Hoax",
+    description: "Jadilah warganet yang cerdas, aman, dan bertanggung jawab.",
     tasks: [
-      { id: "t6", title: "Latihan pernapasan 4-7-8", reward_coins: 15, is_completed: false }
+      { id: "t7", title: "Cara Membedakan Fakta dan Opini", reward_coins: 15, is_completed: false },
+      { id: "t8", title: "Melindungi Password Sendiri", reward_coins: 25, is_completed: false }
+    ]
+  },
+  {
+    id: "m1000000-0000-0000-0000-000000000004",
+    title: "Manajemen Waktu Belajar",
+    description: "Atur waktumu, kurangi menunda-nunda, dan jadilah lebih produktif!",
+    tasks: [
+      { id: "t9", title: "Teknik Pomodoro", reward_coins: 25, is_completed: false },
+      { id: "t10", title: "Skala Prioritas", reward_coins: 15, is_completed: false }
+    ]
+  },
+  {
+    id: "m1000000-0000-0000-0000-000000000005",
+    title: "Kesehatan Mental & Emosi",
+    description: "Kenali emosimu dan pelajari cara menenangkan diri saat stres ujian.",
+    tasks: [
+      { id: "t11", title: "Latihan Pernapasan 4-7-8", reward_coins: 10, is_completed: false },
+      { id: "t12", title: "Journaling Kebaikan", reward_coins: 20, is_completed: false }
+    ]
+  },
+  {
+    id: "m1000000-0000-0000-0000-000000000007",
+    title: "Dasar Logika & Komputasi",
+    description: "Berpikir kritis seperti komputer dalam menyelesaikan masalah.",
+    tasks: [
+      { id: "t13", title: "Algoritma Kehidupan", reward_coins: 15, is_completed: false }
     ]
   }
 ];
@@ -50,7 +77,6 @@ export default function SkillUpHub() {
   const [missions, setMissions] = useState<any[]>([]);
   const [skillCoins, setSkillCoins] = useState(0);
   const [loading, setLoading] = useState(true);
-  const [activeChat, setActiveChat] = useState(false);
   const [completingTask, setCompletingTask] = useState<string | null>(null);
 
   useEffect(() => {
@@ -182,14 +208,13 @@ export default function SkillUpHub() {
                 Ini bukan pelajaran sekolah biasa! Di sini kita akan belajar hal-hal seru seperti Public Speaking, Literasi Finansial, dan Kepemimpinan. Siap berpetualang?
               </p>
               
-              {!activeChat && (
+              <Link href="/student/skill-up-hub/joy">
                 <Button 
-                  onClick={() => setActiveChat(true)}
                   className="mt-4 bg-yellow-400 hover:bg-yellow-300 text-yellow-900 border-b-4 border-yellow-600 rounded-2xl px-8 py-6 text-xl font-black shadow-lg hover:-translate-y-1 transition-all"
                 >
                   <MessageCircle className="w-6 h-6 mr-3" /> Ngobrol bareng Joy!
                 </Button>
-              )}
+              </Link>
             </div>
           </div>
           
@@ -198,40 +223,7 @@ export default function SkillUpHub() {
           <Star className="absolute bottom-10 left-[40%] w-8 h-8 text-pink-300 opacity-50 rotate-45" />
         </div>
 
-        {/* AI CHAT SECTION */}
-        <AnimatePresence>
-          {activeChat && (
-            <motion.div 
-              initial={{ height: 0, opacity: 0 }}
-              animate={{ height: "auto", opacity: 1 }}
-              exit={{ height: 0, opacity: 0 }}
-              className="mb-12 overflow-hidden"
-            >
-              <div className="bg-white border-2 border-slate-200 rounded-[2.5rem] p-6 shadow-lg relative">
-                <Button 
-                  variant="ghost" 
-                  size="sm"
-                  className="absolute top-4 right-4 bg-slate-100 rounded-full hover:bg-red-100 hover:text-red-500 w-10 h-10 p-0 flex items-center justify-center"
-                  onClick={() => setActiveChat(false)}
-                >
-                  ✕
-                </Button>
-                <div className="flex gap-4 mb-4">
-                   <div className="w-12 h-12 bg-blue-100 rounded-full overflow-hidden shrink-0 border-2 border-blue-200">
-                     <img src="/images/joy_avatar.jpg" alt="Joy" className="w-full h-full object-cover" />
-                   </div>
-                   <div className="bg-blue-50 border border-blue-100 rounded-2xl rounded-tl-none p-4 text-slate-700 font-medium">
-                     La la la~ Halo teman! Mau curhat tentang leadership, cara mengatur waktu, atau belajar mengatur uang? Joy siap bantu nih! 🎶
-                   </div>
-                </div>
-                {/* Embedded ChatGPT / AI component would go here */}
-                <div className="h-64 bg-slate-50 rounded-2xl border-2 border-dashed border-slate-200 flex items-center justify-center text-slate-400 font-bold">
-                  [Area Chat Interaktif AI - Segera Hadir]
-                </div>
-              </div>
-            </motion.div>
-          )}
-        </AnimatePresence>
+
 
         {/* MISSIONS SECTION */}
         <div className="mb-12">
