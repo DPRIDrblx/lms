@@ -66,33 +66,6 @@ export default function StudentInteractiveEModule() {
   // Responsive scale hook
   const { containerRef, scale } = useContainerScale(800);
 
-  // Swipe logic
-  const [touchStartX, setTouchStartX] = useState<number | null>(null);
-  const [touchEndX, setTouchEndX] = useState<number | null>(null);
-
-  const handleTouchStart = (e: React.TouchEvent) => {
-    setTouchEndX(null);
-    setTouchStartX(e.targetTouches[0].clientX);
-  };
-
-  const handleTouchMove = (e: React.TouchEvent) => {
-    setTouchEndX(e.targetTouches[0].clientX);
-  };
-
-  const handleTouchEnd = () => {
-    if (touchStartX === null || touchEndX === null) return;
-    const distance = touchStartX - touchEndX;
-    const isLeftSwipe = distance > 50;
-    const isRightSwipe = distance < -50;
-
-    if (isLeftSwipe && pageNumber < numPages) {
-      setPageNumber(p => p + 1);
-    }
-    if (isRightSwipe && pageNumber > 1) {
-      setPageNumber(p => p - 1);
-    }
-  };
-
   useEffect(() => {
     const fetchModule = async () => {
       const { data: { user: currentUser } } = await supabase.auth.getUser();
@@ -254,9 +227,6 @@ export default function StudentInteractiveEModule() {
         <div 
           className="flex-1 bg-slate-900/5 overflow-auto flex flex-col items-center relative p-0 md:p-8" 
           ref={containerRef}
-          onTouchStart={handleTouchStart}
-          onTouchMove={handleTouchMove}
-          onTouchEnd={handleTouchEnd}
         >
           
           <div className="mb-4 md:mb-6 bg-white px-3 md:px-5 py-2.5 rounded-2xl shadow-sm flex items-center gap-3 md:gap-6 sticky top-0 z-20 border border-slate-200">
@@ -327,8 +297,33 @@ export default function StudentInteractiveEModule() {
 
           <div 
             style={{ width: `${800 * scale}px`, height: `${1131 * scale}px` }} 
-            className="relative transition-transform duration-300"
+            className="relative transition-transform duration-300 mx-auto"
           >
+            {/* Floating Nav Buttons (Mobile & Desktop) */}
+            <div className="fixed md:absolute inset-y-0 left-0 flex items-center z-30 pointer-events-none">
+              <Button 
+                variant="default" 
+                size="icon" 
+                disabled={pageNumber <= 1} 
+                onClick={() => setPageNumber(p => p - 1)} 
+                className="pointer-events-auto h-12 w-10 md:h-16 md:w-12 rounded-r-2xl rounded-l-none bg-indigo-600/80 hover:bg-indigo-700 shadow-xl border border-indigo-500/50 backdrop-blur-sm -ml-1 transition-transform"
+              >
+                <ChevronLeft className="w-6 h-6 text-white" />
+              </Button>
+            </div>
+            
+            <div className="fixed md:absolute inset-y-0 right-0 flex items-center z-30 pointer-events-none">
+              <Button 
+                variant="default" 
+                size="icon" 
+                disabled={pageNumber >= numPages} 
+                onClick={() => setPageNumber(p => p + 1)} 
+                className="pointer-events-auto h-12 w-10 md:h-16 md:w-12 rounded-l-2xl rounded-r-none bg-indigo-600/80 hover:bg-indigo-700 shadow-xl border border-indigo-500/50 backdrop-blur-sm -mr-1 transition-transform"
+              >
+                <ChevronRight className="w-6 h-6 text-white" />
+              </Button>
+            </div>
+
             <div 
               className="bg-white shadow-2xl absolute top-0 left-0 origin-top-left flex flex-col"
               style={{ transform: `scale(${scale})`, width: 800, height: 1131 }}

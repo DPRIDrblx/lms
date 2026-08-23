@@ -257,8 +257,32 @@ export default function EModuleResponses() {
               <div className="flex-1 overflow-auto flex flex-col items-center relative p-0 md:p-8" ref={wrapperRef}>
                 <div 
                   style={{ width: `${800 * scale}px`, height: `${1131 * scale}px` }} 
-                  className="relative transition-transform duration-300"
+                  className="relative transition-transform duration-300 mx-auto"
                 >
+                  {/* Floating Nav Buttons */}
+                  <div className="fixed md:absolute inset-y-0 left-0 flex items-center z-30 pointer-events-none">
+                    <Button 
+                      variant="default" 
+                      size="icon" 
+                      disabled={pageNumber <= 1} 
+                      onClick={() => setPageNumber(p => p - 1)} 
+                      className="pointer-events-auto h-12 w-10 md:h-16 md:w-12 rounded-r-2xl rounded-l-none bg-indigo-600/80 hover:bg-indigo-700 shadow-xl border border-indigo-500/50 backdrop-blur-sm -ml-1 transition-transform"
+                    >
+                      <ChevronLeft className="w-6 h-6 text-white" />
+                    </Button>
+                  </div>
+                  <div className="fixed md:absolute inset-y-0 right-0 flex items-center z-30 pointer-events-none">
+                    <Button 
+                      variant="default" 
+                      size="icon" 
+                      disabled={pageNumber >= numPages} 
+                      onClick={() => setPageNumber(p => p + 1)} 
+                      className="pointer-events-auto h-12 w-10 md:h-16 md:w-12 rounded-l-2xl rounded-r-none bg-indigo-600/80 hover:bg-indigo-700 shadow-xl border border-indigo-500/50 backdrop-blur-sm -mr-1 transition-transform"
+                    >
+                      <ChevronRight className="w-6 h-6 text-white" />
+                    </Button>
+                  </div>
+
                   <div 
                     className="bg-white shadow-xl absolute top-0 left-0 origin-top-left flex flex-col"
                     style={{ transform: `scale(${scale})`, width: 800, height: 1131 }}
