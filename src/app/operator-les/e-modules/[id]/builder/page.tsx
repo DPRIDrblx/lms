@@ -179,7 +179,7 @@ export default function EModuleBuilder() {
           <h1 className="font-bold text-slate-800 line-clamp-1">{moduleData?.title}</h1>
         </div>
         <div className="flex items-center gap-2">
-          <Button variant="outline" size="sm" onClick={() => setShowSidebar(!showSidebar)} className="md:hidden">
+          <Button variant="secondary" size="sm" onClick={() => setShowSidebar(!showSidebar)} className="md:hidden">
             <Menu className="w-4 h-4" />
           </Button>
           <Button onClick={handleSave} disabled={saving} className="bg-indigo-600 hover:bg-indigo-700 text-white">
@@ -393,8 +393,6 @@ export default function EModuleBuilder() {
             <Button variant="ghost" size="sm" disabled={pageNumber >= numPages} onClick={() => setPageNumber(pageNumber + 1)} className="h-8 w-8 p-0 rounded-full">
               <ChevronRight className="w-4 h-4" />
             </Button>
-          </div>
-
           </div>
 
           <div 

@@ -139,7 +139,7 @@ export default function EModuleResponses() {
           </div>
         </div>
         <div className="md:hidden">
-          <Button variant="outline" size="sm" onClick={() => setShowSidebar(!showSidebar)}>
+          <Button variant="secondary" size="sm" onClick={() => setShowSidebar(!showSidebar)}>
             <Menu className="w-4 h-4" />
           </Button>
         </div>
