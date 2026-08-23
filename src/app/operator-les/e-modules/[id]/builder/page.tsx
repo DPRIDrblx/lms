@@ -14,23 +14,23 @@ import toast from "react-hot-toast";
 // Setup pdf.js worker
 pdfjs.GlobalWorkerOptions.workerSrc = `//unpkg.com/pdfjs-dist@${pdfjs.version}/build/pdf.worker.min.mjs`;
 
-function useContainerScale(targetWidth: number) {
+function useContainerWidth(maxWidth: number) {
   const containerRef = useRef<HTMLDivElement>(null);
-  const [scale, setScale] = useState(1);
+  const [width, setWidth] = useState(maxWidth);
   
   useEffect(() => {
     if (!containerRef.current) return;
     const observer = new ResizeObserver((entries) => {
       for (const entry of entries) {
-        const availableWidth = entry.contentRect.width;
-        setScale(Math.min(1, availableWidth / targetWidth));
+        const availableWidth = entry.contentRect.width - 32;
+        setWidth(Math.min(maxWidth, Math.max(200, availableWidth)));
       }
     });
     observer.observe(containerRef.current);
     return () => observer.disconnect();
-  }, [targetWidth]);
+  }, [maxWidth]);
   
-  return { containerRef, scale };
+  return { containerRef, width };
 }
 
 type ElementType = "short_text" | "long_text" | "radio" | "checkbox";
@@ -68,7 +68,7 @@ export default function EModuleBuilder() {
   const [numPages, setNumPages] = useState<number>(0);
   const [pageNumber, setPageNumber] = useState<number>(1);
   const pdfClickRef = useRef<HTMLDivElement>(null);
-  const { containerRef: wrapperRef, scale } = useContainerScale(800);
+  const { containerRef: wrapperRef, width: pdfWidth } = useContainerWidth(800);
   
   // Builder state
   const [elements, setElements] = useState<InteractiveElement[]>([]);
@@ -396,16 +396,11 @@ export default function EModuleBuilder() {
           </div>
 
           <div 
-            style={{ width: `${800 * scale}px`, height: `${1131 * scale}px` }} 
-            className="relative"
+            className={`relative bg-white shadow-xl rounded-sm overflow-hidden transition-all duration-200 ${activeTab === 'elements' ? 'cursor-crosshair ring-2 ring-indigo-500/50 hover:ring-indigo-500' : ''}`}
+            ref={pdfClickRef}
+            onClick={handlePdfClick}
           >
-            <div 
-              className={`bg-white shadow-xl absolute top-0 left-0 origin-top-left transition-all duration-200 ${activeTab === 'elements' ? 'cursor-crosshair ring-2 ring-indigo-500/50 hover:ring-indigo-500' : ''}`}
-              style={{ transform: `scale(${scale})`, width: 800, height: 1131 }}
-              ref={pdfClickRef}
-              onClick={handlePdfClick}
-            >
-              {moduleData?.pdf_url ? (
+            {moduleData?.pdf_url ? (
                 <Document
                   file={moduleData.pdf_url}
                   onLoadSuccess={onDocumentLoadSuccess}
@@ -416,7 +411,7 @@ export default function EModuleBuilder() {
                     pageNumber={pageNumber} 
                     renderTextLayer={false} 
                     renderAnnotationLayer={false}
-                    width={800} // Fixed width for consistent overlay coordinate mapping
+                    width={pdfWidth} // Dynamically scaled
                     className="rounded-sm overflow-hidden"
                   />
                 </Document>
@@ -443,7 +438,6 @@ export default function EModuleBuilder() {
                   <span className="text-[10px] font-bold text-indigo-900 truncate">{el.label}</span>
                 </div>
               ))}
-            </div>
           </div>
         </div>
       </div>

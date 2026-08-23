@@ -15,24 +15,24 @@ import toast from "react-hot-toast";
 // Setup pdf.js worker
 pdfjs.GlobalWorkerOptions.workerSrc = `//unpkg.com/pdfjs-dist@${pdfjs.version}/build/pdf.worker.min.mjs`;
 
-function useContainerScale(targetWidth: number) {
+function useContainerWidth(maxWidth: number) {
   const containerRef = useRef<HTMLDivElement>(null);
-  const [scale, setScale] = useState(1);
+  const [width, setWidth] = useState(maxWidth);
   
   useEffect(() => {
     if (!containerRef.current) return;
     const observer = new ResizeObserver((entries) => {
       for (const entry of entries) {
         // give some padding allowance (e.g. 32px for mobile paddings)
-        const availableWidth = entry.contentRect.width;
-        setScale(Math.min(1, availableWidth / targetWidth));
+        const availableWidth = entry.contentRect.width - 32; // subtracting padding
+        setWidth(Math.min(maxWidth, Math.max(200, availableWidth)));
       }
     });
     observer.observe(containerRef.current);
     return () => observer.disconnect();
-  }, [targetWidth]);
+  }, [maxWidth]);
   
-  return { containerRef, scale };
+  return { containerRef, width };
 }
 
 export default function StudentInteractiveEModule() {
@@ -64,8 +64,8 @@ export default function StudentInteractiveEModule() {
   // Sidebar TOC mobile toggle
   const [showToc, setShowToc] = useState(false);
 
-  // Responsive scale hook
-  const { containerRef, scale } = useContainerScale(800);
+  // Responsive width hook
+  const { containerRef, width: pdfWidth } = useContainerWidth(800);
 
   useEffect(() => {
     const fetchModule = async () => {
@@ -293,15 +293,8 @@ export default function StudentInteractiveEModule() {
             </div>
           </div>
 
-          <div 
-            style={{ width: `${800 * scale}px`, height: `${1131 * scale}px` }} 
-            className="relative"
-          >
-            <div 
-              className="bg-white shadow-2xl rounded-sm absolute top-0 left-0 origin-top-left"
-              style={{ transform: `scale(${scale})`, width: 800, height: 1131 }}
-            >
-              {moduleData?.pdf_url ? (
+          <div className="relative shadow-2xl bg-white rounded-sm overflow-hidden">
+            {moduleData?.pdf_url ? (
               <Document
                 file={moduleData.pdf_url}
                 onLoadSuccess={onDocumentLoadSuccess}
@@ -312,7 +305,7 @@ export default function StudentInteractiveEModule() {
                   pageNumber={pageNumber} 
                   renderTextLayer={false} 
                   renderAnnotationLayer={false}
-                  width={800} // MATCH EXACTLY with builder's width
+                  width={pdfWidth} // Dynamically scaled
                   className="rounded-sm overflow-hidden"
                 />
               </Document>
@@ -429,7 +422,6 @@ export default function StudentInteractiveEModule() {
                 </div>
               );
             })}
-            </div>
           </div>
         </div>
       </div>

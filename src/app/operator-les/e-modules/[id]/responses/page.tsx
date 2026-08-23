@@ -14,23 +14,23 @@ import toast from "react-hot-toast";
 // Setup pdf.js worker
 pdfjs.GlobalWorkerOptions.workerSrc = `//unpkg.com/pdfjs-dist@${pdfjs.version}/build/pdf.worker.min.mjs`;
 
-function useContainerScale(targetWidth: number) {
+function useContainerWidth(maxWidth: number) {
   const containerRef = useRef<HTMLDivElement>(null);
-  const [scale, setScale] = useState(1);
+  const [width, setWidth] = useState(maxWidth);
   
   useEffect(() => {
     if (!containerRef.current) return;
     const observer = new ResizeObserver((entries) => {
       for (const entry of entries) {
-        const availableWidth = entry.contentRect.width;
-        setScale(Math.min(1, availableWidth / targetWidth));
+        const availableWidth = entry.contentRect.width - 32;
+        setWidth(Math.min(maxWidth, Math.max(200, availableWidth)));
       }
     });
     observer.observe(containerRef.current);
     return () => observer.disconnect();
-  }, [targetWidth]);
+  }, [maxWidth]);
   
-  return { containerRef, scale };
+  return { containerRef, width };
 }
 
 export default function EModuleResponses() {
@@ -48,7 +48,7 @@ export default function EModuleResponses() {
   // PDF state
   const [numPages, setNumPages] = useState<number>(0);
   const [pageNumber, setPageNumber] = useState<number>(1);
-  const { containerRef: wrapperRef, scale } = useContainerScale(800);
+  const { containerRef: wrapperRef, width: pdfWidth } = useContainerWidth(800);
   
   // Grade state
   const [gradeXP, setGradeXP] = useState<number>(0);
@@ -255,14 +255,7 @@ export default function EModuleResponses() {
 
               {/* PDF Viewer */}
               <div className="flex-1 overflow-auto flex flex-col items-center relative p-2 md:p-8" ref={wrapperRef}>
-                <div 
-                  style={{ width: `${800 * scale}px`, height: `${1131 * scale}px` }} 
-                  className="relative"
-                >
-                  <div 
-                    className="bg-white shadow-xl rounded-sm absolute top-0 left-0 origin-top-left"
-                    style={{ transform: `scale(${scale})`, width: 800, height: 1131 }}
-                  >
+                <div className="relative shadow-xl bg-white rounded-sm overflow-hidden">
                   {moduleData?.pdf_url ? (
                     <Document
                       file={moduleData.pdf_url}
@@ -274,7 +267,7 @@ export default function EModuleResponses() {
                         pageNumber={pageNumber} 
                         renderTextLayer={false} 
                         renderAnnotationLayer={false}
-                        width={800} // MATCH EXACTLY with builder's width
+                        width={pdfWidth} // Dynamically scaled
                         className="rounded-sm overflow-hidden"
                       />
                     </Document>
@@ -335,7 +328,6 @@ export default function EModuleResponses() {
                       </div>
                     );
                   })}
-                  </div>
                 </div>
               </div>
             </>
