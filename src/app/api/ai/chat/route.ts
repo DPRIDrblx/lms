@@ -13,7 +13,7 @@ export async function POST(req: Request) {
     }
 
     const body = await req.json();
-    const { questionContext, context, messages } = body;
+    const { questionContext, context, messages, botPersonality } = body;
     
     const model = genAI.getGenerativeModel({ model: "gemini-3.5-flash" });
 
@@ -38,6 +38,8 @@ Tugas Anda:
 2. Jelaskan konsepnya, bukan sekadar memberikan jawaban. Jika siswa salah, jelaskan MENGAPA mereka salah dan pancing mereka untuk berpikir.
 3. Jangan pernah merendahkan siswa. Gunakan emoji yang mendukung.
 4. Jawablah secara ringkas (maksimal 2-3 paragraf pendek) agar siswa tidak malas membaca.
+
+${botPersonality ? `INSTRUKSI KEPRIBADIAN KHUSUS:\n${botPersonality}` : ''}
 `;
 
     const historyMsgs = messages.slice(0, -1).map((m: any) => ({
