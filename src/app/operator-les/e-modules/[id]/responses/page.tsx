@@ -174,7 +174,23 @@ export default function EModuleResponses() {
                     <Button variant="ghost" size="sm" disabled={pageNumber <= 1} onClick={() => setPageNumber(pageNumber - 1)} className="h-8 w-8 p-0">
                       <ChevronLeft className="w-4 h-4" />
                     </Button>
-                    <span className="text-xs font-bold text-slate-600">Hal {pageNumber} / {numPages || "?"}</span>
+                    <div className="flex items-center gap-2">
+                      <span className="text-xs font-bold text-slate-600">Hal</span>
+                      <input 
+                        type="number" 
+                        value={pageNumber} 
+                        onChange={e => {
+                          let val = parseInt(e.target.value);
+                          if (isNaN(val)) return;
+                          if (val < 1) val = 1;
+                          if (numPages && val > numPages) val = numPages;
+                          setPageNumber(val);
+                        }}
+                        className="w-10 text-center text-xs font-bold border-b-2 border-slate-200 focus:border-indigo-500 outline-none p-0 hide-arrows bg-transparent text-indigo-700"
+                        min={1} max={numPages || 1}
+                      />
+                      <span className="text-xs font-bold text-slate-600">/ {numPages || "?"}</span>
+                    </div>
                     <Button variant="ghost" size="sm" disabled={pageNumber >= numPages} onClick={() => setPageNumber(pageNumber + 1)} className="h-8 w-8 p-0">
                       <ChevronRight className="w-4 h-4" />
                     </Button>

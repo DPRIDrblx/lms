@@ -174,7 +174,23 @@ export default function StudentInteractiveEModule() {
             <Button variant="ghost" disabled={pageNumber <= 1} onClick={() => setPageNumber(pageNumber - 1)} className="h-10 w-10 p-0 rounded-xl hover:bg-slate-100">
               <ChevronLeft className="w-5 h-5 text-slate-600" />
             </Button>
-            <span className="text-sm font-black text-slate-700 tracking-wide">Hal {pageNumber} / {numPages || "?"}</span>
+            <div className="flex items-center gap-2">
+              <span className="text-sm font-black text-slate-700 tracking-wide">Hal</span>
+              <input 
+                type="number" 
+                value={pageNumber} 
+                onChange={e => {
+                  let val = parseInt(e.target.value);
+                  if (isNaN(val)) return;
+                  if (val < 1) val = 1;
+                  if (numPages && val > numPages) val = numPages;
+                  setPageNumber(val);
+                }}
+                className="w-12 text-center text-sm font-black text-[#108B96] border-b-2 border-slate-200 focus:border-[#108B96] outline-none p-0 hide-arrows bg-transparent"
+                min={1} max={numPages || 1}
+              />
+              <span className="text-sm font-black text-slate-700 tracking-wide">/ {numPages || "?"}</span>
+            </div>
             <Button variant="ghost" disabled={pageNumber >= numPages} onClick={() => setPageNumber(pageNumber + 1)} className="h-10 w-10 p-0 rounded-xl hover:bg-slate-100">
               <ChevronRight className="w-5 h-5 text-slate-600" />
             </Button>

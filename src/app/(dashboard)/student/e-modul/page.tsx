@@ -105,34 +105,65 @@ export default function EModulPage() {
           modules.map((mod, index) => (
             <div key={mod.id} className="group relative flex flex-col h-full">
               {/* The Book Cover */}
-              <a href={mod.drive_link} target="_blank" rel="noopener noreferrer" className="block relative w-full aspect-[3/4] rounded-r-[16px] rounded-l-[4px] shadow-sm hover:shadow-xl transition-all duration-300 transform group-hover:-translate-y-2 group-hover:rotate-1">
-                 {/* Spine effect */}
-                 <div className="absolute left-0 top-0 bottom-0 w-3 bg-black/20 rounded-l-[4px] z-20"></div>
-                 <div className="absolute left-3 top-0 bottom-0 w-px bg-white/30 z-20"></div>
-                 
-                 <div className={cn("absolute inset-0 rounded-r-[16px] rounded-l-[4px] bg-gradient-to-br p-6 flex flex-col z-10", getGradient(index))}>
-                    {/* Decorative pattern */}
-                    <div className="absolute inset-0 opacity-10 bg-[url('https://www.transparenttextures.com/patterns/cubes.png')] mix-blend-overlay"></div>
-                    
-                    <div className="relative z-10 flex flex-col h-full">
-                      <div className="mb-auto flex justify-between items-start">
-                        <div className="w-10 h-10 rounded-full bg-white/20 backdrop-blur-sm flex items-center justify-center border border-white/30">
-                          <BookText className="w-5 h-5 text-white" />
-                        </div>
-                        <Bookmark className="w-6 h-6 text-white/50" />
-                      </div>
+              {mod.pdf_url ? (
+                <Link href={`/student/e-modul/${mod.id}`} className="block relative w-full aspect-[3/4] rounded-r-[16px] rounded-l-[4px] shadow-sm hover:shadow-xl transition-all duration-300 transform group-hover:-translate-y-2 group-hover:rotate-1">
+                  {/* Spine effect */}
+                  <div className="absolute left-0 top-0 bottom-0 w-3 bg-black/20 rounded-l-[4px] z-20"></div>
+                  <div className="absolute left-3 top-0 bottom-0 w-px bg-white/30 z-20"></div>
+                  
+                  <div className={cn("absolute inset-0 rounded-r-[16px] rounded-l-[4px] bg-gradient-to-br p-6 flex flex-col z-10", getGradient(index))}>
+                     {/* Decorative pattern */}
+                     <div className="absolute inset-0 opacity-10 bg-[url('https://www.transparenttextures.com/patterns/cubes.png')] mix-blend-overlay"></div>
+                     
+                     <div className="relative z-10 flex flex-col h-full">
+                       <div className="mb-auto flex justify-between items-start">
+                         <div className="w-10 h-10 rounded-full bg-white/20 backdrop-blur-sm flex items-center justify-center border border-white/30">
+                           <BookText className="w-5 h-5 text-white" />
+                         </div>
+                         <Bookmark className="w-6 h-6 text-white/50" />
+                       </div>
+                       
+                       <div className="mt-auto">
+                         {mod.grade_level && (
+                           <span className="inline-block px-2 py-1 bg-white/20 backdrop-blur-md text-white text-[10px] font-black tracking-widest uppercase rounded-[6px] mb-3 border border-white/20">
+                             Kelas {mod.grade_level}
+                           </span>
+                         )}
+                         <h3 className="text-white font-black text-xl leading-tight line-clamp-3">{mod.title}</h3>
+                       </div>
+                     </div>
+                  </div>
+                </Link>
+              ) : (
+                <a href={mod.drive_link} target="_blank" rel="noopener noreferrer" className="block relative w-full aspect-[3/4] rounded-r-[16px] rounded-l-[4px] shadow-sm hover:shadow-xl transition-all duration-300 transform group-hover:-translate-y-2 group-hover:rotate-1">
+                   {/* Spine effect */}
+                   <div className="absolute left-0 top-0 bottom-0 w-3 bg-black/20 rounded-l-[4px] z-20"></div>
+                   <div className="absolute left-3 top-0 bottom-0 w-px bg-white/30 z-20"></div>
+                   
+                   <div className={cn("absolute inset-0 rounded-r-[16px] rounded-l-[4px] bg-gradient-to-br p-6 flex flex-col z-10", getGradient(index))}>
+                      {/* Decorative pattern */}
+                      <div className="absolute inset-0 opacity-10 bg-[url('https://www.transparenttextures.com/patterns/cubes.png')] mix-blend-overlay"></div>
                       
-                      <div className="mt-auto">
-                        {mod.grade_level && (
-                          <span className="inline-block px-2 py-1 bg-white/20 backdrop-blur-md text-white text-[10px] font-black tracking-widest uppercase rounded-[6px] mb-3 border border-white/20">
-                            Kelas {mod.grade_level}
-                          </span>
-                        )}
-                        <h3 className="text-white font-black text-xl leading-tight line-clamp-3">{mod.title}</h3>
+                      <div className="relative z-10 flex flex-col h-full">
+                        <div className="mb-auto flex justify-between items-start">
+                          <div className="w-10 h-10 rounded-full bg-white/20 backdrop-blur-sm flex items-center justify-center border border-white/30">
+                            <BookText className="w-5 h-5 text-white" />
+                          </div>
+                          <Bookmark className="w-6 h-6 text-white/50" />
+                        </div>
+                        
+                        <div className="mt-auto">
+                          {mod.grade_level && (
+                            <span className="inline-block px-2 py-1 bg-white/20 backdrop-blur-md text-white text-[10px] font-black tracking-widest uppercase rounded-[6px] mb-3 border border-white/20">
+                              Kelas {mod.grade_level}
+                            </span>
+                          )}
+                          <h3 className="text-white font-black text-xl leading-tight line-clamp-3">{mod.title}</h3>
+                        </div>
                       </div>
-                    </div>
-                 </div>
-              </a>
+                   </div>
+                </a>
+              )}
               
               {/* Below Cover Details */}
               <div className="mt-4 px-1">

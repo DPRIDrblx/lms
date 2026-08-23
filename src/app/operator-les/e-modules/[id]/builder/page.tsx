@@ -235,6 +235,26 @@ export default function EModuleBuilder() {
                               />
                             </div>
                           </div>
+                          <div className="flex gap-2">
+                            <div className="flex-1">
+                              <label className="text-[10px] font-bold text-slate-500 mb-1 block">Lebar (%)</label>
+                              <input 
+                                type="number" 
+                                className="w-full text-xs p-1.5 border border-slate-200 rounded-md bg-slate-50 focus:bg-white" 
+                                value={el.width} 
+                                onChange={e => updateElement(el.id, { width: parseInt(e.target.value) || 10 })} 
+                              />
+                            </div>
+                            <div className="flex-1">
+                              <label className="text-[10px] font-bold text-slate-500 mb-1 block">Tinggi (%)</label>
+                              <input 
+                                type="number" 
+                                className="w-full text-xs p-1.5 border border-slate-200 rounded-md bg-slate-50 focus:bg-white" 
+                                value={el.height} 
+                                onChange={e => updateElement(el.id, { height: parseInt(e.target.value) || 5 })} 
+                              />
+                            </div>
+                          </div>
                           
                           {(el.type === "radio" || el.type === "checkbox") && (
                             <div>
@@ -302,7 +322,23 @@ export default function EModuleBuilder() {
             <Button variant="ghost" size="sm" disabled={pageNumber <= 1} onClick={() => setPageNumber(pageNumber - 1)} className="h-8 w-8 p-0 rounded-full">
               <ChevronLeft className="w-4 h-4" />
             </Button>
-            <span className="text-sm font-bold text-slate-700">Halaman {pageNumber} dari {numPages || "?"}</span>
+            <div className="flex items-center gap-2">
+              <span className="text-sm font-bold text-slate-500">Hal</span>
+              <input 
+                type="number" 
+                value={pageNumber} 
+                onChange={e => {
+                  let val = parseInt(e.target.value);
+                  if (isNaN(val)) return;
+                  if (val < 1) val = 1;
+                  if (numPages && val > numPages) val = numPages;
+                  setPageNumber(val);
+                }}
+                className="w-12 text-center text-sm font-bold border-b-2 border-indigo-200 focus:border-indigo-600 outline-none p-0 hide-arrows"
+                min={1} max={numPages || 1}
+              />
+              <span className="text-sm font-bold text-slate-500">dari {numPages || "?"}</span>
+            </div>
             <Button variant="ghost" size="sm" disabled={pageNumber >= numPages} onClick={() => setPageNumber(pageNumber + 1)} className="h-8 w-8 p-0 rounded-full">
               <ChevronRight className="w-4 h-4" />
             </Button>
