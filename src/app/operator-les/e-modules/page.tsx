@@ -4,7 +4,8 @@ import { useEffect, useState } from "react";
 import { createClient } from "@/lib/supabase";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { BookOpen, Trash2, Plus, Users, Upload, PenTool, LayoutList, Loader2 } from "lucide-react";
+import { BookOpen, Trash2, Plus, Users, Upload, PenTool, LayoutList, Loader2, Edit3 } from "lucide-react";
+import { Modal } from "@/components/ui/modal";
 import toast from "react-hot-toast";
 import Link from "next/link";
 
@@ -20,6 +21,13 @@ export default function CenterEModulesManager() {
   const [targetClassIds, setTargetClassIds] = useState<string[]>([]);
   const [isUploading, setIsUploading] = useState(false);
   const [migratingId, setMigratingId] = useState<string | null>(null);
+
+  // Edit State
+  const [isEditModalOpen, setIsEditModalOpen] = useState(false);
+  const [editingModule, setEditingModule] = useState<any>(null);
+  const [editTitle, setEditTitle] = useState("");
+  const [editTargetClassIds, setEditTargetClassIds] = useState<string[]>([]);
+  const [isUpdating, setIsUpdating] = useState(false);
 
   const fetchData = async () => {
     setLoading(true);
@@ -103,6 +111,39 @@ export default function CenterEModulesManager() {
     } else {
       toast.success("E-Modul berhasil dihapus");
       fetchData();
+    }
+  };
+
+  const handleEditClick = (m: any) => {
+    setEditingModule(m);
+    setEditTitle(m.title);
+    setEditTargetClassIds(m.target_class_ids || (m.class_id ? [m.class_id] : []));
+    setIsEditModalOpen(true);
+  };
+
+  const handleUpdateModule = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!editTitle || editTargetClassIds.length === 0) {
+      toast.error("Mohon lengkapi semua field wajib");
+      return;
+    }
+    setIsUpdating(true);
+    try {
+      const { error } = await supabase.from("e_modules").update({
+        title: editTitle,
+        target_class_ids: editTargetClassIds,
+        class_id: editTargetClassIds[0] || null
+      }).eq("id", editingModule.id);
+      
+      if (error) throw error;
+      
+      toast.success("E-Modul berhasil diperbarui");
+      setIsEditModalOpen(false);
+      fetchData();
+    } catch (err: any) {
+      toast.error(err.message || "Gagal memperbarui E-Modul");
+    } finally {
+      setIsUpdating(false);
     }
   };
 
@@ -233,13 +274,22 @@ export default function CenterEModulesManager() {
                           ? m.target_class_ids.map((id: string) => classes.find(c => c.id === id)?.name).filter(Boolean).join(", ")
                           : (m.classes?.name || "Semua Kelas")}
                       </div>
-                      <button 
-                        onClick={() => handleDelete(m.id)}
-                        className="p-2 text-red-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors"
-                        title="Hapus E-Modul"
-                      >
-                        <Trash2 className="w-4 h-4" />
-                      </button>
+                      <div className="flex items-center gap-1">
+                        <button 
+                          onClick={() => handleEditClick(m)}
+                          className="p-2 text-indigo-400 hover:text-indigo-600 hover:bg-indigo-50 rounded-lg transition-colors"
+                          title="Edit Konfigurasi"
+                        >
+                          <Edit3 className="w-4 h-4" />
+                        </button>
+                        <button 
+                          onClick={() => handleDelete(m.id)}
+                          className="p-2 text-red-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors"
+                          title="Hapus E-Modul"
+                        >
+                          <Trash2 className="w-4 h-4" />
+                        </button>
+                      </div>
                     </div>
 
                     <h3 className="font-black text-lg text-slate-800 ml-2 mb-2 leading-tight line-clamp-2">{m.title}</h3>
@@ -294,6 +344,55 @@ export default function CenterEModulesManager() {
         </div>
 
       </div>
+
+      {/* Edit Modal */}
+      <Modal
+        isOpen={isEditModalOpen}
+        onClose={() => setIsEditModalOpen(false)}
+        title="Edit Konfigurasi E-Modul"
+      >
+        <form onSubmit={handleUpdateModule} className="space-y-4">
+          <div>
+            <label className="block text-sm font-bold text-slate-700 mb-2">Target Kelas</label>
+            <div className="grid grid-cols-2 gap-2">
+              {classes.map(c => (
+                <label key={c.id} className="flex items-center gap-2 p-2 border border-slate-200 rounded-lg cursor-pointer hover:bg-slate-50 transition-colors">
+                  <input 
+                    type="checkbox" 
+                    className="w-4 h-4 text-indigo-600 rounded border-slate-300 focus:ring-indigo-500"
+                    checked={editTargetClassIds.includes(c.id)}
+                    onChange={(e) => {
+                      if (e.target.checked) setEditTargetClassIds([...editTargetClassIds, c.id]);
+                      else setEditTargetClassIds(editTargetClassIds.filter(id => id !== c.id));
+                    }}
+                  />
+                  <span className="text-sm font-semibold text-slate-700">{c.name}</span>
+                </label>
+              ))}
+            </div>
+          </div>
+          
+          <div>
+            <label className="block text-sm font-bold text-slate-700 mb-1">Judul Modul</label>
+            <input 
+              type="text"
+              className="w-full p-3 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500"
+              value={editTitle}
+              onChange={(e) => setEditTitle(e.target.value)}
+              required
+            />
+          </div>
+          
+          <div className="flex justify-end gap-2 pt-4 border-t border-slate-100">
+            <Button type="button" variant="ghost" onClick={() => setIsEditModalOpen(false)}>Batal</Button>
+            <Button disabled={isUpdating} type="submit" className="bg-indigo-600 hover:bg-indigo-700 text-white">
+              {isUpdating ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : null}
+              Simpan Perubahan
+            </Button>
+          </div>
+        </form>
+      </Modal>
+
     </div>
   );
 }
