@@ -94,7 +94,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
   if (profile?.role === "student") {
     if (isSkillUpHub) {
       return (
-        <div className="min-h-screen bg-[#0b0e14] text-white">
+        <div className="min-h-screen bg-[#F0F9FF] text-slate-800">
           <ClassGuard>
             {children}
           </ClassGuard>

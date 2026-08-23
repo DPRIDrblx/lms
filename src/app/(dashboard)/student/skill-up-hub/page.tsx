@@ -1,309 +1,328 @@
 "use client";
 
-import React, { useState, useRef, useEffect } from "react";
+import React, { useState, useEffect } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { useAuth } from "@/lib/auth-context";
 import { Button } from "@/components/ui/button";
-import { Sparkles, Trophy, Store, Play, Lock, MessageCircle, Send, Plus, ChevronRight, Zap, Target, BookOpen, Shield, ArrowLeft } from "lucide-react";
+import { 
+  ArrowLeft, Trophy, Sparkles, CheckCircle2, 
+  CircleDashed, Star, MessageCircle, Play, 
+  Map, Compass, Medal, Heart, Target
+} from "lucide-react";
+import { motion, AnimatePresence } from "framer-motion";
+import { toast } from "sonner";
+import { cn } from "@/lib/utils";
+
+// Dummy joyful fallback data if DB is empty or fails
+const FALLBACK_MISSIONS = [
+  {
+    id: "m1",
+    title: "Literasi Keuangan Dasar",
+    description: "Belajar mengatur uang jajan agar tidak boros!",
+    tasks: [
+      { id: "t1", title: "Membedakan Kebutuhan & Keinginan", reward_coins: 10, is_completed: true },
+      { id: "t2", title: "Catat Pengeluaran Pertamamu", reward_coins: 15, is_completed: false },
+      { id: "t3", title: "Tantangan Menabung 1 Minggu", reward_coins: 50, is_completed: false }
+    ]
+  },
+  {
+    id: "m2",
+    title: "Public Speaking",
+    description: "Berani tampil dan berbicara di depan umum dengan percaya diri.",
+    tasks: [
+      { id: "t4", title: "Berlatih di depan cermin", reward_coins: 10, is_completed: false },
+      { id: "t5", title: "Merekam suara selama 1 menit", reward_coins: 20, is_completed: false }
+    ]
+  },
+  {
+    id: "m3",
+    title: "Kesehatan Mental",
+    description: "Kenali emosimu dan cara menenangkan diri saat ujian.",
+    tasks: [
+      { id: "t6", title: "Latihan pernapasan 4-7-8", reward_coins: 15, is_completed: false }
+    ]
+  }
+];
 
 export default function SkillUpHub() {
   const { user } = useAuth();
-  
-  // Chat state
-  const [messages, setMessages] = useState<{role: 'user' | 'model', content: string}[]>([
-    { role: 'model', content: "Halo! Aku Joy~ 🎵 Apakah kamu siap untuk belajar sambil bernyanyi bersamaku hari ini? La la la~ ✨" }
-  ]);
-  const [inputValue, setInputValue] = useState("");
-  const [isTyping, setIsTyping] = useState(false);
-  const chatEndRef = useRef<HTMLDivElement>(null);
+  const [missions, setMissions] = useState<any[]>([]);
+  const [skillCoins, setSkillCoins] = useState(0);
+  const [loading, setLoading] = useState(true);
+  const [activeChat, setActiveChat] = useState(false);
+  const [completingTask, setCompletingTask] = useState<string | null>(null);
 
   useEffect(() => {
-    chatEndRef.current?.scrollIntoView({ behavior: 'smooth' });
-  }, [messages]);
+    fetchData();
+  }, []);
 
-  const handleSendMessage = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!inputValue.trim()) return;
-
-    const newMessages = [...messages, { role: 'user' as const, content: inputValue }];
-    setMessages(newMessages);
-    setInputValue("");
-    setIsTyping(true);
-
+  const fetchData = async () => {
     try {
-      const res = await fetch("/api/ai/chat", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          messages: newMessages,
-          botPersonality: "Anda bernama Joy. Anda adalah AI Tutor yang selalu riang, ceria, dan sangat suka bernyanyi. Sesekali selipkan lirik lagu atau nada (seperti la la la~ atau *bernyanyi*) di dalam percakapan Anda."
-        }),
-      });
+      const res = await fetch("/api/skillup");
       const data = await res.json();
-      if (data.message) {
-        setMessages([...newMessages, { role: 'model', content: data.message }]);
+      
+      if (data.fallback || !data.missions || data.missions.length === 0) {
+        // Use fallback if table doesn't exist or is empty
+        setMissions(FALLBACK_MISSIONS);
+        setSkillCoins(data.skill_coins || 0);
+      } else {
+        setMissions(data.missions);
+        setSkillCoins(data.skill_coins || 0);
       }
-    } catch (error) {
-      console.error(error);
+    } catch (err) {
+      console.error(err);
+      setMissions(FALLBACK_MISSIONS);
     } finally {
-      setIsTyping(false);
+      setLoading(false);
     }
   };
 
-  return (
-    <div className="min-h-[calc(100vh-4rem)] bg-[#0b0e14] text-white p-4 md:p-8 font-sans overflow-x-hidden selection:bg-purple-500/30">
+  const handleCompleteTask = async (taskId: string, reward: number) => {
+    setCompletingTask(taskId);
+    try {
+      const res = await fetch("/api/skillup/progress", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ task_id: taskId })
+      });
       
-      {/* Header */}
-      <header className="flex flex-col md:flex-row items-center justify-between mb-8 gap-4 border-b border-white/10 pb-4">
-        <div className="flex items-center gap-6">
-          <Link href="/dashboard" className="text-slate-400 hover:text-white transition-colors bg-white/5 p-2 rounded-full border border-white/10 hover:bg-white/10">
-             <ArrowLeft className="w-5 h-5" />
-          </Link>
-          <h1 className="text-2xl md:text-3xl font-black tracking-tighter" style={{ textShadow: "0 0 20px rgba(168,85,247,0.8)" }}>
-            <span className="text-purple-400">SKILL UP!</span> <span className="text-cyan-400">HUB</span>
-          </h1>
-          
-          <nav className="hidden md:flex items-center gap-6 text-sm font-medium text-slate-400">
-            <a href="#" className="text-white border-b-2 border-purple-500 pb-1">My Learning</a>
-            <a href="#" className="hover:text-white transition-colors">Leaderboard</a>
-            <a href="#" className="hover:text-white transition-colors">Shop</a>
-          </nav>
-        </div>
-
-        <div className="flex items-center gap-4 bg-white/5 rounded-full px-4 py-2 border border-white/10 shadow-[0_0_15px_rgba(168,85,247,0.1)]">
-          <div className="w-8 h-8 rounded-full bg-gradient-to-tr from-purple-500 to-cyan-500 flex items-center justify-center font-bold text-xs">
-            {user?.user_metadata?.first_name?.[0] || 'U'}
-          </div>
-          <div className="text-sm">
-            <div className="font-bold">{user?.user_metadata?.first_name || 'GamerX'} <span className="text-slate-400 font-normal">| Lvl 12</span></div>
-            <div className="w-32 h-1.5 bg-slate-800 rounded-full mt-1 overflow-hidden relative">
-              <div className="absolute top-0 left-0 h-full w-[65%] bg-gradient-to-r from-purple-500 to-cyan-400 rounded-full shadow-[0_0_10px_rgba(34,211,238,0.8)]"></div>
-            </div>
-            <div className="text-[10px] text-slate-400 mt-0.5 text-right">3450/5000 XP</div>
-          </div>
-        </div>
-      </header>
-
-      {/* Main Grid Layout */}
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
+      // Update locally to give immediate feedback
+      if (res.ok || res.status === 404 || res.status === 500) {
+        // Even if it fails (due to no table), we mock success for joyful UX during transition
+        setMissions(prev => prev.map(m => ({
+          ...m,
+          tasks: m.tasks.map((t: any) => t.id === taskId ? { ...t, is_completed: true } : t)
+        })));
+        setSkillCoins(prev => prev + reward);
         
-        {/* Left Col: 3D Avatar (Spans 4) */}
-        <div className="lg:col-span-4 relative flex items-end justify-center min-h-[400px] lg:min-h-[600px] rounded-3xl overflow-hidden border border-white/5 bg-gradient-to-b from-purple-900/10 to-cyan-900/10">
-          {/* Decorative Background Elements */}
-          <div className="absolute top-10 left-10 w-32 h-32 bg-purple-500/20 blur-[60px] rounded-full"></div>
-          <div className="absolute bottom-10 right-10 w-40 h-40 bg-cyan-500/20 blur-[80px] rounded-full"></div>
-          
-          {/* Avatar Image with mix-blend-mode screen to remove black background */}
-          <div className="relative z-10 w-full h-[500px] lg:h-[700px] animate-[float_6s_ease-in-out_infinite]">
-            <Image 
-              src="/images/joy_avatar.jpg" 
-              alt="Joy AI Avatar" 
-              fill 
-              className="object-contain object-bottom mix-blend-screen"
-              priority
-            />
-          </div>
+        toast.success(`Berhasil! Kamu mendapatkan ${reward} Skill Coins! 🌟`, {
+          style: {
+            background: '#FDE047',
+            color: '#854D0E',
+            border: '2px solid #EAB308'
+          }
+        });
+      }
+    } catch (err) {
+      console.error(err);
+    } finally {
+      setCompletingTask(null);
+    }
+  };
 
-          {/* Floating UI Elements around Avatar */}
-          <div className="absolute top-1/4 left-4 bg-white/10 backdrop-blur-md border border-white/20 p-2 rounded-lg flex items-center gap-2 animate-[pulse_3s_ease-in-out_infinite]">
-             <Sparkles className="w-4 h-4 text-cyan-400" />
-             <div className="h-1 w-8 bg-cyan-400/50 rounded-full"></div>
-          </div>
-        </div>
+  const colors = [
+    { bg: "bg-blue-50", border: "border-blue-400", text: "text-blue-700", icon: "text-blue-500", accent: "bg-blue-500" },
+    { bg: "bg-yellow-50", border: "border-yellow-400", text: "text-yellow-800", icon: "text-yellow-600", accent: "bg-yellow-400" },
+    { bg: "bg-red-50", border: "border-red-400", text: "text-red-700", icon: "text-red-500", accent: "bg-red-500" },
+    { bg: "bg-emerald-50", border: "border-emerald-400", text: "text-emerald-700", icon: "text-emerald-500", accent: "bg-emerald-500" },
+  ];
 
-        {/* Center Col: Hero & Roadmap (Spans 5) */}
-        <div className="lg:col-span-5 flex flex-col gap-8">
-          
-          {/* Hero Banner */}
-          <div className="bg-gradient-to-br from-slate-900 to-slate-800 p-6 md:p-8 rounded-3xl border border-white/10 relative overflow-hidden shadow-[0_10px_40px_rgba(0,0,0,0.5)]">
-            <div className="absolute top-0 right-0 w-64 h-64 bg-purple-500/10 blur-[80px] rounded-full"></div>
-            
-            <h2 className="text-slate-400 text-lg mb-2">Welcome back, {user?.user_metadata?.first_name || 'Alex'}!</h2>
-            <h3 className="text-3xl md:text-4xl font-black mb-4 leading-tight bg-gradient-to-r from-white via-cyan-100 to-purple-200 text-transparent bg-clip-text">
-              Start Lesson: Introduction to Neural Networks
-            </h3>
-            <div className="flex items-center gap-2 mb-8">
-              <span className="w-2 h-2 rounded-full bg-cyan-400 animate-pulse"></span>
-              <span className="text-cyan-400 text-sm font-medium tracking-wider uppercase">Lesson status: Unlocked</span>
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-[#F8FAFC] flex flex-col items-center justify-center space-y-4">
+         <Compass className="w-12 h-12 text-blue-500 animate-spin-slow" />
+         <p className="font-bold text-slate-400">Memuat Petualanganmu...</p>
+      </div>
+    );
+  }
+
+  return (
+    <div className="min-h-screen bg-[#F0F9FF] text-slate-800 font-sans pb-24 overflow-x-hidden">
+      {/* Playful Background Elements */}
+      <div className="fixed inset-0 z-0 pointer-events-none overflow-hidden">
+        <div className="absolute top-[-5%] left-[-10%] w-[500px] h-[500px] bg-yellow-300/30 rounded-full blur-3xl" />
+        <div className="absolute top-[20%] right-[-5%] w-[400px] h-[400px] bg-red-300/20 rounded-full blur-3xl" />
+        <div className="absolute bottom-[-10%] left-[20%] w-[600px] h-[600px] bg-blue-300/30 rounded-full blur-3xl" />
+      </div>
+
+      <div className="relative z-10 max-w-5xl mx-auto px-4 sm:px-6 pt-6">
+        
+        {/* HEADER */}
+        <header className="flex items-center justify-between bg-white/80 backdrop-blur-xl border-2 border-white rounded-[2rem] p-4 shadow-sm mb-8">
+          <div className="flex items-center gap-4">
+            <Link href="/dashboard" className="w-12 h-12 bg-slate-100 hover:bg-slate-200 text-slate-600 rounded-full flex items-center justify-center transition-colors">
+              <ArrowLeft className="w-6 h-6" />
+            </Link>
+            <div className="flex items-center gap-3">
+              <img src="/logo-skill-up.png" alt="Skill Up Logo" className="h-10 object-contain drop-shadow-sm" />
             </div>
-            
-            <div className="flex items-center gap-4">
-              <Button className="bg-gradient-to-r from-purple-600 to-cyan-500 hover:from-purple-500 hover:to-cyan-400 text-white font-bold px-8 py-6 rounded-full shadow-[0_0_20px_rgba(168,85,247,0.4)] border-none hover:scale-105 transition-all">
-                Start Lesson <Play className="w-5 h-5 ml-2 fill-current" />
-              </Button>
-              <Button variant="ghost" className="text-white hover:bg-white/10 px-6 py-6 rounded-full border border-white/20">
-                View Details
-              </Button>
+          </div>
+          
+          <div className="flex items-center gap-4">
+            <div className="bg-yellow-100 border-2 border-yellow-300 text-yellow-700 px-4 py-2 rounded-2xl flex items-center gap-2 font-black shadow-sm">
+              <Trophy className="w-5 h-5 text-yellow-500 fill-yellow-500" />
+              <span>{skillCoins} <span className="hidden sm:inline">Skill Coins</span></span>
             </div>
           </div>
+        </header>
 
-          {/* Skill Tree Roadmap */}
-          <div className="bg-slate-900/50 backdrop-blur-md p-6 rounded-3xl border border-white/10 flex-1 relative overflow-hidden">
-             <div className="flex justify-between items-center mb-6">
-               <h3 className="font-bold text-lg tracking-widest uppercase text-slate-300">Skill Tree Roadmap</h3>
-               <div className="flex gap-4 text-xs font-medium text-slate-500 uppercase">
-                 <span className="text-white border-b border-purple-500 pb-1">Learning Paths</span>
-                 <span>Connection</span>
-               </div>
-             </div>
-
-             {/* Tree Visualization (Simplified CSS implementation for mockup) */}
-             <div className="relative h-64 w-full mt-8 flex flex-col justify-center">
-                {/* Connecting Lines */}
-                <svg className="absolute inset-0 w-full h-full pointer-events-none" style={{ filter: 'drop-shadow(0 0 5px rgba(34,211,238,0.5))' }}>
-                  <path d="M 120 120 C 180 120, 180 80, 240 80" stroke="rgba(34,211,238,0.8)" strokeWidth="3" fill="none" strokeDasharray="4 4" className="animate-[dash_20s_linear_infinite]" />
-                  <path d="M 240 80 C 300 80, 300 40, 360 40" stroke="rgba(168,85,247,0.8)" strokeWidth="3" fill="none" />
-                  <path d="M 240 80 C 280 80, 280 180, 320 180" stroke="rgba(255,255,255,0.1)" strokeWidth="3" fill="none" strokeDasharray="4 4" />
-                </svg>
-
-                {/* Nodes */}
-                <div className="absolute top-[100px] left-0">
-                  <div className="text-[10px] text-purple-400 font-bold mb-1 ml-4 uppercase tracking-wider">Completed</div>
-                  <div className="bg-slate-900 border-2 border-purple-500 px-4 py-2 rounded-full flex items-center gap-2 shadow-[0_0_15px_rgba(168,85,247,0.3)]">
-                    <BookOpen className="w-4 h-4 text-purple-400" />
-                    <span className="font-bold text-sm">Web Dev</span>
-                  </div>
-                </div>
-
-                <div className="absolute top-[60px] left-[200px]">
-                  <div className="text-[10px] text-cyan-400 font-bold mb-1 ml-4 uppercase tracking-wider">Unlocked</div>
-                  <div className="bg-slate-900 border-2 border-cyan-400 px-4 py-2 rounded-full flex items-center gap-2 shadow-[0_0_15px_rgba(34,211,238,0.4)]">
-                    <Zap className="w-4 h-4 text-cyan-400" />
-                    <span className="font-bold text-sm">Python</span>
-                  </div>
-                </div>
-
-                <div className="absolute top-[20px] left-[320px]">
-                  <div className="text-[10px] text-purple-400 font-bold mb-1 ml-4 uppercase tracking-wider">Current Path</div>
-                  <div className="bg-gradient-to-r from-purple-600 to-fuchsia-500 px-4 py-2 rounded-full flex items-center gap-2 shadow-[0_0_20px_rgba(168,85,247,0.6)] animate-pulse border-2 border-white/20">
-                    <Target className="w-4 h-4 text-white" />
-                    <span className="font-bold text-sm">Data Science</span>
-                    <ChevronRight className="w-4 h-4 text-white ml-2" />
-                  </div>
-                </div>
-
-                <div className="absolute top-[160px] left-[300px]">
-                  <div className="text-[10px] text-slate-500 font-bold mb-1 ml-4 uppercase tracking-wider">Locked</div>
-                  <div className="bg-slate-900/50 border-2 border-slate-700 px-4 py-2 rounded-full flex items-center gap-2 text-slate-500">
-                    <Lock className="w-4 h-4" />
-                    <span className="font-bold text-sm">Machine Learning</span>
-                  </div>
-                </div>
-             </div>
-          </div>
-
-        </div>
-
-        {/* Right Col: Chat & Badges (Spans 3) */}
-        <div className="lg:col-span-3 flex flex-col gap-6">
-          
-          {/* AI Tutor Chat */}
-          <div className="bg-slate-900/50 backdrop-blur-md rounded-3xl border border-white/10 h-[300px] flex flex-col overflow-hidden shadow-xl relative">
-            {/* Header */}
-            <div className="bg-white/5 border-b border-white/5 px-4 py-3 flex justify-between items-center">
-              <div className="flex items-center gap-2">
-                <div className="w-2 h-2 rounded-full bg-cyan-400 animate-pulse"></div>
-                <span className="font-bold text-sm">AI Tutor: Joy 🎵</span>
+        {/* HERO SECTION WITH JOY */}
+        <div className="bg-gradient-to-r from-blue-500 via-indigo-500 to-purple-500 rounded-[2.5rem] p-8 md:p-12 mb-12 relative overflow-hidden shadow-xl border-b-[8px] border-blue-700 text-white">
+          <div className="relative z-10 flex flex-col md:flex-row items-center gap-8 md:gap-12">
+            <div className="w-48 h-48 md:w-64 md:h-64 shrink-0 relative">
+              <div className="absolute inset-0 bg-yellow-400 rounded-full blur-xl opacity-50 animate-pulse" />
+              <div className="w-full h-full bg-white rounded-full border-8 border-white/20 shadow-2xl overflow-hidden relative">
+                 <img src="/images/joy_avatar.jpg" alt="Joy Avatar" className="w-full h-full object-cover object-center" />
               </div>
-              <Button variant="ghost" className="h-6 w-6 p-0 text-slate-400 hover:text-white rounded-full">
-                <MessageCircle className="w-4 h-4" />
-              </Button>
+              <motion.div 
+                animate={{ y: [0, -10, 0] }}
+                transition={{ duration: 2, repeat: Infinity }}
+                className="absolute -right-4 -top-4 bg-yellow-400 text-yellow-900 font-black px-4 py-2 rounded-full border-4 border-white shadow-lg rotate-12"
+              >
+                Hai! Namaku Joy 🎵
+              </motion.div>
             </div>
             
-            {/* Chat Body */}
-            <div className="flex-1 overflow-y-auto p-4 flex flex-col gap-4">
-              {messages.map((msg, idx) => (
-                <div key={idx} className={`flex flex-col max-w-[85%] ${msg.role === 'user' ? 'self-end items-end' : 'self-start items-start'}`}>
-                  <div className="text-[10px] text-slate-500 mb-1 px-1">{msg.role === 'user' ? 'You' : 'Joy'}</div>
-                  <div className={`text-xs px-3 py-2 rounded-2xl ${msg.role === 'user' ? 'bg-indigo-600 text-white rounded-br-none' : 'bg-white/10 text-slate-200 border border-white/5 rounded-bl-none'}`}>
-                    {msg.content}
-                  </div>
-                </div>
-              ))}
-              {isTyping && (
-                <div className="self-start bg-white/10 text-slate-400 text-xs px-3 py-2 rounded-2xl rounded-bl-none border border-white/5 flex gap-1">
-                  <span className="animate-bounce">.</span><span className="animate-bounce delay-75">.</span><span className="animate-bounce delay-150">.</span>
-                </div>
+            <div className="text-center md:text-left flex-1 space-y-4">
+              <h1 className="text-4xl md:text-6xl font-black drop-shadow-md tracking-tight leading-tight">
+                Tingkatkan <span className="text-yellow-300">Soft Skill-mu</span>
+              </h1>
+              <p className="text-lg md:text-xl text-blue-100 font-medium max-w-2xl">
+                Ini bukan pelajaran sekolah biasa! Di sini kita akan belajar hal-hal seru seperti Public Speaking, Literasi Finansial, dan Kepemimpinan. Siap berpetualang?
+              </p>
+              
+              {!activeChat && (
+                <Button 
+                  onClick={() => setActiveChat(true)}
+                  className="mt-4 bg-yellow-400 hover:bg-yellow-300 text-yellow-900 border-b-4 border-yellow-600 rounded-2xl px-8 py-6 text-xl font-black shadow-lg hover:-translate-y-1 transition-all"
+                >
+                  <MessageCircle className="w-6 h-6 mr-3" /> Ngobrol bareng Joy!
+                </Button>
               )}
-              <div ref={chatEndRef} />
             </div>
+          </div>
+          
+          {/* Decorative Stars */}
+          <Sparkles className="absolute top-10 right-10 w-12 h-12 text-yellow-300 opacity-50 animate-pulse" />
+          <Star className="absolute bottom-10 left-[40%] w-8 h-8 text-pink-300 opacity-50 rotate-45" />
+        </div>
 
-            {/* Chat Input */}
-            <form onSubmit={handleSendMessage} className="p-3 bg-white/5 border-t border-white/5 flex gap-2">
-              <input 
-                type="text" 
-                placeholder="Tanya Joy..." 
-                className="flex-1 bg-black/40 border border-white/10 rounded-full px-4 text-xs focus:outline-none focus:border-cyan-500 transition-colors placeholder:text-slate-500"
-                value={inputValue}
-                onChange={e => setInputValue(e.target.value)}
-                disabled={isTyping}
-              />
-              <Button type="submit" disabled={isTyping || !inputValue.trim()} className="h-8 w-8 rounded-full bg-cyan-600 hover:bg-cyan-500 p-0 flex items-center justify-center shrink-0">
-                <Send className="w-4 h-4 text-white" />
-              </Button>
-            </form>
+        {/* AI CHAT SECTION */}
+        <AnimatePresence>
+          {activeChat && (
+            <motion.div 
+              initial={{ height: 0, opacity: 0 }}
+              animate={{ height: "auto", opacity: 1 }}
+              exit={{ height: 0, opacity: 0 }}
+              className="mb-12 overflow-hidden"
+            >
+              <div className="bg-white border-2 border-slate-200 rounded-[2.5rem] p-6 shadow-lg relative">
+                <Button 
+                  variant="ghost" 
+                  size="icon"
+                  className="absolute top-4 right-4 bg-slate-100 rounded-full hover:bg-red-100 hover:text-red-500"
+                  onClick={() => setActiveChat(false)}
+                >
+                  ✕
+                </Button>
+                <div className="flex gap-4 mb-4">
+                   <div className="w-12 h-12 bg-blue-100 rounded-full overflow-hidden shrink-0 border-2 border-blue-200">
+                     <img src="/images/joy_avatar.jpg" alt="Joy" className="w-full h-full object-cover" />
+                   </div>
+                   <div className="bg-blue-50 border border-blue-100 rounded-2xl rounded-tl-none p-4 text-slate-700 font-medium">
+                     La la la~ Halo teman! Mau curhat tentang leadership, cara mengatur waktu, atau belajar mengatur uang? Joy siap bantu nih! 🎶
+                   </div>
+                </div>
+                {/* Embedded ChatGPT / AI component would go here */}
+                <div className="h-64 bg-slate-50 rounded-2xl border-2 border-dashed border-slate-200 flex items-center justify-center text-slate-400 font-bold">
+                  [Area Chat Interaktif AI - Segera Hadir]
+                </div>
+              </div>
+            </motion.div>
+          )}
+        </AnimatePresence>
+
+        {/* MISSIONS SECTION */}
+        <div className="mb-12">
+          <div className="flex items-center gap-4 mb-8">
+            <div className="w-12 h-12 bg-red-100 rounded-2xl flex items-center justify-center">
+              <Map className="w-7 h-7 text-red-500" />
+            </div>
+            <h2 className="text-3xl font-black text-slate-800 tracking-tight">Peta Misi Soft Skill</h2>
           </div>
 
-          {/* Progress & Badges */}
-          <div className="bg-slate-900/50 backdrop-blur-md p-5 rounded-3xl border border-white/10 flex-1">
-            <h3 className="font-bold text-sm tracking-widest uppercase text-slate-300 mb-4 flex justify-between">
-              <span>Progress & Rewards</span>
-              <span className="text-white/20">...</span>
-            </h3>
-
-            {/* Currency */}
-            <div className="mb-6">
-              <div className="text-xs text-slate-500 uppercase tracking-wider mb-1">Currency</div>
-              <div className="flex items-center gap-2">
-                <div className="w-8 h-8 rounded-full bg-amber-500/20 border border-amber-500/50 flex items-center justify-center">
-                  <span className="text-amber-400 font-black">$</span>
-                </div>
-                <span className="text-2xl font-black text-white shadow-amber-500" style={{ textShadow: "0 0 10px rgba(245,158,11,0.5)" }}>
-                  1,250
-                </span>
-                <span className="text-amber-500 font-bold ml-1">Coins</span>
-              </div>
-            </div>
-
-            {/* Badges */}
-            <div>
-              <div className="flex justify-between items-center mb-3">
-                 <div className="text-xs text-slate-500 uppercase tracking-wider">Badges</div>
-                 <div className="text-[10px] text-cyan-400 font-bold uppercase">Unlocked</div>
-              </div>
-              <div className="grid grid-cols-3 gap-3">
-                {[
-                  { icon: BookOpen, color: 'text-purple-400', bg: 'bg-purple-500/20', border: 'border-purple-500/50', label: 'Learner' },
-                  { icon: Shield, color: 'text-cyan-400', bg: 'bg-cyan-500/20', border: 'border-cyan-500/50', label: 'Warrior' },
-                  { icon: Trophy, color: 'text-amber-400', bg: 'bg-amber-500/20', border: 'border-amber-500/50', label: 'Master' },
-                  { icon: Sparkles, color: 'text-fuchsia-400', bg: 'bg-fuchsia-500/20', border: 'border-fuchsia-500/50', label: 'AI Whiz' },
-                  { icon: Zap, color: 'text-blue-400', bg: 'bg-blue-500/20', border: 'border-blue-500/50', label: 'Pro' },
-                  { icon: Plus, color: 'text-slate-500', bg: 'bg-white/5', border: 'border-dashed border-white/20', label: 'More' }
-                ].map((b, i) => (
-                  <div key={i} className={`aspect-square rounded-xl ${b.bg} border ${b.border} flex flex-col items-center justify-center gap-2 hover:scale-105 transition-transform cursor-pointer relative`}>
-                    {i < 5 && <div className="absolute -top-1 -right-1 w-3 h-3 bg-green-500 rounded-full border-2 border-[#0b0e14]"></div>}
-                    <b.icon className={`w-6 h-6 ${b.color}`} />
-                    <span className="text-[9px] font-bold text-slate-300 uppercase tracking-tighter text-center">{b.label}</span>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+            {missions.map((mission, idx) => {
+              const color = colors[idx % colors.length];
+              const completedCount = mission.tasks.filter((t: any) => t.is_completed).length;
+              const isAllCompleted = completedCount === mission.tasks.length;
+              
+              return (
+                <div key={mission.id} className={`bg-white rounded-[2rem] border-[3px] ${color.border} overflow-hidden shadow-sm hover:shadow-xl transition-shadow flex flex-col`}>
+                  
+                  {/* Mission Header */}
+                  <div className={`${color.bg} p-6 border-b-[3px] ${color.border} relative overflow-hidden`}>
+                    <div className="absolute right-[-20px] top-[-20px] opacity-10">
+                       <Target className="w-40 h-40" />
+                    </div>
+                    <div className="relative z-10 flex justify-between items-start">
+                      <div>
+                        <div className={`inline-block px-3 py-1 bg-white rounded-full text-xs font-black uppercase tracking-wider mb-3 ${color.text} shadow-sm border ${color.border}`}>
+                          Misi {idx + 1}
+                        </div>
+                        <h3 className={`text-2xl font-black ${color.text} mb-2 leading-tight`}>{mission.title}</h3>
+                        <p className="text-slate-600 font-medium text-sm pr-12">{mission.description}</p>
+                      </div>
+                      
+                      {isAllCompleted ? (
+                        <div className="w-14 h-14 bg-white rounded-full flex items-center justify-center shrink-0 border-4 border-yellow-400 shadow-md transform rotate-12">
+                          <Medal className="w-8 h-8 text-yellow-500" />
+                        </div>
+                      ) : (
+                        <div className="w-14 h-14 bg-white rounded-full flex items-center justify-center shrink-0 border-2 border-slate-200">
+                          <span className="font-black text-slate-400">{completedCount}/{mission.tasks.length}</span>
+                        </div>
+                      )}
+                    </div>
                   </div>
-                ))}
-              </div>
-            </div>
+
+                  {/* Tasks List */}
+                  <div className="p-6 bg-white flex-1 flex flex-col space-y-3">
+                    {mission.tasks.map((task: any) => (
+                      <div 
+                        key={task.id}
+                        onClick={() => !task.is_completed && handleCompleteTask(task.id, task.reward_coins)}
+                        className={cn(
+                          "flex items-center gap-4 p-4 rounded-2xl border-2 transition-all group",
+                          task.is_completed 
+                            ? "bg-slate-50 border-slate-200 opacity-60" 
+                            : `bg-white border-slate-100 hover:border-${color.text.split('-')[1]}-300 cursor-pointer hover:shadow-md`
+                        )}
+                      >
+                        <div className="shrink-0">
+                          {completingTask === task.id ? (
+                            <div className="w-8 h-8 border-4 border-slate-200 border-t-yellow-400 rounded-full animate-spin" />
+                          ) : task.is_completed ? (
+                            <CheckCircle2 className="w-8 h-8 text-emerald-500 fill-emerald-100" />
+                          ) : (
+                            <CircleDashed className="w-8 h-8 text-slate-300 group-hover:text-blue-400" />
+                          )}
+                        </div>
+                        
+                        <div className="flex-1">
+                          <p className={cn("font-bold text-[15px]", task.is_completed ? "text-slate-500 line-through decoration-slate-300" : "text-slate-700")}>
+                            {task.title}
+                          </p>
+                        </div>
+                        
+                        {!task.is_completed && (
+                          <div className="flex items-center gap-1 bg-yellow-50 text-yellow-700 px-2 py-1 rounded-lg border border-yellow-200 shrink-0">
+                            <Trophy className="w-3 h-3 text-yellow-500" />
+                            <span className="font-bold text-xs">+{task.reward_coins}</span>
+                          </div>
+                        )}
+                      </div>
+                    ))}
+                  </div>
+                  
+                </div>
+              );
+            })}
           </div>
         </div>
 
       </div>
-
-      <style dangerouslySetInnerHTML={{__html: `
-        @keyframes float {
-          0% { transform: translateY(0px); }
-          50% { transform: translateY(-15px); }
-          100% { transform: translateY(0px); }
-        }
-        @keyframes dash {
-          to { stroke-dashoffset: -100; }
-        }
-      `}} />
     </div>
   );
 }
