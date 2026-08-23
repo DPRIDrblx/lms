@@ -210,8 +210,8 @@ export default function SkillUpHub() {
               <div className="bg-white border-2 border-slate-200 rounded-[2.5rem] p-6 shadow-lg relative">
                 <Button 
                   variant="ghost" 
-                  size="icon"
-                  className="absolute top-4 right-4 bg-slate-100 rounded-full hover:bg-red-100 hover:text-red-500"
+                  size="sm"
+                  className="absolute top-4 right-4 bg-slate-100 rounded-full hover:bg-red-100 hover:text-red-500 w-10 h-10 p-0 flex items-center justify-center"
                   onClick={() => setActiveChat(false)}
                 >
                   ✕
