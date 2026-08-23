@@ -5,7 +5,6 @@ import Image from "next/image";
 import { useAuth } from "@/lib/auth-context";
 import { Button } from "@/components/ui/button";
 import { Sparkles, Trophy, Store, Play, Lock, MessageCircle, Send, Plus, ChevronRight, Zap, Target, BookOpen, Shield } from "lucide-react";
-import { supabase } from "@/lib/supabase";
 
 export default function SkillUpHub() {
   const { user } = useAuth();
