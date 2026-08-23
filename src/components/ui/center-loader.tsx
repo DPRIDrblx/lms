@@ -30,21 +30,11 @@ export function CenterLoader({ className, size = "md" }: CenterLoaderProps) {
   return (
     <div className="fixed inset-0 z-[100] flex flex-col items-center justify-center space-y-4 bg-white/40 backdrop-blur-md dark:bg-slate-900/40">
       <motion.div
-        animate={{ scale: [1, 1.1, 1], opacity: [0.7, 1, 0.7] }}
+        animate={{ scale: [1, 1.05, 1], opacity: [0.7, 1, 0.7] }}
         transition={{ duration: 1.5, repeat: Infinity, ease: "easeInOut" }}
-        className={cn("font-black tracking-tighter flex flex-col items-center gap-1 drop-shadow-xl", sizeClasses[size])}
+        className={cn("flex flex-col items-center drop-shadow-xl mb-4")}
       >
-        <div className="flex items-center gap-1">
-          <span className="text-red-600">NIA</span>
-          <motion.span 
-            animate={{ scale: [1, 1.5, 1] }}
-            transition={{ duration: 1.5, repeat: Infinity, ease: "easeInOut", delay: 0.5 }}
-            className="text-yellow-400"
-          >
-            .
-          </motion.span>
-        </div>
-        <span className="text-sm font-bold text-slate-500 tracking-widest uppercase mt-2">Center</span>
+        <img src="/logo-lms.png" alt="Loading..." className="h-20 w-auto object-contain" />
       </motion.div>
       <motion.div 
         initial={{ width: 0 }}
