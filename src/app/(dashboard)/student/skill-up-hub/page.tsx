@@ -11,7 +11,7 @@ import {
   Map, Compass, Medal, Heart, Target
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
-import { toast } from "sonner";
+import { toast } from "react-hot-toast";
 import { cn } from "@/lib/utils";
 
 // Dummy joyful fallback data if DB is empty or fails
