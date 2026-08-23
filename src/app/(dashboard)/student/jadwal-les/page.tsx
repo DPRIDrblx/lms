@@ -3,7 +3,7 @@
 import { useAuth } from "@/lib/auth-context";
 import { createClient } from "@/lib/supabase";
 import { useEffect, useState, useMemo } from "react";
-import { Calendar, Clock, CheckCircle2, ChevronRight, Star, Link2, KeyRound, FileText, PackageOpen, User } from "lucide-react";
+import { Calendar, Clock, CheckCircle2, ChevronRight, Star, Link2, KeyRound, FileText, PackageOpen, User, BookOpen } from "lucide-react";
 import { CenterLoader } from "@/components/ui/center-loader";
 import { Card } from "@/components/ui/card";
 import { Modal } from "@/components/ui/modal";
@@ -454,6 +454,23 @@ export default function JadwalLesPage() {
                   )}
                 </div>
               </div>
+
+              {selectedSchedule.topic && (
+                <div className="bg-white border border-slate-200 rounded-xl p-4 shadow-sm">
+                  <h4 className="text-xs font-black uppercase tracking-wider text-slate-500 mb-2">Materi Pembelajaran</h4>
+                  <div className="space-y-1">
+                    <p className="font-bold text-slate-800 flex items-start gap-2">
+                      <BookOpen className="w-4 h-4 text-indigo-500 mt-0.5 shrink-0" /> 
+                      <span>{selectedSchedule.topic}</span>
+                    </p>
+                    {selectedSchedule.subtopic && (
+                      <p className="text-sm font-medium text-slate-600 pl-6">
+                        {selectedSchedule.subtopic}
+                      </p>
+                    )}
+                  </div>
+                </div>
+              )}
 
               {selectedSchedule.meeting_link && (
                 <div>
