@@ -26,6 +26,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
   const { uiMode } = useTheme();
   const supabase = createClient();
   const isExam = pathname?.includes("/exam");
+  const isSkillUpHub = pathname?.includes("/skill-up-hub");
   const [isUpdatingCenter, setIsUpdatingCenter] = useState(false);
   const [updateProgress, setUpdateProgress] = useState(0);
   const { isCollapsed } = useSidebarStore();
@@ -91,6 +92,16 @@ export function AppShell({ children }: { children: React.ReactNode }) {
   }
 
   if (profile?.role === "student") {
+    if (isSkillUpHub) {
+      return (
+        <div className="min-h-screen bg-[#0b0e14] text-white">
+          <ClassGuard>
+            {children}
+          </ClassGuard>
+        </div>
+      );
+    }
+
     return (
       <>
         <AnimatePresence>

@@ -2,9 +2,10 @@
 
 import React, { useState, useRef, useEffect } from "react";
 import Image from "next/image";
+import Link from "next/link";
 import { useAuth } from "@/lib/auth-context";
 import { Button } from "@/components/ui/button";
-import { Sparkles, Trophy, Store, Play, Lock, MessageCircle, Send, Plus, ChevronRight, Zap, Target, BookOpen, Shield } from "lucide-react";
+import { Sparkles, Trophy, Store, Play, Lock, MessageCircle, Send, Plus, ChevronRight, Zap, Target, BookOpen, Shield, ArrowLeft } from "lucide-react";
 
 export default function SkillUpHub() {
   const { user } = useAuth();
@@ -56,6 +57,9 @@ export default function SkillUpHub() {
       {/* Header */}
       <header className="flex flex-col md:flex-row items-center justify-between mb-8 gap-4 border-b border-white/10 pb-4">
         <div className="flex items-center gap-6">
+          <Link href="/dashboard" className="text-slate-400 hover:text-white transition-colors bg-white/5 p-2 rounded-full border border-white/10 hover:bg-white/10">
+             <ArrowLeft className="w-5 h-5" />
+          </Link>
           <h1 className="text-2xl md:text-3xl font-black tracking-tighter" style={{ textShadow: "0 0 20px rgba(168,85,247,0.8)" }}>
             <span className="text-purple-400">SKILL UP!</span> <span className="text-cyan-400">HUB</span>
           </h1>
