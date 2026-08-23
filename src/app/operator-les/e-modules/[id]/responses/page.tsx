@@ -93,7 +93,8 @@ export default function EModuleResponses() {
 
   if (loading) return <div className="h-screen flex items-center justify-center"><Loader2 className="animate-spin w-8 h-8 text-indigo-500" /></div>;
 
-  const elements = moduleData?.interactive_elements || [];
+  // Only show grading elements to the operator
+  const elements = (moduleData?.interactive_elements || []).filter((el: any) => el.is_grading !== false);
   const currentPageElements = elements.filter((el: any) => el.page === pageNumber);
   const totalMaxXp = elements.reduce((acc: number, el: any) => acc + (el.xp || 0), 0);
 

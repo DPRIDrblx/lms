@@ -26,6 +26,7 @@ interface InteractiveElement {
   type: ElementType;
   label: string;
   xp: number;
+  is_grading?: boolean; // New property
   options?: string[]; // for radio/checkbox
 }
 
@@ -95,6 +96,7 @@ export default function EModuleBuilder() {
       type: selectedTool,
       label: `Pertanyaan ${elements.length + 1}`,
       xp: 10,
+      is_grading: true, // Default to true
       options: (selectedTool === "radio" || selectedTool === "checkbox") ? ["Opsi 1", "Opsi 2"] : []
     };
 
@@ -226,12 +228,24 @@ export default function EModuleBuilder() {
                           </div>
                           <div className="flex gap-2">
                             <div className="flex-1">
-                              <label className="text-[10px] font-bold text-slate-500 mb-1 block">Max XP</label>
+                              <label className="text-[10px] font-bold text-slate-500 mb-1 block">Tipe Penilaian</label>
+                              <select 
+                                className="w-full text-xs p-1.5 border border-slate-200 rounded-md bg-slate-50 focus:bg-white"
+                                value={el.is_grading === false ? "false" : "true"}
+                                onChange={e => updateElement(el.id, { is_grading: e.target.value === "true" })}
+                              >
+                                <option value="true">Dinilai (Grading)</option>
+                                <option value="false">Tidak Dinilai (Catatan Siswa)</option>
+                              </select>
+                            </div>
+                            <div className="flex-1">
+                              <label className={`text-[10px] font-bold mb-1 block ${el.is_grading === false ? 'text-slate-300' : 'text-slate-500'}`}>Max XP</label>
                               <input 
                                 type="number" 
-                                className="w-full text-xs p-1.5 border border-slate-200 rounded-md bg-slate-50 focus:bg-white" 
-                                value={el.xp} 
+                                className="w-full text-xs p-1.5 border border-slate-200 rounded-md bg-slate-50 focus:bg-white disabled:opacity-50 disabled:bg-slate-100" 
+                                value={el.is_grading === false ? 0 : el.xp} 
                                 onChange={e => updateElement(el.id, { xp: parseInt(e.target.value) || 0 })} 
+                                disabled={el.is_grading === false}
                               />
                             </div>
                           </div>

@@ -8,7 +8,8 @@ import { Button } from "@/components/ui/button";
 import { Document, Page, pdfjs } from "react-pdf";
 import "react-pdf/dist/Page/AnnotationLayer.css";
 import "react-pdf/dist/Page/TextLayer.css";
-import { ChevronLeft, ChevronRight, Save, ArrowLeft, Loader2, List, CheckCircle2 } from "lucide-react";
+import { ChevronLeft, ChevronRight, Save, ArrowLeft, Loader2, List, CheckCircle2, PenTool, Eraser, Trash2, Send } from "lucide-react";
+import { DrawingCanvas, Stroke } from "@/components/ui/drawing-canvas";
 import toast from "react-hot-toast";
 
 // Setup pdf.js worker
@@ -34,6 +35,12 @@ export default function StudentInteractiveEModule() {
   const [toc, setToc] = useState<any[]>([]);
   const [responses, setResponses] = useState<Record<string, any>>({});
   
+  // Drawing State
+  const [drawings, setDrawings] = useState<Record<number, Stroke[]>>({});
+  const [activeTool, setActiveTool] = useState<'pen' | 'eraser' | null>(null);
+  const [penColor, setPenColor] = useState<string>('#ef4444'); // Default red
+  const [savingProgress, setSavingProgress] = useState(false);
+
   // Sidebar TOC mobile toggle
   const [showToc, setShowToc] = useState(false);
 
@@ -64,7 +71,8 @@ export default function StudentInteractiveEModule() {
 
       if (respData) {
         setResponses(respData.responses || {});
-        setHasSubmitted(true);
+        if (respData.drawings) setDrawings(respData.drawings);
+        if (respData.is_submitted) setHasSubmitted(true);
       }
 
       setLoading(false);
@@ -76,16 +84,34 @@ export default function StudentInteractiveEModule() {
     setNumPages(numPages);
   };
 
-  const handleInputChange = (elId: string, value: any) => {
-    if (hasSubmitted) return; // Prevent changing after submission
+  const handleInputChange = (el: any, value: any) => {
+    // Prevent changing if it's a grading input and already submitted
+    if (hasSubmitted && el.is_grading !== false) return; 
     setResponses(prev => ({
       ...prev,
-      [elId]: value
+      [el.id]: value
     }));
   };
 
+  const handleSaveProgress = async () => {
+    setSavingProgress(true);
+    const { error } = await supabase.from("e_module_responses").upsert({
+      e_module_id: id,
+      student_id: user?.id,
+      responses,
+      drawings,
+    }, { onConflict: 'e_module_id, student_id' });
+
+    if (error) {
+      toast.error(error.message);
+    } else {
+      toast.success("Catatan berhasil disimpan!");
+    }
+    setSavingProgress(false);
+  };
+
   const handleSubmit = async () => {
-    if (!window.confirm("Yakin ingin mengumpulkan E-Modul ini? Jawaban tidak bisa diubah lagi.")) return;
+    if (!window.confirm("Yakin ingin mengumpulkan E-Modul ini? Jawaban (yang dinilai) tidak bisa diubah lagi.")) return;
     
     setSaving(true);
     
@@ -93,6 +119,8 @@ export default function StudentInteractiveEModule() {
       e_module_id: id,
       student_id: user?.id,
       responses,
+      drawings,
+      is_submitted: true
     }, { onConflict: 'e_module_id, student_id' });
 
     if (error) {
@@ -123,13 +151,17 @@ export default function StudentInteractiveEModule() {
         </div>
         
         <div className="flex items-center gap-2">
+          <Button onClick={handleSaveProgress} disabled={savingProgress || saving} variant="secondary" className="border-2 border-slate-200 text-slate-600 rounded-xl font-bold px-4 hover:bg-slate-50">
+            {savingProgress ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <Save className="w-4 h-4 mr-2" />} Simpan Catatan
+          </Button>
+
           {hasSubmitted ? (
             <div className="flex items-center gap-2 bg-emerald-50 text-emerald-600 px-4 py-2 rounded-xl text-sm font-bold border border-emerald-100">
-              <CheckCircle2 className="w-4 h-4" /> Sudah Dikumpulkan
+              <CheckCircle2 className="w-4 h-4" /> Dikumpulkan
             </div>
           ) : (
-            <Button onClick={handleSubmit} disabled={saving} className="bg-[#108B96] hover:bg-[#0d737c] text-white rounded-xl shadow-lg shadow-[#108B96]/20 font-bold px-6">
-              {saving ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <Save className="w-4 h-4 mr-2" />} Kumpulkan
+            <Button onClick={handleSubmit} disabled={saving || savingProgress} className="bg-[#108B96] hover:bg-[#0d737c] text-white rounded-xl shadow-lg shadow-[#108B96]/20 font-bold px-4">
+              {saving ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <Send className="w-4 h-4 mr-2" />} Kumpulkan
             </Button>
           )}
           
@@ -194,6 +226,46 @@ export default function StudentInteractiveEModule() {
             <Button variant="ghost" disabled={pageNumber >= numPages} onClick={() => setPageNumber(pageNumber + 1)} className="h-10 w-10 p-0 rounded-xl hover:bg-slate-100">
               <ChevronRight className="w-5 h-5 text-slate-600" />
             </Button>
+            
+            <div className="h-6 w-px bg-slate-200 mx-2"></div>
+            
+            <div className="flex items-center gap-1 bg-slate-50 p-1 rounded-xl border border-slate-200">
+              <Button 
+                variant={activeTool === 'pen' ? "primary" : "ghost"} 
+                size="sm"
+                onClick={() => setActiveTool(activeTool === 'pen' ? null : 'pen')}
+                className={`h-8 px-3 rounded-lg ${activeTool === 'pen' ? 'bg-indigo-100 text-indigo-700 hover:bg-indigo-200' : 'text-slate-500'}`}
+              >
+                <PenTool className="w-4 h-4 mr-1.5" /> <span className="hidden sm:inline text-xs font-bold">Pena</span>
+              </Button>
+              {activeTool === 'pen' && (
+                <div className="flex gap-1 ml-1 pr-1">
+                  {['#000000', '#ef4444', '#3b82f6', '#22c55e'].map(c => (
+                    <button key={c} onClick={() => setPenColor(c)} className={`w-5 h-5 rounded-full border-2 ${penColor === c ? 'border-slate-800 scale-110 shadow-sm' : 'border-transparent'}`} style={{ backgroundColor: c }} />
+                  ))}
+                </div>
+              )}
+              <Button 
+                variant={activeTool === 'eraser' ? "primary" : "ghost"} 
+                size="sm"
+                onClick={() => setActiveTool(activeTool === 'eraser' ? null : 'eraser')}
+                className={`h-8 px-3 rounded-lg ${activeTool === 'eraser' ? 'bg-indigo-100 text-indigo-700 hover:bg-indigo-200' : 'text-slate-500'}`}
+              >
+                <Eraser className="w-4 h-4 mr-1.5" /> <span className="hidden sm:inline text-xs font-bold">Hapus</span>
+              </Button>
+              <Button 
+                variant="ghost" 
+                size="sm"
+                onClick={() => {
+                  if (window.confirm("Hapus semua coretan di halaman ini?")) {
+                    setDrawings(prev => ({ ...prev, [pageNumber]: [] }));
+                  }
+                }}
+                className="h-8 px-3 rounded-lg text-red-500 hover:bg-red-50 hover:text-red-600"
+              >
+                <Trash2 className="w-4 h-4" />
+              </Button>
+            </div>
           </div>
 
           <div className="bg-white shadow-2xl rounded-sm relative">
@@ -216,6 +288,22 @@ export default function StudentInteractiveEModule() {
               <div className="w-[800px] h-[1000px] flex items-center justify-center bg-white text-slate-500 text-sm font-bold border-2 border-dashed border-slate-300">
                 PDF URL tidak ditemukan. Modul lama?
               </div>
+            )}
+
+            {/* Drawing Canvas Overlay */}
+            {moduleData?.pdf_url && (
+              <DrawingCanvas
+                width={800}
+                // React-PDF renders pages with variable heights, we estimate 1131 for A4 but it depends on the PDF.
+                // We'll set height 100% via CSS in DrawingCanvas, but canvas needs absolute pixels. 
+                // A4 ratio 800 * 1.414 = 1131
+                height={1131} 
+                drawings={drawings[pageNumber] || []}
+                onDrawingsChange={(newDrawings) => setDrawings(prev => ({ ...prev, [pageNumber]: newDrawings }))}
+                activeTool={activeTool}
+                penColor={penColor}
+                penWidth={3}
+              />
             )}
 
             {/* Interactive Inputs */}
@@ -244,34 +332,34 @@ export default function StudentInteractiveEModule() {
                     {el.type === "short_text" && (
                       <input 
                         type="text"
-                        placeholder="Ketik jawaban..."
-                        disabled={hasSubmitted}
+                        placeholder={el.is_grading !== false ? "Ketik jawaban..." : "Catatan pribadi..."}
+                        disabled={hasSubmitted && el.is_grading !== false}
                         value={val}
-                        onChange={(e) => handleInputChange(el.id, e.target.value)}
-                        className="w-full h-full bg-white/90 focus:bg-white border-2 border-indigo-300 focus:border-[#108B96] focus:ring-4 focus:ring-[#108B96]/20 rounded-md text-xs font-bold text-slate-800 px-2 shadow-sm disabled:opacity-80 disabled:bg-slate-100 transition-all outline-none"
+                        onChange={(e) => handleInputChange(el, e.target.value)}
+                        className={`w-full h-full bg-white/90 focus:bg-white border-2 rounded-md text-xs font-bold text-slate-800 px-2 shadow-sm disabled:opacity-80 disabled:bg-slate-100 transition-all outline-none ${el.is_grading !== false ? 'border-indigo-300 focus:border-[#108B96] focus:ring-4 focus:ring-[#108B96]/20' : 'border-amber-300 focus:border-amber-500'}`}
                       />
                     )}
                     
                     {el.type === "long_text" && (
                       <textarea 
-                        placeholder="Ketik jawaban panjang/esai di sini..."
-                        disabled={hasSubmitted}
+                        placeholder={el.is_grading !== false ? "Ketik jawaban panjang/esai di sini..." : "Catatan panjang..."}
+                        disabled={hasSubmitted && el.is_grading !== false}
                         value={val}
-                        onChange={(e) => handleInputChange(el.id, e.target.value)}
-                        className="w-full h-full resize-none bg-white/90 focus:bg-white border-2 border-indigo-300 focus:border-[#108B96] focus:ring-4 focus:ring-[#108B96]/20 rounded-md text-xs font-bold text-slate-800 p-2 shadow-sm disabled:opacity-80 disabled:bg-slate-100 transition-all outline-none"
+                        onChange={(e) => handleInputChange(el, e.target.value)}
+                        className={`w-full h-full resize-none bg-white/90 focus:bg-white border-2 rounded-md text-xs font-bold text-slate-800 p-2 shadow-sm disabled:opacity-80 disabled:bg-slate-100 transition-all outline-none ${el.is_grading !== false ? 'border-indigo-300 focus:border-[#108B96] focus:ring-4 focus:ring-[#108B96]/20' : 'border-amber-300 focus:border-amber-500'}`}
                       />
                     )}
 
                     {el.type === "radio" && (
-                      <div className="w-full h-full bg-white/95 border-2 border-indigo-300 rounded-md p-2 flex flex-col gap-1 overflow-auto shadow-sm">
+                      <div className={`w-full h-full bg-white/95 border-2 rounded-md p-2 flex flex-col gap-1 overflow-auto shadow-sm ${el.is_grading !== false ? 'border-indigo-300' : 'border-amber-300'}`}>
                         {el.options?.map((opt: string, i: number) => (
                           <label key={i} className="flex items-center gap-2 cursor-pointer hover:bg-slate-50 p-1 rounded transition-colors">
                             <input 
                               type="radio" 
                               name={`radio-${el.id}`}
-                              disabled={hasSubmitted}
+                              disabled={hasSubmitted && el.is_grading !== false}
                               checked={val === opt}
-                              onChange={() => handleInputChange(el.id, opt)}
+                              onChange={() => handleInputChange(el, opt)}
                               className="w-3.5 h-3.5 text-[#108B96] focus:ring-[#108B96] cursor-pointer"
                             />
                             <span className="text-[11px] font-bold text-slate-700">{opt}</span>
@@ -281,20 +369,20 @@ export default function StudentInteractiveEModule() {
                     )}
 
                     {el.type === "checkbox" && (
-                      <div className="w-full h-full bg-white/95 border-2 border-indigo-300 rounded-md p-2 flex flex-col gap-1 overflow-auto shadow-sm">
+                      <div className={`w-full h-full bg-white/95 border-2 rounded-md p-2 flex flex-col gap-1 overflow-auto shadow-sm ${el.is_grading !== false ? 'border-indigo-300' : 'border-amber-300'}`}>
                         {el.options?.map((opt: string, i: number) => {
                           const isChecked = val.includes(opt);
                           return (
                             <label key={i} className="flex items-center gap-2 cursor-pointer hover:bg-slate-50 p-1 rounded transition-colors">
                               <input 
                                 type="checkbox" 
-                                disabled={hasSubmitted}
+                                disabled={hasSubmitted && el.is_grading !== false}
                                 checked={isChecked}
                                 onChange={(e) => {
                                   if (e.target.checked) {
-                                    handleInputChange(el.id, [...val, opt]);
+                                    handleInputChange(el, [...val, opt]);
                                   } else {
-                                    handleInputChange(el.id, val.filter((v: string) => v !== opt));
+                                    handleInputChange(el, val.filter((v: string) => v !== opt));
                                   }
                                 }}
                                 className="w-3.5 h-3.5 text-[#108B96] rounded-sm focus:ring-[#108B96] cursor-pointer border-slate-300"
