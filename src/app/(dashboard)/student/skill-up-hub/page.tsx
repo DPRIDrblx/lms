@@ -17,7 +17,7 @@ import { cn } from "@/lib/utils";
 // Dummy joyful fallback data if DB is empty or fails
 const FALLBACK_MISSIONS = [
   {
-    id: "m1000000-0000-0000-0000-000000000001",
+    id: "a1000000-0000-0000-0000-000000000001",
     title: "Keterampilan Komunikasi Dasar",
     description: "Belajar berani berbicara di depan kelas dan menjadi pendengar yang baik.",
     tasks: [
@@ -26,7 +26,7 @@ const FALLBACK_MISSIONS = [
     ]
   },
   {
-    id: "m1000000-0000-0000-0000-000000000002",
+    id: "a1000000-0000-0000-0000-000000000002",
     title: "Literasi Finansial Dasar",
     description: "Bedakan kebutuhan dan keinginan agar uang jajanmu awet!",
     tasks: [
@@ -36,7 +36,7 @@ const FALLBACK_MISSIONS = [
     ]
   },
   {
-    id: "m1000000-0000-0000-0000-000000000003",
+    id: "a1000000-0000-0000-0000-000000000003",
     title: "Literasi Digital & Anti-Hoax",
     description: "Jadilah warganet yang cerdas, aman, dan bertanggung jawab.",
     tasks: [
@@ -45,7 +45,7 @@ const FALLBACK_MISSIONS = [
     ]
   },
   {
-    id: "m1000000-0000-0000-0000-000000000004",
+    id: "a1000000-0000-0000-0000-000000000004",
     title: "Manajemen Waktu Belajar",
     description: "Atur waktumu, kurangi menunda-nunda, dan jadilah lebih produktif!",
     tasks: [
@@ -54,7 +54,7 @@ const FALLBACK_MISSIONS = [
     ]
   },
   {
-    id: "m1000000-0000-0000-0000-000000000005",
+    id: "a1000000-0000-0000-0000-000000000005",
     title: "Kesehatan Mental & Emosi",
     description: "Kenali emosimu dan pelajari cara menenangkan diri saat stres ujian.",
     tasks: [
@@ -63,7 +63,7 @@ const FALLBACK_MISSIONS = [
     ]
   },
   {
-    id: "m1000000-0000-0000-0000-000000000007",
+    id: "a1000000-0000-0000-0000-000000000007",
     title: "Dasar Logika & Komputasi",
     description: "Berpikir kritis seperti komputer dalam menyelesaikan masalah.",
     tasks: [

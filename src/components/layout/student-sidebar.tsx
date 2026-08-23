@@ -12,6 +12,10 @@ import { FolderOpen, Calendar, Archive, BookOpen, GraduationCap, ChevronLeft, Ch
 import { createClient } from "@/lib/supabase";
 import { useSidebarStore } from "@/lib/sidebar-store";
 
+const SkillUpIcon = ({ className }: any) => (
+  <img src="/logo-skill-up.png" alt="Skill Up" className={className} style={{ objectFit: 'contain', transform: 'scale(1.2)' }} />
+);
+
 export function StudentSidebar() {
   const pathname = usePathname();
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
@@ -43,6 +47,7 @@ export function StudentSidebar() {
   let navItems = [
     { name: "Learn", href: "/dashboard", icon: Home },
     { name: "Quests", href: "/student/quests", icon: Swords },
+    { name: "Skill Up", href: "/student/skill-up-hub", icon: SkillUpIcon },
     { name: "Faksi & Asrama", href: "/student/faction", icon: Shield },
     { name: "Peliharaan", href: "/student/pet", icon: PawPrint },
     { name: "Gelar & Piala", href: "/student/badges", icon: Medal },
