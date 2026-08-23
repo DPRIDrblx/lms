@@ -8,11 +8,30 @@ import { Button } from "@/components/ui/button";
 import { Document, Page, pdfjs } from "react-pdf";
 import "react-pdf/dist/Page/AnnotationLayer.css";
 import "react-pdf/dist/Page/TextLayer.css";
-import { ChevronLeft, ChevronRight, Save, Plus, Trash2, GripVertical, Settings, ArrowLeft, Loader2, FileText, CheckSquare, AlignLeft, CircleDot } from "lucide-react";
+import { ChevronLeft, ChevronRight, Save, Plus, Trash2, GripVertical, Settings, ArrowLeft, Loader2, FileText, CheckSquare, AlignLeft, CircleDot, Menu } from "lucide-react";
 import toast from "react-hot-toast";
 
 // Setup pdf.js worker
 pdfjs.GlobalWorkerOptions.workerSrc = `//unpkg.com/pdfjs-dist@${pdfjs.version}/build/pdf.worker.min.mjs`;
+
+function useContainerScale(targetWidth: number) {
+  const containerRef = useRef<HTMLDivElement>(null);
+  const [scale, setScale] = useState(1);
+  
+  useEffect(() => {
+    if (!containerRef.current) return;
+    const observer = new ResizeObserver((entries) => {
+      for (const entry of entries) {
+        const availableWidth = entry.contentRect.width;
+        setScale(Math.min(1, availableWidth / targetWidth));
+      }
+    });
+    observer.observe(containerRef.current);
+    return () => observer.disconnect();
+  }, [targetWidth]);
+  
+  return { containerRef, scale };
+}
 
 type ElementType = "short_text" | "long_text" | "radio" | "checkbox";
 
@@ -48,7 +67,8 @@ export default function EModuleBuilder() {
   // PDF state
   const [numPages, setNumPages] = useState<number>(0);
   const [pageNumber, setPageNumber] = useState<number>(1);
-  const containerRef = useRef<HTMLDivElement>(null);
+  const pdfClickRef = useRef<HTMLDivElement>(null);
+  const { containerRef: wrapperRef, scale } = useContainerScale(800);
   
   // Builder state
   const [elements, setElements] = useState<InteractiveElement[]>([]);
@@ -57,6 +77,9 @@ export default function EModuleBuilder() {
   
   // Tool state
   const [selectedTool, setSelectedTool] = useState<ElementType>("short_text");
+  
+  // Mobile sidebar
+  const [showSidebar, setShowSidebar] = useState(false);
   
   useEffect(() => {
     const fetchModule = async () => {
@@ -81,8 +104,8 @@ export default function EModuleBuilder() {
   const handlePdfClick = (e: React.MouseEvent<HTMLDivElement>) => {
     if (activeTab !== "elements") return;
     
-    if (!containerRef.current) return;
-    const rect = containerRef.current.getBoundingClientRect();
+    if (!pdfClickRef.current) return;
+    const rect = pdfClickRef.current.getBoundingClientRect();
     const x = ((e.clientX - rect.left) / rect.width) * 100;
     const y = ((e.clientY - rect.top) / rect.height) * 100;
 
@@ -145,21 +168,30 @@ export default function EModuleBuilder() {
   return (
     <div className="h-[calc(100vh-4rem)] flex flex-col bg-slate-50">
       {/* Header */}
-      <div className="bg-white border-b border-slate-200 px-6 py-3 flex items-center justify-between z-10 shadow-sm">
-        <div className="flex items-center gap-4">
-          <Button variant="ghost" size="sm" onClick={() => router.push("/operator-les/e-modules")}>
+      <div className="bg-white border-b border-slate-200 px-4 py-3 flex items-center justify-between z-20 shadow-sm shrink-0">
+        <div className="flex items-center gap-2 md:gap-4">
+          <Button variant="ghost" size="sm" onClick={() => router.push("/operator-les/e-modules")} className="hidden md:flex">
             <ArrowLeft className="w-4 h-4 mr-2" /> Kembali
+          </Button>
+          <Button variant="ghost" size="sm" onClick={() => router.push("/operator-les/e-modules")} className="md:hidden">
+            <ArrowLeft className="w-4 h-4" />
           </Button>
           <h1 className="font-bold text-slate-800 line-clamp-1">{moduleData?.title}</h1>
         </div>
-        <Button onClick={handleSave} disabled={saving} className="bg-indigo-600 hover:bg-indigo-700 text-white">
-          {saving ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <Save className="w-4 h-4 mr-2" />} Simpan
-        </Button>
+        <div className="flex items-center gap-2">
+          <Button variant="outline" size="sm" onClick={() => setShowSidebar(!showSidebar)} className="md:hidden">
+            <Menu className="w-4 h-4" />
+          </Button>
+          <Button onClick={handleSave} disabled={saving} className="bg-indigo-600 hover:bg-indigo-700 text-white">
+            {saving ? <Loader2 className="w-4 h-4 md:mr-2 animate-spin" /> : <Save className="w-4 h-4 md:mr-2" />} 
+            <span className="hidden md:inline">Simpan</span>
+          </Button>
+        </div>
       </div>
 
-      <div className="flex flex-1 overflow-hidden">
+      <div className="flex flex-1 overflow-hidden relative">
         {/* Left Toolbar */}
-        <div className="w-80 bg-slate-50 border-r border-slate-200 flex flex-col h-full z-10 shadow-md shrink-0">
+        <div className={`absolute md:relative w-80 bg-slate-50 border-r border-slate-200 flex flex-col h-full z-20 shadow-xl md:shadow-md shrink-0 transition-transform duration-300 ${showSidebar ? 'translate-x-0' : '-translate-x-full md:translate-x-0'}`}>
           <div className="flex border-b border-slate-200 bg-white">
             <button 
               className={`flex-1 py-3 text-sm font-bold border-b-2 transition-colors ${activeTab === "elements" ? "border-indigo-600 text-indigo-600" : "border-transparent text-slate-500 hover:text-slate-700 hover:bg-slate-50"}`}
@@ -330,8 +362,13 @@ export default function EModuleBuilder() {
           </div>
         </div>
 
+        {/* Overlay to close sidebar on mobile */}
+        {showSidebar && (
+          <div className="md:hidden fixed inset-0 bg-slate-900/20 z-10" onClick={() => setShowSidebar(false)} />
+        )}
+
         {/* Center PDF Viewer */}
-        <div className="flex-1 bg-slate-900/5 overflow-auto flex flex-col items-center relative p-8">
+        <div className="flex-1 bg-slate-900/5 overflow-auto flex flex-col items-center relative p-2 md:p-8" ref={wrapperRef}>
           <div className="mb-4 bg-white px-4 py-2 rounded-full shadow-sm flex items-center gap-4 sticky top-0 z-20 border border-slate-200">
             <Button variant="ghost" size="sm" disabled={pageNumber <= 1} onClick={() => setPageNumber(pageNumber - 1)} className="h-8 w-8 p-0 rounded-full">
               <ChevronLeft className="w-4 h-4" />
@@ -358,49 +395,57 @@ export default function EModuleBuilder() {
             </Button>
           </div>
 
-          <div 
-            className={`bg-white shadow-xl relative transition-all duration-200 ${activeTab === 'elements' ? 'cursor-crosshair ring-2 ring-indigo-500/50 hover:ring-indigo-500' : ''}`}
-            ref={containerRef}
-            onClick={handlePdfClick}
-          >
-            {moduleData?.pdf_url ? (
-              <Document
-                file={moduleData.pdf_url}
-                onLoadSuccess={onDocumentLoadSuccess}
-                loading={<div className="w-[600px] h-[800px] flex items-center justify-center"><Loader2 className="animate-spin w-8 h-8 text-indigo-500" /></div>}
-                error={<div className="w-[600px] h-[800px] flex items-center justify-center text-red-500">Gagal memuat PDF.</div>}
-              >
-                <Page 
-                  pageNumber={pageNumber} 
-                  renderTextLayer={false} 
-                  renderAnnotationLayer={false}
-                  width={800} // Fixed width for consistent overlay coordinate mapping
-                  className="rounded-sm overflow-hidden"
-                />
-              </Document>
-            ) : (
-              <div className="w-[800px] h-[800px] flex items-center justify-center bg-white text-slate-500 text-sm border-2 border-dashed border-slate-300">
-                PDF URL tidak ditemukan. Modul lama?
-              </div>
-            )}
+          </div>
 
-            {/* Overlays */}
-            {currentPageElements.map((el, index) => (
-              <div 
-                key={el.id}
-                className="absolute border-2 border-indigo-500 bg-indigo-500/10 rounded-sm shadow-sm hover:bg-indigo-500/20 transition-colors pointer-events-none flex items-start p-1 overflow-hidden"
-                style={{
-                  left: `${el.x}%`,
-                  top: `${el.y}%`,
-                  width: `${el.width}%`,
-                  height: `${el.height}%`,
-                  transform: 'translate(-50%, -50%)' // Center exactly where clicked
-                }}
-              >
-                <span className="bg-indigo-600 text-white text-[10px] font-black px-1.5 py-0.5 rounded-sm mr-1 shrink-0">{index + 1}</span>
-                <span className="text-[10px] font-bold text-indigo-900 truncate">{el.label}</span>
-              </div>
-            ))}
+          <div 
+            style={{ width: `${800 * scale}px`, height: `${1131 * scale}px` }} 
+            className="relative"
+          >
+            <div 
+              className={`bg-white shadow-xl absolute top-0 left-0 origin-top-left transition-all duration-200 ${activeTab === 'elements' ? 'cursor-crosshair ring-2 ring-indigo-500/50 hover:ring-indigo-500' : ''}`}
+              style={{ transform: `scale(${scale})`, width: 800, height: 1131 }}
+              ref={pdfClickRef}
+              onClick={handlePdfClick}
+            >
+              {moduleData?.pdf_url ? (
+                <Document
+                  file={moduleData.pdf_url}
+                  onLoadSuccess={onDocumentLoadSuccess}
+                  loading={<div className="w-[800px] h-[1131px] flex items-center justify-center"><Loader2 className="animate-spin w-8 h-8 text-indigo-500" /></div>}
+                  error={<div className="w-[800px] h-[1131px] flex items-center justify-center text-red-500">Gagal memuat PDF.</div>}
+                >
+                  <Page 
+                    pageNumber={pageNumber} 
+                    renderTextLayer={false} 
+                    renderAnnotationLayer={false}
+                    width={800} // Fixed width for consistent overlay coordinate mapping
+                    className="rounded-sm overflow-hidden"
+                  />
+                </Document>
+              ) : (
+                <div className="w-[800px] h-[1131px] flex items-center justify-center bg-white text-slate-500 text-sm border-2 border-dashed border-slate-300">
+                  PDF URL tidak ditemukan. Modul lama?
+                </div>
+              )}
+
+              {/* Overlays */}
+              {currentPageElements.map((el, index) => (
+                <div 
+                  key={el.id}
+                  className="absolute border-2 border-indigo-500 bg-indigo-500/10 rounded-sm shadow-sm hover:bg-indigo-500/20 transition-colors pointer-events-none flex items-start p-1 overflow-hidden"
+                  style={{
+                    left: `${el.x}%`,
+                    top: `${el.y}%`,
+                    width: `${el.width}%`,
+                    height: `${el.height}%`,
+                    transform: 'translate(-50%, -50%)' // Center exactly where clicked
+                  }}
+                >
+                  <span className="bg-indigo-600 text-white text-[10px] font-black px-1.5 py-0.5 rounded-sm mr-1 shrink-0">{index + 1}</span>
+                  <span className="text-[10px] font-bold text-indigo-900 truncate">{el.label}</span>
+                </div>
+              ))}
+            </div>
           </div>
         </div>
       </div>

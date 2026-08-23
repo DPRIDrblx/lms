@@ -8,11 +8,30 @@ import { Button } from "@/components/ui/button";
 import { Document, Page, pdfjs } from "react-pdf";
 import "react-pdf/dist/Page/AnnotationLayer.css";
 import "react-pdf/dist/Page/TextLayer.css";
-import { ChevronLeft, ChevronRight, Save, ArrowLeft, Loader2, Users, CheckCircle2, CircleDashed } from "lucide-react";
+import { ChevronLeft, ChevronRight, Save, ArrowLeft, Loader2, Users, CheckCircle2, CircleDashed, Menu } from "lucide-react";
 import toast from "react-hot-toast";
 
 // Setup pdf.js worker
 pdfjs.GlobalWorkerOptions.workerSrc = `//unpkg.com/pdfjs-dist@${pdfjs.version}/build/pdf.worker.min.mjs`;
+
+function useContainerScale(targetWidth: number) {
+  const containerRef = useRef<HTMLDivElement>(null);
+  const [scale, setScale] = useState(1);
+  
+  useEffect(() => {
+    if (!containerRef.current) return;
+    const observer = new ResizeObserver((entries) => {
+      for (const entry of entries) {
+        const availableWidth = entry.contentRect.width;
+        setScale(Math.min(1, availableWidth / targetWidth));
+      }
+    });
+    observer.observe(containerRef.current);
+    return () => observer.disconnect();
+  }, [targetWidth]);
+  
+  return { containerRef, scale };
+}
 
 export default function EModuleResponses() {
   const { id } = useParams();
@@ -29,9 +48,13 @@ export default function EModuleResponses() {
   // PDF state
   const [numPages, setNumPages] = useState<number>(0);
   const [pageNumber, setPageNumber] = useState<number>(1);
+  const { containerRef: wrapperRef, scale } = useContainerScale(800);
   
   // Grade state
   const [gradeXP, setGradeXP] = useState<number>(0);
+  
+  // Mobile sidebar
+  const [showSidebar, setShowSidebar] = useState(false);
 
   useEffect(() => {
     fetchData();
@@ -66,6 +89,7 @@ export default function EModuleResponses() {
     setSelectedResponse(resp);
     setGradeXP(resp.xp_awarded || 0);
     setPageNumber(1);
+    setShowSidebar(false); // Close sidebar on mobile after selection
   };
 
   const handleSaveGrade = async () => {
@@ -101,21 +125,29 @@ export default function EModuleResponses() {
   return (
     <div className="h-[calc(100vh-4rem)] flex flex-col bg-slate-50">
       {/* Header */}
-      <div className="bg-white border-b border-slate-200 px-6 py-3 flex items-center justify-between z-20 shadow-sm shrink-0">
-        <div className="flex items-center gap-4">
-          <Button variant="ghost" size="sm" onClick={() => router.push("/operator-les/e-modules")} className="text-slate-500">
+      <div className="bg-white border-b border-slate-200 px-4 py-3 flex items-center justify-between z-20 shadow-sm shrink-0">
+        <div className="flex items-center gap-2 md:gap-4">
+          <Button variant="ghost" size="sm" onClick={() => router.push("/operator-les/e-modules")} className="text-slate-500 hidden md:flex">
             <ArrowLeft className="w-5 h-5" />
           </Button>
+          <Button variant="ghost" size="sm" onClick={() => router.push("/operator-les/e-modules")} className="text-slate-500 md:hidden">
+            <ArrowLeft className="w-4 h-4" />
+          </Button>
           <div>
-            <h1 className="font-black text-slate-800 text-lg leading-tight line-clamp-1">{moduleData?.title}</h1>
-            <p className="text-xs font-bold text-indigo-500">Penilaian E-Modul (Manual Grading)</p>
+            <h1 className="font-black text-slate-800 text-sm md:text-lg leading-tight line-clamp-1">{moduleData?.title}</h1>
+            <p className="text-[10px] md:text-xs font-bold text-indigo-500">Penilaian E-Modul (Manual Grading)</p>
           </div>
+        </div>
+        <div className="md:hidden">
+          <Button variant="outline" size="sm" onClick={() => setShowSidebar(!showSidebar)}>
+            <Menu className="w-4 h-4" />
+          </Button>
         </div>
       </div>
 
-      <div className="flex flex-1 overflow-hidden">
+      <div className="flex flex-1 overflow-hidden relative">
         {/* Left Sidebar: Student List */}
-        <div className="w-80 bg-white border-r border-slate-200 flex flex-col h-full z-10 shadow-sm shrink-0">
+        <div className={`absolute md:relative w-80 bg-white border-r border-slate-200 flex flex-col h-full z-20 shadow-xl md:shadow-sm shrink-0 transition-transform duration-300 ${showSidebar ? 'translate-x-0' : '-translate-x-full md:translate-x-0'}`}>
           <div className="p-4 border-b border-slate-100 bg-slate-50 flex items-center justify-between">
             <h2 className="font-bold text-slate-700 text-sm flex items-center gap-2 uppercase tracking-wider">
               <Users className="w-4 h-4 text-indigo-500" /> Daftar Pengumpulan
@@ -154,29 +186,34 @@ export default function EModuleResponses() {
             )}
           </div>
         </div>
+        
+        {/* Overlay to close sidebar on mobile */}
+        {showSidebar && (
+          <div className="md:hidden fixed inset-0 bg-slate-900/20 z-10" onClick={() => setShowSidebar(false)} />
+        )}
 
         {/* Right Area: PDF Viewer & Grading Panel */}
         <div className="flex-1 flex flex-col overflow-hidden bg-slate-900/5">
           {!selectedResponse ? (
-            <div className="flex-1 flex items-center justify-center text-slate-400 font-bold">
+            <div className="flex-1 flex items-center justify-center text-slate-400 font-bold p-4 text-center">
               Pilih siswa di sebelah kiri untuk melihat jawaban.
             </div>
           ) : (
             <>
               {/* Grading Toolbar */}
-              <div className="bg-white border-b border-slate-200 px-6 py-3 flex items-center justify-between shrink-0 shadow-sm z-10">
-                <div className="flex items-center gap-4">
+              <div className="bg-white border-b border-slate-200 px-4 py-3 flex flex-wrap items-center justify-between shrink-0 shadow-sm z-10 gap-3">
+                <div className="flex items-center gap-3">
                   <div className="bg-indigo-50 px-3 py-1.5 rounded-lg border border-indigo-100">
                     <span className="text-[10px] uppercase font-bold text-indigo-400 block leading-none mb-1">Siswa</span>
                     <span className="text-sm font-black text-indigo-900 leading-none">{selectedResponse.profiles?.full_name}</span>
                   </div>
                   
-                  <div className="flex items-center gap-2 ml-4">
+                  <div className="flex items-center gap-1 md:gap-2 ml-2 md:ml-4">
                     <Button variant="ghost" size="sm" disabled={pageNumber <= 1} onClick={() => setPageNumber(pageNumber - 1)} className="h-8 w-8 p-0">
                       <ChevronLeft className="w-4 h-4" />
                     </Button>
-                    <div className="flex items-center gap-2">
-                      <span className="text-xs font-bold text-slate-600">Hal</span>
+                    <div className="flex items-center gap-1 md:gap-2">
+                      <span className="text-[10px] md:text-xs font-bold text-slate-600 hidden md:inline">Hal</span>
                       <input 
                         type="number" 
                         value={pageNumber} 
@@ -190,7 +227,7 @@ export default function EModuleResponses() {
                         className="w-10 text-center text-xs font-bold border-b-2 border-slate-200 focus:border-indigo-500 outline-none p-0 hide-arrows bg-transparent text-indigo-700"
                         min={1} max={numPages || 1}
                       />
-                      <span className="text-xs font-bold text-slate-600">/ {numPages || "?"}</span>
+                      <span className="text-[10px] md:text-xs font-bold text-slate-600">/ {numPages || "?"}</span>
                     </div>
                     <Button variant="ghost" size="sm" disabled={pageNumber >= numPages} onClick={() => setPageNumber(pageNumber + 1)} className="h-8 w-8 p-0">
                       <ChevronRight className="w-4 h-4" />
@@ -198,26 +235,34 @@ export default function EModuleResponses() {
                   </div>
                 </div>
 
-                <div className="flex items-center gap-3">
+                <div className="flex items-center gap-2 md:gap-3">
                   <div className="flex items-center gap-2">
-                    <label className="text-xs font-bold text-slate-500 uppercase">XP Awarded:</label>
+                    <label className="text-[10px] md:text-xs font-bold text-slate-500 uppercase hidden md:inline">XP Awarded:</label>
                     <input 
                       type="number" 
                       value={gradeXP} 
                       onChange={e => setGradeXP(parseInt(e.target.value) || 0)} 
-                      className="w-20 text-sm font-bold border-2 border-slate-200 rounded-lg p-1.5 text-center focus:border-indigo-500 outline-none"
+                      className="w-16 md:w-20 text-sm font-bold border-2 border-slate-200 rounded-lg p-1.5 text-center focus:border-indigo-500 outline-none"
                     />
-                    <span className="text-xs font-bold text-slate-400">/ {totalMaxXp}</span>
+                    <span className="text-[10px] md:text-xs font-bold text-slate-400">/ {totalMaxXp}</span>
                   </div>
-                  <Button onClick={handleSaveGrade} disabled={saving} className="bg-indigo-600 hover:bg-indigo-700 text-white font-bold rounded-lg shadow-md">
-                    {saving ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <Save className="w-4 h-4 mr-2" />} Simpan Nilai
+                  <Button onClick={handleSaveGrade} disabled={saving} className="bg-indigo-600 hover:bg-indigo-700 text-white font-bold rounded-lg shadow-md px-3">
+                    {saving ? <Loader2 className="w-4 h-4 md:mr-2 animate-spin" /> : <Save className="w-4 h-4 md:mr-2" />} 
+                    <span className="hidden md:inline">Simpan</span>
                   </Button>
                 </div>
               </div>
 
               {/* PDF Viewer */}
-              <div className="flex-1 overflow-auto flex flex-col items-center relative p-8">
-                <div className="bg-white shadow-xl rounded-sm relative">
+              <div className="flex-1 overflow-auto flex flex-col items-center relative p-2 md:p-8" ref={wrapperRef}>
+                <div 
+                  style={{ width: `${800 * scale}px`, height: `${1131 * scale}px` }} 
+                  className="relative"
+                >
+                  <div 
+                    className="bg-white shadow-xl rounded-sm absolute top-0 left-0 origin-top-left"
+                    style={{ transform: `scale(${scale})`, width: 800, height: 1131 }}
+                  >
                   {moduleData?.pdf_url ? (
                     <Document
                       file={moduleData.pdf_url}
@@ -290,6 +335,7 @@ export default function EModuleResponses() {
                       </div>
                     );
                   })}
+                  </div>
                 </div>
               </div>
             </>

@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase";
 import { Card } from "@/components/ui/card";
@@ -14,6 +14,26 @@ import toast from "react-hot-toast";
 
 // Setup pdf.js worker
 pdfjs.GlobalWorkerOptions.workerSrc = `//unpkg.com/pdfjs-dist@${pdfjs.version}/build/pdf.worker.min.mjs`;
+
+function useContainerScale(targetWidth: number) {
+  const containerRef = useRef<HTMLDivElement>(null);
+  const [scale, setScale] = useState(1);
+  
+  useEffect(() => {
+    if (!containerRef.current) return;
+    const observer = new ResizeObserver((entries) => {
+      for (const entry of entries) {
+        // give some padding allowance (e.g. 32px for mobile paddings)
+        const availableWidth = entry.contentRect.width;
+        setScale(Math.min(1, availableWidth / targetWidth));
+      }
+    });
+    observer.observe(containerRef.current);
+    return () => observer.disconnect();
+  }, [targetWidth]);
+  
+  return { containerRef, scale };
+}
 
 export default function StudentInteractiveEModule() {
   const { id } = useParams();
@@ -43,6 +63,9 @@ export default function StudentInteractiveEModule() {
 
   // Sidebar TOC mobile toggle
   const [showToc, setShowToc] = useState(false);
+
+  // Responsive scale hook
+  const { containerRef, scale } = useContainerScale(800);
 
   useEffect(() => {
     const fetchModule = async () => {
@@ -139,8 +162,8 @@ export default function StudentInteractiveEModule() {
   return (
     <div className="h-[calc(100vh-4rem)] flex flex-col bg-slate-50">
       {/* Header */}
-      <div className="bg-white border-b border-slate-200 px-6 py-4 flex items-center justify-between z-20 shadow-sm shrink-0">
-        <div className="flex items-center gap-4">
+      <div className="bg-white border-b border-slate-200 px-4 py-3 flex flex-wrap items-center justify-between z-20 shadow-sm shrink-0 gap-3">
+        <div className="flex items-center gap-3">
           <Button variant="ghost" size="sm" onClick={() => router.push("/student/e-modul")} className="text-slate-500">
             <ArrowLeft className="w-5 h-5" />
           </Button>
@@ -151,17 +174,19 @@ export default function StudentInteractiveEModule() {
         </div>
         
         <div className="flex items-center gap-2">
-          <Button onClick={handleSaveProgress} disabled={savingProgress || saving} variant="secondary" className="border-2 border-slate-200 text-slate-600 rounded-xl font-bold px-4 hover:bg-slate-50">
-            {savingProgress ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <Save className="w-4 h-4 mr-2" />} Simpan Catatan
+          <Button onClick={handleSaveProgress} disabled={savingProgress || saving} variant="secondary" className="border-2 border-slate-200 text-slate-600 rounded-xl font-bold px-3 md:px-4 hover:bg-slate-50">
+            {savingProgress ? <Loader2 className="w-4 h-4 md:mr-2 animate-spin" /> : <Save className="w-4 h-4 md:mr-2" />} 
+            <span className="hidden md:inline">Simpan Catatan</span>
           </Button>
 
           {hasSubmitted ? (
-            <div className="flex items-center gap-2 bg-emerald-50 text-emerald-600 px-4 py-2 rounded-xl text-sm font-bold border border-emerald-100">
-              <CheckCircle2 className="w-4 h-4" /> Dikumpulkan
+            <div className="flex items-center gap-2 bg-emerald-50 text-emerald-600 px-3 md:px-4 py-2 rounded-xl text-sm font-bold border border-emerald-100">
+              <CheckCircle2 className="w-4 h-4" /> <span className="hidden md:inline">Dikumpulkan</span>
             </div>
           ) : (
-            <Button onClick={handleSubmit} disabled={saving || savingProgress} className="bg-[#108B96] hover:bg-[#0d737c] text-white rounded-xl shadow-lg shadow-[#108B96]/20 font-bold px-4">
-              {saving ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <Send className="w-4 h-4 mr-2" />} Kumpulkan
+            <Button onClick={handleSubmit} disabled={saving || savingProgress} className="bg-[#108B96] hover:bg-[#0d737c] text-white rounded-xl shadow-lg shadow-[#108B96]/20 font-bold px-3 md:px-4">
+              {saving ? <Loader2 className="w-4 h-4 md:mr-2 animate-spin" /> : <Send className="w-4 h-4 md:mr-2" />} 
+              <span className="hidden md:inline">Kumpulkan</span>
             </Button>
           )}
           
@@ -200,10 +225,10 @@ export default function StudentInteractiveEModule() {
         </div>
 
         {/* PDF Viewer */}
-        <div className="flex-1 overflow-y-auto flex flex-col items-center p-4 md:p-8 relative">
+        <div className="flex-1 overflow-y-auto flex flex-col items-center p-2 md:p-8 relative" ref={containerRef}>
           
-          <div className="mb-6 bg-white px-5 py-2.5 rounded-2xl shadow-sm flex items-center gap-6 sticky top-0 z-20 border border-slate-200">
-            <Button variant="ghost" disabled={pageNumber <= 1} onClick={() => setPageNumber(pageNumber - 1)} className="h-10 w-10 p-0 rounded-xl hover:bg-slate-100">
+          <div className="mb-4 md:mb-6 bg-white px-3 md:px-5 py-2.5 rounded-2xl shadow-sm flex items-center gap-3 md:gap-6 sticky top-0 z-20 border border-slate-200">
+            <Button variant="ghost" disabled={pageNumber <= 1} onClick={() => setPageNumber(pageNumber - 1)} className="h-8 w-8 md:h-10 md:w-10 p-0 rounded-xl hover:bg-slate-100">
               <ChevronLeft className="w-5 h-5 text-slate-600" />
             </Button>
             <div className="flex items-center gap-2">
@@ -268,8 +293,15 @@ export default function StudentInteractiveEModule() {
             </div>
           </div>
 
-          <div className="bg-white shadow-2xl rounded-sm relative">
-            {moduleData?.pdf_url ? (
+          <div 
+            style={{ width: `${800 * scale}px`, height: `${1131 * scale}px` }} 
+            className="relative"
+          >
+            <div 
+              className="bg-white shadow-2xl rounded-sm absolute top-0 left-0 origin-top-left"
+              style={{ transform: `scale(${scale})`, width: 800, height: 1131 }}
+            >
+              {moduleData?.pdf_url ? (
               <Document
                 file={moduleData.pdf_url}
                 onLoadSuccess={onDocumentLoadSuccess}
@@ -397,6 +429,7 @@ export default function StudentInteractiveEModule() {
                 </div>
               );
             })}
+            </div>
           </div>
         </div>
       </div>
