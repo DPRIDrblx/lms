@@ -3,7 +3,7 @@
 import { useAuth } from "@/lib/auth-context";
 import { createClient } from "@/lib/supabase";
 import { useEffect, useState, useMemo } from "react";
-import { Calendar, Clock, CheckCircle2, ChevronRight, Star, Link2, KeyRound, FileText, PackageOpen } from "lucide-react";
+import { Calendar, Clock, CheckCircle2, ChevronRight, Star, Link2, KeyRound, FileText, PackageOpen, User } from "lucide-react";
 import { CenterLoader } from "@/components/ui/center-loader";
 import { Card } from "@/components/ui/card";
 import { Modal } from "@/components/ui/modal";
@@ -58,7 +58,7 @@ export default function JadwalLesPage() {
     // Fetch Schedules
     const { data: schedData } = await supabase
       .from("center_schedules")
-      .select("*")
+      .select("*, tutor:tutor_id(full_name)")
       .contains("target_class_ids", [profile.class_id])
       .order("schedule_time", { ascending: true });
       
@@ -295,6 +295,13 @@ export default function JadwalLesPage() {
                             {date.toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' })} WIB
                           </div>
                           
+                          {schedule.tutor?.full_name && (
+                            <div className="flex items-center gap-1.5 text-[12px] font-bold text-indigo-700 bg-indigo-50 px-2.5 py-1.5 rounded-[8px] border border-indigo-200">
+                              <User className="w-3.5 h-3.5 text-indigo-500" />
+                              {schedule.tutor.full_name}
+                            </div>
+                          )}
+                          
                           {isAttended ? (
                             <div className={cn(
                               "flex items-center gap-1.5 text-[12px] font-bold px-2.5 py-1.5 rounded-[8px] border",
@@ -377,6 +384,13 @@ export default function JadwalLesPage() {
                         <Clock className="w-4 h-4 text-blue-500" />
                         {date.toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' })} WIB
                       </div>
+
+                      {schedule.tutor?.full_name && (
+                        <div className="flex items-center gap-1.5 text-sm font-bold text-indigo-700 bg-indigo-50 px-3 py-1.5 rounded-lg border border-indigo-200">
+                          <User className="w-4 h-4 text-indigo-500" />
+                          {schedule.tutor.full_name}
+                        </div>
+                      )}
                       
                       {isAttended ? (
                         <div className="flex items-center gap-1.5 text-sm font-bold text-emerald-700 bg-emerald-50 px-3 py-1.5 rounded-lg border border-emerald-100">
@@ -432,6 +446,12 @@ export default function JadwalLesPage() {
                     <Clock className="w-4 h-4 text-amber-500" />
                     {selectedSchedule.schedule_time.substring(0, 5)} WIB
                   </span>
+                  {selectedSchedule.tutor?.full_name && (
+                    <span className="flex items-center gap-1.5 bg-indigo-50 text-indigo-700 px-2 py-1 rounded-md border border-indigo-100">
+                      <User className="w-4 h-4 text-indigo-500" />
+                      Tutor: {selectedSchedule.tutor.full_name}
+                    </span>
+                  )}
                 </div>
               </div>
 
