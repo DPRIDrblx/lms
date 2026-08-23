@@ -149,12 +149,13 @@ export default function DashboardPage() {
        }
     }
 
-    if (isCenterStudent) {
-      const { data: schedData } = await supabase
-        .from("center_schedules")
-        .select("*")
-        .order("schedule_time", { ascending: true })
-        .limit(3);
+    if (isCenterStudent && profile?.class_id) {
+        const { data: schedData } = await supabase
+          .from("center_schedules")
+          .select("*")
+          .contains("target_class_ids", [profile.class_id])
+          .order("schedule_time", { ascending: true })
+          .limit(3);
       if (schedData) setCenterSchedules(schedData);
     } else {
       const { data: sessions } = await supabase

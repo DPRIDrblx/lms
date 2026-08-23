@@ -38,7 +38,7 @@ export default function CenterSchedulesManager() {
   const [scheduleDate, setScheduleDate] = useState("");
   const [scheduleTime, setScheduleTime] = useState("");
   const [description, setDescription] = useState("");
-  const [classId, setClassId] = useState("");
+  const [targetClassIds, setTargetClassIds] = useState<string[]>([]);
   const [driveLink, setDriveLink] = useState("");
   const [bannerUrl, setBannerUrl] = useState("");
   const [editingId, setEditingId] = useState<string | null>(null);
@@ -81,7 +81,7 @@ export default function CenterSchedulesManager() {
 
   const handleAddOrEditSchedule = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!title || !scheduleDate || !scheduleTime || !classId) {
+    if (!title || !scheduleDate || !scheduleTime || targetClassIds.length === 0) {
       toast.error("Mohon lengkapi semua field wajib");
       return;
     }
@@ -93,7 +93,8 @@ export default function CenterSchedulesManager() {
         title,
         schedule_time: timestamp,
         description,
-        class_id: classId,
+        target_class_ids: targetClassIds,
+        class_id: targetClassIds[0] || null, // Fallback
         drive_link: driveLink,
         banner_url: bannerUrl || null
       }).eq("id", editingId);
@@ -111,7 +112,8 @@ export default function CenterSchedulesManager() {
         title,
         schedule_time: timestamp,
         description,
-        class_id: classId,
+        target_class_ids: targetClassIds,
+        class_id: targetClassIds[0] || null, // Fallback
         drive_link: driveLink,
         attendance_code: attendanceCode,
         banner_url: bannerUrl || null
@@ -134,7 +136,7 @@ export default function CenterSchedulesManager() {
     setDescription("");
     setDriveLink("");
     setBannerUrl("");
-    setClassId("");
+    setTargetClassIds([]);
     setEditingId(null);
   };
 
@@ -144,7 +146,7 @@ export default function CenterSchedulesManager() {
     setScheduleDate(d.toISOString().split('T')[0]);
     setScheduleTime(d.toTimeString().substring(0, 5));
     setDescription(schedule.description || "");
-    setClassId(schedule.class_id);
+    setTargetClassIds(schedule.target_class_ids || (schedule.class_id ? [schedule.class_id] : []));
     setDriveLink(schedule.drive_link || "");
     setBannerUrl(schedule.banner_url || "");
     setEditingId(schedule.id);
@@ -215,18 +217,23 @@ export default function CenterSchedulesManager() {
             
             <form onSubmit={handleAddOrEditSchedule} className="space-y-4">
               <div>
-                <label className="block text-sm font-bold text-slate-700 mb-1">Target Kelas</label>
-                <select 
-                  className="w-full p-3 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500"
-                  value={classId}
-                  onChange={(e) => setClassId(e.target.value)}
-                  required
-                >
-                  <option value="">-- Pilih Kelas --</option>
+                <label className="block text-sm font-bold text-slate-700 mb-2">Target Kelas</label>
+                <div className="grid grid-cols-2 gap-2">
                   {classes.map(c => (
-                    <option key={c.id} value={c.id}>{c.name}</option>
+                    <label key={c.id} className="flex items-center gap-2 p-2 border border-slate-200 rounded-lg cursor-pointer hover:bg-slate-50 transition-colors">
+                      <input 
+                        type="checkbox" 
+                        className="w-4 h-4 text-blue-600 rounded border-slate-300 focus:ring-blue-500"
+                        checked={targetClassIds.includes(c.id)}
+                        onChange={(e) => {
+                          if (e.target.checked) setTargetClassIds([...targetClassIds, c.id]);
+                          else setTargetClassIds(targetClassIds.filter(id => id !== c.id));
+                        }}
+                      />
+                      <span className="text-sm font-semibold text-slate-700">{c.name}</span>
+                    </label>
                   ))}
-                </select>
+                </div>
               </div>
 
               <div>
@@ -332,7 +339,9 @@ export default function CenterSchedulesManager() {
                       <div className="flex justify-between items-start mb-3 ml-2">
                         <div className="bg-slate-100 text-slate-600 px-3 py-1 rounded-lg text-xs font-bold flex items-center gap-1">
                           <Users className="w-3 h-3" />
-                          {s.classes?.name || "Semua Kelas"}
+                          {s.target_class_ids && s.target_class_ids.length > 0 
+                            ? s.target_class_ids.map((id: string) => classes.find(c => c.id === id)?.name).filter(Boolean).join(", ")
+                            : (s.classes?.name || "Semua Kelas")}
                         </div>
                         <div className="flex gap-1">
                           <button 

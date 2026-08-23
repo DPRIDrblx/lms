@@ -17,7 +17,7 @@ export default function CenterEModulesManager() {
   // Form State
   const [title, setTitle] = useState("");
   const [pdfFile, setPdfFile] = useState<File | null>(null);
-  const [classId, setClassId] = useState("");
+  const [targetClassIds, setTargetClassIds] = useState<string[]>([]);
   const [isUploading, setIsUploading] = useState(false);
   const [migratingId, setMigratingId] = useState<string | null>(null);
 
@@ -44,7 +44,7 @@ export default function CenterEModulesManager() {
 
   const handleAddModule = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!title || !classId) {
+    if (!title || targetClassIds.length === 0) {
       toast.error("Mohon lengkapi semua field wajib");
       return;
     }
@@ -76,7 +76,8 @@ export default function CenterEModulesManager() {
       const { error } = await supabase.from("e_modules").insert({
         title,
         pdf_url: publicUrlData.publicUrl,
-        class_id: classId
+        target_class_ids: targetClassIds,
+        class_id: targetClassIds[0] || null
       });
 
       if (error) throw error;
@@ -84,6 +85,7 @@ export default function CenterEModulesManager() {
       toast.success("E-Modul berhasil ditambahkan");
       setTitle("");
       setPdfFile(null);
+      setTargetClassIds([]);
       fetchData();
     } catch (err: any) {
       toast.error(err.message || "Gagal mengunggah E-Modul");
@@ -154,18 +156,23 @@ export default function CenterEModulesManager() {
             
             <form onSubmit={handleAddModule} className="space-y-4">
               <div>
-                <label className="block text-sm font-bold text-slate-700 mb-1">Target Kelas</label>
-                <select 
-                  className="w-full p-3 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500"
-                  value={classId}
-                  onChange={(e) => setClassId(e.target.value)}
-                  required
-                >
-                  <option value="">-- Pilih Kelas --</option>
+                <label className="block text-sm font-bold text-slate-700 mb-2">Target Kelas</label>
+                <div className="grid grid-cols-2 gap-2">
                   {classes.map(c => (
-                    <option key={c.id} value={c.id}>{c.name}</option>
+                    <label key={c.id} className="flex items-center gap-2 p-2 border border-slate-200 rounded-lg cursor-pointer hover:bg-slate-50 transition-colors">
+                      <input 
+                        type="checkbox" 
+                        className="w-4 h-4 text-indigo-600 rounded border-slate-300 focus:ring-indigo-500"
+                        checked={targetClassIds.includes(c.id)}
+                        onChange={(e) => {
+                          if (e.target.checked) setTargetClassIds([...targetClassIds, c.id]);
+                          else setTargetClassIds(targetClassIds.filter(id => id !== c.id));
+                        }}
+                      />
+                      <span className="text-sm font-semibold text-slate-700">{c.name}</span>
+                    </label>
                   ))}
-                </select>
+                </div>
               </div>
 
               <div>
@@ -222,7 +229,9 @@ export default function CenterEModulesManager() {
                     <div className="flex justify-between items-start mb-3 ml-2">
                       <div className="bg-slate-100 text-slate-600 px-3 py-1 rounded-lg text-xs font-bold flex items-center gap-1">
                         <Users className="w-3 h-3" />
-                        {m.classes?.name || "Semua Kelas"}
+                        {m.target_class_ids && m.target_class_ids.length > 0 
+                          ? m.target_class_ids.map((id: string) => classes.find(c => c.id === id)?.name).filter(Boolean).join(", ")
+                          : (m.classes?.name || "Semua Kelas")}
                       </div>
                       <button 
                         onClick={() => handleDelete(m.id)}

@@ -59,7 +59,7 @@ export default function JadwalLesPage() {
     const { data: schedData } = await supabase
       .from("center_schedules")
       .select("*")
-      .eq("class_id", profile.class_id)
+      .contains("target_class_ids", [profile.class_id])
       .order("schedule_time", { ascending: true });
       
     if (schedData) {

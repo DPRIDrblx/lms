@@ -27,7 +27,7 @@ export default function EModulPage() {
       const { data } = await supabase
         .from("e_modules")
         .select("*")
-        .eq("class_id", profile.class_id)
+        .contains("target_class_ids", [profile.class_id])
         .order("created_at", { ascending: false });
         
       if (data) setModules(data);
