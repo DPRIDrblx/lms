@@ -34,7 +34,7 @@ export function CenterLoader({ className, size = "md" }: CenterLoaderProps) {
         transition={{ duration: 1.5, repeat: Infinity, ease: "easeInOut" }}
         className={cn("flex flex-col items-center drop-shadow-xl mb-4")}
       >
-        <img src="/logo-lms.png" alt="Loading..." className="h-20 w-auto object-contain" />
+        <img src="/logo-lms.png" alt="Loading..." className="h-32 w-auto object-contain" />
       </motion.div>
       <motion.div 
         initial={{ width: 0 }}

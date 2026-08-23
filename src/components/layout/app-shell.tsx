@@ -23,7 +23,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
   const router = useRouter();
   const { profile, loading, isCenterStudent, updateProfile } = useAuth();
-  const { uiMode } = useTheme();
+  const { uiMode, setUiMode } = useTheme();
   const supabase = createClient();
   const isExam = pathname?.includes("/exam");
   const isSkillUpHub = pathname?.includes("/skill-up-hub");
@@ -51,6 +51,16 @@ export function AppShell({ children }: { children: React.ReactNode }) {
       return () => clearInterval(interval);
     }
   }, [isCenterStudent, profile, updateProfile]);
+
+  useEffect(() => {
+    if (isCenterStudent && uiMode !== 'clean') {
+      const isInitialized = localStorage.getItem("nia-ui-mode-center-init");
+      if (!isInitialized) {
+        setUiMode('clean');
+        localStorage.setItem("nia-ui-mode-center-init", "true");
+      }
+    }
+  }, [isCenterStudent, uiMode, setUiMode]);
 
   useEffect(() => {
     if (!loading && profile?.force_password_change) {
