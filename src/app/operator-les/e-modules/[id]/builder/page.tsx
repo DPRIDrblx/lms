@@ -14,23 +14,23 @@ import toast from "react-hot-toast";
 // Setup pdf.js worker
 pdfjs.GlobalWorkerOptions.workerSrc = `//unpkg.com/pdfjs-dist@${pdfjs.version}/build/pdf.worker.min.mjs`;
 
-function useContainerWidth(maxWidth: number) {
+function useContainerScale(targetWidth: number) {
   const containerRef = useRef<HTMLDivElement>(null);
-  const [width, setWidth] = useState(maxWidth);
+  const [scale, setScale] = useState(1);
   
   useEffect(() => {
     if (!containerRef.current) return;
     const observer = new ResizeObserver((entries) => {
       for (const entry of entries) {
-        const availableWidth = entry.contentRect.width - 32;
-        setWidth(Math.min(maxWidth, Math.max(200, availableWidth)));
+        const availableWidth = entry.contentRect.width;
+        setScale(Math.min(1, availableWidth / targetWidth));
       }
     });
     observer.observe(containerRef.current);
     return () => observer.disconnect();
-  }, [maxWidth]);
+  }, [targetWidth]);
   
-  return { containerRef, width };
+  return { containerRef, scale };
 }
 
 type ElementType = "short_text" | "long_text" | "radio" | "checkbox";
@@ -68,7 +68,7 @@ export default function EModuleBuilder() {
   const [numPages, setNumPages] = useState<number>(0);
   const [pageNumber, setPageNumber] = useState<number>(1);
   const pdfClickRef = useRef<HTMLDivElement>(null);
-  const { containerRef: wrapperRef, width: pdfWidth } = useContainerWidth(800);
+  const { containerRef: wrapperRef, scale } = useContainerScale(800);
   
   // Builder state
   const [elements, setElements] = useState<InteractiveElement[]>([]);
@@ -368,7 +368,7 @@ export default function EModuleBuilder() {
         )}
 
         {/* Center PDF Viewer */}
-        <div className="flex-1 bg-slate-900/5 overflow-auto flex flex-col items-center relative p-2 md:p-8" ref={wrapperRef}>
+        <div className="flex-1 bg-slate-900/5 overflow-auto flex flex-col items-center relative p-0 md:p-8" ref={wrapperRef}>
           <div className="mb-4 bg-white px-4 py-2 rounded-full shadow-sm flex items-center gap-4 sticky top-0 z-20 border border-slate-200">
             <Button variant="ghost" size="sm" disabled={pageNumber <= 1} onClick={() => setPageNumber(pageNumber - 1)} className="h-8 w-8 p-0 rounded-full">
               <ChevronLeft className="w-4 h-4" />
@@ -396,11 +396,16 @@ export default function EModuleBuilder() {
           </div>
 
           <div 
-            className={`relative bg-white shadow-xl rounded-sm overflow-hidden transition-all duration-200 ${activeTab === 'elements' ? 'cursor-crosshair ring-2 ring-indigo-500/50 hover:ring-indigo-500' : ''}`}
-            ref={pdfClickRef}
-            onClick={handlePdfClick}
+            style={{ width: `${800 * scale}px`, height: `${1131 * scale}px` }} 
+            className="relative transition-transform duration-300"
           >
-            {moduleData?.pdf_url ? (
+            <div 
+              className={`bg-white shadow-xl absolute top-0 left-0 origin-top-left transition-all duration-200 ${activeTab === 'elements' ? 'cursor-crosshair ring-2 ring-indigo-500/50 hover:ring-indigo-500' : ''}`}
+              style={{ transform: `scale(${scale})`, width: 800, height: 1131 }}
+              ref={pdfClickRef}
+              onClick={handlePdfClick}
+            >
+              {moduleData?.pdf_url ? (
                 <Document
                   file={moduleData.pdf_url}
                   onLoadSuccess={onDocumentLoadSuccess}
@@ -411,7 +416,7 @@ export default function EModuleBuilder() {
                     pageNumber={pageNumber} 
                     renderTextLayer={false} 
                     renderAnnotationLayer={false}
-                    width={pdfWidth} // Dynamically scaled
+                    width={800} // Fixed width for consistent overlay coordinate mapping
                     className="rounded-sm overflow-hidden"
                   />
                 </Document>
@@ -438,6 +443,7 @@ export default function EModuleBuilder() {
                   <span className="text-[10px] font-bold text-indigo-900 truncate">{el.label}</span>
                 </div>
               ))}
+            </div>
           </div>
         </div>
       </div>

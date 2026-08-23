@@ -15,24 +15,23 @@ import toast from "react-hot-toast";
 // Setup pdf.js worker
 pdfjs.GlobalWorkerOptions.workerSrc = `//unpkg.com/pdfjs-dist@${pdfjs.version}/build/pdf.worker.min.mjs`;
 
-function useContainerWidth(maxWidth: number) {
+function useContainerScale(targetWidth: number) {
   const containerRef = useRef<HTMLDivElement>(null);
-  const [width, setWidth] = useState(maxWidth);
+  const [scale, setScale] = useState(1);
   
   useEffect(() => {
     if (!containerRef.current) return;
     const observer = new ResizeObserver((entries) => {
       for (const entry of entries) {
-        // give some padding allowance (e.g. 32px for mobile paddings)
-        const availableWidth = entry.contentRect.width - 32; // subtracting padding
-        setWidth(Math.min(maxWidth, Math.max(200, availableWidth)));
+        const availableWidth = entry.contentRect.width;
+        setScale(Math.min(1, availableWidth / targetWidth));
       }
     });
     observer.observe(containerRef.current);
     return () => observer.disconnect();
-  }, [maxWidth]);
+  }, [targetWidth]);
   
-  return { containerRef, width };
+  return { containerRef, scale };
 }
 
 export default function StudentInteractiveEModule() {
@@ -64,8 +63,35 @@ export default function StudentInteractiveEModule() {
   // Sidebar TOC mobile toggle
   const [showToc, setShowToc] = useState(false);
 
-  // Responsive width hook
-  const { containerRef, width: pdfWidth } = useContainerWidth(800);
+  // Responsive scale hook
+  const { containerRef, scale } = useContainerScale(800);
+
+  // Swipe logic
+  const [touchStartX, setTouchStartX] = useState<number | null>(null);
+  const [touchEndX, setTouchEndX] = useState<number | null>(null);
+
+  const handleTouchStart = (e: React.TouchEvent) => {
+    setTouchEndX(null);
+    setTouchStartX(e.targetTouches[0].clientX);
+  };
+
+  const handleTouchMove = (e: React.TouchEvent) => {
+    setTouchEndX(e.targetTouches[0].clientX);
+  };
+
+  const handleTouchEnd = () => {
+    if (touchStartX === null || touchEndX === null) return;
+    const distance = touchStartX - touchEndX;
+    const isLeftSwipe = distance > 50;
+    const isRightSwipe = distance < -50;
+
+    if (isLeftSwipe && pageNumber < numPages) {
+      setPageNumber(p => p + 1);
+    }
+    if (isRightSwipe && pageNumber > 1) {
+      setPageNumber(p => p - 1);
+    }
+  };
 
   useEffect(() => {
     const fetchModule = async () => {
@@ -224,8 +250,14 @@ export default function StudentInteractiveEModule() {
           </div>
         </div>
 
-        {/* PDF Viewer */}
-        <div className="flex-1 overflow-y-auto flex flex-col items-center p-2 md:p-8 relative" ref={containerRef}>
+        {/* Center PDF Viewer */}
+        <div 
+          className="flex-1 bg-slate-900/5 overflow-auto flex flex-col items-center relative p-0 md:p-8" 
+          ref={containerRef}
+          onTouchStart={handleTouchStart}
+          onTouchMove={handleTouchMove}
+          onTouchEnd={handleTouchEnd}
+        >
           
           <div className="mb-4 md:mb-6 bg-white px-3 md:px-5 py-2.5 rounded-2xl shadow-sm flex items-center gap-3 md:gap-6 sticky top-0 z-20 border border-slate-200">
             <Button variant="ghost" disabled={pageNumber <= 1} onClick={() => setPageNumber(pageNumber - 1)} className="h-8 w-8 md:h-10 md:w-10 p-0 rounded-xl hover:bg-slate-100">
@@ -293,19 +325,26 @@ export default function StudentInteractiveEModule() {
             </div>
           </div>
 
-          <div className="relative shadow-2xl bg-white rounded-sm overflow-hidden">
-            {moduleData?.pdf_url ? (
+          <div 
+            style={{ width: `${800 * scale}px`, height: `${1131 * scale}px` }} 
+            className="relative transition-transform duration-300"
+          >
+            <div 
+              className="bg-white shadow-2xl absolute top-0 left-0 origin-top-left flex flex-col"
+              style={{ transform: `scale(${scale})`, width: 800, height: 1131 }}
+            >
+              {moduleData?.pdf_url ? (
               <Document
                 file={moduleData.pdf_url}
                 onLoadSuccess={onDocumentLoadSuccess}
-                loading={<div className="w-[800px] h-[1000px] flex items-center justify-center"><Loader2 className="animate-spin w-10 h-10 text-[#108B96]" /></div>}
-                error={<div className="w-[800px] h-[1000px] flex items-center justify-center text-red-500 font-bold">Gagal memuat PDF.</div>}
+                loading={<div className="w-[800px] h-[1131px] flex items-center justify-center"><Loader2 className="animate-spin w-8 h-8 text-indigo-500" /></div>}
+                error={<div className="w-[800px] h-[1131px] flex items-center justify-center text-red-500">Gagal memuat PDF.</div>}
               >
                 <Page 
                   pageNumber={pageNumber} 
                   renderTextLayer={false} 
                   renderAnnotationLayer={false}
-                  width={pdfWidth} // Dynamically scaled
+                  width={800} // MATCH EXACTLY with builder's width
                   className="rounded-sm overflow-hidden"
                 />
               </Document>
@@ -422,6 +461,7 @@ export default function StudentInteractiveEModule() {
                 </div>
               );
             })}
+            </div>
           </div>
         </div>
       </div>
