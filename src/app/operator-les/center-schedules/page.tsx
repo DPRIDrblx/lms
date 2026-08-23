@@ -24,7 +24,9 @@ const PREDEFINED_BANNERS = [
   "TES MINAT BAKAT.png",
   "TRYOUT.png",
   "NTC SKILL UP.png",
-  "Skill Up Agustusan.png"
+  "Skill Up Agustusan.png",
+  "Kelas Pengganti NTO.png",
+  "None.png"
 ];
 
 export default function CenterSchedulesManager() {
