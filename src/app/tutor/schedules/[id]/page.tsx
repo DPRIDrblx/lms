@@ -66,11 +66,11 @@ export default function LessonWorkspacePage() {
       setPhotoEndUrl(sched.photo_end_url || "");
       setRoomNumber(sched.room_number || "");
 
-      if (sched.class_id) {
+      if (sched.target_class_ids && sched.target_class_ids.length > 0) {
         const { data: stds } = await supabase
           .from("profiles")
           .select("id, full_name, nis")
-          .eq("class_id", sched.class_id)
+          .in("class_id", sched.target_class_ids)
           .eq("role", "student")
           .order("full_name");
         
