@@ -5,7 +5,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useAuth } from "@/lib/auth-context";
 import { showLogo } from "@/lib/utils";
-import { Sparkles, BookOpen, User, LogOut, Menu, X, LayoutDashboard, Settings, MapPin, CreditCard, GraduationCap, Users } from "lucide-react";
+import { Sparkles, BookOpen, User, LogOut, Menu, X, LayoutDashboard, Settings, MapPin, CreditCard, GraduationCap, Users, Bell } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 
 export function NiaShell({ children }: { children: React.ReactNode }) {
@@ -31,6 +31,7 @@ export function NiaShell({ children }: { children: React.ReactNode }) {
       { name: "Classroom Manager", href: "/operator-les/classroom-manager", icon: Users },
       { name: "Jadwal Les (Center)", href: "/operator-les/center-schedules", icon: BookOpen },
       { name: "E-Modul (Center)", href: "/operator-les/e-modules", icon: BookOpen },
+      { name: "Notifikasi Center", href: "/operator-les/center-notifications", icon: Bell },
       { name: "Form Builder", href: "/operator-les/forms", icon: BookOpen },
       { name: "Laporan Kelas", href: "/operator-les/reports", icon: BookOpen },
       { name: "Manajemen Paket", href: "/operator-les/packages", icon: BookOpen },

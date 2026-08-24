@@ -6,6 +6,7 @@ import { StatCard } from "@/components/ui/stat-card";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { Modal } from "@/components/ui/modal";
 import { AnnouncementBoard } from "@/components/dashboard/announcement-board";
 import { ProgressBar } from "@/components/ui/progress-bar";
 import { CenterLoader } from "@/components/ui/center-loader";
@@ -30,7 +31,8 @@ import {
   ScanFace,
   QrCode,
   Diamond,
-  Gem
+  Gem,
+  Bell
 } from "lucide-react";
 import { useEffect, useState, useCallback } from "react";
 import Link from "next/link";
@@ -67,6 +69,9 @@ export default function DashboardPage() {
   const [quests, setQuests] = useState<any[]>([]);
   const [drills, setDrills] = useState<any[]>([]);
   const [activeFeedbacks, setActiveFeedbacks] = useState<any[]>([]);
+  const [centerNotifications, setCenterNotifications] = useState<any[]>([]);
+  const [selectedNotification, setSelectedNotification] = useState<any>(null);
+  const [isNotifModalOpen, setIsNotifModalOpen] = useState(false);
   const [loading, setLoading] = useState(true);
   const [profileTimeout, setProfileTimeout] = useState(false);
 
@@ -157,6 +162,28 @@ export default function DashboardPage() {
           .order("schedule_time", { ascending: true })
           .limit(3);
       if (schedData) setCenterSchedules(schedData);
+
+      const sevenDaysAgo = new Date();
+      sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
+      const { data: notifData } = await supabase
+        .from("center_notifications")
+        .select("*")
+        .contains("target_class_ids", [profile.class_id])
+        .gte("created_at", sevenDaysAgo.toISOString())
+        .order("created_at", { ascending: false });
+      
+      if (notifData) {
+        setCenterNotifications(notifData);
+        if (notifData.length > 0) {
+          const latestNotifId = notifData[0].id;
+          const seenNotif = sessionStorage.getItem(`seen_notif_${latestNotifId}`);
+          if (!seenNotif) {
+            setSelectedNotification(notifData[0]);
+            setIsNotifModalOpen(true);
+            sessionStorage.setItem(`seen_notif_${latestNotifId}`, 'true');
+          }
+        }
+      }
     } else {
       const { data: sessions } = await supabase
         .from('ace_feedback_sessions')
@@ -234,6 +261,37 @@ export default function DashboardPage() {
           <div className="absolute -top-32 -left-20 w-[500px] h-[500px] rounded-full border-[80px] border-red-500/10 mix-blend-multiply blur-lg" />
           <div className="absolute top-20 right-[-10%] w-[600px] h-[600px] rounded-full border-[100px] border-yellow-400/10 mix-blend-multiply blur-2xl" />
           <div className="absolute -top-10 left-1/2 -translate-x-1/2 w-[400px] h-[400px] rounded-full bg-blue-500/10 mix-blend-multiply blur-[80px]" />
+        </div>
+      )}
+
+      {isCenterStudent && centerNotifications.length > 0 && (
+        <div className="w-full space-y-4">
+          {centerNotifications.map(notif => (
+            <div 
+              key={notif.id} 
+              onClick={() => { setSelectedNotification(notif); setIsNotifModalOpen(true); }} 
+              className={cn(
+                "w-full rounded-[20px] p-6 shadow-sm flex items-center justify-between gap-4 cursor-pointer transition-all hover:scale-[1.01]",
+                uiMode === 'clean' 
+                  ? "bg-white border border-slate-200 hover:border-indigo-500/50" 
+                  : "bg-gradient-to-r from-indigo-500 to-purple-600 border-2 border-indigo-400 text-white"
+              )}
+            >
+              <div className="flex items-center gap-4">
+                <div className={cn(
+                  "w-14 h-14 rounded-2xl flex items-center justify-center shrink-0 shadow-sm",
+                  uiMode === 'clean' ? "bg-indigo-50 text-indigo-500" : "bg-white/20 text-white border border-white/30 backdrop-blur-sm"
+                )}>
+                  <Bell className="w-7 h-7" />
+                </div>
+                <div>
+                  <h3 className={cn("text-xl font-black mb-1 line-clamp-1", uiMode === 'clean' ? "text-slate-800" : "text-white")}>{notif.title}</h3>
+                  <p className={cn("text-sm font-medium line-clamp-1", uiMode === 'clean' ? "text-slate-500" : "text-indigo-100")}>{notif.content}</p>
+                </div>
+              </div>
+              <ChevronRight className={cn("w-6 h-6 shrink-0", uiMode === 'clean' ? "text-slate-300" : "text-white/50")} />
+            </div>
+          ))}
         </div>
       )}
 
@@ -636,6 +694,33 @@ export default function DashboardPage() {
           </div>
        </div>
       </div>
+
+      <Modal
+        isOpen={isNotifModalOpen}
+        onClose={() => setIsNotifModalOpen(false)}
+        title="Pengumuman"
+      >
+        {selectedNotification && (
+          <div className="space-y-4">
+            {selectedNotification.banner_url && (
+              <div className="w-full rounded-2xl overflow-hidden shadow-sm">
+                <img src={selectedNotification.banner_url} alt="Banner" className="w-full h-auto object-contain" />
+              </div>
+            )}
+            <div>
+              <h3 className="text-2xl font-black text-slate-800 mb-2">{selectedNotification.title}</h3>
+              <p className="text-slate-600 whitespace-pre-wrap leading-relaxed">{selectedNotification.content}</p>
+            </div>
+            <div className="text-xs font-bold text-slate-400">
+              Dikirim pada: {new Date(selectedNotification.created_at).toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric', hour: '2-digit', minute: '2-digit' })}
+            </div>
+            <div className="pt-4 flex justify-end">
+              <Button onClick={() => setIsNotifModalOpen(false)}>Tutup</Button>
+            </div>
+          </div>
+        )}
+      </Modal>
+
     </div>
   );
 }
