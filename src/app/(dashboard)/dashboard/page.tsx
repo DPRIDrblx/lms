@@ -155,12 +155,16 @@ export default function DashboardPage() {
     }
 
     if (isCenterStudent && profile?.class_id) {
-        const { data: schedData } = await supabase
-          .from("center_schedules")
-          .select("*")
-          .contains("target_class_ids", [profile.class_id])
-          .order("schedule_time", { ascending: true })
-          .limit(3);
+      const todayMidnight = new Date();
+      todayMidnight.setHours(0, 0, 0, 0);
+      
+      const { data: schedData } = await supabase
+        .from("center_schedules")
+        .select("*")
+        .contains("target_class_ids", [profile.class_id])
+        .gte("schedule_time", todayMidnight.toISOString())
+        .order("schedule_time", { ascending: true })
+        .limit(3);
       if (schedData) setCenterSchedules(schedData);
 
       const sevenDaysAgo = new Date();

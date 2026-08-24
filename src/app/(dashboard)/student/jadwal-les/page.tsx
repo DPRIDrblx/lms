@@ -193,8 +193,7 @@ export default function JadwalLesPage() {
     );
   }
 
-  const activeDateString = activeDate.toISOString().split('T')[0];
-  const filteredSchedules = schedules.filter(s => s.schedule_time.startsWith(activeDateString));
+  const filteredSchedules = schedules.filter(s => new Date(s.schedule_time).toDateString() === activeDate.toDateString());
 
   return (
     <div className={cn(
