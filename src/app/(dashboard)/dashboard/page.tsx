@@ -268,37 +268,6 @@ export default function DashboardPage() {
         </div>
       )}
 
-      {isCenterStudent && centerNotifications.length > 0 && (
-        <div className="w-full space-y-4">
-          {centerNotifications.map(notif => (
-            <div 
-              key={notif.id} 
-              onClick={() => { setSelectedNotification(notif); setIsNotifModalOpen(true); }} 
-              className={cn(
-                "w-full rounded-[20px] p-6 shadow-sm flex items-center justify-between gap-4 cursor-pointer transition-all hover:scale-[1.01]",
-                uiMode === 'clean' 
-                  ? "bg-white border border-slate-200 hover:border-indigo-500/50" 
-                  : "bg-gradient-to-r from-indigo-500 to-purple-600 border-2 border-indigo-400 text-white"
-              )}
-            >
-              <div className="flex items-center gap-4">
-                <div className={cn(
-                  "w-14 h-14 rounded-2xl flex items-center justify-center shrink-0 shadow-sm",
-                  uiMode === 'clean' ? "bg-indigo-50 text-indigo-500" : "bg-white/20 text-white border border-white/30 backdrop-blur-sm"
-                )}>
-                  <Bell className="w-7 h-7" />
-                </div>
-                <div>
-                  <h3 className={cn("text-xl font-black mb-1 line-clamp-1", uiMode === 'clean' ? "text-slate-800" : "text-white")}>{notif.title}</h3>
-                  <p className={cn("text-sm font-medium line-clamp-1", uiMode === 'clean' ? "text-slate-500" : "text-indigo-100")}>{notif.content}</p>
-                </div>
-              </div>
-              <ChevronRight className={cn("w-6 h-6 shrink-0", uiMode === 'clean' ? "text-slate-300" : "text-white/50")} />
-            </div>
-          ))}
-        </div>
-      )}
-
       {!isCenterStudent ? (
         <>
           <div className="w-full">

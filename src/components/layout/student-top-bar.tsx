@@ -1,7 +1,7 @@
 "use client";
 
 import { useAuth } from "@/lib/auth-context";
-import { Flame, Diamond, Heart, LogOut, Gem, User } from "lucide-react";
+import { Flame, Diamond, Heart, LogOut, Gem, User, Bell } from "lucide-react";
 import { useEffect, useState, useRef } from "react";
 import { createClient } from "@/lib/supabase";
 import { getInitials, cn, showLogo } from "@/lib/utils";
@@ -102,6 +102,13 @@ export function StudentTopBar() {
           </div>
 
           <div className="flex items-center gap-4 relative" ref={dropdownRef}>
+            <Link 
+              href="/student/notifications"
+              className="w-10 h-10 rounded-full bg-slate-100 flex items-center justify-center hover:bg-slate-200 transition-colors text-slate-600 relative"
+            >
+              <Bell className="w-5 h-5" />
+            </Link>
+
             <button
               onClick={() => setDropdownOpen(!dropdownOpen)}
               className="flex items-center gap-2 px-3 py-1.5 rounded-lg hover:bg-slate-50 border border-transparent hover:border-slate-200 transition-all group"
@@ -225,6 +232,12 @@ export function StudentTopBar() {
                   </span>
                 </div>
               )}
+              <Link 
+                href="/student/notifications"
+                className="w-10 h-10 rounded-full bg-slate-100 flex items-center justify-center hover:bg-slate-200 transition-colors text-slate-500 relative mr-2"
+              >
+                <Bell className="w-5 h-5" />
+              </Link>
               <button
                 onClick={() => setDropdownOpen(!dropdownOpen)}
                 className="flex items-center gap-2.5 p-1.5 pr-3 rounded-2xl hover:bg-slate-100 transition-all border-2 border-transparent hover:border-slate-200"
