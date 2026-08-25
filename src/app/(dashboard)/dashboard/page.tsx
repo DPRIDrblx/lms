@@ -329,16 +329,26 @@ export default function DashboardPage() {
                 <span className="text-xl font-black text-amber-400 drop-shadow-sm">{rank}</span>
               </div>
               
-              <Link href="/student/leaderboard" className="w-full md:w-auto bg-black/20 hover:bg-black/30 transition-colors rounded-[16px] p-4 flex items-center gap-4 cursor-pointer border border-white/5">
-                <div className="w-10 h-10 bg-amber-400/20 rounded-xl flex items-center justify-center">
-                  <Trophy className="w-6 h-6 text-amber-400 drop-shadow-sm" />
-                </div>
-                <div className="flex-1 text-left">
-                  <p className="text-[10px] text-blue-200 uppercase tracking-widest font-bold mb-0.5">Leaderboard</p>
-                  <p className="font-bold text-sm">Lihat Peringkat</p>
-                </div>
-                <ChevronRight className="w-5 h-5 text-white/50" />
-              </Link>
+              <div className="flex flex-col md:flex-row gap-3 w-full md:w-auto">
+                <Link href="/student/leaderboard" className="w-full md:w-auto bg-black/20 hover:bg-black/30 transition-colors rounded-[16px] p-4 flex items-center gap-4 cursor-pointer border border-white/5">
+                  <div className="w-10 h-10 bg-amber-400/20 rounded-xl flex items-center justify-center">
+                    <Trophy className="w-6 h-6 text-amber-400 drop-shadow-sm" />
+                  </div>
+                  <div className="flex-1 text-left">
+                    <p className="text-[10px] text-blue-200 uppercase tracking-widest font-bold mb-0.5">Leaderboard</p>
+                    <p className="font-bold text-sm">Lihat Peringkat</p>
+                  </div>
+                </Link>
+                <Link href="/nia-pedia" className="w-full md:w-auto bg-black/20 hover:bg-black/30 transition-colors rounded-[16px] p-4 flex items-center gap-4 cursor-pointer border border-white/5">
+                  <div className="w-10 h-10 bg-indigo-400/20 rounded-xl flex items-center justify-center">
+                    <BookOpen className="w-6 h-6 text-indigo-300 drop-shadow-sm" />
+                  </div>
+                  <div className="flex-1 text-left">
+                    <p className="text-[10px] text-blue-200 uppercase tracking-widest font-bold mb-0.5">Blog Publik</p>
+                    <p className="font-bold text-sm">NIA Pedia</p>
+                  </div>
+                </Link>
+              </div>
             </div>
           </div>
 

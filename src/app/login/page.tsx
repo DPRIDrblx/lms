@@ -84,9 +84,15 @@ export default function LoginPage() {
           
           {/* Header Row */}
           <div className="flex items-center justify-between mb-12">
-            <Link href="/" className="p-2 hover:bg-slate-100 rounded-full transition-colors">
-              <ArrowLeft className="w-5 h-5 text-slate-600" />
-            </Link>
+            <div className="flex items-center gap-3">
+              <Link href="/" className="p-2 hover:bg-slate-100 rounded-full transition-colors">
+                <ArrowLeft className="w-5 h-5 text-slate-600" />
+              </Link>
+              <Link href="/nia-pedia" className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-indigo-50 text-indigo-600 hover:bg-indigo-100 transition-colors font-bold text-sm">
+                <BookOpen className="w-4 h-4" />
+                NIA Pedia
+              </Link>
+            </div>
             <div className="text-sm font-medium text-slate-500">
               {mode === "signin" ? "New here?" : "Already member?"}{" "}
               <button 
