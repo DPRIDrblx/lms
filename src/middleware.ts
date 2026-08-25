@@ -34,6 +34,7 @@ export async function middleware(request: NextRequest) {
     request.nextUrl.pathname.startsWith("/bayarnia") || 
     request.nextUrl.pathname.startsWith("/api/ai/") || 
     request.nextUrl.pathname.startsWith("/f/") || 
+    request.nextUrl.pathname.startsWith("/nia-pedia") || 
     request.nextUrl.pathname === "/";
 
   // Bypass for static assets and public routes
