@@ -104,20 +104,20 @@ export default function OperatorNiaPediaPage() {
                     </td>
                     <td className="p-4">
                       <div className="flex items-center gap-2">
-                        <Button variant="outline" size="sm" onClick={() => copyLink(post.slug)} title="Copy Link" className="bg-white border-slate-200">
+                        <Button variant="secondary" size="sm" onClick={() => copyLink(post.slug)} title="Copy Link" className="bg-white border-slate-200">
                           <LinkIcon className="w-4 h-4 text-slate-600" />
                         </Button>
                         <Link href={`/nia-pedia/${post.slug}`} target="_blank">
-                          <Button variant="outline" size="sm" title="Buka" className="bg-white border-slate-200">
+                          <Button variant="secondary" size="sm" title="Buka" className="bg-white border-slate-200">
                             <ExternalLink className="w-4 h-4 text-indigo-600" />
                           </Button>
                         </Link>
                         <Link href={`/operator-les/nia-pedia/${post.id}`}>
-                          <Button variant="outline" size="sm" className="text-blue-600 hover:text-blue-700 hover:bg-blue-50 border-blue-200">
+                          <Button variant="secondary" size="sm" className="text-blue-600 hover:text-blue-700 hover:bg-blue-50 border-blue-200">
                             <Edit2 className="w-4 h-4" />
                           </Button>
                         </Link>
-                        <Button variant="outline" size="sm" onClick={() => handleDelete(post.id)} className="text-red-600 hover:text-red-700 hover:bg-red-50 border-red-200">
+                        <Button variant="secondary" size="sm" onClick={() => handleDelete(post.id)} className="text-red-600 hover:text-red-700 hover:bg-red-50 border-red-200">
                           <Trash2 className="w-4 h-4" />
                         </Button>
                       </div>

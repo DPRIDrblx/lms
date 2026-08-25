@@ -6,7 +6,6 @@ import { useParams, useRouter } from "next/navigation";
 import { ArrowLeft, Save, Upload, X, Loader2 } from "lucide-react";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import toast from "react-hot-toast";
 import { RichTextEditor } from "@/components/ui/rich-text-editor";
 
@@ -104,7 +103,7 @@ export default function EditNiaPediaPage() {
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-4">
           <Link href="/operator-les/nia-pedia">
-            <Button variant="outline" size="icon" className="rounded-full">
+            <Button variant="secondary" size="sm" className="rounded-full px-2">
               <ArrowLeft className="w-5 h-5" />
             </Button>
           </Link>
@@ -147,19 +146,20 @@ export default function EditNiaPediaPage() {
         <div className="bg-white rounded-2xl p-6 border border-slate-200 shadow-sm space-y-4">
           <div>
             <label className="block text-sm font-bold text-slate-700 mb-1.5">Judul Artikel <span className="text-red-500">*</span></label>
-            <Input 
+            <input 
               value={title} 
-              onChange={(e) => setTitle(e.target.value)} 
+              onChange={(e: React.ChangeEvent<HTMLInputElement>) => setTitle(e.target.value)} 
               placeholder="Contoh: 5 Tips Belajar Efektif di Rumah" 
-              className="text-lg font-semibold py-6"
+              className="w-full text-lg font-semibold py-3 px-4 rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
             />
           </div>
           <div>
             <label className="block text-sm font-bold text-slate-700 mb-1.5">Kata Kunci (Opsional)</label>
-            <Input 
+            <input 
               value={keywords} 
-              onChange={(e) => setKeywords(e.target.value)} 
+              onChange={(e: React.ChangeEvent<HTMLInputElement>) => setKeywords(e.target.value)} 
               placeholder="Pisahkan dengan koma (contoh: tips belajar, sbmptn, snbt)" 
+              className="w-full py-2 px-4 rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
             />
           </div>
         </div>

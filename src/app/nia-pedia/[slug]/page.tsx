@@ -81,7 +81,7 @@ export default function NiaPediaDetailPage() {
           <Link href="/nia-pedia" className="flex items-center gap-2 text-slate-600 hover:text-indigo-600 transition-colors font-bold text-sm">
             <ArrowLeft className="w-4 h-4" /> Kembali
           </Link>
-          <Button variant="outline" size="sm" onClick={handleShare} className="flex items-center gap-2">
+          <Button variant="secondary" size="sm" onClick={handleShare} className="flex items-center gap-2">
             <Share2 className="w-4 h-4" /> Bagikan
           </Button>
         </div>
