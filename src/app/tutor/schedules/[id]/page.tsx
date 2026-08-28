@@ -152,7 +152,7 @@ export default function LessonWorkspacePage() {
           
           // Fetch stars
           const { data: starData } = await supabase
-            .from("tutor_student_stars")
+            .from("student_stars")
             .select("student_id, stars")
             .eq("schedule_id", sched.id);
             
@@ -197,6 +197,47 @@ export default function LessonWorkspacePage() {
     
     return () => clearInterval(interval);
   }, [schedule?.is_voting_active, schedule?.id, supabase]);
+
+  // Polling for attendances and excuses
+  useEffect(() => {
+    if (!schedule?.id) return;
+    
+    const interval = setInterval(async () => {
+      const { data: attData } = await supabase
+        .from("center_schedule_attendances")
+        .select("student_id, status")
+        .eq("schedule_id", schedule.id);
+        
+      const { data: excData } = await supabase
+        .from("excuse_status")
+        .select("student_id")
+        .eq("schedule_id", schedule.id);
+        
+      const excMap: Record<string, boolean> = {};
+      if (excData) excData.forEach((e: any) => excMap[e.student_id] = true);
+      
+      if (attData && attData.length > 0) {
+        setAttendances(prev => {
+          const newMap = { ...prev };
+          attData.forEach((a: any) => { newMap[a.student_id] = a.status; });
+          return newMap;
+        });
+      }
+      
+      if (excData && excData.length > 0) {
+        setAttendances(prev => {
+           const newMap = { ...prev };
+           excData.forEach((e: any) => { 
+             // Excuse overrides default if no explicit attendance yet
+             if (!newMap[e.student_id]) newMap[e.student_id] = 'izin'; 
+           });
+           return newMap;
+        });
+      }
+    }, 5000);
+    
+    return () => clearInterval(interval);
+  }, [schedule?.id, supabase]);
 
   const handleAttendanceChange = (studentId: string, status: string) => {
     if (schedule?.is_attendance_closed) return;
@@ -766,15 +807,8 @@ export default function LessonWorkspacePage() {
           </Card>
 
           {/* Student Attendance */}
-          <div className={!schedule.topic ? "opacity-50 pointer-events-none transition-opacity" : "transition-opacity"}>
+          <div className="transition-opacity">
             <Card className="p-6 relative overflow-hidden">
-              {!schedule.topic && (
-                <div className="absolute inset-0 z-10 bg-white/60 backdrop-blur-[2px] flex items-center justify-center">
-                  <div className="bg-white px-4 py-2 rounded-lg shadow-lg border border-orange-200 text-orange-700 font-bold text-sm flex items-center gap-2">
-                    <BookOpen className="w-4 h-4" /> Isi Rencana Pembelajaran Dulu
-                  </div>
-                </div>
-              )}
               <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-4">
                 <h2 className="text-lg font-bold text-slate-900 flex items-center gap-2">
                   <Users className="w-5 h-5 text-orange-500" /> Absensi Siswa
@@ -806,7 +840,7 @@ export default function LessonWorkspacePage() {
                         <button 
                           key={star}
                           onClick={() => handleGiveStar(student.id, star)}
-                          disabled={isCompleted || !schedule.topic}
+                          disabled={isCompleted}
                           className={`p-1 transition-all ${
                             (studentStars[student.id] || 0) >= star ? 'text-yellow-500 hover:scale-110' : 'text-yellow-200 hover:text-yellow-400 hover:scale-110'
                           }`}
@@ -840,7 +874,7 @@ export default function LessonWorkspacePage() {
               </div>
             )}
             
-            {!isCompleted && schedule.topic && !schedule.is_attendance_closed && students.length > 0 && (
+            {!isCompleted && !schedule.is_attendance_closed && students.length > 0 && (
               <div className="mt-4 pt-4 border-t border-slate-100">
                 <Button 
                   onClick={handleCloseAttendance}
@@ -859,15 +893,8 @@ export default function LessonWorkspacePage() {
         </div>
 
         {/* Right Column: Documentation & Finish */}
-        <div className={`space-y-6 ${!schedule.topic ? "opacity-50 pointer-events-none transition-opacity" : "transition-opacity"}`}>
+        <div className="space-y-6 transition-opacity">
           <Card className="p-6 relative overflow-hidden">
-            {!schedule.topic && (
-                <div className="absolute inset-0 z-10 bg-white/60 backdrop-blur-[2px] flex items-center justify-center">
-                  <div className="bg-white px-4 py-2 rounded-lg shadow-lg border border-orange-200 text-orange-700 font-bold text-sm text-center">
-                    <BookOpen className="w-4 h-4 mx-auto mb-1" /> Terkunci
-                  </div>
-                </div>
-            )}
             <h2 className="text-lg font-bold text-slate-900 mb-4 flex items-center gap-2">
               <Camera className="w-5 h-5 text-teal-500" /> Dokumentasi
             </h2>
