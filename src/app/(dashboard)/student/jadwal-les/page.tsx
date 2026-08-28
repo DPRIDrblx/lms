@@ -3,15 +3,17 @@
 import { useAuth } from "@/lib/auth-context";
 import { createClient } from "@/lib/supabase";
 import { useEffect, useState, useMemo } from "react";
-import { Calendar, Clock, CheckCircle2, ChevronRight, Star, Link2, KeyRound, FileText, PackageOpen, User, BookOpen } from "lucide-react";
+import { useRouter } from "next/navigation";
+import { Calendar, Clock, CheckCircle2, ChevronRight, Star, Link2, KeyRound, FileText, PackageOpen, User, BookOpen, MapPin } from "lucide-react";
 import { CenterLoader } from "@/components/ui/center-loader";
 import { Card } from "@/components/ui/card";
-import { Modal } from "@/components/ui/modal";
+
 import { Button } from "@/components/ui/button";
 import toast from "react-hot-toast";
 import { useTheme } from "@/lib/theme-context";
 import { cn } from "@/lib/utils";
 import { DateSlider, DateItem } from "@/components/ui/date-slider";
+import { LeaderboardWidget } from "@/components/student/LeaderboardWidget";
 
 const generateDates = (): DateItem[] => {
   const dates: DateItem[] = [];
@@ -32,6 +34,7 @@ export default function JadwalLesPage() {
   const { profile, isCenterStudent } = useAuth();
   const { uiMode } = useTheme();
   const supabase = createClient();
+  const router = useRouter();
   const [schedules, setSchedules] = useState<any[]>([]);
   const [attendances, setAttendances] = useState<Record<string, any>>({});
   const [loading, setLoading] = useState(true);
@@ -39,15 +42,6 @@ export default function JadwalLesPage() {
   // Layout State
   const [activeDate, setActiveDate] = useState<Date>(new Date());
   const dateItems = useMemo(() => generateDates(), []);
-
-  // Modal State
-  const [selectedSchedule, setSelectedSchedule] = useState<any>(null);
-  const [isModalOpen, setIsModalOpen] = useState(false);
-  const [attendanceCodeInput, setAttendanceCodeInput] = useState("");
-  const [isSubmittingAttendance, setIsSubmittingAttendance] = useState(false);
-  const [attendanceMode, setAttendanceMode] = useState<'hadir' | 'izin'>('hadir');
-  const [excuseReason, setExcuseReason] = useState("");
-  const [ratingHover, setRatingHover] = useState(0);
 
   const fetchData = async () => {
     if (!profile?.class_id) {
@@ -58,7 +52,7 @@ export default function JadwalLesPage() {
     // Fetch Schedules
     const { data: schedData } = await supabase
       .from("center_schedules")
-      .select("*, tutor:tutor_id(full_name)")
+      .select("*, tutor:tutor_id(full_name), branch:branch_id(name), room:room_id(room_number)")
       .contains("target_class_ids", [profile.class_id])
       .order("schedule_time", { ascending: true });
       
@@ -94,93 +88,7 @@ export default function JadwalLesPage() {
   }, [profile?.class_id, supabase]);
 
   const handleOpenSchedule = (schedule: any) => {
-    setSelectedSchedule(schedule);
-    setAttendanceCodeInput("");
-    setAttendanceMode("hadir");
-    setExcuseReason("");
-    setIsModalOpen(true);
-  };
-
-  const handleAttend = async () => {
-    if (!selectedSchedule) return;
-    if (!attendanceCodeInput) {
-      toast.error("Masukkan kode presensi dari guru/TU");
-      return;
-    }
-    
-    if (attendanceCodeInput.toUpperCase() !== selectedSchedule.attendance_code?.toUpperCase()) {
-      toast.error("Kode presensi tidak valid");
-      return;
-    }
-
-    setIsSubmittingAttendance(true);
-    const { data, error } = await supabase
-      .from("center_schedule_attendances")
-      .insert({
-        schedule_id: selectedSchedule.id,
-        student_id: profile?.id
-      })
-      .select()
-      .single();
-
-    setIsSubmittingAttendance(false);
-
-    if (error) {
-      toast.error(error.message);
-    } else {
-      toast.success("Berhasil presensi!");
-      setAttendances(prev => ({ ...prev, [selectedSchedule.id]: data }));
-    }
-  };
-
-  const handleExcuse = async () => {
-    if (!selectedSchedule) return;
-    if (!excuseReason) {
-      toast.error("Pilih alasan izin");
-      return;
-    }
-
-    setIsSubmittingAttendance(true);
-    const { data, error } = await supabase
-      .from("center_schedule_attendances")
-      .insert({
-        schedule_id: selectedSchedule.id,
-        student_id: profile?.id,
-        status: "izin",
-        excuse_reason: excuseReason
-      })
-      .select()
-      .single();
-
-    setIsSubmittingAttendance(false);
-
-    if (error) {
-      toast.error(error.message);
-    } else {
-      toast.success("Berhasil mengajukan izin!");
-      setAttendances(prev => ({ ...prev, [selectedSchedule.id]: data }));
-    }
-  };
-
-  const handleRate = async (rating: number) => {
-    if (!selectedSchedule) return;
-    const attendance = attendances[selectedSchedule.id];
-    if (!attendance || attendance.rating) return; // Cannot rate if not attended or already rated
-
-    const { error } = await supabase
-      .from("center_schedule_attendances")
-      .update({ rating })
-      .eq("id", attendance.id);
-
-    if (error) {
-      toast.error("Gagal mengirim rating");
-    } else {
-      toast.success("Terima kasih atas penilaianmu!");
-      setAttendances(prev => ({
-        ...prev,
-        [selectedSchedule.id]: { ...attendance, rating }
-      }));
-    }
+    router.push(`/student/jadwal-les/${schedule.id}`);
   };
 
   if (!isCenterStudent) {
@@ -219,6 +127,8 @@ export default function JadwalLesPage() {
           </div>
         </div>
       )}
+
+      <LeaderboardWidget />
 
       {uiMode === 'clean' ? (
         <div className="bg-white rounded-[20px] shadow-sm border border-slate-200 overflow-hidden">
@@ -419,240 +329,7 @@ export default function JadwalLesPage() {
         </div>
       )}
 
-      <Modal
-        isOpen={isModalOpen}
-        onClose={() => setIsModalOpen(false)}
-        title="Detail Jadwal Les"
-        size="lg"
-      >
-        {selectedSchedule && (() => {
-          const dateObj = new Date(selectedSchedule.schedule_time);
-          const isAttended = !!attendances[selectedSchedule.id];
-          const attendanceData = attendances[selectedSchedule.id];
 
-          return (
-            <div className="space-y-6">
-              <div className="bg-slate-50 p-5 rounded-2xl border border-slate-100">
-                <h2 className="text-2xl font-black text-slate-800 mb-2">{selectedSchedule.title}</h2>
-                <p className="text-slate-600 font-medium mb-4">{selectedSchedule.description || "Tidak ada deskripsi."}</p>
-                
-                <div className="flex flex-wrap items-center gap-4 text-sm font-bold text-slate-600">
-                  <span className="flex items-center gap-1.5">
-                    <Calendar className="w-4 h-4 text-blue-500" />
-                    {dateObj.toLocaleDateString('id-ID', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' })}
-                  </span>
-                  <span className="flex items-center gap-1.5">
-                    <Clock className="w-4 h-4 text-amber-500" />
-                    {selectedSchedule.schedule_time.substring(0, 5)} WIB
-                  </span>
-                  {selectedSchedule.tutor?.full_name && (
-                    <span className="flex items-center gap-1.5 bg-indigo-50 text-indigo-700 px-2 py-1 rounded-md border border-indigo-100">
-                      <User className="w-4 h-4 text-indigo-500" />
-                      Tutor: {selectedSchedule.tutor.full_name}
-                    </span>
-                  )}
-                </div>
-              </div>
-
-              {selectedSchedule.topic && (
-                <div className="bg-white border border-slate-200 rounded-xl p-4 shadow-sm">
-                  <h4 className="text-xs font-black uppercase tracking-wider text-slate-500 mb-2">Materi Pembelajaran</h4>
-                  <div className="space-y-1">
-                    <p className="font-bold text-slate-800 flex items-start gap-2">
-                      <BookOpen className="w-4 h-4 text-indigo-500 mt-0.5 shrink-0" /> 
-                      <span>{selectedSchedule.topic}</span>
-                    </p>
-                    {selectedSchedule.subtopic && (
-                      <p className="text-sm font-medium text-slate-600 pl-6">
-                        {selectedSchedule.subtopic}
-                      </p>
-                    )}
-                  </div>
-                </div>
-              )}
-
-              {selectedSchedule.meeting_link && (
-                <div>
-                  <h4 className="text-sm font-black uppercase tracking-wider text-slate-500 mb-2">Link Pertemuan (Zoom/Meet)</h4>
-                  <a 
-                    href={selectedSchedule.meeting_link}
-                    target="_blank"
-                    rel="noreferrer"
-                    className="flex items-center justify-between bg-blue-50 p-4 rounded-xl border border-blue-100 hover:bg-blue-100 transition-colors group"
-                  >
-                    <div className="flex items-center gap-3 text-blue-700 font-bold">
-                      <div className="w-10 h-10 bg-white rounded-lg flex items-center justify-center shadow-sm">
-                        <Link2 className="w-5 h-5 text-blue-500" />
-                      </div>
-                      Gabung ke Kelas Online
-                    </div>
-                    <ChevronRight className="w-5 h-5 text-blue-300 group-hover:text-blue-500 transition-colors" />
-                  </a>
-                </div>
-              )}
-
-              {selectedSchedule.material_link && (
-                <div>
-                  <h4 className="text-sm font-black uppercase tracking-wider text-slate-500 mb-2">Bahan Ajar / Modul</h4>
-                  <a 
-                    href={selectedSchedule.material_link}
-                    target="_blank"
-                    rel="noreferrer"
-                    className="flex items-center justify-between bg-emerald-50 p-4 rounded-xl border border-emerald-100 hover:bg-emerald-100 transition-colors group"
-                  >
-                    <div className="flex items-center gap-3 text-emerald-700 font-bold">
-                      <div className="w-10 h-10 bg-white rounded-lg flex items-center justify-center shadow-sm">
-                        <FileText className="w-5 h-5 text-emerald-500" />
-                      </div>
-                      Buka Materi Pelajaran
-                    </div>
-                    <ChevronRight className="w-5 h-5 text-emerald-300 group-hover:text-emerald-500 transition-colors" />
-                  </a>
-                </div>
-              )}
-
-              {/* Attendance Section */}
-              <div className="border-t border-slate-100 pt-6">
-                {!isAttended ? (
-                  <div className="bg-slate-50 border border-slate-200 p-5 rounded-2xl">
-                    <div className="flex items-center gap-2 mb-4 p-1 bg-white rounded-lg border border-slate-200 w-fit">
-                      <button 
-                        onClick={() => setAttendanceMode('hadir')}
-                        className={cn("px-4 py-2 rounded-md text-sm font-bold transition-all", attendanceMode === 'hadir' ? "bg-amber-100 text-amber-700" : "text-slate-500 hover:text-slate-700")}
-                      >
-                        Presensi Kehadiran
-                      </button>
-                      <button 
-                        onClick={() => setAttendanceMode('izin')}
-                        className={cn("px-4 py-2 rounded-md text-sm font-bold transition-all", attendanceMode === 'izin' ? "bg-amber-100 text-amber-700" : "text-slate-500 hover:text-slate-700")}
-                      >
-                        Izin Absen
-                      </button>
-                    </div>
-
-                    {attendanceMode === 'hadir' ? (
-                      <div>
-                        <h4 className="font-black text-amber-900 mb-2 flex items-center gap-2">
-                          <KeyRound className="w-5 h-5 text-amber-600" /> Presensi Kehadiran
-                        </h4>
-                        <p className="text-sm text-amber-800 font-medium mb-4">
-                          Masukkan 6 digit kode dari Tutor/TU untuk mencatat kehadiranmu.
-                        </p>
-                        <div className="flex gap-3">
-                          <input 
-                            type="text" 
-                            placeholder="Kode Presensi"
-                            maxLength={6}
-                            value={attendanceCodeInput}
-                            onChange={(e) => setAttendanceCodeInput(e.target.value.toUpperCase())}
-                            className="flex-1 px-4 py-3 rounded-xl border border-amber-300 focus:border-amber-500 outline-none font-black text-center tracking-[0.3em] uppercase bg-white text-slate-800"
-                          />
-                          <Button 
-                            onClick={handleAttend}
-                            disabled={isSubmittingAttendance || attendanceCodeInput.length < 4}
-                            className="bg-amber-500 hover:bg-amber-600 text-white font-bold px-8 h-auto rounded-xl"
-                          >
-                            {isSubmittingAttendance ? <CenterLoader size="sm" /> : "Hadir"}
-                          </Button>
-                        </div>
-                      </div>
-                    ) : (
-                      <div>
-                        <h4 className="font-black text-amber-900 mb-2 flex items-center gap-2">
-                          Ajukan Izin
-                        </h4>
-                        <p className="text-sm text-amber-800 font-medium mb-4">
-                          Pilih alasan kenapa kamu tidak bisa hadir.
-                        </p>
-                        <div className="flex flex-col gap-3">
-                          <select 
-                            className="w-full p-3 rounded-xl border border-amber-300 bg-white text-slate-700 font-medium outline-none focus:border-amber-500"
-                            value={excuseReason}
-                            onChange={(e) => setExcuseReason(e.target.value)}
-                          >
-                            <option value="">-- Pilih Alasan --</option>
-                            <option value="Sakit">Sakit</option>
-                            <option value="Acara Keluarga">Acara Keluarga</option>
-                            <option value="Acara Sekolah">Acara Sekolah</option>
-                            <option value="Lainnya">Lainnya</option>
-                          </select>
-                          <Button 
-                            onClick={handleExcuse}
-                            disabled={isSubmittingAttendance || !excuseReason}
-                            className="bg-amber-500 hover:bg-amber-600 text-white font-bold w-full rounded-xl"
-                          >
-                            {isSubmittingAttendance ? <CenterLoader size="sm" /> : "Kirim Izin"}
-                          </Button>
-                        </div>
-                      </div>
-                    )}
-                  </div>
-                ) : attendanceData.status === 'izin' ? (
-                  <div className="bg-amber-50 border border-amber-200 p-5 rounded-2xl flex items-center gap-4">
-                    <div className="w-12 h-12 bg-amber-100 rounded-full flex items-center justify-center shrink-0">
-                      <Calendar className="w-6 h-6 text-amber-600" />
-                    </div>
-                    <div>
-                      <h4 className="font-black text-amber-900 mb-0.5">Izin Tercatat</h4>
-                      <p className="text-sm text-amber-800 font-medium">Alasan: {attendanceData.excuse_reason}</p>
-                    </div>
-                  </div>
-                ) : (
-                  <div className="bg-emerald-50 border border-emerald-200 p-5 rounded-2xl flex items-center gap-4">
-                    <div className="w-12 h-12 bg-emerald-100 rounded-full flex items-center justify-center shrink-0">
-                      <CheckCircle2 className="w-6 h-6 text-emerald-600" />
-                    </div>
-                    <div>
-                      <h4 className="font-black text-emerald-900 mb-0.5">Kehadiran Tercatat</h4>
-                      <p className="text-sm text-emerald-800 font-medium">Kamu sudah presensi pada {new Date(attendanceData.created_at).toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' })} WIB.</p>
-                    </div>
-                  </div>
-                )}
-              </div>
-
-              {/* Rating Section - Updated Redesign */}
-              {isAttended && (
-                <div className="pt-2">
-                  <div className="bg-amber-50/80 border border-amber-200 p-6 rounded-[20px] flex flex-col sm:flex-row gap-5 items-center justify-between shadow-sm">
-                    <div>
-                      <h4 className="font-black text-amber-900 text-[17px] mb-1 flex items-center gap-2">
-                        Beri Penilaian
-                      </h4>
-                      <p className="text-[13px] text-amber-800/80 font-semibold">
-                        {attendanceData.rating 
-                          ? "Terima kasih atas penilaian Anda." 
-                          : "Bagaimana pengalamanmu belajar di sesi ini?"}
-                      </p>
-                    </div>
-                    
-                    <div className="flex items-center gap-2">
-                      {[1, 2, 3, 4, 5].map((star) => {
-                        const currentRating = attendanceData.rating || 0;
-                        const isFilled = star <= (ratingHover || currentRating);
-                        return (
-                          <button
-                            key={star}
-                            disabled={!!attendanceData.rating}
-                            className={`p-1 transition-transform ${!attendanceData.rating ? 'hover:scale-110' : 'cursor-default'}`}
-                            onMouseEnter={() => !attendanceData.rating && setRatingHover(star)}
-                            onMouseLeave={() => !attendanceData.rating && setRatingHover(0)}
-                            onClick={() => handleRate(star)}
-                          >
-                            <Star 
-                              className={`w-10 h-10 ${isFilled ? 'fill-yellow-400 text-yellow-400 drop-shadow-sm' : 'fill-transparent text-slate-300'}`} 
-                            />
-                          </button>
-                        );
-                      })}
-                    </div>
-                  </div>
-                </div>
-              )}
-
-            </div>
-          );
-        })()}
-      </Modal>
     </div>
     </div>
   );

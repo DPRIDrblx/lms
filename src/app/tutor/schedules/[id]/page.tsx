@@ -23,8 +23,41 @@ export default function LessonWorkspacePage() {
   const [schedule, setSchedule] = useState<any>(null);
   const [students, setStudents] = useState<any[]>([]);
   const [attendances, setAttendances] = useState<Record<string, string>>({});
+  const [studentStars, setStudentStars] = useState<Record<string, number>>({});
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
+  const [closingAttendance, setClosingAttendance] = useState(false);
+  const [timeLeft, setTimeLeft] = useState("");
+
+  useEffect(() => {
+    if (!schedule) return;
+    
+    const updateCountdown = () => {
+      const now = new Date().getTime();
+      const schedTime = new Date(schedule.schedule_time).getTime();
+      const diff = schedTime - now;
+
+      if (diff <= 0) {
+        setTimeLeft("Sedang Berlangsung");
+        return;
+      }
+
+      const hours = Math.floor((diff % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+      const minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
+      const seconds = Math.floor((diff % (1000 * 60)) / 1000);
+      
+      let timeString = "";
+      if (hours > 0) timeString += `${hours} Jam `;
+      if (minutes > 0) timeString += `${minutes} Menit `;
+      timeString += `${seconds} Detik Lagi!`;
+      
+      setTimeLeft(timeString);
+    };
+
+    updateCountdown();
+    const timer = setInterval(updateCountdown, 1000);
+    return () => clearInterval(timer);
+  }, [schedule]);
 
   // Lesson Plan States
   const [selectedLevel, setSelectedLevel] = useState<string>("");
@@ -47,7 +80,7 @@ export default function LessonWorkspacePage() {
     setLoading(true);
     const { data: sched } = await supabase
       .from("center_schedules")
-      .select("*, classes(name)")
+      .select("*, classes(name), branch:branch_id(name), room:room_id(room_number)")
       .eq("id", id)
       .single();
 
@@ -83,14 +116,46 @@ export default function LessonWorkspacePage() {
             .select("student_id, status")
             .eq("schedule_id", sched.id);
             
+          // Fetch excuses
+          const { data: excData } = await supabase
+            .from("excuse_status")
+            .select("student_id")
+            .eq("schedule_id", sched.id);
+            
+          const excMap: Record<string, boolean> = {};
+          if (excData) excData.forEach((e: any) => excMap[e.student_id] = true);
+
           if (attData) {
             const attMap: Record<string, string> = {};
             attData.forEach((a: any) => { attMap[a.student_id] = a.status; });
-            // For students without attendance record yet, default to 'hadir'
+            
+            // For students without attendance record yet
             stds.forEach((s: any) => {
-              if (!attMap[s.id]) attMap[s.id] = 'hadir';
+              if (excMap[s.id]) {
+                attMap[s.id] = 'izin';
+              } else if (!attMap[s.id]) {
+                attMap[s.id] = 'hadir'; // default
+              }
             });
             setAttendances(attMap);
+          } else {
+            const attMap: Record<string, string> = {};
+            stds.forEach((s: any) => {
+              attMap[s.id] = excMap[s.id] ? 'izin' : 'hadir';
+            });
+            setAttendances(attMap);
+          }
+          
+          // Fetch stars
+          const { data: starData } = await supabase
+            .from("student_stars")
+            .select("student_id, stars")
+            .eq("schedule_id", sched.id);
+            
+          if (starData) {
+            const starMap: Record<string, number> = {};
+            starData.forEach((s: any) => { starMap[s.student_id] = s.stars; });
+            setStudentStars(starMap);
           }
         }
       }
@@ -103,7 +168,53 @@ export default function LessonWorkspacePage() {
   }, [id]);
 
   const handleAttendanceChange = (studentId: string, status: string) => {
+    if (schedule?.is_attendance_closed) return;
     setAttendances(prev => ({ ...prev, [studentId]: status }));
+  };
+
+  const handleGiveStar = async (studentId: string, starCount: number) => {
+    if (schedule.status === 'completed') return;
+    
+    // Update local state first for immediate feedback
+    setStudentStars(prev => ({ ...prev, [studentId]: starCount }));
+    
+    // Check if already exist
+    const { data: existing } = await supabase
+      .from("student_stars")
+      .select("id")
+      .eq("schedule_id", schedule.id)
+      .eq("student_id", studentId)
+      .single();
+      
+    if (existing) {
+      await supabase.from("student_stars").update({ stars: starCount }).eq("id", existing.id);
+    } else {
+      await supabase.from("student_stars").insert({
+        student_id: studentId,
+        tutor_id: profile?.id,
+        schedule_id: schedule.id,
+        stars: starCount
+      });
+    }
+    toast.success(`Diberikan ${starCount} bintang!`);
+  };
+
+  const handleCloseAttendance = async () => {
+    if (!window.confirm("Yakin ingin menutup sesi presensi? Siswa tidak akan bisa izin lagi setelah ini.")) return;
+    
+    setClosingAttendance(true);
+    const { error } = await supabase
+      .from("center_schedules")
+      .update({ is_attendance_closed: true })
+      .eq("id", schedule.id);
+      
+    if (error) {
+      toast.error(error.message);
+    } else {
+      toast.success("Sesi presensi ditutup!");
+      setSchedule((prev: any) => ({ ...prev, is_attendance_closed: true }));
+    }
+    setClosingAttendance(false);
   };
 
   const handlePhotoUpload = async (e: React.ChangeEvent<HTMLInputElement>, type: 'start' | 'end') => {
@@ -345,11 +456,28 @@ export default function LessonWorkspacePage() {
           <div className="flex items-center gap-2">
             <h1 className="text-2xl font-black text-slate-900">{schedule.title}</h1>
             {isCompleted && <span className="px-2 py-1 bg-green-100 text-green-700 text-xs font-bold rounded-lg">Selesai</span>}
+            {!isCompleted && timeLeft && (
+              <span className={`px-3 py-1 text-xs font-bold rounded-lg animate-pulse ${
+                timeLeft === 'Sedang Berlangsung' ? 'bg-red-100 text-red-700' : 'bg-amber-100 text-amber-700'
+              }`}>
+                {timeLeft}
+              </span>
+            )}
           </div>
-          <p className="text-slate-500 font-medium flex items-center gap-2 text-sm mt-1">
-            <Clock className="w-4 h-4" /> {new Date(schedule.schedule_time).toLocaleString('id-ID')}
-            <span className="mx-2">•</span>
-            <Users className="w-4 h-4" /> Kelas: {schedule.classes?.name || 'Umum'}
+          <p className="text-slate-500 font-medium flex flex-wrap items-center gap-3 text-sm mt-2">
+            <span className="flex items-center gap-1"><Clock className="w-4 h-4" /> {new Date(schedule.schedule_time).toLocaleString('id-ID')}</span>
+            <span className="text-slate-300">•</span>
+            <span className="flex items-center gap-1"><Users className="w-4 h-4" /> Kelas: {schedule.classes?.name || 'Umum'}</span>
+            {schedule.branch && (
+              <>
+                <span className="text-slate-300">•</span>
+                <span className="flex items-center gap-1 text-indigo-600 font-bold bg-indigo-50 px-2 py-0.5 rounded">
+                  <MapPin className="w-4 h-4" /> 
+                  Cabang {schedule.branch.name}
+                  {schedule.room && ` - Ruang ${schedule.room.room_number}`}
+                </span>
+              </>
+            )}
           </p>
         </div>
       </div>
@@ -528,13 +656,17 @@ export default function LessonWorkspacePage() {
                   </div>
                 </div>
               )}
-              <div className="flex justify-between items-center mb-4">
               <h2 className="text-lg font-bold text-slate-900 flex items-center gap-2">
                 <Users className="w-5 h-5 text-orange-500" /> Absensi Siswa
               </h2>
-              <div className="flex items-center gap-2 bg-slate-100 px-3 py-1 rounded-lg">
-                <KeyRound className="w-4 h-4 text-slate-500" />
-                <span className="font-mono font-bold tracking-widest text-slate-900">{schedule.attendance_code}</span>
+              <div className="flex items-center gap-3">
+                {schedule.is_attendance_closed && (
+                  <span className="text-xs font-bold bg-red-100 text-red-700 px-2 py-1 rounded">Ditutup</span>
+                )}
+                <div className="flex items-center gap-2 bg-slate-100 px-3 py-1 rounded-lg">
+                  <KeyRound className="w-4 h-4 text-slate-500" />
+                  <span className="font-mono font-bold tracking-widest text-slate-900">{schedule.attendance_code}</span>
+                </div>
               </div>
             </div>
             
@@ -543,16 +675,32 @@ export default function LessonWorkspacePage() {
             ) : (
               <div className="space-y-2">
                 {students.map(student => (
-                  <div key={student.id} className="flex items-center justify-between p-3 border border-slate-100 rounded-xl hover:bg-slate-50">
-                    <div>
+                  <div key={student.id} className="flex items-center justify-between p-3 border border-slate-100 rounded-xl hover:bg-slate-50 flex-wrap gap-2">
+                    <div className="flex-1 min-w-[150px]">
                       <p className="font-bold text-slate-900 text-sm">{student.full_name}</p>
                       <p className="text-xs text-slate-500">{student.nis || 'NIS -'}</p>
                     </div>
+                    
+                    <div className="flex items-center gap-1 bg-yellow-50 px-2 py-1 rounded-lg mr-2" title="Beri Bintang Keaktifan">
+                      {[1,2,3,4,5].map(star => (
+                        <button 
+                          key={star}
+                          onClick={() => handleGiveStar(student.id, star)}
+                          disabled={isCompleted || !schedule.topic}
+                          className={`p-1 transition-all ${
+                            (studentStars[student.id] || 0) >= star ? 'text-yellow-500 hover:scale-110' : 'text-yellow-200 hover:text-yellow-400 hover:scale-110'
+                          }`}
+                        >
+                          <svg className="w-4 h-4 fill-current" viewBox="0 0 24 24"><path d="M12 17.27L18.18 21l-1.64-7.03L22 9.24l-7.19-.61L12 2 9.19 8.63 2 9.24l5.46 4.73L5.82 21z"/></svg>
+                        </button>
+                      ))}
+                    </div>
+
                     <div className="flex gap-1">
                       {['hadir', 'sakit', 'izin', 'absen'].map(status => (
                         <button
                           key={status}
-                          disabled={isCompleted}
+                          disabled={isCompleted || schedule.is_attendance_closed}
                           onClick={() => handleAttendanceChange(student.id, status)}
                           className={`px-3 py-1 text-xs font-bold rounded-lg capitalize transition-colors ${
                             attendances[student.id] === status
@@ -569,6 +717,21 @@ export default function LessonWorkspacePage() {
                     </div>
                   </div>
                 ))}
+              </div>
+            )}
+            
+            {!isCompleted && schedule.topic && !schedule.is_attendance_closed && students.length > 0 && (
+              <div className="mt-4 pt-4 border-t border-slate-100">
+                <Button 
+                  onClick={handleCloseAttendance}
+                  disabled={closingAttendance}
+                  variant="outline"
+                  className="w-full border-red-200 text-red-600 hover:bg-red-50"
+                >
+                  {closingAttendance ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : <KeyRound className="w-4 h-4 mr-2" />}
+                  Tutup Sesi Presensi & Izin
+                </Button>
+                <p className="text-center text-xs text-slate-400 mt-2">Setelah ditutup, siswa tidak bisa mengisi presensi lagi di aplikasi mereka.</p>
               </div>
             )}
             </Card>

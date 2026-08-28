@@ -13,6 +13,7 @@ import { useTheme } from "@/lib/theme-context";
 import { cn } from "@/lib/utils";
 import { TabsSlider, TabItem } from "@/components/ui/tabs-slider";
 import { DateSlider, DateItem } from "@/components/ui/date-slider";
+import { LeaderboardWidget } from "@/components/student/LeaderboardWidget";
 
 const TABS: TabItem[] = [
   { id: "tersedia", label: "Sesi Tersedia" },
@@ -288,6 +289,8 @@ export default function KlinikTanyaTutorPage() {
           </div>
         </div>
       )}
+
+      <LeaderboardWidget />
 
       {uiMode === 'clean' && (
         <div className="bg-white rounded-[20px] shadow-sm border border-slate-200 overflow-hidden">
