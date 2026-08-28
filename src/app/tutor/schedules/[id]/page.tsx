@@ -726,7 +726,7 @@ export default function LessonWorkspacePage() {
                 <Button 
                   onClick={handleCloseAttendance}
                   disabled={closingAttendance}
-                  variant="outline"
+                  variant="secondary"
                   className="w-full border-red-200 text-red-600 hover:bg-red-50"
                 >
                   {closingAttendance ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : <KeyRound className="w-4 h-4 mr-2" />}
