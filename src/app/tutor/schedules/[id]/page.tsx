@@ -9,7 +9,7 @@ import { Button } from "@/components/ui/button";
 import { TUTORING_TOPICS, EducationLevel, Subject, Topic } from "@/lib/tutoring-topics";
 import { 
   ArrowLeft, Clock, Users, BookOpen, Save, CheckCircle2, 
-  Camera, FileText, Loader2, KeyRound, Sparkles 
+  Camera, FileText, Loader2, KeyRound, Sparkles, MapPin, Star
 } from "lucide-react";
 import toast from "react-hot-toast";
 import jsPDF from "jspdf";
