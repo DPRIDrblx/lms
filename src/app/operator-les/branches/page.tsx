@@ -3,8 +3,9 @@
 import React, { useState, useEffect } from "react";
 import { createClient } from "@/lib/supabase";
 import { useConfirmStore } from "@/components/ui/GlobalConfirmModal";
-import { Plus, Trash2, MapPin, Building, Map } from "lucide-react";
+import { Plus, Trash2, MapPin, Building, Map, Grid2X2 } from "lucide-react";
 import { motion } from "framer-motion";
+import Link from "next/link";
 
 export default function BranchesPage() {
   const supabase = createClient();
@@ -111,10 +112,13 @@ export default function BranchesPage() {
                     <MapPin className="w-4 h-4 mt-0.5 shrink-0" />
                     <p className="leading-tight">{branch.address}</p>
                   </div>
-                  <div className="flex items-center gap-2 text-slate-500 text-xs font-medium">
+                  <div className="flex items-center gap-2 text-slate-500 text-xs font-medium mb-4">
                     <Map className="w-4 h-4" />
                     {branch.city}, {branch.province}
                   </div>
+                  <Link href={`/operator-les/branches/${branch.id}/rooms`} className="inline-flex items-center gap-2 px-3 py-1.5 bg-slate-50 text-slate-700 text-sm font-bold rounded-lg border border-slate-200 hover:bg-slate-100 transition-colors">
+                    <Grid2X2 className="w-4 h-4" /> Kelola Ruangan
+                  </Link>
                 </div>
               </div>
             </motion.div>
