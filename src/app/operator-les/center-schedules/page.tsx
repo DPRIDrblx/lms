@@ -4,7 +4,7 @@ import { useEffect, useState } from "react";
 import { createClient } from "@/lib/supabase";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Calendar, Clock, Trash2, Plus, Users, Link2, KeyRound, FileText, ChevronRight, Edit3 } from "lucide-react";
+import { Calendar, Clock, Trash2, Plus, Users, Link2, KeyRound, FileText, ChevronRight, Edit3, MapPin } from "lucide-react";
 import toast from "react-hot-toast";
 import { Modal } from "@/components/ui/modal";
 
@@ -33,6 +33,7 @@ export default function CenterSchedulesManager() {
   const supabase = createClient();
   const [schedules, setSchedules] = useState<any[]>([]);
   const [classes, setClasses] = useState<any[]>([]);
+  const [branches, setBranches] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   
   // Form State
@@ -43,6 +44,7 @@ export default function CenterSchedulesManager() {
   const [targetClassIds, setTargetClassIds] = useState<string[]>([]);
   const [driveLink, setDriveLink] = useState("");
   const [bannerUrl, setBannerUrl] = useState("");
+  const [branchId, setBranchId] = useState("");
   const [editingId, setEditingId] = useState<string | null>(null);
 
   // Summary Modal State
@@ -57,6 +59,10 @@ export default function CenterSchedulesManager() {
     const { data: clsData } = await supabase.from("classes").select("*").order("name");
     const regularClasses = ["7A", "7B", "7C", "7D", "8A", "8B", "8C", "8D", "9A", "9B", "9C", "9D"];
     if (clsData) setClasses(clsData.filter((c: any) => !regularClasses.includes(c.name)));
+
+    // Fetch branches
+    const { data: branchData } = await supabase.from("nia_branches").select("*").order("name");
+    if (branchData) setBranches(branchData);
 
     // Fetch schedules
     const { data: schedData } = await supabase
@@ -98,7 +104,8 @@ export default function CenterSchedulesManager() {
         target_class_ids: targetClassIds,
         class_id: targetClassIds[0] || null, // Fallback
         drive_link: driveLink,
-        banner_url: bannerUrl || null
+        banner_url: bannerUrl || null,
+        branch_id: branchId || null
       }).eq("id", editingId);
 
       if (error) {
@@ -118,7 +125,8 @@ export default function CenterSchedulesManager() {
         class_id: targetClassIds[0] || null, // Fallback
         drive_link: driveLink,
         attendance_code: attendanceCode,
-        banner_url: bannerUrl || null
+        banner_url: bannerUrl || null,
+        branch_id: branchId || null
       });
 
       if (error) {
@@ -138,6 +146,7 @@ export default function CenterSchedulesManager() {
     setDescription("");
     setDriveLink("");
     setBannerUrl("");
+    setBranchId("");
     setTargetClassIds([]);
     setEditingId(null);
   };
@@ -151,6 +160,7 @@ export default function CenterSchedulesManager() {
     setTargetClassIds(schedule.target_class_ids || (schedule.class_id ? [schedule.class_id] : []));
     setDriveLink(schedule.drive_link || "");
     setBannerUrl(schedule.banner_url || "");
+    setBranchId(schedule.branch_id || "");
     setEditingId(schedule.id);
     
     // Scroll to form (mobile friendly)
@@ -236,6 +246,20 @@ export default function CenterSchedulesManager() {
                     </label>
                   ))}
                 </div>
+              </div>
+
+              <div>
+                <label className="block text-sm font-bold text-slate-700 mb-1">Cabang (Opsional)</label>
+                <select 
+                  className="w-full p-3 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500"
+                  value={branchId}
+                  onChange={(e) => setBranchId(e.target.value)}
+                >
+                  <option value="">-- Bebas Cabang / Tentukan Nanti --</option>
+                  {branches.map(b => (
+                    <option key={b.id} value={b.id}>{b.name}</option>
+                  ))}
+                </select>
               </div>
 
               <div>
@@ -378,6 +402,12 @@ export default function CenterSchedulesManager() {
                           <div className="flex items-center gap-2 text-emerald-600 bg-emerald-50 w-fit px-2 py-1 rounded-md">
                             <KeyRound className="w-4 h-4" />
                             Kode Presensi: <span className="font-black tracking-widest">{s.attendance_code}</span>
+                          </div>
+                        )}
+                        {s.branch_id && (
+                          <div className="flex items-center gap-2 text-indigo-600 bg-indigo-50 w-fit px-2 py-1 rounded-md mt-1">
+                            <MapPin className="w-4 h-4" />
+                            Cabang: <span className="font-bold">{branches.find(b => b.id === s.branch_id)?.name || "Unknown"}</span>
                           </div>
                         )}
                       </div>

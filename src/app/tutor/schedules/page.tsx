@@ -5,9 +5,10 @@ import { createClient } from "@/lib/supabase";
 import { useAuth } from "@/lib/auth-context";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Calendar, Clock, MapPin, Users, UserPlus, ArrowRight, CheckCircle2 } from "lucide-react";
+import { Calendar, Clock, MapPin, Users, UserPlus, ArrowRight, CheckCircle2, Building, DoorOpen } from "lucide-react";
 import toast from "react-hot-toast";
 import { useRouter } from "next/navigation";
+import { Modal } from "@/components/ui/modal";
 
 export default function TutorSchedulesPage() {
   const { profile } = useAuth();
@@ -21,7 +22,7 @@ export default function TutorSchedulesPage() {
     // Fetch upcoming center schedules
     const { data, error } = await supabase
       .from("center_schedules")
-      .select("*, classes(name), tutor:tutor_id(full_name)")
+      .select("*, classes(name), tutor:tutor_id(full_name), branch:branch_id(name), room:room_id(room_number)")
       .order("schedule_time", { ascending: true });
 
     if (data) {
@@ -34,20 +35,57 @@ export default function TutorSchedulesPage() {
     fetchSchedules();
   }, []);
 
-  const claimSchedule = async (scheduleId: string) => {
-    if (!profile) return;
+  const [isClaimModalOpen, setIsClaimModalOpen] = useState(false);
+  const [claimingSchedule, setClaimingSchedule] = useState<any>(null);
+  const [availableRooms, setAvailableRooms] = useState<any[]>([]);
+  const [selectedRoomId, setSelectedRoomId] = useState("");
+  const [loadingRooms, setLoadingRooms] = useState(false);
+
+  const handleOpenClaimModal = async (sched: any) => {
+    setClaimingSchedule(sched);
+    setSelectedRoomId("");
+    setIsClaimModalOpen(true);
+    
+    if (sched.branch_id) {
+      setLoadingRooms(true);
+      const { data } = await supabase
+        .from("branch_rooms")
+        .select("*")
+        .eq("branch_id", sched.branch_id)
+        .order("floor", { ascending: true })
+        .order("room_number", { ascending: true });
+      if (data) setAvailableRooms(data);
+      setLoadingRooms(false);
+    } else {
+      setAvailableRooms([]);
+    }
+  };
+
+  const claimSchedule = async () => {
+    if (!profile || !claimingSchedule) return;
+    
+    if (claimingSchedule.branch_id && !selectedRoomId) {
+      toast.error("Silakan pilih ruangan terlebih dahulu.");
+      return;
+    }
+
     const toastId = toast.loading("Mengklaim jadwal...");
     
     const { error } = await supabase
       .from("center_schedules")
-      .update({ tutor_id: profile.id, status: 'scheduled' })
-      .eq("id", scheduleId)
+      .update({ 
+        tutor_id: profile.id, 
+        status: 'scheduled',
+        room_id: selectedRoomId || null
+      })
+      .eq("id", claimingSchedule.id)
       .is("tutor_id", null); // Ensure it's not already claimed
 
     if (error) {
       toast.error("Gagal mengklaim jadwal. Mungkin sudah diklaim tutor lain.", { id: toastId });
     } else {
       toast.success("Jadwal berhasil diklaim!", { id: toastId });
+      setIsClaimModalOpen(false);
       fetchSchedules();
     }
   };
@@ -91,6 +129,13 @@ export default function TutorSchedulesPage() {
                       <Clock className="w-4 h-4 text-slate-400" />
                       {new Date(sched.schedule_time).toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' })} WIB
                     </div>
+                    {sched.branch && (
+                      <div className="flex items-center gap-2 text-indigo-600 font-semibold pt-1">
+                        <MapPin className="w-4 h-4" />
+                        Cabang {sched.branch.name}
+                        {sched.room && <span> • Ruang {sched.room.room_number}</span>}
+                      </div>
+                    )}
                   </div>
                 </div>
                 
@@ -137,6 +182,12 @@ export default function TutorSchedulesPage() {
                       <Clock className="w-4 h-4 text-slate-400" />
                       {new Date(sched.schedule_time).toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' })} WIB
                     </div>
+                    {sched.branch && (
+                      <div className="flex items-center gap-2 text-indigo-600 font-semibold pt-1">
+                        <MapPin className="w-4 h-4" />
+                        Cabang {sched.branch.name}
+                      </div>
+                    )}
                     {sched.description && (
                       <p className="text-slate-500 italic mt-2 line-clamp-2 text-xs">"{sched.description}"</p>
                     )}
@@ -145,7 +196,7 @@ export default function TutorSchedulesPage() {
                 
                 <div className="mt-6 pt-4 border-t border-slate-100">
                   <Button 
-                    onClick={() => claimSchedule(sched.id)}
+                    onClick={() => handleOpenClaimModal(sched)}
                     variant="secondary"
                     className="w-full border-teal-200 text-teal-700 hover:bg-teal-50"
                   >
@@ -157,6 +208,88 @@ export default function TutorSchedulesPage() {
           </div>
         )}
       </section>
+
+      {/* Claim Modal */}
+      <Modal
+        isOpen={isClaimModalOpen}
+        onClose={() => setIsClaimModalOpen(false)}
+        title="Klaim Jadwal"
+      >
+        {claimingSchedule && (
+          <div className="space-y-6">
+            <div className="bg-slate-50 p-4 rounded-xl border border-slate-100">
+              <h3 className="font-bold text-slate-800 mb-2">{claimingSchedule.title}</h3>
+              <div className="flex items-center gap-2 text-sm text-slate-600 mb-1">
+                <Calendar className="w-4 h-4" />
+                {new Date(claimingSchedule.schedule_time).toLocaleDateString('id-ID', { weekday: 'long', day: 'numeric', month: 'long' })}
+              </div>
+              <div className="flex items-center gap-2 text-sm text-slate-600 mb-1">
+                <Clock className="w-4 h-4" />
+                {new Date(claimingSchedule.schedule_time).toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' })} WIB
+              </div>
+              {claimingSchedule.branch && (
+                <div className="flex items-center gap-2 text-sm text-indigo-600 font-bold mt-2">
+                  <MapPin className="w-4 h-4" />
+                  Cabang: {claimingSchedule.branch.name}
+                </div>
+              )}
+            </div>
+
+            {claimingSchedule.branch_id ? (
+              <div className="space-y-3">
+                <label className="block text-sm font-bold text-slate-700">Pilih Ruangan <span className="text-red-500">*</span></label>
+                {loadingRooms ? (
+                  <div className="h-20 flex items-center justify-center"><div className="w-6 h-6 border-2 border-blue-500 border-t-transparent rounded-full animate-spin"></div></div>
+                ) : availableRooms.length === 0 ? (
+                  <div className="p-4 bg-orange-50 text-orange-700 rounded-lg text-sm border border-orange-100">
+                    Cabang ini belum memiliki ruangan yang terdaftar. Hubungi admin.
+                  </div>
+                ) : (
+                  <div className="grid grid-cols-2 gap-3">
+                    {availableRooms.map(room => (
+                      <label 
+                        key={room.id}
+                        className={`flex flex-col p-3 rounded-xl border-2 cursor-pointer transition-all ${
+                          selectedRoomId === room.id 
+                            ? 'border-blue-500 bg-blue-50 text-blue-700' 
+                            : 'border-slate-200 hover:border-blue-200'
+                        }`}
+                      >
+                        <input 
+                          type="radio"
+                          name="room"
+                          className="hidden"
+                          checked={selectedRoomId === room.id}
+                          onChange={() => setSelectedRoomId(room.id)}
+                        />
+                        <div className="flex items-center gap-2 font-bold mb-1">
+                          <DoorOpen className="w-4 h-4" />
+                          Ruang {room.room_number}
+                        </div>
+                        <div className="text-xs opacity-70">
+                          Lantai {room.floor} • Kapasitas: {room.capacity}
+                        </div>
+                      </label>
+                    ))}
+                  </div>
+                )}
+              </div>
+            ) : (
+              <div className="p-4 bg-yellow-50 text-yellow-800 rounded-lg text-sm border border-yellow-100">
+                Jadwal ini belum memiliki data Cabang.
+              </div>
+            )}
+
+            <Button 
+              className="w-full bg-teal-600 hover:bg-teal-700 text-white font-bold py-6 rounded-xl"
+              onClick={claimSchedule}
+              disabled={claimingSchedule.branch_id && !selectedRoomId}
+            >
+              Konfirmasi Klaim
+            </Button>
+          </div>
+        )}
+      </Modal>
     </div>
   );
 }
