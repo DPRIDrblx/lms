@@ -236,7 +236,7 @@ export default function StudentScheduleDetail({ params }: { params: Promise<{ id
       <div className="min-h-screen flex flex-col items-center justify-center bg-slate-50 text-center p-6">
         <Calendar className="w-16 h-16 text-slate-300 mb-4" />
         <h2 className="text-2xl font-black text-slate-800 mb-2">Jadwal Tidak Ditemukan</h2>
-        <Button onClick={() => router.push('/student/jadwal-les')} variant="outline" className="mt-4">
+        <Button onClick={() => router.push('/student/jadwal-les')} variant="secondary" className="mt-4">
           Kembali ke Jadwal
         </Button>
       </div>
