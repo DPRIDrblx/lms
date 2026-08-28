@@ -219,9 +219,9 @@ export default function JadwalLesPage() {
                                 : "text-emerald-700 bg-emerald-50 border-emerald-100"
                             )}>
                               {attendances[schedule.id].status === 'izin' ? (
-                                <>Izin: {attendances[schedule.id].excuse_reason}</>
+                                <span className="truncate max-w-[200px] inline-block">Izin: {attendances[schedule.id].excuse_reason}</span>
                               ) : (
-                                <><CheckCircle2 className="w-3.5 h-3.5" /> Hadir</>
+                                <><CheckCircle2 className="w-3.5 h-3.5 shrink-0" /> Hadir</>
                               )}
                             </div>
                           ) : isToday ? (

@@ -29,6 +29,10 @@ export default function LessonWorkspacePage() {
   const [closingAttendance, setClosingAttendance] = useState(false);
   const [timeLeft, setTimeLeft] = useState("");
 
+  // Voting States
+  const [votes, setVotes] = useState<any[]>([]);
+  const [isTogglingVoting, setIsTogglingVoting] = useState(false);
+
   useEffect(() => {
     if (!schedule) return;
     
@@ -148,15 +152,27 @@ export default function LessonWorkspacePage() {
           
           // Fetch stars
           const { data: starData } = await supabase
-            .from("student_stars")
+            .from("tutor_student_stars")
             .select("student_id, stars")
             .eq("schedule_id", sched.id);
             
           if (starData) {
             const starMap: Record<string, number> = {};
-            starData.forEach((s: any) => { starMap[s.student_id] = s.stars; });
+            starData.forEach((s: any) => starMap[s.student_id] = s.stars);
             setStudentStars(starMap);
           }
+        }
+      }
+      
+      // Fetch Votes if voting is active or completed
+      if (sched.is_voting_active || sched.topic) {
+        const { data: voteData } = await supabase
+          .from("center_schedule_votes")
+          .select("topic")
+          .eq("schedule_id", sched.id);
+          
+        if (voteData) {
+          setVotes(voteData);
         }
       }
     }
@@ -164,8 +180,23 @@ export default function LessonWorkspacePage() {
   };
 
   useEffect(() => {
-    if (id) fetchData();
+    fetchData();
   }, [id]);
+
+  // Polling for votes when voting is active
+  useEffect(() => {
+    if (!schedule?.is_voting_active) return;
+    
+    const interval = setInterval(async () => {
+      const { data } = await supabase
+        .from("center_schedule_votes")
+        .select("topic")
+        .eq("schedule_id", schedule.id);
+      if (data) setVotes(data);
+    }, 5000);
+    
+    return () => clearInterval(interval);
+  }, [schedule?.is_voting_active, schedule?.id, supabase]);
 
   const handleAttendanceChange = (studentId: string, status: string) => {
     if (schedule?.is_attendance_closed) return;
@@ -515,15 +546,103 @@ export default function LessonWorkspacePage() {
               </div>
               <div className="md:col-span-2">
                 <label className="text-xs font-bold text-slate-500 mb-1 block">Topik Pokok</label>
-                <select 
-                  className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-lg text-sm"
-                  value={selectedTopic} onChange={e => { setSelectedTopic(e.target.value); setSelectedSubtopics([]); setCustomTopic(""); }}
-                  disabled={!selectedSubject || isCompleted}
-                >
-                  <option value="">-- Pilih Topik --</option>
-                  {selectedSubjectData?.topics.map(t => <option key={t.name} value={t.name}>{t.name}</option>)}
-                  <option value="Lainnya">Lainnya...</option>
-                </select>
+                {!schedule.topic && schedule.is_voting_active ? (
+                  <div className="p-4 bg-blue-50 border border-blue-200 rounded-xl space-y-4">
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-2 text-blue-700 font-bold">
+                        <Users className="w-5 h-5" /> Voting Topik Sedang Berlangsung...
+                      </div>
+                      <span className="text-xs bg-blue-600 text-white px-2 py-1 rounded font-bold animate-pulse">LIVE</span>
+                    </div>
+                    <p className="text-sm text-blue-600 font-medium">Mapel: {schedule.voting_subject} ({schedule.voting_level})</p>
+                    
+                    <div className="space-y-2 max-h-[200px] overflow-y-auto pr-2 custom-scrollbar">
+                      {Object.entries(
+                        votes.reduce((acc, v) => ({ ...acc, [v.topic]: (acc[v.topic] || 0) + 1 }), {} as Record<string, number>)
+                      ).sort(([,a], [,b]) => (b as number) - (a as number)).map(([topic, count], idx) => (
+                        <div key={idx} className="bg-white p-3 rounded-lg border border-blue-100 flex items-center justify-between shadow-sm">
+                          <span className="font-bold text-slate-800 text-sm truncate pr-2">{topic}</span>
+                          <span className="shrink-0 bg-blue-100 text-blue-700 font-black px-3 py-1 rounded-full text-sm">{count as number} Suara</span>
+                        </div>
+                      ))}
+                      {votes.length === 0 && (
+                        <p className="text-center text-sm text-blue-400 py-4 italic">Belum ada siswa yang memilih.</p>
+                      )}
+                    </div>
+                    
+                    <Button 
+                      onClick={async () => {
+                        setIsTogglingVoting(true);
+                        // find winner
+                        const counts = votes.reduce((acc, v) => ({ ...acc, [v.topic]: (acc[v.topic] || 0) + 1 }), {} as Record<string, number>);
+                        let winner = "";
+                        let maxVotes = 0;
+                        Object.entries(counts).forEach(([t, c]) => {
+                          if ((c as number) > maxVotes) {
+                            maxVotes = c as number;
+                            winner = t;
+                          }
+                        });
+                        
+                        const updates: any = { is_voting_active: false };
+                        if (winner) updates.topic = winner;
+
+                        const { error } = await supabase.from('center_schedules').update(updates).eq('id', schedule.id);
+                        if (!error) {
+                          toast.success(winner ? `Voting ditutup! Topik terpilih: ${winner}` : "Voting ditutup tanpa pemenang.");
+                          setSchedule({ ...schedule, ...updates });
+                          setSelectedTopic(winner);
+                        } else {
+                          toast.error("Gagal menutup voting.");
+                        }
+                        setIsTogglingVoting(false);
+                      }}
+                      disabled={isTogglingVoting}
+                      className="w-full bg-blue-600 hover:bg-blue-700 text-white"
+                    >
+                      {isTogglingVoting ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : <CheckCircle2 className="w-4 h-4 mr-2" />}
+                      Tutup Voting & Terapkan Topik Pemenang
+                    </Button>
+                  </div>
+                ) : (
+                  <div className="flex gap-2">
+                    <select 
+                      className="flex-1 px-3 py-2 bg-slate-50 border border-slate-200 rounded-lg text-sm"
+                      value={selectedTopic} onChange={e => { setSelectedTopic(e.target.value); setSelectedSubtopics([]); setCustomTopic(""); }}
+                      disabled={!selectedSubject || isCompleted}
+                    >
+                      <option value="">-- Pilih Topik --</option>
+                      {selectedSubjectData?.topics.map(t => <option key={t.name} value={t.name}>{t.name}</option>)}
+                      <option value="Lainnya">Lainnya...</option>
+                    </select>
+                    {!schedule.topic && selectedSubject && selectedLevel && !isCompleted && (
+                      <Button
+                        onClick={async () => {
+                          setIsTogglingVoting(true);
+                          const { error } = await supabase.from('center_schedules').update({
+                            is_voting_active: true,
+                            voting_subject: selectedSubject,
+                            voting_level: selectedLevel
+                          }).eq('id', schedule.id);
+                          if (!error) {
+                            toast.success("Sesi voting topik berhasil dibuka!");
+                            setSchedule({ ...schedule, is_voting_active: true, voting_subject: selectedSubject, voting_level: selectedLevel });
+                          } else {
+                            toast.error("Gagal membuka voting.");
+                          }
+                          setIsTogglingVoting(false);
+                        }}
+                        disabled={isTogglingVoting}
+                        variant="secondary"
+                        className="border-blue-200 text-blue-600 hover:bg-blue-50 shrink-0"
+                        title="Buka Voting Topik ke Siswa"
+                      >
+                        {isTogglingVoting ? <Loader2 className="w-4 h-4 animate-spin" /> : <Users className="w-4 h-4 mr-2" />}
+                        Mulai Voting
+                      </Button>
+                    )}
+                  </div>
+                )}
               </div>
               
               {/* Dynamic Subtopics */}

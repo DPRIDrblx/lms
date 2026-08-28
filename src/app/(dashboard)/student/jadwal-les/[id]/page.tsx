@@ -274,7 +274,7 @@ export default function StudentScheduleDetail({ params }: { params: Promise<{ id
               <h1 className="text-4xl md:text-5xl font-black tracking-tight mb-4 drop-shadow-md leading-tight">
                 {schedule.title}
               </h1>
-              <p className="text-red-100 font-medium text-lg md:text-xl drop-shadow-sm opacity-90 max-w-xl">
+              <p className="text-red-100 font-medium text-lg md:text-xl drop-shadow-sm opacity-90 max-w-xl break-words whitespace-pre-wrap">
                 {schedule.description || "Mari bersiap untuk sesi belajar yang menyenangkan!"}
               </p>
             </div>
@@ -333,6 +333,23 @@ export default function StudentScheduleDetail({ params }: { params: Promise<{ id
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
           <div className="lg:col-span-2 space-y-6">
             
+            {/* Voting Banner */}
+            {!schedule.topic && schedule.is_voting_active && (
+              <div className="bg-blue-600 rounded-[32px] p-8 shadow-md border border-blue-500 flex flex-col md:flex-row items-center justify-between gap-6 relative overflow-hidden group">
+                <div className="absolute top-0 right-0 w-32 h-32 bg-white/10 rounded-full blur-2xl -mr-10 -mt-10 pointer-events-none"></div>
+                <div className="relative z-10 text-white">
+                  <h3 className="text-2xl font-black mb-2">Voting Topik Pembelajaran Dibuka!</h3>
+                  <p className="text-blue-100 font-medium max-w-md">Tutor telah meminta partisipasi kelas untuk memilih materi apa yang akan dipelajari hari ini. Pilih sekarang!</p>
+                </div>
+                <Button 
+                  onClick={() => router.push(`/student/jadwal-les/${schedule.id}/voting`)}
+                  className="shrink-0 bg-white text-blue-700 hover:bg-blue-50 h-14 px-8 rounded-2xl font-black text-lg shadow-lg relative z-10 border-0"
+                >
+                  <ThumbsUp className="w-5 h-5 mr-2" /> Ikut Voting
+                </Button>
+              </div>
+            )}
+
             {/* Materi */}
             {schedule.topic && (
               <div className="bg-white rounded-[32px] p-8 shadow-sm border border-slate-100">
@@ -343,8 +360,8 @@ export default function StudentScheduleDetail({ params }: { params: Promise<{ id
                   Materi Pembelajaran
                 </h3>
                 <div className="bg-slate-50 p-5 rounded-2xl border border-slate-100">
-                  <p className="font-bold text-slate-800 text-lg mb-1">{schedule.topic}</p>
-                  {schedule.subtopic && <p className="text-slate-500 font-medium">{schedule.subtopic}</p>}
+                  <p className="font-bold text-slate-800 text-lg mb-1 break-words whitespace-pre-wrap">{schedule.topic}</p>
+                  {schedule.subtopic && <p className="text-slate-500 font-medium break-words whitespace-pre-wrap">{schedule.subtopic}</p>}
                 </div>
               </div>
             )}
@@ -402,99 +419,46 @@ export default function StudentScheduleDetail({ params }: { params: Promise<{ id
 
                 {attendance?.rating ? (
                   // Submitted State
-                  <div className="bg-slate-50 rounded-3xl p-8 border border-slate-100 text-center space-y-4">
+                  <div className="bg-slate-50 rounded-3xl p-8 border border-slate-100 text-center space-y-4 flex flex-col items-center">
                     <div className="flex justify-center gap-2 mb-4">
                       {[1,2,3,4,5].map(star => (
-                        <Star key={star} className={`w-12 h-12 ${star <= attendance.rating ? 'fill-yellow-400 text-yellow-400 drop-shadow-md' : 'fill-transparent text-slate-200'}`} />
+                         <Star key={star} className={`w-12 h-12 ${star <= attendance.rating ? 'fill-yellow-400 text-yellow-400 drop-shadow-md' : 'fill-transparent text-slate-200'}`} />
                       ))}
                     </div>
                     {attendance.feedback_tags?.length > 0 && (
                       <div className="flex flex-wrap justify-center gap-2 max-w-lg mx-auto">
                         {attendance.feedback_tags.map((tag: string, i: number) => (
-                          <span key={i} className="bg-blue-100 text-blue-800 px-4 py-2 rounded-full text-sm font-bold border border-blue-200">
+                          <span key={i} className="bg-blue-100 text-blue-800 px-4 py-2 rounded-full text-sm font-bold border border-blue-200 break-words max-w-full">
                             {tag}
                           </span>
                         ))}
                       </div>
                     )}
                     {attendance.feedback_text && (
-                      <p className="text-slate-600 italic mt-4 bg-white p-4 rounded-xl shadow-sm inline-block max-w-lg">
+                      <p className="text-slate-600 italic mt-4 bg-white p-4 rounded-xl shadow-sm inline-block max-w-lg break-words whitespace-pre-wrap">
                         "{attendance.feedback_text}"
                       </p>
                     )}
                     <div className="text-emerald-600 font-bold flex items-center justify-center gap-2 mt-4">
-                      <CheckCircle2 className="w-5 h-5" /> Terima kasih atas feedback-mu!
+                      <CheckCircle2 className="w-5 h-5 shrink-0" /> Terima kasih atas feedback-mu!
                     </div>
                   </div>
                 ) : (
-                  // Form State
-                  <div className="space-y-8">
-                    {/* Stars */}
-                    <div className="flex justify-center gap-3">
-                      {[1, 2, 3, 4, 5].map((star) => {
-                        const isFilled = star <= (ratingHover || selectedRating);
-                        return (
-                          <button
-                            key={star}
-                            className="p-1 transition-transform hover:scale-110"
-                            onMouseEnter={() => setRatingHover(star)}
-                            onMouseLeave={() => setRatingHover(0)}
-                            onClick={() => {
-                              setSelectedRating(star);
-                              setSelectedTags([]); // reset tags when star changes
-                            }}
-                          >
-                            <Star 
-                              className={`w-14 h-14 md:w-16 md:h-16 transition-colors ${isFilled ? 'fill-yellow-400 text-yellow-400 drop-shadow-lg' : 'fill-slate-100 text-slate-200'}`} 
-                            />
-                          </button>
-                        );
-                      })}
+                  // Action button to go to rating page
+                  <div className="text-center p-6 bg-gradient-to-br from-yellow-50 to-red-50 rounded-3xl border border-yellow-100">
+                    <div className="flex justify-center gap-2 mb-6">
+                      <Star className="w-10 h-10 fill-yellow-400 text-yellow-400" />
+                      <Star className="w-10 h-10 fill-yellow-400 text-yellow-400 -translate-y-2 transform" />
+                      <Star className="w-10 h-10 fill-yellow-400 text-yellow-400" />
                     </div>
-
-                    {selectedRating > 0 && (
-                      <div className="animate-in fade-in slide-in-from-bottom-4 duration-300">
-                        <div className="bg-blue-50/50 rounded-3xl p-6 border border-blue-100 mb-6">
-                          <p className="font-bold text-blue-900 mb-4 text-center">
-                            {selectedRating >= 4 ? "Apa yang paling kamu suka dari sesi ini?" : "Apa yang perlu kami tingkatkan?"}
-                          </p>
-                          <div className="flex flex-wrap justify-center gap-3">
-                            {tagsList.map(tag => (
-                              <button
-                                key={tag}
-                                onClick={() => handleToggleTag(tag)}
-                                className={cn(
-                                  "px-4 py-2 rounded-full text-sm font-bold transition-all border",
-                                  selectedTags.includes(tag) 
-                                    ? "bg-blue-600 text-white border-blue-600 shadow-md transform scale-105" 
-                                    : "bg-white text-slate-600 border-slate-200 hover:border-blue-300 hover:bg-blue-50"
-                                )}
-                              >
-                                {tag}
-                              </button>
-                            ))}
-                          </div>
-                        </div>
-
-                        <div className="mb-6">
-                          <label className="font-bold text-slate-700 block mb-2">Ada pesan tambahan untuk tutor? (Opsional)</label>
-                          <textarea
-                            value={feedbackText}
-                            onChange={(e) => setFeedbackText(e.target.value)}
-                            placeholder="Tulis kesan atau saranmu di sini..."
-                            className="w-full bg-slate-50 border border-slate-200 rounded-2xl p-4 min-h-[120px] outline-none focus:border-blue-500 focus:bg-white transition-colors resize-y font-medium text-slate-800"
-                          ></textarea>
-                        </div>
-
-                        <Button 
-                          onClick={handleSubmitFeedback}
-                          disabled={isSubmittingFeedback}
-                          className="w-full h-14 bg-blue-600 hover:bg-blue-700 text-white rounded-2xl font-black text-lg shadow-lg shadow-blue-200"
-                        >
-                          {isSubmittingFeedback ? <CenterLoader size="sm" /> : <><Send className="w-5 h-5 mr-2" /> Kirim Penilaian</>}
-                        </Button>
-                      </div>
-                    )}
+                    <h4 className="font-bold text-slate-800 mb-2">Belum ada penilaian</h4>
+                    <p className="text-slate-500 text-sm mb-6 max-w-sm mx-auto">Ayo bagikan bagaimana perasaanmu belajar di sesi ini agar Master Teacher bisa memberikan yang lebih baik lagi!</p>
+                    <Button 
+                      onClick={() => router.push(`/student/jadwal-les/${schedule.id}/rating`)}
+                      className="bg-yellow-500 hover:bg-yellow-600 text-slate-900 rounded-2xl h-14 px-8 font-black shadow-lg shadow-yellow-200"
+                    >
+                      Beri Nilai Sekarang
+                    </Button>
                   </div>
                 )}
               </div>
