@@ -3,7 +3,7 @@
 import React, { useState, useEffect } from 'react';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { MessageSquare, HelpCircle, Sparkles, Send, Loader2, PlayCircle, CheckCircle2 } from 'lucide-react';
+import { MessageSquare, HelpCircle, Sparkles, Send, Loader2, PlayCircle, CheckCircle2, ListChecks, ArrowRight, CheckSquare } from 'lucide-react';
 import { createClient } from '@/lib/supabase';
 import toast from 'react-hot-toast';
 
@@ -31,18 +31,48 @@ export default function LiveInteractionsPanel({
   const [lastSaved, setLastSaved] = useState<Date | null>(null);
 
   // Quiz states
+  const [quizMode, setQuizMode] = useState<'ai' | 'manual'>('ai');
   const [quizType, setQuizType] = useState('Cek Konsep');
   const [selectedSubtopic, setSelectedSubtopic] = useState('');
   const [isGenerating, setIsGenerating] = useState(false);
-  const [generatedQuiz, setGeneratedQuiz] = useState<any>(null);
+  
+  // Manual Quiz states
+  const [manualQuestion, setManualQuestion] = useState('');
+  const [manualOptions, setManualOptions] = useState(['', '', '', '']);
+  const [manualCorrectIndex, setManualCorrectIndex] = useState(0);
+
+  // Bank Soal states
+  const [draftQuizzes, setDraftQuizzes] = useState<any[]>([]);
+  
+  // Active Quiz states
   const [activeQuizId, setActiveQuizId] = useState<string | null>(null);
+  const [activeQuiz, setActiveQuiz] = useState<any>(null); // The quiz currently active or discussing
   const [quizAnswers, setQuizAnswers] = useState<any[]>([]);
 
   // Q&A states
   const [qaList, setQaList] = useState<any[]>([]);
 
+  const fetchQuizzes = async () => {
+    // Fetch draft
+    const { data: drafts } = await supabase.from('class_live_quizzes')
+      .select('*').eq('schedule_id', scheduleId).eq('status', 'draft').order('created_at', { ascending: false });
+    if (drafts) setDraftQuizzes(drafts);
+
+    // Fetch active or discussing
+    const { data: activeQ } = await supabase.from('class_live_quizzes')
+      .select('*').eq('schedule_id', scheduleId).in('status', ['active', 'discussing']).order('created_at', { ascending: false }).limit(1).single();
+    
+    if (activeQ) {
+      setActiveQuizId(activeQ.id);
+      setActiveQuiz(activeQ);
+      fetchAnswers(activeQ.id);
+    } else {
+      setActiveQuizId(null);
+      setActiveQuiz(null);
+    }
+  };
+
   useEffect(() => {
-    // Initial fetch for Q&A and active quizzes
     const fetchInteractions = async () => {
       const { data: qas } = await supabase.from('class_qa_board').select('*, profiles(full_name)').eq('schedule_id', scheduleId).order('created_at', { ascending: false });
       if (qas) setQaList(qas);
@@ -50,21 +80,14 @@ export default function LiveInteractionsPanel({
       const { data: noteData } = await supabase.from('center_schedules').select('shared_notes').eq('id', scheduleId).single();
       if (noteData && noteData.shared_notes) setNotes(noteData.shared_notes);
 
-      const { data: activeQ } = await supabase.from('class_live_quizzes').select('*').eq('schedule_id', scheduleId).eq('status', 'active').order('created_at', { ascending: false }).limit(1).single();
-      if (activeQ) {
-        setActiveQuizId(activeQ.id);
-        setGeneratedQuiz(activeQ);
-        fetchAnswers(activeQ.id);
-      }
+      await fetchQuizzes();
     };
     fetchInteractions();
 
-    // Polling for Q&A and Answers
     const interval = setInterval(async () => {
       const { data: qas } = await supabase.from('class_qa_board').select('*, profiles(full_name)').eq('schedule_id', scheduleId).order('created_at', { ascending: false });
       if (qas) setQaList(qas);
 
-      // Poll notes
       if (!isSavingNotes) {
         const { data: noteData } = await supabase.from('center_schedules').select('shared_notes').eq('id', scheduleId).single();
         if (noteData && noteData.shared_notes !== notes) {
@@ -72,27 +95,24 @@ export default function LiveInteractionsPanel({
         }
       }
 
-      if (activeQuizId) {
-        fetchAnswers(activeQuizId);
-      }
+      await fetchQuizzes();
     }, 5000);
 
     return () => clearInterval(interval);
-  }, [scheduleId, activeQuizId, supabase]);
+  }, [scheduleId, supabase]);
 
   const fetchAnswers = async (qId: string) => {
     const { data } = await supabase.from('class_live_quiz_answers').select('*, profiles(full_name)').eq('quiz_id', qId);
     if (data) setQuizAnswers(data);
   };
 
-  const handleGenerateQuiz = async () => {
+  const handleGenerateQuizAI = async () => {
     if (!topic) {
       toast.error("Rencana Pembelajaran (Topik) harus diisi dulu!");
       return;
     }
 
     setIsGenerating(true);
-    setGeneratedQuiz(null);
     const toastId = toast.loading("AI sedang menyusun kuis...");
 
     try {
@@ -111,8 +131,21 @@ export default function LiveInteractionsPanel({
       const data = await res.json();
       if (!res.ok) throw new Error(data.error);
 
-      setGeneratedQuiz(data);
-      toast.success("Kuis berhasil dibuat!", { id: toastId });
+      // Save to Draft
+      const { error } = await supabase.from('class_live_quizzes').insert({
+        schedule_id: scheduleId,
+        tutor_id: tutorId,
+        question: data.question,
+        options: data.options,
+        correct_answer: data.correctAnswer,
+        explanation: data.explanation,
+        quiz_type: quizType,
+        status: 'draft'
+      });
+
+      if (error) throw error;
+      await fetchQuizzes();
+      toast.success("Kuis AI berhasil ditambahkan ke Bank Soal!", { id: toastId });
     } catch (err: any) {
       toast.error(err.message, { id: toastId });
     } finally {
@@ -120,54 +153,65 @@ export default function LiveInteractionsPanel({
     }
   };
 
-  // Auto-save notes every 3 seconds of typing stop
-  useEffect(() => {
-    const delayDebounceFn = setTimeout(async () => {
-      if (!notes) return;
-      setIsSavingNotes(true);
+  const handleSaveManualQuiz = async () => {
+    if (!manualQuestion.trim()) return toast.error("Pertanyaan tidak boleh kosong");
+    if (manualOptions.some(opt => !opt.trim())) return toast.error("Semua pilihan ganda harus diisi");
 
-      await supabase.from('center_schedules').update({ shared_notes: notes }).eq('id', scheduleId);
-
-      setLastSaved(new Date());
-      setIsSavingNotes(false);
-    }, 3000);
-
-    return () => clearTimeout(delayDebounceFn);
-  }, [notes, scheduleId, supabase]);
-
-  const handleBroadcastQuiz = async () => {
-    if (!generatedQuiz) return;
-    const toastId = toast.loading("Mempersiapkan Kuis untuk Siswa...");
+    const toastId = toast.loading("Menyimpan kuis manual...");
     try {
-      // End previous active quizzes
-      await supabase.from('class_live_quizzes').update({ status: 'ended' }).eq('schedule_id', scheduleId).eq('status', 'active');
-
-      const { data, error } = await supabase.from('class_live_quizzes').insert({
+      const { error } = await supabase.from('class_live_quizzes').insert({
         schedule_id: scheduleId,
         tutor_id: tutorId,
-        question: generatedQuiz.question,
-        options: generatedQuiz.options,
-        correct_answer: generatedQuiz.correctAnswer,
-        explanation: generatedQuiz.explanation,
-        quiz_type: quizType,
-        status: 'active'
-      }).select().single();
+        question: manualQuestion,
+        options: manualOptions,
+        correct_answer: [manualOptions[manualCorrectIndex]],
+        explanation: "Penjelasan akan dibahas langsung oleh Tutor.",
+        quiz_type: 'Manual',
+        status: 'draft'
+      });
 
       if (error) throw error;
 
-      setActiveQuizId(data.id);
-      setGeneratedQuiz(data);
-      setQuizAnswers([]);
+      // Reset form
+      setManualQuestion('');
+      setManualOptions(['', '', '', '']);
+      setManualCorrectIndex(0);
+      
+      await fetchQuizzes();
+      toast.success("Kuis manual berhasil ditambahkan ke Bank Soal!", { id: toastId });
+    } catch (err: any) {
+      toast.error(err.message, { id: toastId });
+    }
+  };
+
+  const handlePushQuiz = async (quizId: string) => {
+    const toastId = toast.loading("Mempersiapkan Kuis untuk Siswa...");
+    try {
+      // End any active/discussing quizzes first
+      await supabase.from('class_live_quizzes').update({ status: 'ended' }).eq('schedule_id', scheduleId).in('status', ['active', 'discussing']);
+
+      // Push the selected quiz
+      const { error } = await supabase.from('class_live_quizzes').update({ status: 'active' }).eq('id', quizId);
+      if (error) throw error;
+
+      await fetchQuizzes();
       toast.success("Kuis berhasil disebarkan! Menunggu jawaban siswa...", { id: toastId });
     } catch (err: any) {
       toast.error(err.message, { id: toastId });
     }
   };
 
+  const handleDiscussQuiz = async () => {
+    if (!activeQuizId) return;
+    await supabase.from('class_live_quizzes').update({ status: 'discussing' }).eq('id', activeQuizId);
+    await fetchQuizzes();
+    toast.success("Membahas kuis bersama siswa.");
+  };
+
   const handleEndQuiz = async () => {
     if (!activeQuizId) return;
     await supabase.from('class_live_quizzes').update({ status: 'ended' }).eq('id', activeQuizId);
-    setActiveQuizId(null);
+    await fetchQuizzes();
     toast.success("Kuis ditutup.");
   };
 
@@ -183,7 +227,7 @@ export default function LiveInteractionsPanel({
           onClick={() => setActiveTab('quiz')}
           className={`flex-1 py-3 text-sm font-bold flex items-center justify-center gap-2 transition-colors ${activeTab === 'quiz' ? 'bg-indigo-50 text-indigo-700 border-b-2 border-indigo-600' : 'text-slate-500 hover:bg-slate-50'}`}
         >
-          <Sparkles className="w-4 h-4" /> Kuis Kilat AI
+          <Sparkles className="w-4 h-4" /> Kuis Kilat
         </button>
         <button
           onClick={() => setActiveTab('qa')}
@@ -204,74 +248,205 @@ export default function LiveInteractionsPanel({
 
       <div className="p-5 bg-white">
         {activeTab === 'quiz' && (
-          <div className="space-y-4 animate-in fade-in slide-in-from-bottom-2">
+          <div className="space-y-6 animate-in fade-in slide-in-from-bottom-2">
             {!activeQuizId ? (
               <>
-                <div className="grid grid-cols-2 gap-4 mb-4">
-                  <div>
-                    <label className="text-xs font-bold text-slate-500 mb-1 block">Subtopik Spesifik (Opsional)</label>
-                    <select className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-lg text-sm" value={selectedSubtopic} onChange={e => setSelectedSubtopic(e.target.value)}>
-                      <option value="">Semua Subtopik</option>
-                      {subtopics.filter(s => s).map(s => <option key={s} value={s}>{s}</option>)}
-                    </select>
+                <div className="border border-indigo-100 p-4 rounded-xl shadow-sm bg-slate-50/50">
+                  <h3 className="text-sm font-bold text-slate-800 mb-4 flex items-center gap-2">
+                    <ListChecks className="w-4 h-4 text-indigo-500" />
+                    Buat Soal Kuis Baru
+                  </h3>
+                  
+                  {/* Mode Selector */}
+                  <div className="flex bg-slate-200/50 p-1 rounded-xl mb-4">
+                    <button 
+                      onClick={() => setQuizMode('ai')} 
+                      className={`flex-1 py-2 text-sm font-bold rounded-lg transition-colors ${quizMode === 'ai' ? 'bg-white shadow-sm text-indigo-700' : 'text-slate-500 hover:text-slate-700'}`}
+                    >
+                      AI Generate
+                    </button>
+                    <button 
+                      onClick={() => setQuizMode('manual')} 
+                      className={`flex-1 py-2 text-sm font-bold rounded-lg transition-colors ${quizMode === 'manual' ? 'bg-white shadow-sm text-indigo-700' : 'text-slate-500 hover:text-slate-700'}`}
+                    >
+                      Ketik Manual
+                    </button>
                   </div>
-                  <div>
-                    <label className="text-xs font-bold text-slate-500 mb-1 block">Tipe Kuis</label>
-                    <select className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-lg text-sm" value={quizType} onChange={e => setQuizType(e.target.value)}>
-                      <option value="Cek Konsep">Cek Konsep (Mudah)</option>
-                      <option value="Latihan Soal">Latihan Soal (Sedang)</option>
-                      <option value="HOTS">HOTS (Sulit)</option>
-                      <option value="Pilihan Ganda Kompleks">Pilihan Ganda Kompleks</option>
-                    </select>
-                  </div>
-                </div>
 
-                {!generatedQuiz ? (
-                  <Button onClick={handleGenerateQuiz} disabled={isGenerating || !topic} className="w-full bg-indigo-600 hover:bg-indigo-700 gap-2">
-                    {isGenerating ? <Loader2 className="w-4 h-4 animate-spin" /> : <Sparkles className="w-4 h-4" />}
-                    Buat Soal Kuis dengan AI
-                  </Button>
-                ) : (
-                  <div className="p-4 border border-indigo-200 bg-indigo-50/50 rounded-xl space-y-4 relative">
-                    <button onClick={() => setGeneratedQuiz(null)} className="absolute top-2 right-2 text-xs text-slate-400 hover:text-slate-600">Tutup</button>
-                    <p className="font-bold text-slate-900 text-sm pr-6">{generatedQuiz.question}</p>
-                    <div className="space-y-2">
-                      {generatedQuiz.options.map((opt: string, i: number) => (
-                        <div key={i} className={`p-2 rounded-lg text-sm border ${generatedQuiz.correctAnswer.includes(opt) ? 'bg-green-100 border-green-300 font-bold text-green-800' : 'bg-white border-slate-200 text-slate-600'}`}>
-                          {String.fromCharCode(65 + i)}. {opt}
+                  {quizMode === 'ai' ? (
+                    <div className="space-y-4 animate-in fade-in">
+                      <div className="grid grid-cols-2 gap-4">
+                        <div>
+                          <label className="text-xs font-bold text-slate-500 mb-1 block">Subtopik Spesifik (Opsional)</label>
+                          <select className="w-full px-3 py-2 bg-white border border-slate-200 rounded-lg text-sm" value={selectedSubtopic} onChange={e => setSelectedSubtopic(e.target.value)}>
+                            <option value="">Semua Subtopik</option>
+                            {subtopics.filter(s => s).map(s => <option key={s} value={s}>{s}</option>)}
+                          </select>
                         </div>
-                      ))}
-                    </div>
-                    <div className="flex gap-2 pt-2">
-                      <Button onClick={handleGenerateQuiz} variant="secondary" className="flex-1 border border-slate-200">Buat Ulang</Button>
-                      <Button onClick={handleBroadcastQuiz} className="flex-1 bg-green-600 hover:bg-green-700 gap-2 text-white">
-                        <Send className="w-4 h-4" /> Broadcast ke Siswa
+                        <div>
+                          <label className="text-xs font-bold text-slate-500 mb-1 block">Tipe Kuis</label>
+                          <select className="w-full px-3 py-2 bg-white border border-slate-200 rounded-lg text-sm" value={quizType} onChange={e => setQuizType(e.target.value)}>
+                            <option value="Cek Konsep">Cek Konsep (Mudah)</option>
+                            <option value="Latihan Soal">Latihan Soal (Sedang)</option>
+                            <option value="HOTS">HOTS (Sulit)</option>
+                            <option value="Pilihan Ganda Kompleks">Pilihan Ganda Kompleks</option>
+                          </select>
+                        </div>
+                      </div>
+
+                      <Button onClick={handleGenerateQuizAI} disabled={isGenerating || !topic} className="w-full bg-indigo-600 hover:bg-indigo-700 gap-2">
+                        {isGenerating ? <Loader2 className="w-4 h-4 animate-spin" /> : <Sparkles className="w-4 h-4" />}
+                        Generate & Simpan ke Bank Soal
                       </Button>
                     </div>
-                  </div>
-                )}
-              </>
-            ) : (
-              <div className="p-4 border border-green-200 bg-green-50 rounded-xl space-y-4">
-                <div className="flex justify-between items-center">
-                  <span className="bg-red-500 text-white text-xs px-2 py-1 rounded font-bold animate-pulse">LIVE QUIZ</span>
-                  <Button size="sm" variant="danger" onClick={handleEndQuiz}>Tutup Kuis</Button>
-                </div>
-                <p className="font-bold text-slate-900 text-sm">{generatedQuiz?.question}</p>
-                <div className="pt-2 border-t border-green-200">
-                  <h4 className="text-xs font-bold text-green-800 mb-2">Jawaban Masuk ({quizAnswers.length}):</h4>
-                  {quizAnswers.length === 0 ? (
-                    <p className="text-sm text-green-700 italic">Belum ada siswa yang menjawab...</p>
                   ) : (
-                    <div className="space-y-1">
-                      {quizAnswers.map((ans, i) => (
-                        <div key={i} className="flex justify-between items-center bg-white p-2 rounded border border-green-100 text-sm">
-                          <span className="font-bold">{ans.profiles?.full_name || 'Anonim'}</span>
-                          {ans.is_correct ? <CheckCircle2 className="w-4 h-4 text-green-600" /> : <span className="text-red-500 font-bold">X</span>}
+                    <div className="space-y-4 animate-in fade-in">
+                      <div>
+                        <label className="text-xs font-bold text-slate-500 mb-1 block">Pertanyaan</label>
+                        <textarea 
+                          className="w-full px-3 py-2 bg-white border border-slate-200 rounded-lg text-sm h-20 resize-none"
+                          placeholder="Ketik pertanyaan kuis di sini..."
+                          value={manualQuestion}
+                          onChange={(e) => setManualQuestion(e.target.value)}
+                        />
+                      </div>
+                      
+                      <div className="space-y-2">
+                        <label className="text-xs font-bold text-slate-500 block">Pilihan Jawaban (A-D)</label>
+                        {manualOptions.map((opt, i) => (
+                          <div key={i} className="flex gap-2">
+                            <input 
+                              type="text" 
+                              className="flex-1 px-3 py-2 bg-white border border-slate-200 rounded-lg text-sm"
+                              placeholder={`Pilihan ${String.fromCharCode(65 + i)}`}
+                              value={opt}
+                              onChange={(e) => {
+                                const newOpts = [...manualOptions];
+                                newOpts[i] = e.target.value;
+                                setManualOptions(newOpts);
+                              }}
+                            />
+                          </div>
+                        ))}
+                      </div>
+
+                      <div>
+                        <label className="text-xs font-bold text-slate-500 mb-1 block">Jawaban Benar</label>
+                        <select 
+                          className="w-full px-3 py-2 bg-white border border-slate-200 rounded-lg text-sm"
+                          value={manualCorrectIndex}
+                          onChange={(e) => setManualCorrectIndex(Number(e.target.value))}
+                        >
+                          {manualOptions.map((_, i) => (
+                            <option key={i} value={i}>Pilihan {String.fromCharCode(65 + i)}</option>
+                          ))}
+                        </select>
+                      </div>
+
+                      <Button onClick={handleSaveManualQuiz} className="w-full bg-indigo-600 hover:bg-indigo-700 gap-2 text-white">
+                        <CheckSquare className="w-4 h-4" /> Simpan ke Bank Soal
+                      </Button>
+                    </div>
+                  )}
+                </div>
+
+                {/* Bank Soal List */}
+                <div className="pt-2">
+                  <h3 className="text-sm font-bold text-slate-800 mb-3">Bank Soal Sesi Ini ({draftQuizzes.length})</h3>
+                  {draftQuizzes.length === 0 ? (
+                    <div className="text-center py-6 text-slate-400 text-sm border-2 border-dashed border-slate-200 rounded-xl">
+                      Belum ada soal di Bank Soal. Buat soal di atas!
+                    </div>
+                  ) : (
+                    <div className="space-y-3 max-h-[300px] overflow-y-auto pr-2 custom-scrollbar">
+                      {draftQuizzes.map((quiz, i) => (
+                        <div key={quiz.id} className="p-4 border border-slate-200 rounded-xl bg-white hover:border-indigo-300 transition-colors">
+                          <p className="font-bold text-slate-900 text-sm mb-3 line-clamp-2">{quiz.question}</p>
+                          <div className="flex items-center justify-between">
+                            <span className="text-xs font-bold text-indigo-600 bg-indigo-50 px-2 py-1 rounded">
+                              Tipe: {quiz.quiz_type}
+                            </span>
+                            <Button size="sm" onClick={() => handlePushQuiz(quiz.id)} className="bg-green-600 hover:bg-green-700 gap-1 text-white">
+                              <PlayCircle className="w-4 h-4" /> Push ke Siswa
+                            </Button>
+                          </div>
                         </div>
                       ))}
                     </div>
                   )}
+                </div>
+              </>
+            ) : (
+              <div className="p-5 border-2 border-indigo-200 bg-indigo-50/30 rounded-xl space-y-6">
+                <div className="flex justify-between items-center">
+                  <div className="flex gap-2 items-center">
+                    <span className={`text-white text-xs px-3 py-1 rounded-full font-bold animate-pulse ${activeQuiz.status === 'active' ? 'bg-red-500' : 'bg-blue-500'}`}>
+                      {activeQuiz.status === 'active' ? 'LIVE: Mengerjakan' : 'Membahas Soal'}
+                    </span>
+                    <span className="text-xs font-bold text-slate-500 bg-slate-200 px-2 py-1 rounded">Tipe: {activeQuiz.quiz_type}</span>
+                  </div>
+                  <Button size="sm" variant="ghost" className="text-red-600 border-red-200 hover:bg-red-50" onClick={handleEndQuiz}>
+                    Tutup Kuis Ini
+                  </Button>
+                </div>
+                
+                <div>
+                  <h2 className="text-lg font-bold text-slate-900 mb-4">{activeQuiz.question}</h2>
+                  
+                  {activeQuiz.status === 'discussing' && (
+                    <div className="mb-4 p-4 bg-green-50 border border-green-200 rounded-xl">
+                      <p className="text-xs font-bold text-green-700 uppercase mb-1">Kunci Jawaban</p>
+                      <p className="text-sm font-bold text-slate-800">{activeQuiz.correct_answer.join(', ')}</p>
+                      
+                      {activeQuiz.explanation && (
+                        <div className="mt-3 pt-3 border-t border-green-200/50">
+                          <p className="text-xs font-bold text-slate-500 uppercase mb-1">Penjelasan AI</p>
+                          <p className="text-sm text-slate-700">{activeQuiz.explanation}</p>
+                        </div>
+                      )}
+                    </div>
+                  )}
+
+                  <div className="pt-4 border-t border-indigo-100">
+                    <h4 className="text-sm font-bold text-indigo-900 mb-3 flex items-center justify-between">
+                      Statistik Jawaban Siswa ({quizAnswers.length})
+                      {activeQuiz.status === 'active' && quizAnswers.length > 0 && (
+                        <Button size="sm" onClick={handleDiscussQuiz} className="bg-indigo-600 hover:bg-indigo-700 text-white shadow-sm h-8">
+                          <CheckCircle2 className="w-4 h-4 mr-2" /> Bahas Sekarang
+                        </Button>
+                      )}
+                    </h4>
+                    
+                    {quizAnswers.length === 0 ? (
+                      <div className="text-center p-6 border border-dashed border-indigo-200 rounded-xl bg-white">
+                        <p className="text-sm text-slate-500 italic">Belum ada siswa yang merespons...</p>
+                      </div>
+                    ) : (
+                      <div className="grid gap-2">
+                        {activeQuiz.options.map((opt: string, i: number) => {
+                          const count = quizAnswers.filter(a => Array.isArray(a.student_answer) ? a.student_answer.includes(opt) : a.student_answer === opt).length;
+                          const percentage = Math.round((count / quizAnswers.length) * 100);
+                          const isCorrectOption = activeQuiz.correct_answer.includes(opt);
+                          
+                          return (
+                            <div key={i} className="relative bg-white border border-slate-200 rounded-lg overflow-hidden">
+                              <div 
+                                className={`absolute inset-y-0 left-0 opacity-20 ${activeQuiz.status === 'discussing' ? (isCorrectOption ? 'bg-green-500' : 'bg-red-500') : 'bg-indigo-500'}`} 
+                                style={{ width: `${percentage}%` }}
+                              ></div>
+                              <div className="relative p-3 flex justify-between items-center text-sm">
+                                <div className="flex gap-2 items-center">
+                                  <span className="font-bold text-slate-400 w-5">{String.fromCharCode(65 + i)}.</span>
+                                  <span className="font-medium text-slate-700">{opt}</span>
+                                </div>
+                                <span className="font-bold text-slate-900">{count} orang ({percentage}%)</span>
+                              </div>
+                            </div>
+                          );
+                        })}
+                      </div>
+                    )}
+                  </div>
                 </div>
               </div>
             )}

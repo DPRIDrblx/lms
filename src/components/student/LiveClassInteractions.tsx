@@ -35,6 +35,7 @@ export default function StudentLiveInteractions({
   const [activeQuiz, setActiveQuiz] = useState<any>(null);
   const [selectedAnswers, setSelectedAnswers] = useState<string[]>([]);
   const [hasAnswered, setHasAnswered] = useState(false);
+  const [isCorrect, setIsCorrect] = useState<boolean | null>(null);
 
   useEffect(() => {
     // Initial fetch
@@ -43,8 +44,8 @@ export default function StudentLiveInteractions({
       const { data: noteData } = await supabase.from('center_schedules').select('shared_notes').eq('id', scheduleId).single();
       if (noteData && noteData.shared_notes) setNotes(noteData.shared_notes);
 
-      // Quiz
-      const { data: activeQ } = await supabase.from('class_live_quizzes').select('*').eq('schedule_id', scheduleId).eq('status', 'active').limit(1).single();
+      // Quiz (Active or Discussing)
+      const { data: activeQ } = await supabase.from('class_live_quizzes').select('*').eq('schedule_id', scheduleId).in('status', ['active', 'discussing']).order('created_at', { ascending: false }).limit(1).single();
       if (activeQ) {
         setActiveQuiz(activeQ);
         // Check if already answered
@@ -52,30 +53,42 @@ export default function StudentLiveInteractions({
         if (ans) {
           setHasAnswered(true);
           setSelectedAnswers(ans.answer);
+          setIsCorrect(ans.is_correct);
         }
       }
     };
     fetchInitial();
 
-    // Polling for Quizzes (every 5 seconds)
+    // Polling for Quizzes (every 3 seconds for better real-time feel)
     const interval = setInterval(async () => {
-      const { data: activeQ } = await supabase.from('class_live_quizzes').select('*').eq('schedule_id', scheduleId).eq('status', 'active').order('created_at', { ascending: false }).limit(1).single();
+      const { data: activeQ } = await supabase.from('class_live_quizzes').select('*').eq('schedule_id', scheduleId).in('status', ['active', 'discussing']).order('created_at', { ascending: false }).limit(1).single();
       
       if (activeQ) {
-        if (!activeQuiz || activeQuiz.id !== activeQ.id) {
+        if (!activeQuiz || activeQuiz.id !== activeQ.id || activeQuiz.status !== activeQ.status) {
           setActiveQuiz(activeQ);
-          setHasAnswered(false);
-          setSelectedAnswers([]);
           
-          // Check if already answered just in case
-          const { data: ans } = await supabase.from('class_live_quiz_answers').select('*').eq('quiz_id', activeQ.id).eq('student_id', studentId).single();
-          if (ans) {
-            setHasAnswered(true);
-            setSelectedAnswers(ans.answer);
+          if (!activeQuiz || activeQuiz.id !== activeQ.id) {
+            // New quiz entirely
+            setHasAnswered(false);
+            setSelectedAnswers([]);
+            setIsCorrect(null);
+            
+            // Check if already answered just in case
+            const { data: ans } = await supabase.from('class_live_quiz_answers').select('*').eq('quiz_id', activeQ.id).eq('student_id', studentId).single();
+            if (ans) {
+              setHasAnswered(true);
+              setSelectedAnswers(ans.answer);
+              setIsCorrect(ans.is_correct);
+            }
           }
         }
       } else {
-        if (activeQuiz) setActiveQuiz(null); // quiz ended
+        if (activeQuiz) {
+          setActiveQuiz(null); // quiz ended
+          setHasAnswered(false);
+          setSelectedAnswers([]);
+          setIsCorrect(null);
+        }
       }
       
       // Poll notes
@@ -85,7 +98,7 @@ export default function StudentLiveInteractions({
           setNotes(noteData.shared_notes || '');
         }
       }
-    }, 5000);
+    }, 3000);
 
     return () => clearInterval(interval);
   }, [scheduleId, studentId, supabase, activeQuiz]);
@@ -132,22 +145,23 @@ export default function StudentLiveInteractions({
   const handleQuizSubmit = async () => {
     if (selectedAnswers.length === 0) return;
     
-    // Evaluate answer (simple strict check for arrays)
-    const isCorrect = JSON.stringify(selectedAnswers.sort()) === JSON.stringify(activeQuiz.correct_answer.sort());
+    // Evaluate answer
+    const checkCorrect = JSON.stringify(selectedAnswers.sort()) === JSON.stringify(activeQuiz.correct_answer.sort());
     
     const toastId = toast.loading("Mengumpulkan jawaban...");
     const { error } = await supabase.from('class_live_quiz_answers').insert({
       quiz_id: activeQuiz.id,
       student_id: studentId,
       answer: selectedAnswers,
-      is_correct: isCorrect
+      is_correct: checkCorrect
     });
 
     if (error) {
       toast.error(error.message, { id: toastId });
     } else {
-      toast.success(isCorrect ? "Jawabanmu Benar! +5 Bintang 🌟" : "Jawabanmu Kurang Tepat!", { id: toastId });
+      toast.success("Jawaban tersimpan! Menunggu pembahasan tutor...", { id: toastId });
       setHasAnswered(true);
+      setIsCorrect(checkCorrect);
     }
   };
 
@@ -217,28 +231,56 @@ export default function StudentLiveInteractions({
                   <div className="bg-white p-6 rounded-[22px]">
                     <div className="flex justify-between items-start mb-6">
                       <div className="bg-red-100 text-red-600 font-bold px-3 py-1 rounded-full text-xs flex items-center gap-1 animate-pulse">
-                        <Sparkles className="w-3 h-3" /> KUIS KILAT DARI TUTOR
+                        <Sparkles className="w-3 h-3" /> {activeQuiz.status === 'discussing' ? 'PEMBAHASAN KUIS' : 'KUIS KILAT DARI TUTOR'}
                       </div>
-                      {hasAnswered && <span className="bg-green-100 text-green-700 text-xs font-bold px-3 py-1 rounded-full">Selesai Menjawab</span>}
+                      {hasAnswered && activeQuiz.status === 'active' && <span className="bg-amber-100 text-amber-700 text-xs font-bold px-3 py-1 rounded-full">Menunggu Tutor</span>}
+                      {hasAnswered && activeQuiz.status === 'discussing' && (
+                        <span className={`text-xs font-bold px-3 py-1 rounded-full ${isCorrect ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'}`}>
+                          {isCorrect ? 'Jawaban Benar! 🌟' : 'Kurang Tepat'}
+                        </span>
+                      )}
                     </div>
                     
                     <h2 className="text-xl font-bold text-slate-900 mb-6">{activeQuiz.question}</h2>
                     
                     <div className="space-y-3">
-                      {activeQuiz.options.map((opt: string, i: number) => (
-                        <button
-                          key={i}
-                          disabled={hasAnswered}
-                          onClick={() => toggleQuizAnswer(opt)}
-                          className={`w-full text-left p-4 rounded-xl border-2 transition-all ${
-                            selectedAnswers.includes(opt) 
-                              ? 'border-indigo-600 bg-indigo-50 text-indigo-700 font-bold shadow-md shadow-indigo-100' 
-                              : 'border-slate-200 hover:border-indigo-300 bg-white text-slate-700'
-                          } ${hasAnswered && activeQuiz.correct_answer.includes(opt) ? 'border-green-500 bg-green-50 text-green-700' : ''}`}
-                        >
-                          <span className="inline-block w-6 font-bold opacity-50">{String.fromCharCode(65+i)}.</span> {opt}
-                        </button>
-                      ))}
+                      {activeQuiz.options.map((opt: string, i: number) => {
+                        const isSelected = selectedAnswers.includes(opt);
+                        const isCorrectOption = activeQuiz.correct_answer.includes(opt);
+                        const isDiscussing = activeQuiz.status === 'discussing';
+
+                        let buttonClass = 'border-slate-200 bg-white text-slate-700'; // default
+
+                        if (isDiscussing) {
+                          if (isCorrectOption) {
+                            buttonClass = 'border-green-500 bg-green-50 text-green-700 font-bold shadow-md shadow-green-100';
+                          } else if (isSelected && !isCorrectOption) {
+                            buttonClass = 'border-red-500 bg-red-50 text-red-700';
+                          } else {
+                            buttonClass = 'border-slate-200 bg-slate-50 text-slate-400 opacity-60';
+                          }
+                        } else {
+                          // Active status
+                          if (isSelected) {
+                            buttonClass = 'border-indigo-600 bg-indigo-50 text-indigo-700 font-bold shadow-md shadow-indigo-100';
+                          } else if (!hasAnswered) {
+                            buttonClass = 'border-slate-200 hover:border-indigo-300 bg-white text-slate-700';
+                          } else {
+                            buttonClass = 'border-slate-200 bg-slate-50 text-slate-400 opacity-60';
+                          }
+                        }
+
+                        return (
+                          <button
+                            key={i}
+                            disabled={hasAnswered}
+                            onClick={() => toggleQuizAnswer(opt)}
+                            className={`w-full text-left p-4 rounded-xl border-2 transition-all ${buttonClass}`}
+                          >
+                            <span className="inline-block w-6 font-bold opacity-50">{String.fromCharCode(65+i)}.</span> {opt}
+                          </button>
+                        );
+                      })}
                     </div>
 
                     {!hasAnswered && (
@@ -247,9 +289,17 @@ export default function StudentLiveInteractions({
                       </Button>
                     )}
 
-                    {hasAnswered && (
-                      <div className="mt-6 p-4 bg-slate-50 rounded-xl text-center">
-                        <p className="text-sm font-medium text-slate-500">Menunggu tutor menutup kuis...</p>
+                    {hasAnswered && activeQuiz.status === 'active' && (
+                      <div className="mt-6 p-4 bg-amber-50 border border-amber-200 rounded-xl text-center animate-pulse">
+                        <p className="text-sm font-bold text-amber-800">Jawaban Disimpan!</p>
+                        <p className="text-xs font-medium text-amber-600 mt-1">Mohon tunggu tutor untuk menampilkan pembahasan kuis ini...</p>
+                      </div>
+                    )}
+
+                    {activeQuiz.status === 'discussing' && activeQuiz.explanation && (
+                      <div className="mt-6 p-4 bg-indigo-50 border border-indigo-100 rounded-xl animate-in fade-in slide-in-from-bottom-2">
+                        <p className="text-xs font-bold text-indigo-800 uppercase mb-2">Penjelasan Tutor / AI</p>
+                        <p className="text-sm text-indigo-900">{activeQuiz.explanation}</p>
                       </div>
                     )}
                   </div>
