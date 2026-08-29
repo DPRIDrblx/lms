@@ -952,10 +952,10 @@ export default function LessonWorkspacePage() {
               <LiveInteractionsPanel 
                 scheduleId={id as string}
                 tutorId={profile?.id || ""}
-                topic={schedule.topic || customTopic}
-                subtopics={schedule.subtopics || []}
-                subject={schedule.subject || selectedSubject}
-                level={schedule.level || selectedLevel}
+                topic={selectedTopic === 'Lainnya' ? customTopic : selectedTopic}
+                subtopics={selectedSubtopics.filter(s => s !== "")}
+                subject={selectedSubject}
+                level={selectedLevel}
               />
             )}
           </div>
