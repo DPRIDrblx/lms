@@ -424,7 +424,7 @@ export default function LiveInteractionsPanel({
                     ) : (
                       <div className="grid gap-2">
                         {activeQuiz.options.map((opt: string, i: number) => {
-                          const count = quizAnswers.filter(a => Array.isArray(a.student_answer) ? a.student_answer.includes(opt) : a.student_answer === opt).length;
+                          const count = quizAnswers.filter(a => Array.isArray(a.answer) ? a.answer.includes(opt) : a.answer === opt).length;
                           const percentage = Math.round((count / quizAnswers.length) * 100);
                           const isCorrectOption = activeQuiz.correct_answer.includes(opt);
                           

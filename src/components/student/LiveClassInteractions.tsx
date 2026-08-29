@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useState, useEffect } from 'react';
+import { createPortal } from 'react-dom';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Lightbulb, HelpCircle, AlertCircle, X, Send, Sparkles, SendHorizontal } from 'lucide-react';
@@ -20,6 +21,16 @@ export default function StudentLiveInteractions({
 }) {
   const supabase = createClient();
   const [mood, setMood] = useState<string | null>(null);
+  
+  const [mounted, setMounted] = useState(false);
+  useEffect(() => { setMounted(true); }, []);
+
+  const renderModal = (content: React.ReactNode) => {
+    if (mounted && typeof document !== 'undefined') {
+      return createPortal(content, document.body);
+    }
+    return null;
+  };
   
   // Q&A
   const [showQA, setShowQA] = useState(false);
@@ -197,25 +208,25 @@ export default function StudentLiveInteractions({
           </div>
 
           {/* Q&A Modal */}
-          {showQA && (
-            <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/40 backdrop-blur-sm">
-              <div className="bg-white rounded-2xl w-full max-w-md shadow-2xl overflow-hidden animate-in zoom-in-95">
-                <div className="p-4 border-b border-slate-100 flex justify-between items-center bg-indigo-600 text-white">
-                  <h3 className="font-bold">Kirim Pertanyaan</h3>
-                  <button onClick={() => setShowQA(false)}><X className="w-5 h-5" /></button>
+          {showQA && renderModal(
+            <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-md">
+              <div className="bg-white rounded-[2rem] w-full max-w-md shadow-2xl overflow-hidden animate-in zoom-in-95 duration-200 border border-slate-200">
+                <div className="p-5 border-b border-slate-100 flex justify-between items-center bg-indigo-600 text-white">
+                  <h3 className="font-bold text-lg">Tanya Tutor</h3>
+                  <button onClick={() => setShowQA(false)} className="hover:bg-indigo-700 p-2 rounded-full transition-colors"><X className="w-5 h-5" /></button>
                 </div>
-                <div className="p-6 space-y-4">
+                <div className="p-6 space-y-5 bg-slate-50/50">
                   <textarea 
-                    className="w-full p-4 bg-slate-50 border border-slate-200 rounded-xl resize-none min-h-[120px] focus:outline-indigo-500"
+                    className="w-full p-4 bg-white border border-slate-200 rounded-2xl resize-none min-h-[140px] focus:outline-indigo-500 shadow-sm transition-all text-slate-700"
                     placeholder="Tulis pertanyaanmu di sini..."
                     value={question}
                     onChange={e => setQuestion(e.target.value)}
                   ></textarea>
-                  <label className="flex items-center gap-2 text-sm text-slate-600 cursor-pointer">
-                    <input type="checkbox" checked={isAnonymous} onChange={e => setIsAnonymous(e.target.checked)} className="rounded border-slate-300 text-indigo-600 focus:ring-indigo-600" />
-                    Kirim sebagai Anonim (Tutor tidak tahu namamu)
+                  <label className="flex items-center gap-3 text-sm text-slate-600 cursor-pointer p-3 bg-white border border-slate-200 rounded-xl hover:bg-slate-50 transition-colors">
+                    <input type="checkbox" checked={isAnonymous} onChange={e => setIsAnonymous(e.target.checked)} className="w-4 h-4 rounded border-slate-300 text-indigo-600 focus:ring-indigo-600" />
+                    Kirim sebagai Anonim
                   </label>
-                  <Button onClick={handleAskQuestion} disabled={!question.trim()} className="w-full bg-indigo-600 hover:bg-indigo-700">
+                  <Button onClick={handleAskQuestion} disabled={!question.trim()} className="w-full bg-indigo-600 hover:bg-indigo-700 h-12 rounded-xl text-base font-bold shadow-md shadow-indigo-200">
                     Kirim Pertanyaan
                   </Button>
                 </div>
@@ -224,15 +235,14 @@ export default function StudentLiveInteractions({
           )}
 
           {/* Live Quiz Modal */}
-          {activeQuiz && (
-            <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-indigo-900/80 backdrop-blur-md">
-              <div className="bg-white rounded-3xl w-full max-w-lg shadow-2xl overflow-hidden animate-in zoom-in-90 duration-300">
-                <div className="bg-gradient-to-r from-red-500 via-amber-500 to-indigo-500 p-1">
-                  <div className="bg-white p-6 rounded-[22px]">
-                    <div className="flex justify-between items-start mb-6">
-                      <div className="bg-red-100 text-red-600 font-bold px-3 py-1 rounded-full text-xs flex items-center gap-1 animate-pulse">
-                        <Sparkles className="w-3 h-3" /> {activeQuiz.status === 'discussing' ? 'PEMBAHASAN KUIS' : 'KUIS KILAT DARI TUTOR'}
-                      </div>
+          {activeQuiz && renderModal(
+            <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-slate-900/70 backdrop-blur-xl">
+              <div className="bg-white/95 backdrop-blur-3xl rounded-[2rem] w-full max-w-xl shadow-[0_20px_60px_-15px_rgba(0,0,0,0.5)] overflow-hidden animate-in zoom-in-90 duration-300 border border-white/20">
+                <div className="p-8">
+                  <div className="flex justify-between items-start mb-8">
+                    <div className="bg-gradient-to-r from-red-500 to-orange-500 text-white font-black px-4 py-1.5 rounded-full text-xs flex items-center gap-2 shadow-sm animate-pulse">
+                      <Sparkles className="w-3 h-3" /> {activeQuiz.status === 'discussing' ? 'PEMBAHASAN KUIS' : 'KUIS KILAT LIVE'}
+                    </div>
                       {hasAnswered && activeQuiz.status === 'active' && <span className="bg-amber-100 text-amber-700 text-xs font-bold px-3 py-1 rounded-full">Menunggu Tutor</span>}
                       {hasAnswered && activeQuiz.status === 'discussing' && (
                         <span className={`text-xs font-bold px-3 py-1 rounded-full ${isCorrect ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'}`}>
@@ -297,9 +307,9 @@ export default function StudentLiveInteractions({
                     )}
 
                     {activeQuiz.status === 'discussing' && activeQuiz.explanation && (
-                      <div className="mt-6 p-4 bg-indigo-50 border border-indigo-100 rounded-xl animate-in fade-in slide-in-from-bottom-2">
-                        <p className="text-xs font-bold text-indigo-800 uppercase mb-2">Penjelasan Tutor / AI</p>
-                        <p className="text-sm text-indigo-900">{activeQuiz.explanation}</p>
+                      <div className="mt-8 p-5 bg-gradient-to-br from-indigo-50 to-blue-50 border border-indigo-100/50 rounded-2xl animate-in fade-in slide-in-from-bottom-4 shadow-inner">
+                        <p className="text-xs font-black text-indigo-600/80 uppercase tracking-widest mb-3">Penjelasan Tutor / AI</p>
+                        <p className="text-sm text-slate-800 leading-relaxed font-medium">{activeQuiz.explanation}</p>
                       </div>
                     )}
                   </div>
