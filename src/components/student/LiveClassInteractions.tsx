@@ -319,6 +319,7 @@ export default function StudentLiveInteractions({
                   </div>
                 </div>
               </div>
+            </div>
           )}
         </>
       )}
