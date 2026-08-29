@@ -391,7 +391,7 @@ export default function LiveInteractionsPanel({
                 </div>
                 
                 <div>
-                  <h2 className="text-lg font-bold text-slate-900 mb-4">{activeQuiz.question}</h2>
+                  <h2 className="text-lg font-bold text-slate-900 mb-4 whitespace-pre-wrap">{activeQuiz.question}</h2>
                   
                   {activeQuiz.status === 'discussing' && (
                     <div className="mb-4 p-4 bg-green-50 border border-green-200 rounded-xl">
@@ -401,7 +401,7 @@ export default function LiveInteractionsPanel({
                       {activeQuiz.explanation && (
                         <div className="mt-3 pt-3 border-t border-green-200/50">
                           <p className="text-xs font-bold text-slate-500 uppercase mb-1">Penjelasan AI</p>
-                          <p className="text-sm text-slate-700">{activeQuiz.explanation}</p>
+                          <p className="text-sm text-slate-700 whitespace-pre-wrap">{activeQuiz.explanation}</p>
                         </div>
                       )}
                     </div>

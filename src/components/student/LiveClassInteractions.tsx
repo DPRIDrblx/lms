@@ -251,8 +251,7 @@ export default function StudentLiveInteractions({
                         </span>
                       )}
                     </div>
-                    
-                    <h2 className="text-2xl md:text-3xl font-black text-slate-900 mb-8 leading-tight">{activeQuiz.question}</h2>
+                    <h2 className="text-xl md:text-2xl font-bold text-slate-900 mb-8 leading-relaxed whitespace-pre-wrap">{activeQuiz.question}</h2>
                     
                     <div className="space-y-4">
                       {activeQuiz.options.map((opt: string, i: number) => {
@@ -313,7 +312,7 @@ export default function StudentLiveInteractions({
                         <p className="text-sm font-black text-indigo-600 uppercase tracking-widest mb-4 flex items-center gap-2">
                           <Lightbulb className="w-5 h-5" /> Penjelasan Tutor / AI
                         </p>
-                        <p className="text-base text-slate-800 leading-relaxed font-medium">{activeQuiz.explanation}</p>
+                        <p className="text-base text-slate-800 leading-relaxed font-medium whitespace-pre-wrap">{activeQuiz.explanation}</p>
                       </div>
                     )}
                   </div>
