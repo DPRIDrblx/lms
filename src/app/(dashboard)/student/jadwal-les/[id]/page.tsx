@@ -10,6 +10,7 @@ import { Button } from "@/components/ui/button";
 import { format } from "date-fns";
 import { id } from "date-fns/locale";
 import StudentLiveInteractions from '@/components/student/LiveClassInteractions';
+import { SessionLeaderboard } from '@/components/student/SessionLeaderboard';
 import toast from "react-hot-toast";
 import { cn } from "@/lib/utils";
 
@@ -500,12 +501,21 @@ export default function StudentScheduleDetail({ params }: { params: Promise<{ id
             
             {/* Live Interactions & Notes */}
             {(isCompleted || (isAttended && !isIzin)) && (
-              <StudentLiveInteractions 
-                scheduleId={resolvedParams.id} 
-                studentId={profile?.id || ""} 
-                isCompleted={isCompleted}
-                isHadir={isAttended && !isIzin}
-              />
+              <>
+                <StudentLiveInteractions 
+                  scheduleId={resolvedParams.id} 
+                  studentId={profile?.id || ""} 
+                  isCompleted={isCompleted}
+                  isHadir={isAttended && !isIzin}
+                />
+                
+                <div className="mt-8">
+                  <SessionLeaderboard 
+                    scheduleId={resolvedParams.id}
+                    studentId={profile?.id || ""}
+                  />
+                </div>
+              </>
             )}
           </div>
 
