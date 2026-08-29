@@ -39,7 +39,7 @@ export function LeaderboardWidget() {
         }
         
         // Sort and get top 3 (already sorted by RPC, but just to be safe)
-        const sorted = mappedData.sort((a: any, b: any) => b.total - a.total).slice(0, 3);
+        const sorted = mappedData.sort((a: any, b: any) => b.total - a.total).slice(0, 10);
         setTopStudents(sorted);
       } else {
         console.error("RPC failed, falling back to direct table query:", error);
@@ -61,7 +61,7 @@ export function LeaderboardWidget() {
           if (profile?.id && studentMap[profile.id]) {
             setMyStars(studentMap[profile.id].total);
           }
-          const sorted = Object.values(studentMap).sort((a, b) => b.total - a.total).slice(0, 3);
+          const sorted = Object.values(studentMap).sort((a, b) => b.total - a.total).slice(0, 10);
           setTopStudents(sorted);
         }
       }

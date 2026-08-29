@@ -151,8 +151,26 @@ export default function StudentScheduleDetail({ params }: { params: Promise<{ id
     if (error) {
       toast.error(error.message);
     } else {
-      toast.success("Berhasil presensi kehadiran!");
+      toast.success("Berhasil presensi kehadiran! +2 Bintang 🌟");
       setAttendance(data);
+      
+      // Give 2 stars automatically
+      const { data: existing } = await supabase
+        .from("student_stars")
+        .select("id, stars")
+        .eq("schedule_id", schedule.id)
+        .eq("student_id", profile.id)
+        .single();
+        
+      if (existing) {
+        await supabase.from("student_stars").update({ stars: existing.stars + 2 }).eq("id", existing.id);
+      } else {
+        await supabase.from("student_stars").insert({
+          student_id: profile.id,
+          schedule_id: schedule.id,
+          stars: 2
+        });
+      }
     }
   };
 
