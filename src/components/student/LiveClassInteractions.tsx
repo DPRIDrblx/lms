@@ -150,7 +150,7 @@ export default function StudentLiveInteractions({ scheduleId, studentId }: { sch
   return (
     <>
       {/* Floating Mood Bar & Ask Button */}
-      <div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-40 bg-white shadow-xl shadow-slate-200/50 rounded-full border border-slate-100 flex items-center p-2 gap-2">
+      <div className="fixed bottom-24 md:bottom-10 left-1/2 -translate-x-1/2 z-40 bg-white shadow-xl shadow-slate-200/50 rounded-full border border-slate-100 flex items-center p-2 gap-2">
         <button onClick={() => handleMood('paham')} className={`p-3 rounded-full flex items-center justify-center transition-transform hover:scale-110 ${mood === 'paham' ? 'bg-green-100 ring-2 ring-green-500' : 'bg-slate-50 hover:bg-slate-100'}`} title="Paham">
           <Lightbulb className={`w-5 h-5 ${mood === 'paham' ? 'text-green-600' : 'text-slate-500'}`} />
         </button>

@@ -50,7 +50,7 @@ export function NiaShell({ children }: { children: React.ReactNode }) {
       <aside className="hidden lg:flex w-72 flex-col bg-white border-r border-slate-200 shadow-sm fixed h-full z-40">
         <div className="p-4 border-b border-slate-100 flex flex-col gap-2">
           {showLogo(profile?.class_name) ? (
-            <img src="/logo-nia-tutoring.png" alt="NIA Tutoring" className="h-14 scale-110 origin-left w-auto object-contain" />
+            <img src="/icons/icon-512x512.png" alt="NIA Tutoring" className="h-14 scale-110 origin-left w-auto object-contain" />
           ) : (
             <div className="flex items-center gap-3">
               <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-blue-600 to-indigo-800 flex items-center justify-center shadow-lg shadow-blue-500/20 shrink-0">
@@ -109,7 +109,7 @@ export function NiaShell({ children }: { children: React.ReactNode }) {
       <header className="lg:hidden fixed top-0 w-full h-16 bg-white border-b border-slate-200 z-50 flex items-center justify-between px-4">
         <div className="flex items-center gap-2">
           {showLogo(profile?.class_name) ? (
-            <img src="/logo-nia-tutoring.png" alt="NIA Tutoring" className="h-10 scale-110 origin-left w-auto object-contain" />
+            <img src="/icons/icon-512x512.png" alt="NIA Tutoring" className="h-10 scale-110 origin-left w-auto object-contain" />
           ) : (
             <>
               <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-blue-600 to-indigo-800 flex items-center justify-center shrink-0">

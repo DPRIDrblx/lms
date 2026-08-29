@@ -268,16 +268,16 @@ export default function StudentScheduleDetail({ params }: { params: Promise<{ id
             <ChevronLeft className="w-5 h-5" /> Kembali
           </button>
           
-          <div className="flex flex-col md:flex-row md:items-end justify-between gap-6">
-            <div className="text-white max-w-2xl">
+          <div className="flex flex-col lg:flex-row lg:items-end justify-between gap-6">
+            <div className="text-white max-w-2xl min-w-0">
               <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-lg bg-black/20 backdrop-blur-md border border-white/20 font-bold text-sm mb-4 shadow-sm">
                 <Calendar className="w-4 h-4 text-yellow-300" />
                 {dateObj.toLocaleDateString('id-ID', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' })}
               </div>
-              <h1 className="text-4xl md:text-5xl font-black tracking-tight mb-4 drop-shadow-md leading-tight">
+              <h1 className="text-3xl md:text-5xl font-black tracking-tight mb-4 drop-shadow-md leading-tight break-words whitespace-pre-wrap">
                 {schedule.title}
               </h1>
-              <p className="text-red-100 font-medium text-lg md:text-xl drop-shadow-sm opacity-90 max-w-xl break-words whitespace-pre-wrap">
+              <p className="text-red-100 font-medium text-base md:text-xl drop-shadow-sm opacity-90 max-w-xl break-words whitespace-pre-wrap">
                 {schedule.description || "Mari bersiap untuk sesi belajar yang menyenangkan!"}
               </p>
             </div>
@@ -298,35 +298,35 @@ export default function StudentScheduleDetail({ params }: { params: Promise<{ id
       <div className="max-w-5xl mx-auto px-4 md:px-8 -mt-8 relative z-20 space-y-6">
         
         {/* Info Grid */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-          <div className="bg-white p-5 rounded-[24px] shadow-sm border border-slate-100 flex items-center gap-4">
-            <div className="w-12 h-12 bg-blue-50 rounded-2xl flex items-center justify-center shrink-0">
-              <Clock className="w-6 h-6 text-blue-500" />
+        <div className="grid grid-cols-2 lg:grid-cols-3 gap-3 md:gap-4">
+          <div className="bg-white p-4 md:p-5 rounded-[20px] md:rounded-[24px] shadow-sm border border-slate-100 flex items-center gap-3 md:gap-4 min-w-0">
+            <div className="w-10 h-10 md:w-12 md:h-12 bg-blue-50 rounded-xl md:rounded-2xl flex items-center justify-center shrink-0">
+              <Clock className="w-5 h-5 md:w-6 md:h-6 text-blue-500" />
             </div>
-            <div>
-              <p className="text-xs font-black uppercase text-slate-400">Waktu</p>
-              <p className="font-bold text-slate-800 text-lg">{schedule.schedule_time.substring(0, 5)} WIB</p>
+            <div className="min-w-0 flex-1">
+              <p className="text-[10px] md:text-xs font-black uppercase text-slate-400 truncate">Waktu</p>
+              <p className="font-bold text-slate-800 text-sm md:text-lg truncate">{schedule.schedule_time.substring(0, 5)} WIB</p>
             </div>
           </div>
           
-          <div className="bg-white p-5 rounded-[24px] shadow-sm border border-slate-100 flex items-center gap-4">
-            <div className="w-12 h-12 bg-red-50 rounded-2xl flex items-center justify-center shrink-0">
-              <User className="w-6 h-6 text-red-500" />
+          <div className="bg-white p-4 md:p-5 rounded-[20px] md:rounded-[24px] shadow-sm border border-slate-100 flex items-center gap-3 md:gap-4 min-w-0">
+            <div className="w-10 h-10 md:w-12 md:h-12 bg-red-50 rounded-xl md:rounded-2xl flex items-center justify-center shrink-0">
+              <User className="w-5 h-5 md:w-6 md:h-6 text-red-500" />
             </div>
-            <div>
-              <p className="text-xs font-black uppercase text-slate-400">Tutor</p>
-              <p className="font-bold text-slate-800 text-lg truncate">{schedule.tutor?.full_name || "TBA"}</p>
+            <div className="min-w-0 flex-1">
+              <p className="text-[10px] md:text-xs font-black uppercase text-slate-400 truncate">Tutor</p>
+              <p className="font-bold text-slate-800 text-sm md:text-lg truncate">{schedule.tutor?.full_name || "TBA"}</p>
             </div>
           </div>
 
-          <div className="bg-white p-5 rounded-[24px] shadow-sm border border-slate-100 flex items-center gap-4">
-            <div className="w-12 h-12 bg-yellow-50 rounded-2xl flex items-center justify-center shrink-0">
-              <MapPin className="w-6 h-6 text-yellow-600" />
+          <div className="bg-white p-4 md:p-5 rounded-[20px] md:rounded-[24px] shadow-sm border border-slate-100 flex items-center gap-3 md:gap-4 min-w-0 col-span-2 lg:col-span-1">
+            <div className="w-10 h-10 md:w-12 md:h-12 bg-yellow-50 rounded-xl md:rounded-2xl flex items-center justify-center shrink-0">
+              <MapPin className="w-5 h-5 md:w-6 md:h-6 text-yellow-600" />
             </div>
-            <div>
-              <p className="text-xs font-black uppercase text-slate-400">Lokasi</p>
-              <p className="font-bold text-slate-800 text-lg truncate">
-                {schedule.branch?.name ? `${schedule.branch.name} - Lt.${schedule.room?.room_number.toString()[0]} R.${schedule.room?.room_number}` : 'Online / TBA'}
+            <div className="min-w-0 flex-1">
+              <p className="text-[10px] md:text-xs font-black uppercase text-slate-400 truncate">Lokasi</p>
+              <p className="font-bold text-slate-800 text-sm md:text-lg truncate">
+                {schedule.branch?.name ? `${schedule.branch.name} - Lt.${schedule.room?.room_number?.toString()[0] || ''} R.${schedule.room?.room_number || ''}` : 'Online / TBA'}
               </p>
             </div>
           </div>
