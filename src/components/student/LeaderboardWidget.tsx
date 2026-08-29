@@ -19,35 +19,27 @@ export function LeaderboardWidget() {
       const date = new Date();
       const firstDay = new Date(date.getFullYear(), date.getMonth(), 1).toISOString();
       
-      // We need to fetch all student stars this month and group them
-      // Since supabase JS client doesn't have native groupBy with sum, we'll fetch them all
-      // Or we can use RPC if available, but for now we fetch all stars this month
-      const { data: starsData } = await supabase
-        .from("student_stars")
-        .select("student_id, stars, profiles!student_stars_student_id_fkey(full_name)")
-        .gte("created_at", firstDay);
+      // Use RPC to bypass RLS and aggregate stars safely
+      const { data: starsData, error } = await supabase.rpc('get_monthly_stars_leaderboard');
         
-      if (starsData) {
-        const studentMap: Record<string, { id: string, name: string, total: number }> = {};
-        
-        starsData.forEach((row: any) => {
-          if (!studentMap[row.student_id]) {
-            studentMap[row.student_id] = {
-              id: row.student_id,
-              name: row.profiles?.full_name || 'Siswa',
-              total: 0
-            };
-          }
-          studentMap[row.student_id].total += row.stars;
-        });
-        
+      if (!error && starsData) {
+        // Map the RPC result to match the expected format {id, name, total}
+        const mappedData = starsData.map((row: any) => ({
+          id: row.student_id,
+          name: row.full_name || 'Siswa',
+          total: Number(row.total_stars) || 0
+        }));
+
         // Find my stars
-        if (profile?.id && studentMap[profile.id]) {
-          setMyStars(studentMap[profile.id].total);
+        if (profile?.id) {
+          const myData = mappedData.find((s: any) => s.id === profile.id);
+          if (myData) {
+            setMyStars(myData.total);
+          }
         }
         
-        // Sort and get top 3
-        const sorted = Object.values(studentMap).sort((a, b) => b.total - a.total).slice(0, 3);
+        // Sort and get top 3 (already sorted by RPC, but just to be safe)
+        const sorted = mappedData.sort((a: any, b: any) => b.total - a.total).slice(0, 3);
         setTopStudents(sorted);
       }
       setLoading(false);

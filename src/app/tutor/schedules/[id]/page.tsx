@@ -140,14 +140,14 @@ export default function LessonWorkspacePage() {
               if (excMap[s.id]) {
                 attMap[s.id] = 'izin';
               } else if (!attMap[s.id]) {
-                attMap[s.id] = 'hadir'; // default
+                attMap[s.id] = 'absen'; // default
               }
             });
             setAttendances(attMap);
           } else {
             const attMap: Record<string, string> = {};
             stds.forEach((s: any) => {
-              attMap[s.id] = excMap[s.id] ? 'izin' : 'hadir';
+              attMap[s.id] = excMap[s.id] ? 'izin' : 'absen';
             });
             setAttendances(attMap);
           }

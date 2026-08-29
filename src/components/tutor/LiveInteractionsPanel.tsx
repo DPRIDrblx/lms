@@ -23,7 +23,12 @@ export default function LiveInteractionsPanel({
   level: string 
 }) {
   const supabase = createClient();
-  const [activeTab, setActiveTab] = useState<'quiz' | 'qa'>('quiz');
+  const [activeTab, setActiveTab] = useState<'quiz' | 'qa' | 'notes'>('quiz');
+  
+  // Notes states
+  const [notes, setNotes] = useState('');
+  const [isSavingNotes, setIsSavingNotes] = useState(false);
+  const [lastSaved, setLastSaved] = useState<Date | null>(null);
   
   // Quiz states
   const [quizType, setQuizType] = useState('Cek Konsep');
@@ -42,6 +47,9 @@ export default function LiveInteractionsPanel({
       const { data: qas } = await supabase.from('class_qa_board').select('*, profiles(full_name)').eq('schedule_id', scheduleId).order('created_at', { ascending: false });
       if (qas) setQaList(qas);
 
+      const { data: noteData } = await supabase.from('center_schedules').select('shared_notes').eq('id', scheduleId).single();
+      if (noteData && noteData.shared_notes) setNotes(noteData.shared_notes);
+
       const { data: activeQ } = await supabase.from('class_live_quizzes').select('*').eq('schedule_id', scheduleId).eq('status', 'active').order('created_at', { ascending: false }).limit(1).single();
       if (activeQ) {
         setActiveQuizId(activeQ.id);
@@ -55,6 +63,14 @@ export default function LiveInteractionsPanel({
     const interval = setInterval(async () => {
       const { data: qas } = await supabase.from('class_qa_board').select('*, profiles(full_name)').eq('schedule_id', scheduleId).order('created_at', { ascending: false });
       if (qas) setQaList(qas);
+
+      // Poll notes
+      if (!isSavingNotes) {
+        const { data: noteData } = await supabase.from('center_schedules').select('shared_notes').eq('id', scheduleId).single();
+        if (noteData && noteData.shared_notes !== notes) {
+          setNotes(noteData.shared_notes || '');
+        }
+      }
 
       if (activeQuizId) {
         fetchAnswers(activeQuizId);
@@ -103,6 +119,21 @@ export default function LiveInteractionsPanel({
       setIsGenerating(false);
     }
   };
+
+  // Auto-save notes every 3 seconds of typing stop
+  useEffect(() => {
+    const delayDebounceFn = setTimeout(async () => {
+      if (!notes) return;
+      setIsSavingNotes(true);
+      
+      await supabase.from('center_schedules').update({ shared_notes: notes }).eq('id', scheduleId);
+      
+      setLastSaved(new Date());
+      setIsSavingNotes(false);
+    }, 3000);
+
+    return () => clearTimeout(delayDebounceFn);
+  }, [notes, scheduleId, supabase]);
 
   const handleBroadcastQuiz = async () => {
     if (!generatedQuiz) return;
@@ -162,6 +193,12 @@ export default function LiveInteractionsPanel({
           {qaList.filter(q => !q.is_answered).length > 0 && (
             <span className="bg-red-500 text-white text-[10px] px-1.5 py-0.5 rounded-full">{qaList.filter(q => !q.is_answered).length}</span>
           )}
+        </button>
+        <button 
+          onClick={() => setActiveTab('notes')}
+          className={`flex-1 py-3 text-sm font-bold flex items-center justify-center gap-2 transition-colors ${activeTab === 'notes' ? 'bg-amber-50 text-amber-700 border-b-2 border-amber-600' : 'text-slate-500 hover:bg-slate-50'}`}
+        >
+          <MessageSquare className="w-4 h-4" /> Catatan Kelas
         </button>
       </div>
 
@@ -242,22 +279,52 @@ export default function LiveInteractionsPanel({
         )}
 
         {activeTab === 'qa' && (
-          <div className="space-y-3 max-h-[300px] overflow-y-auto pr-2 custom-scrollbar animate-in fade-in slide-in-from-bottom-2">
+          <div className="space-y-4 animate-in fade-in slide-in-from-bottom-2">
+            <h3 className="text-sm font-bold text-slate-800 mb-4">Daftar Pertanyaan Siswa</h3>
             {qaList.length === 0 ? (
-              <div className="text-center py-6 text-slate-400 text-sm italic">Belum ada pertanyaan dari siswa.</div>
+              <div className="text-center p-8 bg-slate-50 rounded-xl border border-slate-100">
+                <p className="text-slate-400 text-sm">Belum ada pertanyaan dari siswa.</p>
+              </div>
             ) : (
-              qaList.map(q => (
-                <div key={q.id} className={`p-3 rounded-xl border ${q.is_answered ? 'bg-slate-50 border-slate-200 opacity-60' : 'bg-blue-50 border-blue-200'}`}>
-                  <div className="flex justify-between items-start mb-1">
-                    <span className="text-xs font-bold text-slate-500">{q.profiles?.full_name || '👤 Siswa Anonim'}</span>
-                    <button onClick={() => handleMarkAnswered(q.id, q.is_answered)} className={`text-[10px] px-2 py-1 rounded font-bold ${q.is_answered ? 'bg-slate-200 text-slate-600' : 'bg-blue-600 text-white hover:bg-blue-700'}`}>
-                      {q.is_answered ? 'Terjawab' : 'Tandai Terjawab'}
-                    </button>
+              <div className="space-y-3 max-h-[400px] overflow-y-auto pr-2 custom-scrollbar">
+                {qaList.map(q => (
+                  <div key={q.id} className={`p-4 rounded-xl border ${q.is_answered ? 'bg-slate-50 border-slate-200' : 'bg-white border-blue-200 shadow-sm'}`}>
+                    <div className="flex justify-between items-start mb-2">
+                      <span className="text-xs font-bold text-slate-500">{q.profiles?.full_name || 'Anonim'}</span>
+                      <span className="text-[10px] text-slate-400">{new Date(q.created_at).toLocaleTimeString()}</span>
+                    </div>
+                    <p className={`text-sm mb-4 ${q.is_answered ? 'text-slate-500' : 'text-slate-800 font-medium'}`}>{q.question}</p>
+                    <div className="flex justify-end">
+                      <Button 
+                        size="sm" 
+                        variant={q.is_answered ? "secondary" : "primary"}
+                        onClick={() => handleMarkAnswered(q.id, q.is_answered)}
+                        className={q.is_answered ? 'text-slate-500' : 'bg-blue-600 hover:bg-blue-700 text-white'}
+                      >
+                        {q.is_answered ? 'Tandai Belum Terjawab' : 'Tandai Sudah Terjawab'}
+                      </Button>
+                    </div>
                   </div>
-                  <p className="text-sm text-slate-800 font-medium">{q.question}</p>
-                </div>
-              ))
+                ))}
+              </div>
             )}
+          </div>
+        )}
+
+        {activeTab === 'notes' && (
+          <div className="space-y-4 animate-in fade-in slide-in-from-bottom-2">
+            <div className="flex justify-between items-center mb-2">
+              <h3 className="text-sm font-bold text-slate-800">Catatan Kelas Kolaboratif</h3>
+              <span className="text-xs text-slate-400">
+                {isSavingNotes ? 'Menyimpan...' : lastSaved ? `Tersimpan ${lastSaved.toLocaleTimeString()}` : ''}
+              </span>
+            </div>
+            <textarea
+              value={notes}
+              onChange={e => setNotes(e.target.value)}
+              placeholder="Ketik catatan penting di sini. Apa yang Anda ketik akan langsung terlihat oleh semua siswa secara real-time..."
+              className="w-full min-h-[300px] p-4 bg-yellow-50/50 border border-amber-200/50 rounded-xl outline-none focus:border-amber-400 focus:ring-4 focus:ring-amber-400/20 resize-y text-slate-700 leading-relaxed font-medium custom-scrollbar"
+            />
           </div>
         )}
       </div>

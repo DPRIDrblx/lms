@@ -250,6 +250,7 @@ export default function StudentScheduleDetail({ params }: { params: Promise<{ id
   const isAttended = !!attendance;
   const isHadir = attendance?.status === 'hadir';
   const isIzin = attendance?.status === 'izin';
+  const isCompleted = schedule.status === 'completed';
   const tagsList = selectedRating >= 4 ? FEEDBACK_TAGS_GOOD : FEEDBACK_TAGS_BAD;
 
   return (
@@ -479,8 +480,15 @@ export default function StudentScheduleDetail({ params }: { params: Promise<{ id
               </div>
             )}
             
-            {/* Live Interactions */}
-            <StudentLiveInteractions scheduleId={resolvedParams.id} studentId={profile?.id || ""} />
+            {/* Live Interactions & Notes */}
+            {(isCompleted || (isAttended && !isIzin)) && (
+              <StudentLiveInteractions 
+                scheduleId={resolvedParams.id} 
+                studentId={profile?.id || ""} 
+                isCompleted={isCompleted}
+                isHadir={isAttended && !isIzin}
+              />
+            )}
           </div>
 
           <div className="lg:col-span-1 space-y-6">
