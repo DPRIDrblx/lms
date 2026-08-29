@@ -9,7 +9,7 @@ import { Button } from "@/components/ui/button";
 import { TUTORING_TOPICS, EducationLevel, Subject, Topic } from "@/lib/tutoring-topics";
 import { 
   ArrowLeft, Clock, Users, BookOpen, Save, CheckCircle2, 
-  Camera, FileText, Loader2, KeyRound, Sparkles, MapPin, Star
+  Camera, FileText, Loader2, KeyRound, Sparkles, MapPin, Star, Plus, Minus
 } from "lucide-react";
 import LiveInteractionsPanel from "@/components/tutor/LiveInteractionsPanel";
 import toast from "react-hot-toast";
@@ -856,15 +856,19 @@ export default function LessonWorkspacePage() {
               </div>
             </div>
             
-            {students.length === 0 ? (
-              <p className="text-slate-500 text-sm italic">Belum ada siswa di kelas ini.</p>
+            {students.filter(s => ['hadir', 'izin'].includes(attendances[s.id])).length === 0 ? (
+              <p className="text-slate-500 text-sm italic">Belum ada siswa yang mengisi absensi.</p>
             ) : (
               <div className="space-y-2">
-                {students.map(student => (
+                {students.filter(s => ['hadir', 'izin'].includes(attendances[s.id])).map(student => (
                   <div key={student.id} className="flex items-center justify-between p-3 border border-slate-100 rounded-xl hover:bg-slate-50 flex-wrap gap-2">
                     <div 
                       className="flex-1 min-w-[150px] cursor-pointer hover:bg-slate-100 p-2 rounded-lg transition-colors"
-                      onClick={() => handleGiveStar(student.id, Math.min((studentStars[student.id] || 0) + 1, 5))}
+                      onClick={() => {
+                        if (attendances[student.id] === 'hadir' && !isCompleted) {
+                          handleGiveStar(student.id, (studentStars[student.id] || 0) + 1);
+                        }
+                      }}
                       title="Klik untuk tambah bintang"
                     >
                       <div className="flex items-center gap-2">
@@ -878,19 +882,29 @@ export default function LessonWorkspacePage() {
                       <p className="text-xs text-slate-500">{student.nis || 'NIS -'}</p>
                     </div>
                     
-                    <div className="flex items-center gap-1 bg-yellow-50 px-2 py-1 rounded-lg mr-2" title="Beri Bintang Keaktifan">
-                      {[1,2,3,4,5].map(star => (
+                    <div className="flex items-center gap-3 bg-yellow-50 px-3 py-1.5 rounded-xl mr-2 border border-yellow-100">
+                      <div className="flex items-center gap-1.5 font-black text-yellow-600 min-w-[3rem] justify-center">
+                        <Star className="w-5 h-5 fill-yellow-400 text-yellow-500 drop-shadow-sm" />
+                        <span className="text-lg">{studentStars[student.id] || 0}</span>
+                      </div>
+                      
+                      <div className="flex items-center gap-1 border-l border-yellow-200 pl-3">
                         <button 
-                          key={star}
-                          onClick={() => handleGiveStar(student.id, star)}
-                          disabled={isCompleted}
-                          className={`p-1 transition-all ${
-                            (studentStars[student.id] || 0) >= star ? 'text-yellow-500 hover:scale-110' : 'text-yellow-200 hover:text-yellow-400 hover:scale-110'
-                          }`}
+                          onClick={() => handleGiveStar(student.id, Math.max(0, (studentStars[student.id] || 0) - 1))}
+                          disabled={isCompleted || attendances[student.id] !== 'hadir' || (studentStars[student.id] || 0) === 0}
+                          className="p-1.5 rounded-lg transition-all bg-yellow-100 hover:bg-yellow-200 text-yellow-700 disabled:opacity-50 disabled:cursor-not-allowed"
                         >
-                          <svg className="w-4 h-4 fill-current" viewBox="0 0 24 24"><path d="M12 17.27L18.18 21l-1.64-7.03L22 9.24l-7.19-.61L12 2 9.19 8.63 2 9.24l5.46 4.73L5.82 21z"/></svg>
+                          <Minus className="w-4 h-4" />
                         </button>
-                      ))}
+                        <button 
+                          onClick={() => handleGiveStar(student.id, (studentStars[student.id] || 0) + 1)}
+                          disabled={isCompleted || attendances[student.id] !== 'hadir'}
+                          title={attendances[student.id] === 'hadir' ? "Tambah Bintang Keaktifan" : "Bintang hanya untuk siswa yang Hadir"}
+                          className="p-1.5 rounded-lg transition-all bg-yellow-400 hover:bg-yellow-500 text-white shadow-sm hover:scale-105 active:scale-95 disabled:bg-slate-200 disabled:text-slate-400 disabled:cursor-not-allowed disabled:hover:scale-100"
+                        >
+                          <Plus className="w-4 h-4" />
+                        </button>
+                      </div>
                     </div>
 
                     <div className="flex gap-1">
