@@ -41,11 +41,47 @@ export function LeaderboardWidget() {
         // Sort and get top 3 (already sorted by RPC, but just to be safe)
         const sorted = mappedData.sort((a: any, b: any) => b.total - a.total).slice(0, 3);
         setTopStudents(sorted);
+      } else {
+        console.error("RPC failed, falling back to direct table query:", error);
+        // Fallback if RPC is not created yet (might suffer from RLS issues)
+        const { data: fallbackData } = await supabase
+          .from("student_stars")
+          .select("student_id, stars, profiles!student_stars_student_id_fkey(full_name)")
+          .gte("created_at", firstDay);
+          
+        if (fallbackData) {
+          const studentMap: Record<string, { id: string, name: string, total: number }> = {};
+          fallbackData.forEach((row: any) => {
+            if (!studentMap[row.student_id]) {
+              studentMap[row.student_id] = { id: row.student_id, name: row.profiles?.full_name || 'Siswa', total: 0 };
+            }
+            studentMap[row.student_id].total += row.stars;
+          });
+          
+          if (profile?.id && studentMap[profile.id]) {
+            setMyStars(studentMap[profile.id].total);
+          }
+          const sorted = Object.values(studentMap).sort((a, b) => b.total - a.total).slice(0, 3);
+          setTopStudents(sorted);
+        }
       }
       setLoading(false);
     }
     
     fetchData();
+
+    // Subscribe to realtime updates for student_stars
+    const channel = supabase
+      .channel('public:student_stars')
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'student_stars' }, () => {
+        console.log('Realtime update received! Refetching leaderboard...');
+        fetchData();
+      })
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
   }, [profile?.id, supabase]);
 
   if (loading) {
