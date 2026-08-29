@@ -7,29 +7,29 @@ import { MessageSquare, HelpCircle, Sparkles, Send, Loader2, PlayCircle, CheckCi
 import { createClient } from '@/lib/supabase';
 import toast from 'react-hot-toast';
 
-export default function LiveInteractionsPanel({ 
-  scheduleId, 
-  tutorId, 
-  topic, 
-  subtopics, 
-  subject, 
-  level 
-}: { 
-  scheduleId: string, 
-  tutorId: string, 
-  topic: string, 
-  subtopics: string[], 
-  subject: string, 
-  level: string 
+export default function LiveInteractionsPanel({
+  scheduleId,
+  tutorId,
+  topic,
+  subtopics,
+  subject,
+  level
+}: {
+  scheduleId: string,
+  tutorId: string,
+  topic: string,
+  subtopics: string[],
+  subject: string,
+  level: string
 }) {
   const supabase = createClient();
   const [activeTab, setActiveTab] = useState<'quiz' | 'qa' | 'notes'>('quiz');
-  
+
   // Notes states
   const [notes, setNotes] = useState('');
   const [isSavingNotes, setIsSavingNotes] = useState(false);
   const [lastSaved, setLastSaved] = useState<Date | null>(null);
-  
+
   // Quiz states
   const [quizType, setQuizType] = useState('Cek Konsep');
   const [selectedSubtopic, setSelectedSubtopic] = useState('');
@@ -90,11 +90,11 @@ export default function LiveInteractionsPanel({
       toast.error("Rencana Pembelajaran (Topik) harus diisi dulu!");
       return;
     }
-    
+
     setIsGenerating(true);
     setGeneratedQuiz(null);
     const toastId = toast.loading("AI sedang menyusun kuis...");
-    
+
     try {
       const res = await fetch("/api/ai/generate-live-quiz", {
         method: "POST",
@@ -125,9 +125,9 @@ export default function LiveInteractionsPanel({
     const delayDebounceFn = setTimeout(async () => {
       if (!notes) return;
       setIsSavingNotes(true);
-      
+
       await supabase.from('center_schedules').update({ shared_notes: notes }).eq('id', scheduleId);
-      
+
       setLastSaved(new Date());
       setIsSavingNotes(false);
     }, 3000);
@@ -154,7 +154,7 @@ export default function LiveInteractionsPanel({
       }).select().single();
 
       if (error) throw error;
-      
+
       setActiveQuizId(data.id);
       setGeneratedQuiz(data);
       setQuizAnswers([]);
@@ -179,13 +179,13 @@ export default function LiveInteractionsPanel({
   return (
     <Card className="p-0 overflow-hidden border-indigo-100 shadow-sm mt-6 transition-all duration-300">
       <div className="flex border-b border-slate-100">
-        <button 
+        <button
           onClick={() => setActiveTab('quiz')}
           className={`flex-1 py-3 text-sm font-bold flex items-center justify-center gap-2 transition-colors ${activeTab === 'quiz' ? 'bg-indigo-50 text-indigo-700 border-b-2 border-indigo-600' : 'text-slate-500 hover:bg-slate-50'}`}
         >
           <Sparkles className="w-4 h-4" /> Kuis Kilat AI
         </button>
-        <button 
+        <button
           onClick={() => setActiveTab('qa')}
           className={`flex-1 py-3 text-sm font-bold flex items-center justify-center gap-2 transition-colors ${activeTab === 'qa' ? 'bg-blue-50 text-blue-700 border-b-2 border-blue-600' : 'text-slate-500 hover:bg-slate-50'}`}
         >
@@ -194,7 +194,7 @@ export default function LiveInteractionsPanel({
             <span className="bg-red-500 text-white text-[10px] px-1.5 py-0.5 rounded-full">{qaList.filter(q => !q.is_answered).length}</span>
           )}
         </button>
-        <button 
+        <button
           onClick={() => setActiveTab('notes')}
           className={`flex-1 py-3 text-sm font-bold flex items-center justify-center gap-2 transition-colors ${activeTab === 'notes' ? 'bg-amber-50 text-amber-700 border-b-2 border-amber-600' : 'text-slate-500 hover:bg-slate-50'}`}
         >
@@ -295,8 +295,8 @@ export default function LiveInteractionsPanel({
                     </div>
                     <p className={`text-sm mb-4 ${q.is_answered ? 'text-slate-500' : 'text-slate-800 font-medium'}`}>{q.question}</p>
                     <div className="flex justify-end">
-                      <Button 
-                        size="sm" 
+                      <Button
+                        size="sm"
                         variant={q.is_answered ? "secondary" : "primary"}
                         onClick={() => handleMarkAnswered(q.id, q.is_answered)}
                         className={q.is_answered ? 'text-slate-500' : 'bg-blue-600 hover:bg-blue-700 text-white'}
