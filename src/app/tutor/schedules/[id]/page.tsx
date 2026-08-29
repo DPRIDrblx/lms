@@ -261,9 +261,19 @@ export default function LessonWorkspacePage() {
     return () => clearInterval(interval);
   }, [schedule?.id, supabase]);
 
-  const handleAttendanceChange = (studentId: string, status: string) => {
+  const handleAttendanceChange = async (studentId: string, status: string) => {
     if (schedule?.is_attendance_closed) return;
+    
+    // Update local state first
     setAttendances(prev => ({ ...prev, [studentId]: status }));
+    
+    // Update DB immediately so polling doesn't overwrite it
+    await supabase.from("center_schedule_attendances").upsert({
+      schedule_id: schedule.id,
+      student_id: studentId,
+      status: status,
+      created_at: new Date().toISOString()
+    }, { onConflict: 'schedule_id, student_id' });
   };
 
   const handleGiveStar = async (studentId: string, starCount: number) => {
@@ -852,7 +862,11 @@ export default function LessonWorkspacePage() {
               <div className="space-y-2">
                 {students.map(student => (
                   <div key={student.id} className="flex items-center justify-between p-3 border border-slate-100 rounded-xl hover:bg-slate-50 flex-wrap gap-2">
-                    <div className="flex-1 min-w-[150px]">
+                    <div 
+                      className="flex-1 min-w-[150px] cursor-pointer hover:bg-slate-100 p-2 rounded-lg transition-colors"
+                      onClick={() => handleGiveStar(student.id, Math.min((studentStars[student.id] || 0) + 1, 5))}
+                      title="Klik untuk tambah bintang"
+                    >
                       <div className="flex items-center gap-2">
                         <p className="font-bold text-slate-900 text-sm">{student.full_name}</p>
                         {studentMoods[student.id] && (
