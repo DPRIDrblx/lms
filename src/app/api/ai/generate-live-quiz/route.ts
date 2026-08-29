@@ -1,13 +1,16 @@
 import { NextResponse } from 'next/server';
-import { generateText } from 'ai';
-import { createGoogleGenerativeAI } from '@ai-sdk/google';
+import { GoogleGenerativeAI } from '@google/generative-ai';
 
-const google = createGoogleGenerativeAI({
-  apiKey: process.env.GEMINI_API_KEY || '',
-});
+const apiKey = process.env.GEMINI_API_KEY;
+const genAI = apiKey ? new GoogleGenerativeAI(apiKey) : null;
+export const maxDuration = 60;
 
 export async function POST(req: Request) {
   try {
+    if (!genAI) {
+      return NextResponse.json({ error: "Gemini API key not configured" }, { status: 500 });
+    }
+
     const { jenjang, mapel, topik, subtopik, tipeKuis } = await req.json();
 
     if (!jenjang || !mapel || !topik || !tipeKuis) {
@@ -31,11 +34,9 @@ STRUKTUR JSON YANG DIHARAPKAN:
   "explanation": "Penjelasan detail kenapa jawaban tersebut benar."
 }`;
 
-    const { text } = await generateText({
-      model: google('gemini-1.5-flash'),
-      prompt: prompt,
-      temperature: 0.7,
-    });
+    const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
+    const result = await model.generateContent(prompt);
+    const text = result.response.text();
 
     let quizData;
     try {
@@ -51,7 +52,7 @@ STRUKTUR JSON YANG DIHARAPKAN:
   } catch (error: any) {
     console.error('AI Quiz Generation Error:', error);
     return NextResponse.json(
-      { error: 'Gagal menghasilkan kuis dengan AI' },
+      { error: error.message || 'Gagal menghasilkan kuis dengan AI' },
       { status: 500 }
     );
   }
