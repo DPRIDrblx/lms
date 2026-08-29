@@ -115,7 +115,7 @@ export function LeaderboardWidget() {
           </div>
           
           <div className="h-20 overflow-hidden relative">
-            <div className="absolute inset-0 flex flex-col animate-[scrollUp_20s_linear_infinite]">
+            <div className="absolute inset-0 flex flex-col animate-[scrollUp_10s_linear_infinite]">
               {/* Double the list for seamless scrolling */}
               {[...topStudents, ...topStudents].map((student, idx) => (
                 <div key={idx} className="h-10 flex items-center justify-between px-2 shrink-0">
