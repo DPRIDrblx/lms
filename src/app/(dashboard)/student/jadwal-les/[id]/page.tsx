@@ -139,11 +139,11 @@ export default function StudentScheduleDetail({ params }: { params: Promise<{ id
     setIsSubmitting(true);
     const { data, error } = await supabase
       .from("center_schedule_attendances")
-      .insert({
+      .upsert({
         schedule_id: schedule.id,
         student_id: profile.id,
         status: "hadir"
-      })
+      }, { onConflict: 'schedule_id, student_id' })
       .select()
       .single();
 
@@ -190,12 +190,12 @@ export default function StudentScheduleDetail({ params }: { params: Promise<{ id
     setIsSubmitting(true);
     const { data, error } = await supabase
       .from("center_schedule_attendances")
-      .insert({
+      .upsert({
         schedule_id: schedule.id,
         student_id: profile.id,
         status: "izin",
         excuse_reason: excuseReason
-      })
+      }, { onConflict: 'schedule_id, student_id' })
       .select()
       .single();
 
@@ -266,7 +266,7 @@ export default function StudentScheduleDetail({ params }: { params: Promise<{ id
   }
 
   const dateObj = new Date(schedule.schedule_time);
-  const isAttended = !!attendance;
+  const isAttended = !!attendance && attendance.status !== 'absen';
   const isHadir = attendance?.status === 'hadir';
   const isIzin = attendance?.status === 'izin';
   const isCompleted = schedule.status === 'completed';
@@ -527,9 +527,19 @@ export default function StudentScheduleDetail({ params }: { params: Promise<{ id
               {!isAttended ? (
                 <div className="space-y-6">
                   {schedule.is_attendance_closed ? (
-                    <div className="bg-red-50 text-red-700 p-5 rounded-2xl border border-red-100 text-center font-bold">
-                      Waktu presensi telah ditutup oleh Tutor.
-                    </div>
+                    attendance?.status === 'absen' ? (
+                      <div className="bg-rose-50 text-rose-700 p-5 rounded-2xl border border-rose-100 text-center">
+                        <div className="w-16 h-16 bg-rose-200 rounded-full flex items-center justify-center mx-auto mb-4">
+                          <AlertCircle className="w-8 h-8 text-rose-700" />
+                        </div>
+                        <h4 className="font-black text-rose-900 text-lg mb-1">Status: Tidak Hadir / Absen</h4>
+                        <p className="font-medium text-sm">Waktu presensi telah ditutup oleh Tutor.</p>
+                      </div>
+                    ) : (
+                      <div className="bg-red-50 text-red-700 p-5 rounded-2xl border border-red-100 text-center font-bold">
+                        Waktu presensi telah ditutup oleh Tutor.
+                      </div>
+                    )
                   ) : (
                     <>
                       <div className="flex bg-slate-100 rounded-xl p-1">
