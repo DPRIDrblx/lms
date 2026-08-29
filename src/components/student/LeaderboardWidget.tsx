@@ -110,12 +110,12 @@ export function LeaderboardWidget() {
         {/* Animated Leaderboard Ticker */}
         <div className="w-full md:w-auto flex-1 max-w-sm bg-black/20 rounded-2xl p-4 backdrop-blur-sm border border-white/10">
           <div className="flex items-center gap-2 text-yellow-300 font-bold text-sm mb-3">
-            <Trophy className="w-4 h-4" /> Top 3 Bintang Terbanyak
+            <Trophy className="w-4 h-4" /> Top 10 Bintang Terbanyak
             <TrendingUp className="w-4 h-4 ml-auto text-blue-300" />
           </div>
           
           <div className="h-20 overflow-hidden relative">
-            <div className="absolute inset-0 flex flex-col animate-[scrollUp_8s_linear_infinite]">
+            <div className="absolute inset-0 flex flex-col animate-[scrollUp_20s_linear_infinite]">
               {/* Double the list for seamless scrolling */}
               {[...topStudents, ...topStudents].map((student, idx) => (
                 <div key={idx} className="h-10 flex items-center justify-between px-2 shrink-0">
@@ -123,7 +123,8 @@ export function LeaderboardWidget() {
                     <span className={`w-5 h-5 rounded-full flex items-center justify-center text-[10px] font-black ${
                       (idx % topStudents.length) === 0 ? 'bg-yellow-400 text-yellow-900' :
                       (idx % topStudents.length) === 1 ? 'bg-slate-300 text-slate-800' :
-                      'bg-orange-400 text-orange-950'
+                      (idx % topStudents.length) === 2 ? 'bg-orange-400 text-orange-950' :
+                      'bg-white/20 text-white'
                     }`}>
                       {(idx % topStudents.length) + 1}
                     </span>
