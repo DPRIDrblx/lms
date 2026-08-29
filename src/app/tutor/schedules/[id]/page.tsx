@@ -108,7 +108,7 @@ export default function LessonWorkspacePage() {
       if (sched.target_class_ids && sched.target_class_ids.length > 0) {
         const { data: stds } = await supabase
           .from("profiles")
-          .select("id, full_name, nis")
+          .select("id, full_name")
           .in("class_id", sched.target_class_ids)
           .eq("role", "student")
           .order("full_name");
