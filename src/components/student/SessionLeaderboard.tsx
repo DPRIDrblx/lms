@@ -12,24 +12,38 @@ export function SessionLeaderboard({ scheduleId, studentId }: { scheduleId: stri
 
   useEffect(() => {
     async function fetchSessionStars() {
-      // Fetch all stars for this specific session
-      const { data, error } = await supabase
-        .from('student_stars')
-        .select('student_id, stars, profiles!student_stars_student_id_fkey(full_name)')
-        .eq('schedule_id', scheduleId)
-        .order('stars', { ascending: false });
+      // Fetch all stars for this specific session using RPC to bypass RLS
+      const { data, error } = await supabase.rpc('get_session_stars_leaderboard', { p_schedule_id: scheduleId });
 
       if (!error && data) {
         const mapped = data.map((row: any) => ({
           id: row.student_id,
-          name: row.profiles?.full_name || 'Siswa',
-          stars: row.stars
+          name: row.full_name || 'Siswa',
+          stars: Number(row.stars) || 0
         }));
 
         setLeaderboard(mapped);
         
         const me = mapped.find((s: any) => s.id === studentId);
         if (me) setMyStars(me.stars);
+      } else {
+        console.error("Session RPC failed, falling back to direct table query:", error);
+        const { data: fallbackData } = await supabase
+          .from('student_stars')
+          .select('student_id, stars, profiles!student_stars_student_id_fkey(full_name)')
+          .eq('schedule_id', scheduleId)
+          .order('stars', { ascending: false });
+          
+        if (fallbackData) {
+          const mapped = fallbackData.map((row: any) => ({
+            id: row.student_id,
+            name: row.profiles?.full_name || 'Siswa',
+            stars: row.stars
+          }));
+          setLeaderboard(mapped);
+          const me = mapped.find((s: any) => s.id === studentId);
+          if (me) setMyStars(me.stars);
+        }
       }
       setLoading(false);
     }
