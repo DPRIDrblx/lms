@@ -184,7 +184,7 @@ export default function JadwalLesPage() {
                         </div>
                       )}
                       
-                      <div className="p-5 flex-1 flex flex-col">
+                      <div className="p-5 flex-1 flex flex-col min-w-0">
                         <div className="flex items-start justify-between gap-3 mb-2">
                           <h3 className="text-[17px] font-black text-slate-800 leading-tight group-hover:text-[#108B96] transition-colors line-clamp-2">{schedule.title}</h3>
                           {isToday && (
@@ -205,9 +205,9 @@ export default function JadwalLesPage() {
                           </div>
                           
                           {schedule.tutor?.full_name && (
-                            <div className="flex items-center gap-1.5 text-[12px] font-bold text-indigo-700 bg-indigo-50 px-2.5 py-1.5 rounded-[8px] border border-indigo-200">
-                              <User className="w-3.5 h-3.5 text-indigo-500" />
-                              {schedule.tutor.full_name}
+                            <div className="flex items-center gap-1.5 text-[12px] font-bold text-indigo-700 bg-indigo-50 px-2.5 py-1.5 rounded-[8px] border border-indigo-200 max-w-full">
+                              <User className="w-3.5 h-3.5 text-indigo-500 shrink-0" />
+                              <span className="truncate">{schedule.tutor.full_name}</span>
                             </div>
                           )}
                           
@@ -225,8 +225,8 @@ export default function JadwalLesPage() {
                               )}
                             </div>
                           ) : isToday ? (
-                            <div className="flex items-center gap-1.5 text-[12px] font-bold text-amber-700 bg-amber-50 px-2.5 py-1.5 rounded-[8px] border border-amber-100">
-                              <KeyRound className="w-3.5 h-3.5" /> Belum Presensi
+                            <div className="flex items-center gap-1.5 text-[12px] font-bold text-amber-700 bg-amber-50 px-2.5 py-1.5 rounded-[8px] border border-amber-100 max-w-full">
+                              <KeyRound className="w-3.5 h-3.5 shrink-0" /> <span className="truncate">Belum Presensi</span>
                             </div>
                           ) : null}
                         </div>
@@ -276,7 +276,7 @@ export default function JadwalLesPage() {
                     <span className="text-3xl sm:text-4xl leading-none font-black">{date.getDate()}</span>
                   </div>
                   
-                  <div className="flex-1 p-6 flex flex-col justify-center">
+                  <div className="flex-1 p-6 flex flex-col justify-center min-w-0">
                     <div className="flex items-center gap-2 mb-1">
                       <h3 className="text-xl text-slate-800 transition-colors font-black group-hover:text-blue-600">{schedule.title}</h3>
                       {isToday && <span className="px-2 py-0.5 text-[10px] uppercase rounded-full tracking-wider bg-yellow-400 text-yellow-900 font-black">
@@ -295,9 +295,9 @@ export default function JadwalLesPage() {
                       </div>
 
                       {schedule.tutor?.full_name && (
-                        <div className="flex items-center gap-1.5 text-sm font-bold text-indigo-700 bg-indigo-50 px-3 py-1.5 rounded-lg border border-indigo-200">
-                          <User className="w-4 h-4 text-indigo-500" />
-                          {schedule.tutor.full_name}
+                        <div className="flex items-center gap-1.5 text-sm font-bold text-indigo-700 bg-indigo-50 px-3 py-1.5 rounded-lg border border-indigo-200 max-w-full">
+                          <User className="w-4 h-4 text-indigo-500 shrink-0" />
+                          <span className="truncate">{schedule.tutor.full_name}</span>
                         </div>
                       )}
                       
@@ -306,8 +306,8 @@ export default function JadwalLesPage() {
                           <CheckCircle2 className="w-4 h-4" /> Hadir
                         </div>
                       ) : isToday ? (
-                        <div className="flex items-center gap-1.5 text-sm font-bold text-amber-700 bg-amber-50 px-3 py-1.5 rounded-lg border border-amber-100">
-                          <KeyRound className="w-4 h-4" /> Belum Presensi
+                        <div className="flex items-center gap-1.5 text-sm font-bold text-amber-700 bg-amber-50 px-3 py-1.5 rounded-lg border border-amber-100 max-w-full">
+                          <KeyRound className="w-4 h-4 shrink-0" /> <span className="truncate">Belum Presensi</span>
                         </div>
                       ) : null}
                     </div>

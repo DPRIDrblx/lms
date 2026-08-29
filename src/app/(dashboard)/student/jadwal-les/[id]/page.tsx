@@ -7,6 +7,9 @@ import { useAuth } from "@/lib/auth-context";
 import { Calendar, Clock, MapPin, User, BookOpen, Link2, FileText, ChevronLeft, Star, KeyRound, CheckCircle2, MessageSquare, Send, ThumbsUp, AlertCircle } from "lucide-react";
 import { CenterLoader } from "@/components/ui/center-loader";
 import { Button } from "@/components/ui/button";
+import { format } from "date-fns";
+import { id } from "date-fns/locale";
+import StudentLiveInteractions from '@/components/student/LiveClassInteractions';
 import toast from "react-hot-toast";
 import { cn } from "@/lib/utils";
 
@@ -475,7 +478,9 @@ export default function StudentScheduleDetail({ params }: { params: Promise<{ id
                 </div>
               </div>
             )}
-
+            
+            {/* Live Interactions */}
+            <StudentLiveInteractions scheduleId={resolvedParams.id} studentId={profile?.id || ""} />
           </div>
 
           <div className="lg:col-span-1 space-y-6">

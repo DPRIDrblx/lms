@@ -11,6 +11,7 @@ import {
   ArrowLeft, Clock, Users, BookOpen, Save, CheckCircle2, 
   Camera, FileText, Loader2, KeyRound, Sparkles, MapPin, Star
 } from "lucide-react";
+import LiveInteractionsPanel from "@/components/tutor/LiveInteractionsPanel";
 import toast from "react-hot-toast";
 import jsPDF from "jspdf";
 
@@ -32,6 +33,7 @@ export default function LessonWorkspacePage() {
   // Voting States
   const [votes, setVotes] = useState<any[]>([]);
   const [isTogglingVoting, setIsTogglingVoting] = useState(false);
+  const [studentMoods, setStudentMoods] = useState<Record<string, string>>({});
 
   useEffect(() => {
     if (!schedule) return;
@@ -232,6 +234,26 @@ export default function LessonWorkspacePage() {
              if (!newMap[e.student_id]) newMap[e.student_id] = 'izin'; 
            });
            return newMap;
+        });
+      }
+
+      // Poll Student Moods
+      const { data: moodData } = await supabase
+        .from('class_mood_meter')
+        .select('student_id, mood, created_at')
+        .eq('schedule_id', schedule.id)
+        .order('created_at', { ascending: false });
+
+      if (moodData && moodData.length > 0) {
+        // Since we order by descending, the first one encountered per student is the latest
+        setStudentMoods(prev => {
+          const newMap = { ...prev };
+          moodData.forEach((m: any) => {
+            if (!newMap[m.student_id]) {
+              newMap[m.student_id] = m.mood;
+            }
+          });
+          return newMap;
         });
       }
     }, 5000);
@@ -831,7 +853,14 @@ export default function LessonWorkspacePage() {
                 {students.map(student => (
                   <div key={student.id} className="flex items-center justify-between p-3 border border-slate-100 rounded-xl hover:bg-slate-50 flex-wrap gap-2">
                     <div className="flex-1 min-w-[150px]">
-                      <p className="font-bold text-slate-900 text-sm">{student.full_name}</p>
+                      <div className="flex items-center gap-2">
+                        <p className="font-bold text-slate-900 text-sm">{student.full_name}</p>
+                        {studentMoods[student.id] && (
+                          <span className="text-sm animate-in zoom-in" title="Mood Saat Ini">
+                            {studentMoods[student.id] === 'paham' ? '💡' : studentMoods[student.id] === 'bingung' ? '🤔' : '🐢'}
+                          </span>
+                        )}
+                      </div>
                       <p className="text-xs text-slate-500">{student.nis || 'NIS -'}</p>
                     </div>
                     
@@ -889,6 +918,18 @@ export default function LessonWorkspacePage() {
               </div>
             )}
             </Card>
+            
+            {/* Live Interactions Panel */}
+            {!isCompleted && (
+              <LiveInteractionsPanel 
+                scheduleId={id as string}
+                tutorId={profile?.id || ""}
+                topic={schedule.topic || customTopic}
+                subtopics={schedule.subtopics || []}
+                subject={schedule.subject || selectedSubject}
+                level={schedule.level || selectedLevel}
+              />
+            )}
           </div>
         </div>
 
