@@ -1,6 +1,10 @@
 import { NextResponse } from 'next/server';
 import { generateText } from 'ai';
-import { google } from '@ai-sdk/google';
+import { createGoogleGenerativeAI } from '@ai-sdk/google';
+
+const google = createGoogleGenerativeAI({
+  apiKey: process.env.GEMINI_API_KEY || '',
+});
 
 export async function POST(req: Request) {
   try {
