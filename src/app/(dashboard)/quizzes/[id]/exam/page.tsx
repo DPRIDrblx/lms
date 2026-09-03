@@ -468,8 +468,16 @@ export default function ExamPage({ params }: { params: Promise<{ id: string }> }
       } else if (q.question_type === "complex_mcq") {
         const correctOpts = q.options?.filter((o: any) => o.is_correct).map((o: any) => o.text) || [];
         const userOpts = responses[q.id] || [];
-        if (correctOpts.length > 0 && correctOpts.every((c: any) => userOpts.includes(c)) && userOpts.every((u: string) => correctOpts.includes(u))) {
-          totalScore += q.points;
+        if (correctOpts.length > 0) {
+          let correctSelections = 0;
+          correctOpts.forEach((c: any) => { if (userOpts.includes(c)) correctSelections++; });
+          let incorrectSelections = 0;
+          userOpts.forEach((u: any) => { if (!correctOpts.includes(u)) incorrectSelections++; });
+          
+          let scoreMultiplier = (correctSelections - incorrectSelections) / correctOpts.length;
+          if (scoreMultiplier > 0) {
+            totalScore += scoreMultiplier * q.points;
+          }
         }
       } else if (q.question_type === "matching") {
         const userMatches = responses[q.id] || {};
@@ -482,13 +490,24 @@ export default function ExamPage({ params }: { params: Promise<{ id: string }> }
       } else if (q.question_type === "matrix") {
         const userMatches = responses[q.id] || {};
         const totalRows = q.options?.length || 1;
-        let correctRows = 0;
+        let earnedRows = 0;
         q.options?.forEach((o: any) => {
-          const correctCols = [...(o.match_pairs || [])].sort().join(',');
-          const userCols = [...(userMatches[o.text] || [])].sort().join(',');
-          if (correctCols === userCols) correctRows++;
+          const correctCols = o.match_pairs || [];
+          const userCols = userMatches[o.text] || [];
+          
+          if (correctCols.length === 0) {
+            if (userCols.length === 0) earnedRows++;
+          } else {
+            let correctSelections = 0;
+            correctCols.forEach((c: string) => { if (userCols.includes(c)) correctSelections++; });
+            let incorrectSelections = 0;
+            userCols.forEach((u: string) => { if (!correctCols.includes(u)) incorrectSelections++; });
+            
+            let rowScore = (correctSelections - incorrectSelections) / correctCols.length;
+            if (rowScore > 0) earnedRows += rowScore;
+          }
         });
-        totalScore += (correctRows / totalRows) * q.points;
+        totalScore += (earnedRows / totalRows) * q.points;
       } else if (q.question_type === "essay") {
         hasEssay = true;
       }
@@ -960,6 +979,8 @@ export default function ExamPage({ params }: { params: Promise<{ id: string }> }
                     isAnswered = Array.isArray(ans) && ans.length > 0;
                   } else if (q.question_type === 'matching') {
                     isAnswered = ans && Object.keys(ans).length > 0;
+                  } else if (q.question_type === 'matrix') {
+                    isAnswered = !!ans && q.options?.every((o: any) => Array.isArray(ans[o.text]) && ans[o.text].length > 0);
                   }
                   const isFlagged = flags[q.id];
                   
@@ -1052,7 +1073,7 @@ export default function ExamPage({ params }: { params: Promise<{ id: string }> }
             </div>
           </div>
 
-          <div className="text-lg md:text-xl font-medium text-slate-700 leading-relaxed mb-8 relative">
+          <div className="text-base md:text-lg font-medium text-slate-700 leading-relaxed mb-8 relative prose prose-slate max-w-none prose-p:my-2 prose-ol:my-2 prose-ul:my-2">
             <div dangerouslySetInnerHTML={{ __html: currentQ?.question_text }} />
             {currentQ?.id && (
               <div className="mt-6 flex items-center justify-between text-[10px] font-mono text-slate-400">
@@ -1442,8 +1463,10 @@ export default function ExamPage({ params }: { params: Promise<{ id: string }> }
                   isAnswered = !!ans && ans.length > 0;
                 } else if (q.question_type === 'complex_mcq') {
                   isAnswered = Array.isArray(ans) && ans.length > 0;
-                } else if (q.question_type === 'matching' || q.question_type === 'matrix') {
+                } else if (q.question_type === 'matching') {
                   isAnswered = ans && Object.keys(ans).length > 0;
+                } else if (q.question_type === 'matrix') {
+                  isAnswered = !!ans && q.options?.every((o: any) => Array.isArray(ans[o.text]) && ans[o.text].length > 0);
                 }
 
                 const isFlagged = flags[q.id];
@@ -1540,6 +1563,7 @@ export default function ExamPage({ params }: { params: Promise<{ id: string }> }
                       if (q.question_type === 'mcq' || q.question_type === 'essay') return !!ans && ans.length > 0;
                       if (q.question_type === 'complex_mcq') return Array.isArray(ans) && ans.length > 0;
                       if (q.question_type === 'matching') return ans && Object.keys(ans).length > 0;
+                      if (q.question_type === 'matrix') return !!ans && q.options?.every((o: any) => Array.isArray(ans[o.text]) && ans[o.text].length > 0);
                       return false;
                     }).length;
 

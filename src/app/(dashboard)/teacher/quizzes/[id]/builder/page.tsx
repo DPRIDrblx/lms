@@ -201,6 +201,8 @@ export default function CBTBuilderPage() {
       };
       if (!q.id.startsWith('temp-')) {
         payload.id = q.id; // Preserve existing UUID
+      } else {
+        payload.id = crypto.randomUUID(); // Assign new UUID
       }
       return payload;
     });

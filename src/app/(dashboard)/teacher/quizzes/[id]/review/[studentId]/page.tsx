@@ -176,8 +176,20 @@ export default function TeacherQuizGradingPage({ params }: { params: Promise<{ i
              earnedPoints = isCorrect ? q.points : 0;
           } else if (q.question_type === "complex_mcq") {
              const correctOpts = q.options?.filter((o: any) => o.is_correct).map((o: any) => o.text) || [];
-             isCorrect = Array.isArray(ans) && ans.length === correctOpts.length && ans.every(a => correctOpts.includes(a));
-             earnedPoints = isCorrect ? q.points : 0;
+             if (correctOpts.length > 0) {
+               let correctSelections = 0;
+               correctOpts.forEach((c: string) => { if (Array.isArray(ans) && ans.includes(c)) correctSelections++; });
+               let incorrectSelections = 0;
+               if (Array.isArray(ans)) {
+                 ans.forEach((u: string) => { if (!correctOpts.includes(u)) incorrectSelections++; });
+               }
+               let scoreMultiplier = (correctSelections - incorrectSelections) / correctOpts.length;
+               earnedPoints = scoreMultiplier > 0 ? scoreMultiplier * q.points : 0;
+               isCorrect = earnedPoints === q.points;
+             } else {
+               earnedPoints = 0;
+               isCorrect = false;
+             }
           } else if (q.question_type === "matching") {
              let matches = 0;
              q.options?.forEach((opt: any) => {
@@ -187,15 +199,26 @@ export default function TeacherQuizGradingPage({ params }: { params: Promise<{ i
              isCorrect = matches === q.options?.length;
              showCorrectness = false; // Partial points possible
           } else if (q.question_type === "matrix") {
-             let correctRows = 0;
+             let earnedRows = 0;
              const totalRows = q.options?.length || 1;
              q.options?.forEach((opt: any) => {
-                const correctCols = [...(opt.match_pairs || [])].sort().join(',');
-                const userCols = [...(ans?.[opt.text] || [])].sort().join(',');
-                if (correctCols === userCols) correctRows++;
+                const correctCols = opt.match_pairs || [];
+                const userCols = ans?.[opt.text] || [];
+                
+                if (correctCols.length === 0) {
+                  if (userCols.length === 0) earnedRows++;
+                } else {
+                  let correctSelections = 0;
+                  correctCols.forEach((c: string) => { if (userCols.includes(c)) correctSelections++; });
+                  let incorrectSelections = 0;
+                  userCols.forEach((u: string) => { if (!correctCols.includes(u)) incorrectSelections++; });
+                  
+                  let rowScore = (correctSelections - incorrectSelections) / correctCols.length;
+                  if (rowScore > 0) earnedRows += rowScore;
+                }
              });
-             earnedPoints = (correctRows / totalRows) * q.points;
-             isCorrect = correctRows === totalRows;
+             earnedPoints = (earnedRows / totalRows) * q.points;
+             isCorrect = earnedRows === totalRows;
              showCorrectness = false;
           } else if (q.question_type === "essay") {
              showCorrectness = false;
