@@ -110,6 +110,8 @@ export default function TeacherQuizGradingPage({ params }: { params: Promise<{ i
          // Add the manual grade
          const grade = parseFloat(essayGrades[q.id] || "0");
          totalScore += isNaN(grade) ? 0 : grade;
+      } else if (q.question_type === "linear_scale") {
+         totalScore += 0;
       }
     });
 
@@ -223,6 +225,9 @@ export default function TeacherQuizGradingPage({ params }: { params: Promise<{ i
           } else if (q.question_type === "essay") {
              showCorrectness = false;
              earnedPoints = parseFloat(essayGrades[q.id] || "0") || 0;
+          } else if (q.question_type === "linear_scale") {
+             showCorrectness = false;
+             earnedPoints = 0;
           }
 
           return (
@@ -322,6 +327,12 @@ export default function TeacherQuizGradingPage({ params }: { params: Promise<{ i
                               })}
                            </tbody>
                         </table>
+                     </div>
+                 ) : q.question_type === "linear_scale" ? (
+                     <div className="flex flex-col items-center py-4">
+                        <div className="w-16 h-16 rounded-full bg-blue-50 border-4 border-blue-500 flex items-center justify-center font-black text-2xl text-blue-700 shadow-sm">
+                           {ans !== undefined && ans !== null ? ans : "-"}
+                        </div>
                      </div>
                  ) : (
                     <div>

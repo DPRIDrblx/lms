@@ -981,6 +981,8 @@ export default function ExamPage({ params }: { params: Promise<{ id: string }> }
                     isAnswered = ans && Object.keys(ans).length > 0;
                   } else if (q.question_type === 'matrix') {
                     isAnswered = !!ans && q.options?.every((o: any) => Array.isArray(ans[o.text]) && ans[o.text].length > 0);
+                  } else if (q.question_type === 'linear_scale') {
+                    isAnswered = ans !== undefined && ans !== null;
                   }
                   const isFlagged = flags[q.id];
                   
@@ -1443,6 +1445,50 @@ export default function ExamPage({ params }: { params: Promise<{ id: string }> }
               </div>
             )}
 
+            {/* LINEAR SCALE */}
+            {currentQ?.question_type === 'linear_scale' && (() => {
+              const min = currentQ.criteria?.min ?? 1;
+              const max = currentQ.criteria?.max ?? 5;
+              const minLabel = currentQ.criteria?.minLabel || "";
+              const maxLabel = currentQ.criteria?.maxLabel || "";
+              const options = [];
+              for (let i = min; i <= max; i++) {
+                options.push(i);
+              }
+              const isRevealed = isPracticeMode && isAnswerRevealed[currentQ.id];
+
+              return (
+                <div className="flex flex-col items-center gap-6 py-8">
+                  <div className="flex w-full max-w-2xl justify-between items-end px-2 md:px-6">
+                    <span className="text-sm font-bold text-slate-500 text-center w-1/4 break-words">{minLabel}</span>
+                    
+                    <div className="flex flex-1 justify-between items-center relative before:absolute before:inset-0 before:top-1/2 before:-translate-y-1/2 before:h-1 before:bg-slate-200 before:z-0 before:rounded-full">
+                      {options.map((val) => {
+                        const isSelected = responses[currentQ.id] === val;
+                        return (
+                          <div key={val} className="relative z-10 flex flex-col items-center gap-2">
+                            <button
+                              onClick={() => !isRevealed && saveAnswer(currentQ.id, val)}
+                              className={`w-10 h-10 md:w-12 md:h-12 rounded-full border-2 text-base md:text-lg font-black transition-all flex items-center justify-center
+                                ${isSelected 
+                                  ? 'bg-blue-500 text-white border-blue-600 scale-110 shadow-lg shadow-blue-500/30' 
+                                  : 'bg-white text-slate-600 border-slate-300 hover:border-blue-400 hover:bg-blue-50 hover:scale-105'
+                                }
+                                ${isRevealed ? 'cursor-not-allowed opacity-80' : 'cursor-pointer'}`}
+                            >
+                              {val}
+                            </button>
+                          </div>
+                        );
+                      })}
+                    </div>
+                    
+                    <span className="text-sm font-bold text-slate-500 text-center w-1/4 break-words">{maxLabel}</span>
+                  </div>
+                </div>
+              );
+            })()}
+
           </div>
         </div>
 
@@ -1467,6 +1513,8 @@ export default function ExamPage({ params }: { params: Promise<{ id: string }> }
                   isAnswered = ans && Object.keys(ans).length > 0;
                 } else if (q.question_type === 'matrix') {
                   isAnswered = !!ans && q.options?.every((o: any) => Array.isArray(ans[o.text]) && ans[o.text].length > 0);
+                } else if (q.question_type === 'linear_scale') {
+                  isAnswered = ans !== undefined && ans !== null;
                 }
 
                 const isFlagged = flags[q.id];
@@ -1564,6 +1612,7 @@ export default function ExamPage({ params }: { params: Promise<{ id: string }> }
                       if (q.question_type === 'complex_mcq') return Array.isArray(ans) && ans.length > 0;
                       if (q.question_type === 'matching') return ans && Object.keys(ans).length > 0;
                       if (q.question_type === 'matrix') return !!ans && q.options?.every((o: any) => Array.isArray(ans[o.text]) && ans[o.text].length > 0);
+                      if (q.question_type === 'linear_scale') return ans !== undefined && ans !== null;
                       return false;
                     }).length;
 

@@ -38,11 +38,11 @@ import { RichTextEditor } from "@/components/ui/rich-text-editor";
 interface Question {
   id: string;
   question_text: string;
-  question_type: "mcq" | "essay" | "complex_mcq" | "matching" | "matrix";
+  question_type: "mcq" | "essay" | "complex_mcq" | "matching" | "matrix" | "linear_scale";
   options: { text: string; is_correct?: boolean; match_pair?: string; match_pairs?: string[] }[] | null;
   points: number;
   order_index: number;
-  criteria?: { minLength?: number; maxLength?: number; cols?: string[] } | null;
+  criteria?: { minLength?: number; maxLength?: number; cols?: string[]; min?: number; max?: number; minLabel?: string; maxLabel?: string } | null;
   explanation?: string | null;
 }
 
@@ -119,12 +119,12 @@ export default function CBTBuilderPage() {
     fetchData();
   }, [id, supabase]);
 
-  const addQuestion = (type: "mcq" | "essay" | "complex_mcq" | "matching" | "matrix") => {
+  const addQuestion = (type: "mcq" | "essay" | "complex_mcq" | "matching" | "matrix" | "linear_scale") => {
     const newQ: Question = {
       id: `temp-${Date.now()}`,
       question_text: "",
       question_type: type,
-      points: 10,
+      points: type === "linear_scale" ? 0 : 10,
       order_index: questions.length,
       options: type === "mcq" || type === "complex_mcq" ? [
         { text: "Option 1", is_correct: type === "mcq" ? true : false },
@@ -136,7 +136,7 @@ export default function CBTBuilderPage() {
         { text: "Pernyataan 1", match_pairs: ["Benar"] },
         { text: "Pernyataan 2", match_pairs: ["Salah"] }
       ] : null,
-      criteria: type === "essay" ? { minLength: 250 } : type === "matrix" ? { cols: ["Benar", "Salah"] } : null
+      criteria: type === "essay" ? { minLength: 250 } : type === "matrix" ? { cols: ["Benar", "Salah"] } : type === "linear_scale" ? { min: 1, max: 5, minLabel: "Sangat Kurang", maxLabel: "Sangat Baik" } : null
     };
     setQuestions([...questions, newQ]);
   };
@@ -398,6 +398,10 @@ export default function CBTBuilderPage() {
                 <Plus className="h-4 w-4 mr-2 text-[var(--accent)]" />
                 Matrix / Tabel
               </Button>
+              <Button variant="secondary" className="justify-start border-[var(--border)] bg-white dark:bg-[var(--bg-secondary)] shadow-sm" onClick={() => addQuestion("linear_scale")}>
+                <Plus className="h-4 w-4 mr-2 text-[var(--accent)]" />
+                Skala Linier
+              </Button>
               <Button variant="secondary" className="justify-start border-blue-200 bg-blue-50 text-blue-700 hover:bg-blue-100 hover:text-blue-800 mt-4 shadow-sm" onClick={openBankModal}>
                 <Download className="h-4 w-4 mr-2" />
                 Impor dari Bank Soal
@@ -424,6 +428,7 @@ export default function CBTBuilderPage() {
                         {q.question_type === "matching" && <LinkIcon className="h-3 w-3" />}
                         {q.question_type === "matrix" && <LayoutGrid className="h-3 w-3" />}
                         {q.question_type === "essay" && <Type className="h-3 w-3" />}
+                        {q.question_type === "linear_scale" && <Circle className="h-3 w-3" />}
                         {q.question_type.toUpperCase().replace("_", " ")}
                       </Badge>
                       {reports.filter(r => r.question_id === q.id).length > 0 && (
@@ -438,8 +443,9 @@ export default function CBTBuilderPage() {
                         <span className="text-xs font-medium text-[var(--text-secondary)]">Points:</span>
                         <input
                           type="number"
-                          className="w-16 px-2 py-1 text-center text-sm border border-[var(--border)] rounded focus:ring-1 focus:ring-[var(--accent)] focus:outline-none"
+                          className="w-16 px-2 py-1 text-center text-sm border border-[var(--border)] rounded focus:ring-1 focus:ring-[var(--accent)] focus:outline-none disabled:bg-slate-100 disabled:text-slate-400"
                           value={q.points}
+                          disabled={q.question_type === 'linear_scale'}
                           onChange={(e) => updateQuestion(q.id, { points: parseInt(e.target.value) || 0 })}
                         />
                       </div>
@@ -737,6 +743,65 @@ export default function CBTBuilderPage() {
                               });
                             }}
                           />
+                        </div>
+                      </div>
+                    )}
+
+                    {/* Linear Scale Options */}
+                    {q.question_type === "linear_scale" && (
+                      <div className="space-y-3 bg-[var(--bg-tertiary)] p-4 rounded border border-[var(--border)]">
+                        <label className="text-sm font-semibold text-[var(--text-primary)] block mb-2">Pengaturan Skala Linier</label>
+                        <div className="grid grid-cols-2 gap-4">
+                          <div className="space-y-2">
+                            <label className="text-xs text-[var(--text-secondary)]">Nilai Minimum (Mulai dari)</label>
+                            <input
+                              type="number"
+                              className="w-full px-2 py-1 text-sm border border-[var(--border)] rounded focus:ring-1 focus:ring-[var(--accent)] focus:outline-none"
+                              value={q.criteria?.min ?? 1}
+                              onChange={(e) => {
+                                updateQuestion(q.id, { 
+                                  criteria: { ...q.criteria, min: parseInt(e.target.value) || 0 } 
+                                });
+                              }}
+                            />
+                            <label className="text-xs text-[var(--text-secondary)] mt-2 block">Label Kiri (Opsional)</label>
+                            <input
+                              type="text"
+                              placeholder="Misal: Sangat Kurang"
+                              className="w-full px-2 py-1 text-sm border border-[var(--border)] rounded focus:ring-1 focus:ring-[var(--accent)] focus:outline-none"
+                              value={q.criteria?.minLabel || ""}
+                              onChange={(e) => {
+                                updateQuestion(q.id, { 
+                                  criteria: { ...q.criteria, minLabel: e.target.value } 
+                                });
+                              }}
+                            />
+                          </div>
+                          <div className="space-y-2">
+                            <label className="text-xs text-[var(--text-secondary)]">Nilai Maksimum (Hingga)</label>
+                            <input
+                              type="number"
+                              className="w-full px-2 py-1 text-sm border border-[var(--border)] rounded focus:ring-1 focus:ring-[var(--accent)] focus:outline-none"
+                              value={q.criteria?.max ?? 5}
+                              onChange={(e) => {
+                                updateQuestion(q.id, { 
+                                  criteria: { ...q.criteria, max: parseInt(e.target.value) || 0 } 
+                                });
+                              }}
+                            />
+                            <label className="text-xs text-[var(--text-secondary)] mt-2 block">Label Kanan (Opsional)</label>
+                            <input
+                              type="text"
+                              placeholder="Misal: Sangat Baik"
+                              className="w-full px-2 py-1 text-sm border border-[var(--border)] rounded focus:ring-1 focus:ring-[var(--accent)] focus:outline-none"
+                              value={q.criteria?.maxLabel || ""}
+                              onChange={(e) => {
+                                updateQuestion(q.id, { 
+                                  criteria: { ...q.criteria, maxLabel: e.target.value } 
+                                });
+                              }}
+                            />
+                          </div>
                         </div>
                       </div>
                     )}
