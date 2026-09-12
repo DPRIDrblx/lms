@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useRef } from "react";
+// @ts-expect-error No types available
 import renderMathInElement from "katex/contrib/auto-render";
 import "katex/dist/katex.min.css";
 
