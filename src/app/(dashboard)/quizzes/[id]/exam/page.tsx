@@ -11,6 +11,7 @@ import { updateQuestProgress } from "@/lib/gamification";
 import { useTheme } from "@/lib/theme-context";
 import { cn } from "@/lib/utils";
 import { Mascot } from "@/components/ui/mascot";
+import { MathRenderer } from "@/components/ui/math-renderer";
 
 export default function ExamPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = use(params);
@@ -1076,7 +1077,7 @@ export default function ExamPage({ params }: { params: Promise<{ id: string }> }
           </div>
 
           <div className="text-base md:text-lg font-medium text-slate-700 leading-relaxed mb-8 relative prose prose-slate max-w-none prose-p:my-2 prose-ol:my-2 prose-ul:my-2">
-            <div dangerouslySetInnerHTML={{ __html: currentQ?.question_text }} />
+            <MathRenderer htmlContent={currentQ?.question_text || ""} />
             {currentQ?.id && (
               <div className="mt-6 flex items-center justify-between text-[10px] font-mono text-slate-400">
                 <div className="flex items-center gap-2">
@@ -1714,7 +1715,7 @@ export default function ExamPage({ params }: { params: Promise<{ id: string }> }
                 
                 <div className={`text-base font-medium mb-6 ${isCorrect ? 'text-green-800' : 'text-red-800'}`}>
                   {currentQ.explanation ? (
-                    <span dangerouslySetInnerHTML={{ __html: currentQ.explanation }} />
+                    <MathRenderer htmlContent={currentQ.explanation || ""} />
                   ) : (
                     <span>{isCorrect ? 'Kerja bagus, kamu paham konsepnya.' : 'Jawabanmu belum sesuai dengan kunci.'}</span>
                   )}
@@ -1806,7 +1807,7 @@ export default function ExamPage({ params }: { params: Promise<{ id: string }> }
                         ? 'bg-indigo-500 text-white rounded-br-sm'
                         : 'bg-white border-2 border-slate-200 text-slate-700 rounded-bl-sm'
                     }`}>
-                      <div className="prose prose-sm max-w-none prose-p:leading-relaxed" dangerouslySetInnerHTML={{ __html: msg.content.replace(/\n/g, '<br/>') }} />
+                      <MathRenderer className="prose prose-sm max-w-none prose-p:leading-relaxed" htmlContent={msg.content.replace(/\n/g, '<br/>')} />
                     </div>
                   </div>
                 ))}

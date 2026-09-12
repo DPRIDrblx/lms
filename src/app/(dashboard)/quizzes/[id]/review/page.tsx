@@ -24,6 +24,7 @@ import {
   Loader2,
   X
 } from "lucide-react";
+import { MathRenderer } from "@/components/ui/math-renderer";
 import { useEffect, useState, use, useRef } from "react";
 import Link from "next/link";
 import { motion, AnimatePresence } from "framer-motion";
@@ -438,7 +439,7 @@ export default function QuizReviewPage({ params }: { params: Promise<{ id: strin
                       {idx + 1}
                     </div>
                     <div className="flex-1">
-                      <div className="prose prose-sm max-w-none text-[var(--text-primary)]" dangerouslySetInnerHTML={{ __html: q.question_text }} />
+                      <MathRenderer className="prose prose-sm max-w-none text-[var(--text-primary)]" htmlContent={q.question_text || ""} />
                       
                       <div className="mt-4 space-y-3">
                         {q.question_type === 'mcq' || q.question_type === 'complex_mcq' ? (
@@ -572,7 +573,7 @@ export default function QuizReviewPage({ params }: { params: Promise<{ id: strin
                           <p className="text-sm font-bold text-blue-800 mb-2 flex items-center gap-2">
                             <AlertCircle className="h-4 w-4" /> Pembahasan
                           </p>
-                          <div className="prose prose-sm max-w-none text-blue-900" dangerouslySetInnerHTML={{ __html: q.explanation }} />
+                          <MathRenderer className="prose prose-sm max-w-none text-blue-900" htmlContent={q.explanation || ""} />
                         </div>
                       )}
                     </div>
@@ -637,7 +638,7 @@ export default function QuizReviewPage({ params }: { params: Promise<{ id: strin
                         ? 'bg-indigo-500 text-white rounded-br-sm'
                         : 'bg-white border-2 border-slate-200 text-slate-700 rounded-bl-sm'
                     }`}>
-                      <div className="prose prose-sm max-w-none prose-p:leading-relaxed" dangerouslySetInnerHTML={{ __html: msg.content.replace(/\n/g, '<br/>') }} />
+                      <MathRenderer className="prose prose-sm max-w-none prose-p:leading-relaxed" htmlContent={msg.content.replace(/\n/g, '<br/>')} />
                     </div>
                   </div>
                 ))}

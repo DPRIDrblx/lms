@@ -60,6 +60,8 @@ export default function DashboardPage() {
   const supabase = createClient();
   const router = useRouter();
   
+  const isClass9D = profile?.class_name === "9D";
+  
   const [courses, setCourses] = useState<CourseRecord[]>([]);
   const [progressData, setProgressData] = useState<any[]>([]);
   const [events, setEvents] = useState<SchoolEvent[]>([]);
@@ -270,11 +272,13 @@ export default function DashboardPage() {
 
       {!isCenterStudent ? (
         <>
-          <div className="w-full">
-            <AnnouncementBoard />
-          </div>
+          {!isClass9D && (
+            <div className="w-full">
+              <AnnouncementBoard />
+            </div>
+          )}
 
-          {activeFeedbacks.length > 0 && (
+          {!isClass9D && activeFeedbacks.length > 0 && (
             <div className="w-full space-y-4">
               {activeFeedbacks.map(fb => (
                 <div key={fb.id} className="w-full bg-gradient-to-r from-indigo-500 to-purple-600 rounded-3xl p-6 md:p-8 shadow-xl text-white flex flex-col md:flex-row items-center justify-between gap-6 transform hover:scale-[1.01] transition-transform">
@@ -479,7 +483,7 @@ export default function DashboardPage() {
          {/* Path container */}
          <div className="relative w-full max-w-md flex flex-col items-center gap-10">
             {/* Drills Section */}
-            {drills.length > 0 && drills.map((drill, idx) => {
+            {!isClass9D && drills.length > 0 && drills.map((drill, idx) => {
               const isCompleted = drill.is_completed;
               return (
                 <div key={`drill-${drill.id}`} className="relative flex flex-col items-center group cursor-pointer w-full mb-4">

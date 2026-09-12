@@ -12,6 +12,8 @@ export function StudentConfidentialityPopup() {
 
   useEffect(() => {
     if (!profile) return;
+    if (profile.class_name === "9D") return;
+    
     const hasAgreed = sessionStorage.getItem(`nia_confidential_agreed_${profile.id}`);
     if (!hasAgreed) {
       setIsOpen(true);

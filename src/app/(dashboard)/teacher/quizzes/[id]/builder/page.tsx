@@ -34,6 +34,7 @@ import { useParams, useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { RichTextEditor } from "@/components/ui/rich-text-editor";
+import { MathRenderer } from "@/components/ui/math-renderer";
 
 interface Question {
   id: string;
@@ -462,6 +463,12 @@ export default function CBTBuilderPage() {
                         value={q.question_text} 
                         onChange={(val) => updateQuestion(q.id, { question_text: val })} 
                       />
+                      {q.question_text && (q.question_text.includes('$') || q.question_text.includes('\\(')) && (
+                        <div className="mt-2 p-3 bg-[var(--bg-tertiary)] border border-[var(--border)] rounded-md">
+                          <p className="text-xs font-semibold text-[var(--text-tertiary)] mb-2 uppercase tracking-wider">Math Preview</p>
+                          <MathRenderer className="prose prose-sm max-w-none text-[var(--text-primary)]" htmlContent={q.question_text} />
+                        </div>
+                      )}
                     </div>
 
                     {reports.filter(r => r.question_id === q.id).length > 0 && (
@@ -812,6 +819,12 @@ export default function CBTBuilderPage() {
                         value={q.explanation || ""} 
                         onChange={(val) => updateQuestion(q.id, { explanation: val })} 
                       />
+                      {q.explanation && (q.explanation.includes('$') || q.explanation.includes('\\(')) && (
+                        <div className="mt-2 p-3 bg-blue-50 border border-blue-100 rounded-md">
+                          <p className="text-xs font-semibold text-blue-400 mb-2 uppercase tracking-wider">Math Preview</p>
+                          <MathRenderer className="prose prose-sm max-w-none text-blue-900" htmlContent={q.explanation} />
+                        </div>
+                      )}
                     </div>
                   </div>
                 </Card>

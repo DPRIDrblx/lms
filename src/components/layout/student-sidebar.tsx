@@ -22,6 +22,7 @@ export function StudentSidebar() {
 
   const { profile, isCenterStudent } = useAuth();
   const { uiMode } = useTheme();
+  const isClass9D = profile?.class_name === "9D";
   const [branchName, setBranchName] = useState("");
   const { isCollapsed, toggleCollapse } = useSidebarStore();
 
@@ -65,6 +66,19 @@ export function StudentSidebar() {
     ...(isCenterStudent ? [{ name: "Talent Mapping", href: "/student/talent-mapping", icon: Map }] : []),
     { name: "Profile", href: "/student/profile", icon: User },
   ];
+
+  if (isClass9D) {
+    navItems = navItems.filter(item => ![
+      "Skill Up", 
+      "Gelar & Piala", 
+      "Hideout", 
+      "Social", 
+      "Messages", 
+      "Market", 
+      "Shop", 
+      "Golden Hour"
+    ].includes(item.name));
+  }
 
   if (isCenterStudent) {
     navItems = navItems.filter(item => item.name !== "Hideout");

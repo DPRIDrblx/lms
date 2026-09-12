@@ -7,7 +7,8 @@ import { Button } from "@/components/ui/button";
 import { ChevronLeft, Save } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
+import { Upload, Image as ImageIcon } from "lucide-react";
 
 export default function CreateQuizPage() {
   const { profile } = useAuth();
@@ -22,7 +23,11 @@ export default function CreateQuizPage() {
     time_limit_minutes: 30,
     passing_score: 60,
     is_randomized: false,
+    icon_url: "",
   });
+  const [iconFile, setIconFile] = useState<File | null>(null);
+  const [iconPreview, setIconPreview] = useState<string | null>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     const fetchCourses = async () => {
@@ -37,6 +42,19 @@ export default function CreateQuizPage() {
     if (!profile || !formData.course_id) return;
     setLoading(true);
 
+    let finalIconUrl = formData.icon_url;
+
+    if (iconFile) {
+      const fileExt = iconFile.name.split('.').pop();
+      const fileName = `quiz-icon-${Date.now()}.${fileExt}`;
+      const { error: uploadError } = await supabase.storage.from("social_media").upload(fileName, iconFile);
+      
+      if (!uploadError) {
+        const { data } = supabase.storage.from("social_media").getPublicUrl(fileName);
+        finalIconUrl = data.publicUrl;
+      }
+    }
+
     const { data, error } = await supabase
       .from("quizzes")
       .insert({
@@ -45,6 +63,7 @@ export default function CreateQuizPage() {
         time_limit_minutes: formData.time_limit_minutes,
         passing_score: formData.passing_score,
         is_randomized: formData.is_randomized,
+        icon_url: finalIconUrl,
       })
       .select()
       .single();
@@ -94,6 +113,47 @@ export default function CreateQuizPage() {
                   <option key={course.id} value={course.id}>{course.title}</option>
                 ))}
               </select>
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-[var(--text-primary)] mb-1.5">Quiz Icon (Optional)</label>
+              <div className="flex items-center gap-4">
+                <div 
+                  className="w-16 h-16 rounded-xl border-2 border-dashed border-[var(--border)] flex items-center justify-center bg-[var(--bg-secondary)] overflow-hidden cursor-pointer hover:border-[var(--accent)] transition-colors"
+                  onClick={() => fileInputRef.current?.click()}
+                >
+                  {iconPreview ? (
+                    <img src={iconPreview} alt="Icon preview" className="w-full h-full object-cover" />
+                  ) : (
+                    <ImageIcon className="h-6 w-6 text-[var(--text-tertiary)]" />
+                  )}
+                </div>
+                <div className="flex-1">
+                  <input
+                    type="file"
+                    accept="image/*"
+                    className="hidden"
+                    ref={fileInputRef}
+                    onChange={(e) => {
+                      const file = e.target.files?.[0];
+                      if (file) {
+                        setIconFile(file);
+                        setIconPreview(URL.createObjectURL(file));
+                      }
+                    }}
+                  />
+                  <Button 
+                    type="button" 
+                    variant="secondary" 
+                    size="sm"
+                    onClick={() => fileInputRef.current?.click()}
+                    className="mb-1"
+                  >
+                    <Upload className="h-4 w-4 mr-2" /> Upload Icon
+                  </Button>
+                  <p className="text-xs text-[var(--text-tertiary)]">Recommended size: 256x256px</p>
+                </div>
+              </div>
             </div>
 
             <div className="grid grid-cols-2 gap-4">
