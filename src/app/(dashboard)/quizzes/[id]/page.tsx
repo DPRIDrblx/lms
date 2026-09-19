@@ -100,10 +100,7 @@ export default function TakeQuizPage({ params }: { params: Promise<{ id: string 
           </div>
           
           <h1 className="text-3xl font-black text-slate-900 mb-2 uppercase tracking-tight">{quiz.is_form ? 'Portal Formulir' : 'Portal Ujian'}</h1>
-          <h2 className="text-xl font-bold text-slate-700 mb-8 flex items-center justify-center gap-2">
-            {quiz.icon_url && <img src={quiz.icon_url} alt="" className="w-6 h-6 object-contain" />}
-            {quiz.title}
-          </h2>
+          <h2 className="text-xl font-bold text-slate-700 mb-8">{quiz.title}</h2>
           
           {!quiz.is_form && (
             <div className="flex justify-center gap-6 mb-10">

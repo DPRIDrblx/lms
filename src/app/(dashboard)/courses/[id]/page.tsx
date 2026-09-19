@@ -261,7 +261,9 @@ export default function CourseDetailPage({ params }: { params: Promise<{ id: str
                                     </div>
                                     <h3 className={`text-base font-black flex items-center gap-2 ${done ? "text-emerald-700 opacity-80" : "text-slate-700"}`}>
                                       {isQuiz && (m as any).icon_url && (
-                                        <img src={(m as any).icon_url} alt="" className="w-5 h-5 object-contain" />
+                                        <div className="w-8 h-8 rounded-full bg-slate-100 flex items-center justify-center border border-slate-200 shrink-0">
+                                          <img src={(m as any).icon_url} alt="" className="w-5 h-5 object-contain" />
+                                        </div>
                                       )}
                                       {m.title}
                                     </h3>
