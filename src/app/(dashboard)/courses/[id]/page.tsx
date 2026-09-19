@@ -60,6 +60,7 @@ interface Quiz {
   title: string;
   time_limit_minutes: number;
   passing_score: number;
+  icon_url?: string;
   type: "quiz";
 }
 
@@ -258,7 +259,12 @@ export default function CourseDetailPage({ params }: { params: Promise<{ id: str
                                         {isQuiz ? "Assessment" : (m.content_type === "canva" ? "presentasi" : m.content_type)}
                                       </span>
                                     </div>
-                                    <h3 className={`text-base font-black ${done ? "text-emerald-700 opacity-80" : "text-slate-700"}`}>{m.title}</h3>
+                                    <h3 className={`text-base font-black flex items-center gap-2 ${done ? "text-emerald-700 opacity-80" : "text-slate-700"}`}>
+                                      {isQuiz && (m as any).icon_url && (
+                                        <img src={(m as any).icon_url} alt="" className="w-5 h-5 object-contain" />
+                                      )}
+                                      {m.title}
+                                    </h3>
                                     <div className="flex items-center gap-1 mt-1">
                                       <Trophy className="h-3.5 w-3.5 text-amber-500" />
                                       <span className="text-xs font-black text-amber-500">+{m.xp_reward} XP</span>

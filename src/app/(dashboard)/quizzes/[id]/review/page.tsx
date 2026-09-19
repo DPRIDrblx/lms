@@ -245,7 +245,10 @@ export default function QuizReviewPage({ params }: { params: Promise<{ id: strin
          <Link href={quiz?.course_id ? `/courses/${quiz.course_id}` : "/courses"}>
             <Button variant="ghost" className="flex items-center gap-2"><ChevronLeft className="h-4 w-4" /> Kembali</Button>
          </Link>
-         <Badge variant="info" className="px-4 py-1.5 font-bold">{quiz?.title}</Badge>
+         <Badge variant="info" className="px-4 py-1.5 font-bold flex items-center gap-2">
+           {quiz?.icon_url && <img src={quiz?.icon_url} alt="" className="w-4 h-4 object-contain" />}
+           {quiz?.title}
+         </Badge>
       </header>
 
       <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
