@@ -13,6 +13,7 @@ export interface Profile {
   avatar_url: string | null;
   class_id?: string | null;
   class_name?: string | null;
+  branch_id?: string | null;
   face_descriptor?: any | null;
   has_seen_center_update?: boolean;
   force_password_change?: boolean;

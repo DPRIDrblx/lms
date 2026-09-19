@@ -17,7 +17,8 @@ import {
   Smartphone,
   Fingerprint,
   Pencil,
-  X
+  X,
+  Building
 } from "lucide-react";
 import { useState, useEffect } from "react";
 import { Badge } from "@/components/ui/badge";
@@ -45,10 +46,22 @@ export default function SettingsPage() {
     twoFactorAuth: false,
   });
 
+  const [branches, setBranches] = useState<any[]>([]);
+  const [selectedBranch, setSelectedBranch] = useState("");
+
+  useEffect(() => {
+    const fetchBranches = async () => {
+      const { data } = await supabase.from("nia_branches").select("id, name").eq("is_active", true);
+      if (data) setBranches(data);
+    };
+    fetchBranches();
+  }, [supabase]);
+
   useEffect(() => {
     if (profile) {
       setEditName(profile.full_name || "");
       setEditAvatar(profile.avatar_url || "");
+      if (profile.branch_id) setSelectedBranch(profile.branch_id);
     }
     const savedPrefs = localStorage.getItem("nia-user-prefs");
     if (savedPrefs) {
@@ -83,6 +96,25 @@ export default function SettingsPage() {
     if (!error) {
       setIsEditProfileOpen(false);
       window.location.reload();
+    }
+  };
+
+  const handleSelectBranch = async (branchId: string) => {
+    if (profile?.branch_id) return; // already selected
+    if (!confirm("Cabang hanya bisa dipilih 1x. Apakah Anda yakin memilih cabang ini?")) return;
+    
+    setLoading(true);
+    const { error } = await supabase
+      .from("profiles")
+      .update({ branch_id: branchId })
+      .eq("id", profile?.id);
+    
+    setLoading(false);
+    if (!error) {
+      setSelectedBranch(branchId);
+      window.location.reload();
+    } else {
+      alert("Gagal menyimpan cabang");
     }
   };
 
@@ -270,6 +302,36 @@ export default function SettingsPage() {
               </button>
             </div>
           </div>
+
+          {profile?.role === "student" && (
+            <div className="bg-[var(--bg-secondary)] backdrop-blur-lg rounded-3xl overflow-hidden border border-[var(--border)] shadow-sm">
+              <div className="p-6 border-b border-[var(--border)]/50 bg-[var(--bg-tertiary)]">
+                <h3 className="text-sm font-bold text-[var(--text-primary)] uppercase tracking-wider">Cabang Akademi</h3>
+              </div>
+              <div className="p-6">
+                <div className="flex items-center gap-4 mb-4">
+                  <div className="h-12 w-12 rounded-2xl bg-white/80 dark:bg-slate-800/80 border border-[var(--border)] flex items-center justify-center text-[var(--text-secondary)] shadow-sm">
+                    <Building className="h-5 w-5" />
+                  </div>
+                  <div className="text-left">
+                    <p className="text-[15px] font-bold text-[var(--text-primary)]">Cabang Anda</p>
+                    <p className="text-xs font-medium text-[var(--text-secondary)] mt-0.5">Hanya bisa dipilih 1 kali.</p>
+                  </div>
+                </div>
+                <select 
+                  value={selectedBranch}
+                  onChange={(e) => handleSelectBranch(e.target.value)}
+                  disabled={!!profile.branch_id || loading}
+                  className="w-full bg-[var(--bg-tertiary)] text-[var(--text-primary)] border border-[var(--border)] rounded-xl px-4 py-3 font-medium focus:outline-none focus:ring-2 focus:ring-indigo-500 disabled:opacity-70 appearance-none"
+                >
+                  <option value="" disabled>-- Pilih Cabang --</option>
+                  {branches.map(b => (
+                    <option key={b.id} value={b.id}>{b.name}</option>
+                  ))}
+                </select>
+              </div>
+            </div>
+          )}
         </div>
       </div>
 

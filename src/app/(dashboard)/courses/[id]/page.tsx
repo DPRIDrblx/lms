@@ -254,15 +254,19 @@ export default function CourseDetailPage({ params }: { params: Promise<{ id: str
                                 <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
                                   <div className="flex-1 min-w-0">
                                     <div className="flex items-center gap-2 mb-1">
-                                      <TypeIcon className="h-4 w-4 text-slate-400" />
+                                      {!isQuiz && <TypeIcon className="h-4 w-4 text-slate-400" />}
                                       <span className="text-[10px] font-black text-slate-400 uppercase tracking-wider">
                                         {isQuiz ? "Assessment" : (m.content_type === "canva" ? "presentasi" : m.content_type)}
                                       </span>
                                     </div>
-                                    <h3 className={`text-base font-black flex items-center gap-2 ${done ? "text-emerald-700 opacity-80" : "text-slate-700"}`}>
-                                      {isQuiz && (m as any).icon_url && (
-                                        <div className="w-8 h-8 rounded-full bg-slate-100 flex items-center justify-center border border-slate-200 shrink-0">
-                                          <img src={(m as any).icon_url} alt="" className="w-5 h-5 object-contain" />
+                                    <h3 className={`text-base font-black flex items-center gap-3 ${done ? "text-emerald-700 opacity-80" : "text-slate-700"}`}>
+                                      {isQuiz && (
+                                        <div className="w-10 h-10 rounded-full bg-slate-100 flex items-center justify-center border border-slate-200 shrink-0">
+                                          {(m as any).icon_url ? (
+                                            <img src={(m as any).icon_url} alt="" className="w-6 h-6 object-contain" />
+                                          ) : (
+                                            <TypeIcon className="w-5 h-5 text-slate-500" />
+                                          )}
                                         </div>
                                       )}
                                       {m.title}
