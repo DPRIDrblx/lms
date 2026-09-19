@@ -122,17 +122,29 @@ export default function CourseDetailPage({ params }: { params: Promise<{ id: str
           setExpandedChapters(new Set(courseData.chapters.map((c: any) => c.id)));
         }
 
-        if (profile) {
-          const { data: progressData } = await supabase
-            .from("course_progress")
-            .select("lesson_id, completed")
-            .eq("student_id", profile.id)
-            .eq("course_id", id);
-          
-          if (progressData) {
-            setCompletedIds(new Set(progressData.filter((d: any) => d.completed).map((d: any) => d.lesson_id)));
+          if (profile) {
+            const [
+              { data: progressData },
+              { data: examData },
+              { data: scoreData }
+            ] = await Promise.all([
+              supabase.from("course_progress").select("lesson_id, completed").eq("student_id", profile.id).eq("course_id", id),
+              supabase.from("exam_sessions").select("quiz_id").eq("student_id", profile.id).eq("status", "submitted"),
+              supabase.from("student_scores").select("quiz_id").eq("student_id", profile.id)
+            ]);
+            
+            const completed = new Set<string>();
+            if (progressData) {
+              progressData.filter((d: any) => d.completed).forEach((d: any) => completed.add(d.lesson_id));
+            }
+            if (examData) {
+              examData.forEach((d: any) => completed.add(d.quiz_id));
+            }
+            if (scoreData) {
+              scoreData.forEach((d: any) => completed.add(d.quiz_id));
+            }
+            setCompletedIds(completed);
           }
-        }
       }
       setLoading(false);
     };
@@ -355,13 +367,24 @@ export default function CourseDetailPage({ params }: { params: Promise<{ id: str
                             <div className={`ml-10 w-full p-4 rounded-2xl border-2 ${done ? 'border-emerald-200 bg-emerald-50' : 'bg-white border-slate-200 shadow-[0_4px_0_rgb(226,232,240)]'}`}>
                               <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
                                 <div className="flex-1 min-w-0">
-                                  <div className="flex items-center gap-2 mb-1">
-                                    <TypeIcon className="h-4 w-4 text-slate-400" />
-                                    <span className="text-[10px] font-black text-slate-400 uppercase tracking-wider">
-                                      {isQuiz ? "Assessment CBT" : (m.content_type === "canva" ? "presentasi" : m.content_type)}
-                                    </span>
-                                  </div>
-                                  <h3 className={`text-base font-black ${done ? "text-emerald-700 opacity-80" : "text-slate-700"}`}>{m.title}</h3>
+                                    <div className="flex items-center gap-2 mb-1">
+                                      {!isQuiz && <TypeIcon className="h-4 w-4 text-slate-400" />}
+                                      <span className="text-[10px] font-black text-slate-400 uppercase tracking-wider">
+                                        {isQuiz ? "Assessment CBT" : (m.content_type === "canva" ? "presentasi" : m.content_type)}
+                                      </span>
+                                    </div>
+                                    <h3 className={`text-base font-black flex items-center gap-3 ${done ? "text-emerald-700 opacity-80" : "text-slate-700"}`}>
+                                      {isQuiz && (
+                                        <div className="w-10 h-10 rounded-full bg-slate-100 flex items-center justify-center border border-slate-200 shrink-0">
+                                          {(m as any).icon_url ? (
+                                            <img src={(m as any).icon_url} alt="" className="w-6 h-6 object-contain" />
+                                          ) : (
+                                            <TypeIcon className="w-5 h-5 text-slate-500" />
+                                          )}
+                                        </div>
+                                      )}
+                                      {m.title}
+                                    </h3>
                                   <div className="flex items-center gap-1 mt-1">
                                     <Trophy className="h-3.5 w-3.5 text-amber-500" />
                                     <span className="text-xs font-black text-amber-500">+{m.xp_reward} XP</span>
@@ -418,12 +441,23 @@ export default function CourseDetailPage({ params }: { params: Promise<{ id: str
                       <div className="flex items-start justify-between gap-4">
                         <div className="flex-1 min-w-0">
                           <div className="flex items-center gap-2 mb-1">
-                            <TypeIcon className="h-4 w-4 text-slate-400" />
+                            {!isQuiz && <TypeIcon className="h-4 w-4 text-slate-400" />}
                             <span className="text-[10px] font-black text-slate-400 uppercase tracking-wider">
-                              {isQuiz ? "Assessment" : (m.content_type === "canva" ? "presentasi" : m.content_type)}
+                              {isQuiz ? "Assessment CBT" : (m.content_type === "canva" ? "presentasi" : m.content_type)}
                             </span>
                           </div>
-                          <h3 className={`text-base font-black ${done ? "text-emerald-700 opacity-80" : "text-slate-700"}`}>{m.title}</h3>
+                          <h3 className={`text-base font-black flex items-center gap-3 ${done ? "text-emerald-700 opacity-80" : "text-slate-700"}`}>
+                            {isQuiz && (
+                              <div className="w-10 h-10 rounded-full bg-slate-100 flex items-center justify-center border border-slate-200 shrink-0">
+                                {(m as any).icon_url ? (
+                                  <img src={(m as any).icon_url} alt="" className="w-6 h-6 object-contain" />
+                                ) : (
+                                  <TypeIcon className="w-5 h-5 text-slate-500" />
+                                )}
+                              </div>
+                            )}
+                            {m.title}
+                          </h3>
                           <div className="flex items-center gap-1 mt-2">
                             <Trophy className="h-3.5 w-3.5 text-amber-500" />
                             <span className="text-xs font-black text-amber-500">+{m.xp_reward} XP Reward</span>
