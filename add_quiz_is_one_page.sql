@@ -1,0 +1,1 @@
+ALTER TABLE quizzes ADD COLUMN IF NOT EXISTS is_one_page_layout BOOLEAN DEFAULT false;

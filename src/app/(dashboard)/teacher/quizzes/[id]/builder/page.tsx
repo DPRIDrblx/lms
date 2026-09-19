@@ -16,9 +16,6 @@ import {
   GripVertical, 
   Save,
   HelpCircle,
-  Type,
-  Loader2,
-  X,
   Link as LinkIcon,
   Settings,
   Clock,
@@ -27,11 +24,16 @@ import {
   Library,
   Download,
   AlertCircle,
-  LayoutGrid
+  LayoutGrid,
+  Image as ImageIcon,
+  Upload,
+  Loader2,
+  Type,
+  X
 } from "lucide-react";
 import Link from "next/link";
 import { useParams, useRouter } from "next/navigation";
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { RichTextEditor } from "@/components/ui/rich-text-editor";
 import { MathRenderer } from "@/components/ui/math-renderer";
@@ -61,6 +63,9 @@ export default function CBTBuilderPage() {
   const [showBankModal, setShowBankModal] = useState(false);
   const [banks, setBanks] = useState<any[]>([]);
   const [loadingBanks, setLoadingBanks] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  const [iconFile, setIconFile] = useState<File | null>(null);
+  const [iconPreview, setIconPreview] = useState<string | null>(null);
 
   const openBankModal = async () => {
     setShowBankModal(true);
@@ -104,8 +109,16 @@ export default function CBTBuilderPage() {
           show_explanation: quizData.show_explanation ?? false,
           allow_practice_mode: quizData.allow_practice_mode ?? false,
           practice_time_limit_minutes: quizData.practice_time_limit_minutes ?? 0,
-          save_practice_scores: quizData.save_practice_scores ?? false
+          save_practice_scores: quizData.save_practice_scores ?? false,
+          is_form: quizData.is_form ?? false,
+          is_one_page_layout: quizData.is_one_page_layout ?? true,
+          description: quizData.description || "",
+          theme_color: quizData.theme_color || "blue",
+          icon_url: quizData.icon_url || ""
         });
+        if (quizData.icon_url) {
+          setIconPreview(quizData.icon_url);
+        }
       }
       if (qData) {
         setQuestions(qData as Question[]);
@@ -155,21 +168,39 @@ export default function CBTBuilderPage() {
     
     const calculatedMaxScore = questions.reduce((sum, q) => sum + (q.points || 0), 0);
 
+    let finalIconUrl = quiz.icon_url;
+
+    if (iconFile) {
+      const fileExt = iconFile.name.split('.').pop();
+      const fileName = `quiz-icon-${Date.now()}.${fileExt}`;
+      const { error: uploadError } = await supabase.storage.from("social_media").upload(fileName, iconFile);
+      
+      if (!uploadError) {
+        const { data } = supabase.storage.from("social_media").getPublicUrl(fileName);
+        finalIconUrl = data.publicUrl;
+      }
+    }
+
     // Save quiz settings
     const { error: quizError } = await supabase
       .from("quizzes")
       .update({ 
         time_limit: quiz.time_limit || null, 
-        max_score: calculatedMaxScore,
+        max_score: quiz.is_form ? 0 : calculatedMaxScore,
         allow_leave_exam: quiz.allow_leave_exam,
         min_time_to_submit: quiz.min_time_to_submit,
         shuffle_questions: quiz.shuffle_questions,
-        show_score: quiz.show_score,
-        show_answers: quiz.show_answers,
+        show_score: quiz.is_form ? false : quiz.show_score,
+        show_answers: quiz.is_form ? false : quiz.show_answers,
         show_explanation: quiz.show_explanation,
-        allow_practice_mode: quiz.allow_practice_mode,
+        allow_practice_mode: quiz.is_form ? false : quiz.allow_practice_mode,
         practice_time_limit_minutes: quiz.practice_time_limit_minutes,
-        save_practice_scores: quiz.save_practice_scores
+        save_practice_scores: quiz.save_practice_scores,
+        is_form: quiz.is_form,
+        is_one_page_layout: quiz.is_one_page_layout,
+        description: quiz.description,
+        theme_color: quiz.theme_color,
+        icon_url: finalIconUrl
       })
       .eq("id", id);
 
@@ -249,32 +280,127 @@ export default function CBTBuilderPage() {
             </div>
             
             <div className="space-y-4">
-              <div className="space-y-2">
-                <label className="flex items-center gap-2 text-sm font-medium text-[var(--text-secondary)]">
-                  <Clock className="h-4 w-4 text-[var(--text-tertiary)]" />
-                  Time Limit (minutes)
-                </label>
-                <input
-                  type="number"
-                  placeholder="0 for unlimited"
-                  className="w-full text-sm bg-white dark:bg-[var(--bg-secondary)] border border-[var(--border)] rounded px-3 py-2 focus:ring-1 focus:ring-[var(--accent)] focus:outline-none"
-                  value={quiz.time_limit || ""}
-                  onChange={(e) => setQuiz({ ...quiz, time_limit: parseInt(e.target.value) || 0 })}
-                />
-                <p className="text-xs text-[var(--text-tertiary)]">Leave 0 for no time limit.</p>
-              </div>
-
-              <div className="space-y-2 border-t border-[var(--border)] pt-4 mt-2">
-                <label className="flex items-center gap-2 text-sm font-medium text-[var(--text-secondary)]">
-                  <Award className="h-4 w-4 text-[var(--text-tertiary)]" />
-                  Total Poin Soal (Otomatis)
-                </label>
-                <div className="text-2xl font-black text-[var(--accent)]">
-                  {questions.reduce((sum, q) => sum + (q.points || 0), 0)}
+              <div className="space-y-2 border-b border-[var(--border)] pb-4 mb-2">
+                <label className="block text-sm font-medium text-[var(--text-primary)] mb-1.5">Update Quiz Icon</label>
+                <div className="flex items-center gap-4">
+                  <div 
+                    className="w-12 h-12 rounded-xl border-2 border-dashed border-[var(--border)] flex items-center justify-center bg-[var(--bg-secondary)] overflow-hidden cursor-pointer hover:border-[var(--accent)] transition-colors shrink-0"
+                    onClick={() => fileInputRef.current?.click()}
+                  >
+                    {iconPreview ? (
+                      <img src={iconPreview} alt="Icon preview" className="w-full h-full object-cover" />
+                    ) : (
+                      <ImageIcon className="h-5 w-5 text-[var(--text-tertiary)]" />
+                    )}
+                  </div>
+                  <div className="flex-1">
+                    <input
+                      type="file"
+                      accept="image/*"
+                      className="hidden"
+                      ref={fileInputRef}
+                      onChange={(e) => {
+                        const file = e.target.files?.[0];
+                        if (file) {
+                          setIconFile(file);
+                          setIconPreview(URL.createObjectURL(file));
+                        }
+                      }}
+                    />
+                    <Button 
+                      type="button" 
+                      variant="secondary" 
+                      size="sm"
+                      onClick={() => fileInputRef.current?.click()}
+                      className="text-xs"
+                    >
+                      <Upload className="h-3 w-3 mr-2" /> Upload Icon
+                    </Button>
+                  </div>
                 </div>
               </div>
 
-              <div className="space-y-2 border-t border-[var(--border)] pt-4 mt-2">
+              <div className="flex items-center justify-between border-b border-[var(--border)] pb-4 mb-2">
+                <div className="flex items-center gap-2">
+                  <label className="text-sm font-medium text-[var(--text-primary)]" title="Jadikan CBT ini sebagai Form (Tanpa sistem nilai & batas waktu)">Jadikan Form</label>
+                  <Badge variant="info" className="text-[10px]">Baru</Badge>
+                </div>
+                <input 
+                  type="checkbox" 
+                  checked={quiz.is_form} 
+                  onChange={(e) => setQuiz({ ...quiz, is_form: e.target.checked })}
+                  className="h-4 w-4 text-[var(--accent)]"
+                />
+              </div>
+
+              {quiz.is_form && (
+                <div className="space-y-4 border-b border-[var(--border)] pb-4 mb-2">
+                  <div className="flex items-center justify-between">
+                    <label className="text-sm font-medium text-[var(--text-primary)]" title="Tampilkan semua soal dalam 1 halaman">Tampilan Satu Halaman</label>
+                    <input 
+                      type="checkbox" 
+                      checked={quiz.is_one_page_layout} 
+                      onChange={(e) => setQuiz({ ...quiz, is_one_page_layout: e.target.checked })}
+                      className="h-4 w-4 text-[var(--accent)]"
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <label className="text-sm font-medium text-[var(--text-primary)]">Deskripsi Formulir</label>
+                    <textarea
+                      placeholder="Masukkan kata pengantar form..."
+                      className="w-full text-sm bg-white dark:bg-[var(--bg-secondary)] border border-[var(--border)] rounded px-3 py-2 focus:ring-1 focus:ring-[var(--accent)] focus:outline-none min-h-[80px]"
+                      value={quiz.description || ""}
+                      onChange={(e) => setQuiz({ ...quiz, description: e.target.value })}
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <label className="text-sm font-medium text-[var(--text-primary)]">Warna Tema</label>
+                    <select
+                      className="w-full text-sm bg-white dark:bg-[var(--bg-secondary)] border border-[var(--border)] rounded px-3 py-2 focus:ring-1 focus:ring-[var(--accent)] focus:outline-none"
+                      value={quiz.theme_color || "blue"}
+                      onChange={(e) => setQuiz({ ...quiz, theme_color: e.target.value })}
+                    >
+                      <option value="blue">Biru (Default)</option>
+                      <option value="green">Hijau</option>
+                      <option value="purple">Ungu</option>
+                      <option value="rose">Merah Muda</option>
+                      <option value="orange">Oranye</option>
+                      <option value="slate">Abu-abu</option>
+                    </select>
+                  </div>
+                </div>
+              )}
+
+              {!quiz.is_form && (
+                <div className="space-y-2 border-b border-[var(--border)] pb-4 mb-2">
+                  <label className="flex items-center gap-2 text-sm font-medium text-[var(--text-secondary)]">
+                    <Clock className="h-4 w-4 text-[var(--text-tertiary)]" />
+                    Time Limit (minutes)
+                  </label>
+                  <input
+                    type="number"
+                    placeholder="0 for unlimited"
+                    className="w-full text-sm bg-white dark:bg-[var(--bg-secondary)] border border-[var(--border)] rounded px-3 py-2 focus:ring-1 focus:ring-[var(--accent)] focus:outline-none"
+                    value={quiz.time_limit || ""}
+                    onChange={(e) => setQuiz({ ...quiz, time_limit: parseInt(e.target.value) || 0 })}
+                  />
+                  <p className="text-xs text-[var(--text-tertiary)]">Leave 0 for no time limit.</p>
+                </div>
+              )}
+
+              {!quiz.is_form && (
+                <div className="space-y-2 border-b border-[var(--border)] pb-4 mb-2">
+                  <label className="flex items-center gap-2 text-sm font-medium text-[var(--text-secondary)]">
+                    <Award className="h-4 w-4 text-[var(--text-tertiary)]" />
+                    Total Poin Soal (Otomatis)
+                  </label>
+                  <div className="text-2xl font-black text-[var(--accent)]">
+                    {questions.reduce((sum, q) => sum + (q.points || 0), 0)}
+                  </div>
+                </div>
+              )}
+
+              <div className="space-y-2 border-b border-[var(--border)] pb-4 mb-2">
                 <label className="flex items-center gap-2 text-sm font-medium text-[var(--text-secondary)]">
                   Minimum Time to Submit (minutes)
                 </label>
@@ -306,25 +432,29 @@ export default function CBTBuilderPage() {
                 />
               </div>
 
-              <div className="flex items-center justify-between">
-                <label className="text-sm font-medium text-[var(--text-secondary)]" title="Siswa dapat melihat nilai akhir setelah ujian">Tampilkan Nilai Akhir</label>
-                <input 
-                  type="checkbox" 
-                  checked={quiz.show_score} 
-                  onChange={(e) => setQuiz({ ...quiz, show_score: e.target.checked })}
-                  className="h-4 w-4 text-[var(--accent)]"
-                />
-              </div>
+              {!quiz.is_form && (
+                <>
+                  <div className="flex items-center justify-between">
+                    <label className="text-sm font-medium text-[var(--text-secondary)]" title="Siswa dapat melihat nilai akhir setelah ujian">Tampilkan Nilai Akhir</label>
+                    <input 
+                      type="checkbox" 
+                      checked={quiz.show_score} 
+                      onChange={(e) => setQuiz({ ...quiz, show_score: e.target.checked })}
+                      className="h-4 w-4 text-[var(--accent)]"
+                    />
+                  </div>
 
-              <div className="flex items-center justify-between">
-                <label className="text-sm font-medium text-[var(--text-secondary)]" title="Siswa dapat melihat kunci jawaban yang benar setelah ujian">Tampilkan Kunci Jawaban</label>
-                <input 
-                  type="checkbox" 
-                  checked={quiz.show_answers} 
-                  onChange={(e) => setQuiz({ ...quiz, show_answers: e.target.checked })}
-                  className="h-4 w-4 text-[var(--accent)]"
-                />
-              </div>
+                  <div className="flex items-center justify-between">
+                    <label className="text-sm font-medium text-[var(--text-secondary)]" title="Siswa dapat melihat kunci jawaban yang benar setelah ujian">Tampilkan Kunci Jawaban</label>
+                    <input 
+                      type="checkbox" 
+                      checked={quiz.show_answers} 
+                      onChange={(e) => setQuiz({ ...quiz, show_answers: e.target.checked })}
+                      className="h-4 w-4 text-[var(--accent)]"
+                    />
+                  </div>
+                </>
+              )}
 
               <div className="flex items-center justify-between">
                 <label className="text-sm font-medium text-[var(--text-secondary)]" title="Siswa dapat melihat pembahasan soal setelah ujian">Tampilkan Pembahasan</label>
@@ -336,42 +466,46 @@ export default function CBTBuilderPage() {
                 />
               </div>
 
-              <div className="flex items-center justify-between border-t border-[var(--border)] pt-4 mt-2">
-                <label className="text-sm font-medium text-[var(--text-secondary)]">Sediakan Mode Latihan</label>
-                <input 
-                  type="checkbox" 
-                  checked={quiz.allow_practice_mode} 
-                  onChange={(e) => setQuiz({ ...quiz, allow_practice_mode: e.target.checked })}
-                  className="h-4 w-4 text-[var(--accent)]"
-                />
-              </div>
-
-              {quiz.allow_practice_mode && (
-                <div className="space-y-4 bg-slate-50 dark:bg-slate-900 p-3 rounded border border-slate-200 dark:border-slate-800">
-                  <div className="space-y-2">
-                    <label className="flex items-center gap-2 text-sm font-medium text-[var(--text-secondary)]">
-                      <Clock className="h-4 w-4 text-[var(--text-tertiary)]" />
-                      Waktu Latihan (menit)
-                    </label>
-                    <input
-                      type="number"
-                      placeholder="0 for unlimited"
-                      className="w-full text-sm bg-white dark:bg-[var(--bg-secondary)] border border-[var(--border)] rounded px-3 py-2 focus:ring-1 focus:ring-[var(--accent)] focus:outline-none"
-                      value={quiz.practice_time_limit_minutes || ""}
-                      onChange={(e) => setQuiz({ ...quiz, practice_time_limit_minutes: parseInt(e.target.value) || 0 })}
-                    />
-                    <p className="text-xs text-[var(--text-tertiary)]">Isi 0 jika tanpa batas waktu.</p>
-                  </div>
-                  <div className="flex items-center justify-between">
-                    <label className="text-sm font-medium text-[var(--text-secondary)]" title="Jika aktif, nilai saat latihan akan menggantikan nilai utama siswa">Simpan Nilai Latihan</label>
+              {!quiz.is_form && (
+                <>
+                  <div className="flex items-center justify-between border-t border-[var(--border)] pt-4 mt-2">
+                    <label className="text-sm font-medium text-[var(--text-secondary)]">Sediakan Mode Latihan</label>
                     <input 
                       type="checkbox" 
-                      checked={quiz.save_practice_scores} 
-                      onChange={(e) => setQuiz({ ...quiz, save_practice_scores: e.target.checked })}
-                      className="h-4 w-4 text-emerald-500"
+                      checked={quiz.allow_practice_mode} 
+                      onChange={(e) => setQuiz({ ...quiz, allow_practice_mode: e.target.checked })}
+                      className="h-4 w-4 text-[var(--accent)]"
                     />
                   </div>
-                </div>
+
+                  {quiz.allow_practice_mode && (
+                    <div className="space-y-4 bg-slate-50 dark:bg-slate-900 p-3 rounded border border-slate-200 dark:border-slate-800">
+                      <div className="space-y-2">
+                        <label className="flex items-center gap-2 text-sm font-medium text-[var(--text-secondary)]">
+                          <Clock className="h-4 w-4 text-[var(--text-tertiary)]" />
+                          Waktu Latihan (menit)
+                        </label>
+                        <input
+                          type="number"
+                          placeholder="0 for unlimited"
+                          className="w-full text-sm bg-white dark:bg-[var(--bg-secondary)] border border-[var(--border)] rounded px-3 py-2 focus:ring-1 focus:ring-[var(--accent)] focus:outline-none"
+                          value={quiz.practice_time_limit_minutes || ""}
+                          onChange={(e) => setQuiz({ ...quiz, practice_time_limit_minutes: parseInt(e.target.value) || 0 })}
+                        />
+                        <p className="text-xs text-[var(--text-tertiary)]">Isi 0 jika tanpa batas waktu.</p>
+                      </div>
+                      <div className="flex items-center justify-between">
+                        <label className="text-sm font-medium text-[var(--text-secondary)]" title="Jika aktif, nilai saat latihan akan menggantikan nilai utama siswa">Simpan Nilai Latihan</label>
+                        <input 
+                          type="checkbox" 
+                          checked={quiz.save_practice_scores} 
+                          onChange={(e) => setQuiz({ ...quiz, save_practice_scores: e.target.checked })}
+                          className="h-4 w-4 text-emerald-500"
+                        />
+                      </div>
+                    </div>
+                  )}
+                </>
               )}
             </div>
           </Card>

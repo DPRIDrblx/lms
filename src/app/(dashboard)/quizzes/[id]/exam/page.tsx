@@ -11,6 +11,7 @@ import { updateQuestProgress } from "@/lib/gamification";
 import { useTheme } from "@/lib/theme-context";
 import { cn } from "@/lib/utils";
 import { Mascot } from "@/components/ui/mascot";
+import { Button } from "@/components/ui/button";
 import { MathRenderer } from "@/components/ui/math-renderer";
 
 export default function ExamPage({ params }: { params: Promise<{ id: string }> }) {
@@ -72,26 +73,34 @@ export default function ExamPage({ params }: { params: Promise<{ id: string }> }
     const { data: existing } = await supabase.from("exam_sessions").select("*").eq("student_id", profile.id).eq("quiz_id", id).single();
     
     if (existing) {
-      if (existing.status === 'submitted') { 
-        const { data: scoreCheck } = await supabase
-          .from("student_scores")
-          .select("score, is_graded")
-          .eq("student_id", profile.id)
-          .eq("target_id", id)
-          .eq("target_type", "quiz")
-          .single();
-          
-        if (!scoreCheck) {
-          await supabase.from("exam_sessions").delete().eq("id", existing.id);
-          window.location.reload();
-          return;
-        }
+      if (existing.status === 'submitted') {
+        const isRetake = typeof window !== 'undefined' ? new URLSearchParams(window.location.search).get('retake') === 'true' : false;
+        
+        if (qData.data?.is_form && isRetake) {
+          // Reopen the session
+          await supabase.from("exam_sessions").update({ status: 'in_progress' }).eq("id", existing.id);
+          existing.status = 'in_progress';
+        } else {
+          const { data: scoreCheck } = await supabase
+            .from("student_scores")
+            .select("score, is_graded")
+            .eq("student_id", profile.id)
+            .eq("target_id", id)
+            .eq("target_type", "quiz")
+            .single();
+            
+          if (!scoreCheck) {
+            await supabase.from("exam_sessions").delete().eq("id", existing.id);
+            window.location.reload();
+            return;
+          }
 
-        setFinalScore(scoreCheck.score);
-        setNeedsManualGrading(!scoreCheck.is_graded);
-        setIsFinished(true); 
-        setLoading(false); 
-        return; 
+          setFinalScore(scoreCheck.score);
+          setNeedsManualGrading(!scoreCheck.is_graded);
+          setIsFinished(true); 
+          setLoading(false); 
+          return; 
+        }
       }
       setSession(existing);
       
@@ -228,7 +237,7 @@ export default function ExamPage({ params }: { params: Promise<{ id: string }> }
 
   useEffect(() => {
     const handleBeforeUnload = (e: BeforeUnloadEvent) => {
-      if (!isFinished && !loading) {
+      if (!isFinished && !loading && !quiz?.is_form) {
         e.preventDefault();
         e.returnValue = '';
         
@@ -254,7 +263,7 @@ export default function ExamPage({ params }: { params: Promise<{ id: string }> }
 
   useEffect(() => {
     const handleBlur = () => {
-      if (!isFinished && !loading && !isAlertOpen.current && !isPracticeMode) {
+      if (!isFinished && !loading && !isAlertOpen.current && !isPracticeMode && !quiz?.is_form) {
         isAlertOpen.current = true;
         setCheatWarnings(prev => {
           const newWarnings = prev + 1;
@@ -413,11 +422,13 @@ export default function ExamPage({ params }: { params: Promise<{ id: string }> }
 
 
   const submitExam = async (skipConfirm = false) => {
-    if (!skipConfirm && timeLeft > 0) {
+    if (!skipConfirm) {
       setConfirmModal({
         show: true,
-        title: 'Kumpulkan Ujian?',
-        message: 'Apakah Anda yakin ingin mengakhiri ujian ini? Anda tidak bisa mengubah jawaban setelah dikumpulkan.',
+        title: quiz?.is_form ? 'Kirim Formulir?' : 'Kumpulkan Ujian?',
+        message: quiz?.is_form 
+          ? 'Apakah Anda yakin ingin mengirim formulir ini? Anda tidak bisa mengubah jawaban setelah dikirim.'
+          : 'Apakah Anda yakin ingin mengakhiri ujian ini? Anda tidak bisa mengubah jawaban setelah dikumpulkan.',
         onConfirm: () => {
           setConfirmModal(prev => ({...prev, show: false}));
           submitExam(true);
@@ -426,7 +437,7 @@ export default function ExamPage({ params }: { params: Promise<{ id: string }> }
       return;
     }
     
-    if (timeLeft > 0 && quiz?.min_time_to_submit > 0) {
+    if (!quiz?.is_form && timeLeft > 0 && quiz?.min_time_to_submit > 0) {
       const totalTimeSeconds = (quiz?.time_limit || quiz?.time_limit_minutes || 60) * 60;
       const elapsedSeconds = totalTimeSeconds - timeLeft;
       const minTimeSeconds = quiz.min_time_to_submit * 60;
@@ -516,6 +527,11 @@ export default function ExamPage({ params }: { params: Promise<{ id: string }> }
 
     // Bulatkan totalScore menjadi maksimal 1 angka desimal
     totalScore = Math.round(totalScore * 10) / 10;
+
+    if (quiz?.is_form) {
+      finalizeSubmission(0, false, null);
+      return;
+    }
 
     // finalizeSubmission is defined below and will be called appropriately.
     setIsSubmittingToAI(true);
@@ -737,33 +753,41 @@ export default function ExamPage({ params }: { params: Promise<{ id: string }> }
             </div>
 
             <h1 className="text-3xl font-black text-slate-800 mb-2">
-              {needsManualGrading ? "UJIAN SELESAI!" : isPassed ? "LUAR BIASA!" : "TETAP SEMANGAT!"}
+              {quiz?.is_form ? "FORMULIR TERKIRIM!" : needsManualGrading ? "UJIAN SELESAI!" : isPassed ? "LUAR BIASA!" : "TETAP SEMANGAT!"}
             </h1>
             <p className="text-slate-500 mb-8 font-medium">Jawabanmu sudah berhasil tersimpan.</p>
             
-            <div className="bg-slate-50 p-6 rounded-2xl border-2 border-slate-100 mb-8">
-               <p className="text-sm font-bold text-slate-400 uppercase tracking-widest mb-2">Nilai Akhir</p>
-               {quiz?.show_score === false ? (
-                 <div className="text-2xl font-black text-slate-500 py-4">
-                   Nilai Anda disembunyikan oleh Guru.
+            {quiz?.is_form ? (
+              <div className="bg-slate-50 p-6 rounded-2xl border-2 border-slate-100 mb-8">
+                 <div className="text-2xl font-black text-slate-700 py-4">
+                   Formulir Berhasil Dikirim
                  </div>
-               ) : needsManualGrading ? (
-                  <div>
-                    <div className="text-5xl font-black text-yellow-500">
-                      {finalScore !== null ? finalScore : "?"} <span className="text-2xl text-slate-300">/ {quiz?.max_score}</span>
+              </div>
+            ) : (
+              <div className="bg-slate-50 p-6 rounded-2xl border-2 border-slate-100 mb-8">
+                 <p className="text-sm font-bold text-slate-400 uppercase tracking-widest mb-2">Nilai Akhir</p>
+                 {quiz?.show_score === false ? (
+                   <div className="text-2xl font-black text-slate-500 py-4">
+                     Nilai Anda disembunyikan oleh Guru.
+                   </div>
+                 ) : needsManualGrading ? (
+                    <div>
+                      <div className="text-5xl font-black text-yellow-500">
+                        {finalScore !== null ? finalScore : "?"} <span className="text-2xl text-slate-300">/ {quiz?.max_score}</span>
+                      </div>
+                      <p className="text-sm text-yellow-600 mt-4 font-bold bg-yellow-100/50 p-2 rounded-xl inline-block">
+                        Menunggu Penilaian Guru (Ada Soal Essay)
+                      </p>
                     </div>
-                    <p className="text-sm text-yellow-600 mt-4 font-bold bg-yellow-100/50 p-2 rounded-xl inline-block">
-                      Menunggu Penilaian Guru (Ada Soal Essay)
-                    </p>
-                  </div>
-               ) : (
-                  <div>
-                    <div className={`text-6xl font-black ${isPassed ? 'text-green-500' : 'text-red-500'}`}>
-                      {Number.isInteger(finalScore) ? finalScore : finalScore?.toString().replace('.', ',')} <span className="text-2xl text-slate-300">/ {quiz?.max_score}</span>
+                 ) : (
+                    <div>
+                      <div className={`text-6xl font-black ${isPassed ? 'text-green-500' : 'text-red-500'}`}>
+                        {Number.isInteger(finalScore) ? finalScore : finalScore?.toString().replace('.', ',')} <span className="text-2xl text-slate-300">/ {quiz?.max_score}</span>
+                      </div>
                     </div>
-                  </div>
-               )}
-            </div>
+                 )}
+              </div>
+            )}
 
             <div className="flex gap-4">
               <button 
@@ -772,7 +796,7 @@ export default function ExamPage({ params }: { params: Promise<{ id: string }> }
               >
                 KEMBALI
               </button>
-              {(quiz?.show_answers || quiz?.show_explanation) && (
+              {(!quiz?.is_form && (quiz?.show_answers || quiz?.show_explanation)) && (
                 <button 
                   onClick={() => router.push(`/quizzes/${id}/review`)}
                   className="flex-1 py-4 bg-blue-500 hover:bg-blue-400 active:bg-blue-600 active:translate-y-1 text-white font-bold rounded-2xl border-b-4 border-blue-700 transition-all text-lg"
@@ -789,8 +813,26 @@ export default function ExamPage({ params }: { params: Promise<{ id: string }> }
   const currentQ = questions[currentIndex];
   const progressPercent = ((currentIndex + 1) / questions.length) * 100;
 
+  const themeColors: Record<string, { accent: string, hover: string }> = {
+    green: { accent: '#22c55e', hover: '#16a34a' },
+    purple: { accent: '#a855f7', hover: '#9333ea' },
+    rose: { accent: '#f43f5e', hover: '#e11d48' },
+    orange: { accent: '#f97316', hover: '#ea580c' },
+    slate: { accent: '#64748b', hover: '#475569' },
+    blue: { accent: '#3b82f6', hover: '#2563eb' }
+  };
+  const currentTheme = quiz?.is_form && quiz?.theme_color ? themeColors[quiz.theme_color] : null;
+
   return (
     <div className={cn("min-h-screen font-sans text-slate-800 flex flex-col relative overflow-hidden", uiMode === "clean" ? "bg-[var(--bg-secondary)]" : "bg-slate-50")}>
+      {currentTheme && (
+        <style dangerouslySetInnerHTML={{ __html: `
+          :root {
+            --accent: ${currentTheme.accent} !important;
+            --accent-hover: ${currentTheme.hover} !important;
+          }
+        `}} />
+      )}
       
       {/* BACKGROUND WATERMARK (REPEATING TILE ON TOP) */}
       <div 
@@ -1046,31 +1088,44 @@ export default function ExamPage({ params }: { params: Promise<{ id: string }> }
           <motion.div 
             initial={{ width: 0 }}
             animate={{ width: `${progressPercent}%` }}
-            className={cn("absolute top-0 left-0 h-full rounded-full", uiMode === 'clean' ? 'bg-[#108B96]' : 'bg-green-500')}
+            className={cn("absolute top-0 left-0 h-full rounded-full", quiz?.is_form ? 'bg-[var(--accent)]' : (uiMode === 'clean' ? 'bg-[#108B96]' : 'bg-green-500'))}
           >
             <div className="absolute top-1 left-2 right-2 h-1 bg-white/30 rounded-full" />
           </motion.div>
         </div>
 
         {/* Timer */}
-        <div className={`flex items-center gap-2 px-4 py-2 rounded-2xl font-bold border-2 ${
-          timeLeft < 300 
-            ? 'border-red-200 bg-red-50 text-red-600' 
-            : 'border-slate-200 bg-white text-slate-600'
-        }`}>
-          <Clock className={`w-5 h-5 ${timeLeft < 300 ? 'animate-pulse' : ''}`} />
-          <span className="text-lg font-mono tracking-wider">{formatTime(timeLeft)}</span>
-        </div>
+        {!quiz?.is_form && (
+          <div className={`flex items-center gap-2 px-4 py-2 rounded-2xl font-bold border-2 ${
+            timeLeft < 300 
+              ? 'border-red-200 bg-red-50 text-red-600' 
+              : 'border-slate-200 bg-white text-slate-600'
+          }`}>
+            <Clock className={`w-5 h-5 ${timeLeft < 300 ? 'animate-pulse' : ''}`} />
+            <span className="text-lg font-mono tracking-wider">{formatTime(timeLeft)}</span>
+          </div>
+        )}
       </header>
 
       <main className="flex-1 flex flex-col lg:flex-row max-w-7xl mx-auto w-full p-4 md:p-8 gap-4 md:gap-8 relative z-10 pb-32 lg:pb-8 landscape:pb-32">
         
         {/* LEFT PANEL: QUESTION CONTENT */}
         <div className="flex-1 flex flex-col max-w-3xl mx-auto w-full">
-          <div className="mb-6 flex items-center justify-between">
-            <h2 className="text-2xl md:text-3xl font-black text-slate-800">
-              Soal {currentIndex + 1}
-            </h2>
+          {quiz?.is_form && quiz?.description && (
+            <div className="mb-8 p-6 bg-white rounded-2xl border border-[var(--border)] shadow-sm">
+              <p className="text-lg text-slate-700 whitespace-pre-wrap">{quiz.description}</p>
+            </div>
+          )}
+          {(quiz?.is_form && quiz?.is_one_page_layout ? questions : [currentQ]).map((q, loopIndex) => {
+            const actualIndex = quiz?.is_form && quiz?.is_one_page_layout ? loopIndex : currentIndex;
+            const currentQ = q;
+            if (!currentQ) return null;
+            return (
+              <div key={currentQ.id} className={quiz?.is_form && quiz?.is_one_page_layout ? "mb-16 pb-12 border-b-2 border-slate-200 last:border-b-0 last:pb-0" : ""}>
+                <div className="mb-6 flex items-center justify-between">
+                  <h2 className="text-2xl md:text-3xl font-black text-slate-800">
+                    Soal {actualIndex + 1}
+                  </h2>
             <div className="px-3 py-1 bg-blue-100 text-blue-600 rounded-xl text-sm font-bold border-2 border-blue-200">
               {currentQ?.question_type?.toUpperCase().replace("_", " ")}
             </div>
@@ -1078,7 +1133,7 @@ export default function ExamPage({ params }: { params: Promise<{ id: string }> }
 
           <div className="text-base md:text-lg font-medium text-slate-700 leading-relaxed mb-8 relative prose prose-slate max-w-none prose-p:my-2 prose-ol:my-2 prose-ul:my-2">
             <MathRenderer htmlContent={currentQ?.question_text || ""} />
-            {currentQ?.id && (
+            {currentQ?.id && !quiz?.is_form && (
               <div className="mt-6 flex items-center justify-between text-[10px] font-mono text-slate-400">
                 <div className="flex items-center gap-2">
                   <button 
@@ -1491,10 +1546,21 @@ export default function ExamPage({ params }: { params: Promise<{ id: string }> }
             })()}
 
           </div>
+              </div>
+            );
+          })}
+
+          {quiz?.is_form && quiz?.is_one_page_layout && (
+            <div className="mt-8 flex justify-center">
+              <Button onClick={() => submitExam(false)} size="lg" className="w-full max-w-md h-14 text-lg font-black uppercase tracking-widest bg-[var(--accent)] hover:bg-[var(--accent-hover)] text-white">
+                Kirim Formulir
+              </Button>
+            </div>
+          )}
         </div>
 
         {/* RIGHT PANEL: NUMBER GRID (Mobile & Desktop) */}
-        {!isPracticeMode && (
+        {!isPracticeMode && !(quiz?.is_form && quiz?.is_one_page_layout) && (
         <div className="hidden lg:flex flex-col w-full lg:w-80 shrink-0">
           <div className={cn("bg-white p-6 sticky top-28", uiMode === 'clean' ? 'rounded-2xl border border-[var(--border)] shadow-sm' : 'rounded-3xl border-2 border-slate-200 shadow-sm')}>
             <h3 className="font-black text-slate-700 mb-6 uppercase tracking-widest text-sm flex items-center justify-between">
@@ -1565,7 +1631,7 @@ export default function ExamPage({ params }: { params: Promise<{ id: string }> }
       </main>
 
       {/* BOTTOM ACTION BAR (CBT MODE) */}
-      {!isPracticeMode && (
+      {!isPracticeMode && !(quiz?.is_form && quiz?.is_one_page_layout) && (
         <div className={cn("fixed bottom-0 left-0 right-0 z-50 bg-white p-2 md:px-8 shadow-[0_-4px_6px_-1px_rgba(0,0,0,0.05)] landscape:p-2", uiMode === 'clean' ? 'border-t border-[var(--border)]' : 'border-t-2 border-slate-200')}>
           <div className="max-w-7xl mx-auto flex items-center justify-between gap-2 md:gap-4">
             <div className="flex items-center gap-1 md:gap-4">

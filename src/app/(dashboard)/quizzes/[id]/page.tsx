@@ -38,6 +38,7 @@ interface Quiz {
   show_score?: boolean;
   allow_practice_mode?: boolean;
   practice_time_limit_minutes?: number;
+  is_form?: boolean;
 }
 
 export default function TakeQuizPage({ params }: { params: Promise<{ id: string }> }) {
@@ -93,19 +94,21 @@ export default function TakeQuizPage({ params }: { params: Promise<{ id: string 
             <Trophy className="h-10 w-10" />
           </div>
           
-          <h1 className="text-3xl font-black text-slate-900 mb-2 uppercase tracking-tight">Portal Ujian</h1>
+          <h1 className="text-3xl font-black text-slate-900 mb-2 uppercase tracking-tight">{quiz.is_form ? 'Portal Formulir' : 'Portal Ujian'}</h1>
           <h2 className="text-xl font-bold text-slate-700 mb-8">{quiz.title}</h2>
           
-          <div className="flex justify-center gap-6 mb-10">
-            <div className="bg-slate-50 border border-slate-200 rounded-xl p-4 min-w-[120px]">
-              <p className="text-[10px] uppercase font-bold text-slate-500 mb-1">Durasi Ujian</p>
-              <p className="text-xl font-black text-slate-800">{quiz.time_limit_minutes || 0} Menit</p>
+          {!quiz.is_form && (
+            <div className="flex justify-center gap-6 mb-10">
+              <div className="bg-slate-50 border border-slate-200 rounded-xl p-4 min-w-[120px]">
+                <p className="text-[10px] uppercase font-bold text-slate-500 mb-1">Durasi Ujian</p>
+                <p className="text-xl font-black text-slate-800">{quiz.time_limit_minutes || 0} Menit</p>
+              </div>
+              <div className="bg-slate-50 border border-slate-200 rounded-xl p-4 min-w-[120px]">
+                <p className="text-[10px] uppercase font-bold text-slate-500 mb-1">Batas Lulus</p>
+                <p className="text-xl font-black text-slate-800">{quiz.passing_score}%</p>
+              </div>
             </div>
-            <div className="bg-slate-50 border border-slate-200 rounded-xl p-4 min-w-[120px]">
-              <p className="text-[10px] uppercase font-bold text-slate-500 mb-1">Batas Lulus</p>
-              <p className="text-xl font-black text-slate-800">{quiz.passing_score}%</p>
-            </div>
-          </div>
+          )}
 
           <div className="bg-amber-50 border border-amber-200 text-amber-800 rounded-xl p-4 mb-10 text-left text-sm space-y-2">
             <p className="font-bold flex items-center gap-2"><AlertCircle className="h-4 w-4" /> PERHATIAN PESERTA:</p>
@@ -118,38 +121,46 @@ export default function TakeQuizPage({ params }: { params: Promise<{ id: string 
           </div>
 
           {scoreRecord ? (
-            <div className="mb-10 p-6 bg-slate-50 border border-slate-200 rounded-xl">
-               <p className="text-sm font-bold text-slate-500 uppercase tracking-wider mb-2">Nilai Ujian Anda</p>
-               {quiz.show_score === false ? (
-                 <div className="text-2xl font-black text-slate-500 py-4">
-                   Nilai Anda disembunyikan oleh Guru.
+            quiz.is_form ? (
+              <div className="mb-10 p-6 bg-slate-50 border border-slate-200 rounded-xl">
+                 <div className="text-xl font-bold text-slate-700 py-4">
+                   Anda sudah mengisi formulir ini.
                  </div>
-               ) : !scoreRecord.is_graded ? (
-                  <div>
-                    <div className="text-4xl font-black text-amber-500">{scoreRecord.score !== null ? scoreRecord.score : "?"} <span className="text-xl text-slate-400">/ 100</span></div>
-                    <p className="text-xs font-bold text-amber-700 mt-2">Menunggu Penilaian Guru (Ada Soal Essay)</p>
-                  </div>
-               ) : (
-                  <div>
-                    <div className={`text-5xl font-black ${scoreRecord.score !== null && scoreRecord.score >= (quiz.passing_score || 0) ? 'text-green-600' : 'text-red-500'}`}>
-                       {scoreRecord.score !== null ? scoreRecord.score : "?"} <span className="text-2xl text-slate-400">/ 100</span>
+              </div>
+            ) : (
+              <div className="mb-10 p-6 bg-slate-50 border border-slate-200 rounded-xl">
+                 <p className="text-sm font-bold text-slate-500 uppercase tracking-wider mb-2">Nilai Ujian Anda</p>
+                 {quiz.show_score === false ? (
+                   <div className="text-2xl font-black text-slate-500 py-4">
+                     Nilai Anda disembunyikan oleh Guru.
+                   </div>
+                 ) : !scoreRecord.is_graded ? (
+                    <div>
+                      <div className="text-4xl font-black text-amber-500">{scoreRecord.score !== null ? scoreRecord.score : "?"} <span className="text-xl text-slate-400">/ 100</span></div>
+                      <p className="text-xs font-bold text-amber-700 mt-2">Menunggu Penilaian Guru (Ada Soal Essay)</p>
                     </div>
-                  </div>
-               )}
-            </div>
+                 ) : (
+                    <div>
+                      <div className={`text-5xl font-black ${scoreRecord.score !== null && scoreRecord.score >= (quiz.passing_score || 0) ? 'text-green-600' : 'text-red-500'}`}>
+                         {scoreRecord.score !== null ? scoreRecord.score : "?"} <span className="text-2xl text-slate-400">/ 100</span>
+                      </div>
+                    </div>
+                 )}
+              </div>
+            )
           ) : null}
 
           {scoreRecord ? (
-            <Link href={`/quizzes/${quizId}/exam`}>
+            <Link href={`/quizzes/${quizId}/exam${quiz.is_form ? '?retake=true' : ''}`}>
               <Button size="lg" className="w-full text-lg h-14 uppercase tracking-widest font-black" icon={<ArrowRight className="h-5 w-5" />}>
-                LIHAT RUANG CBT
+                {quiz.is_form ? 'EDIT FORMULIR / ISI ULANG' : 'LIHAT RUANG CBT'}
               </Button>
             </Link>
           ) : (
             <div className="flex flex-col gap-4">
               <Link href={`/quizzes/${quizId}/exam`}>
                 <Button size="lg" className="w-full text-lg h-14 uppercase tracking-widest font-black" icon={<ArrowRight className="h-5 w-5" />}>
-                  MASUK KE RUANG UJIAN (CBT)
+                  {quiz.is_form ? 'MULAI ISI FORMULIR' : 'MASUK KE RUANG UJIAN (CBT)'}
                 </Button>
               </Link>
               {quiz.allow_practice_mode && (
