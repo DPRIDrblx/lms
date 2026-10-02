@@ -252,14 +252,16 @@ export default function SessionCbtManager({
               {packages.map(pkg => (
                 <Card key={pkg.id} className="p-4 hover:border-indigo-200 transition-colors flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
                   <div className="flex-1 cursor-pointer" onClick={() => pkg.activity_type === 'cbt' ? loadPackageDetail(pkg) : null}>
-                    <h4 className="font-bold text-slate-800 flex items-center gap-2">
+                    <h4 className="font-bold text-slate-800 flex items-center gap-2 text-lg">
                       {pkg.title}
-                      {pkg.status === 'active' && <span className="text-[10px] uppercase font-black tracking-wider bg-emerald-100 text-emerald-700 px-2 py-0.5 rounded-full">Aktif</span>}
-                      {pkg.status === 'ended' && <span className="text-[10px] uppercase font-black tracking-wider bg-slate-100 text-slate-500 px-2 py-0.5 rounded-full">Selesai</span>}
-                      {pkg.status === 'draft' && <span className="text-[10px] uppercase font-black tracking-wider bg-amber-100 text-amber-700 px-2 py-0.5 rounded-full">Draft</span>}
-                      <span className="text-[10px] bg-indigo-100 text-indigo-700 px-2 py-0.5 rounded-full uppercase font-black">{pkg.activity_type || 'CBT'}</span>
+                      {pkg.status === 'active' && <span className="text-[10px] uppercase font-black tracking-wider bg-emerald-100 text-emerald-700 px-2 py-1 rounded-md shadow-sm border border-emerald-200">Aktif</span>}
+                      {pkg.status === 'ended' && <span className="text-[10px] uppercase font-black tracking-wider bg-slate-100 text-slate-500 px-2 py-1 rounded-md shadow-sm border border-slate-200">Selesai</span>}
+                      {pkg.status === 'draft' && <span className="text-[10px] uppercase font-black tracking-wider bg-amber-100 text-amber-700 px-2 py-1 rounded-md shadow-sm border border-amber-200">Draft</span>}
+                      <span className="text-[10px] bg-indigo-100 text-indigo-700 px-2 py-1 rounded-md uppercase font-black shadow-sm border border-indigo-200">{pkg.activity_type === 'cbt' ? 'CBT (Kuis)' : pkg.activity_type.toUpperCase()}</span>
                     </h4>
-                    <p className="text-xs text-slate-500 mt-1">Dibuat pada {new Date(pkg.created_at).toLocaleString('id-ID')}</p>
+                    <p className="text-sm text-slate-500 mt-1 flex items-center gap-1">
+                      <Clock className="w-3 h-3" /> Dibuat pada {new Date(pkg.created_at).toLocaleString('id-ID')}
+                    </p>
                   </div>
                   <div className="flex items-center gap-2">
                     <Button variant="secondary" size="sm" onClick={() => handleRenamePackage(pkg.id, pkg.title)}>Rename</Button>
@@ -276,98 +278,99 @@ export default function SessionCbtManager({
       )}
 
       {activeView === 'create_ai' && (
-        <Card className="p-6">
-          <div className="flex items-center justify-between mb-6">
-            <h3 className="text-lg font-bold text-slate-800 flex items-center gap-2"><Sparkles className="w-5 h-5 text-indigo-500" /> Buat Kuis dengan AI</h3>
-            <Button variant="ghost" size="sm" onClick={() => setActiveView('list')}>Batal</Button>
+        <Card className="p-0 overflow-hidden border-indigo-100 shadow-lg animate-in zoom-in-95 duration-300">
+          <div className="bg-gradient-to-r from-indigo-600 to-violet-600 p-6 flex items-center justify-between text-white">
+            <div>
+              <h3 className="text-xl font-black flex items-center gap-2"><Sparkles className="w-6 h-6 text-indigo-200" /> Buat Kuis dengan AI</h3>
+              <p className="text-indigo-100 text-sm mt-1 opacity-90">AI akan otomatis membuat paket soal interaktif untuk siswa.</p>
+            </div>
+            <Button variant="ghost" size="sm" onClick={() => setActiveView('list')} className="text-white hover:bg-white/20 rounded-full h-10 px-4">Batal</Button>
           </div>
           
-          <div className="space-y-4">
+          <div className="p-6 md:p-8 space-y-8 bg-slate-50">
             <div>
-              <label className="text-sm font-bold text-slate-700 block mb-1">Judul Paket Kuis</label>
-              <input type="text" value={packageTitle} onChange={e => setPackageTitle(e.target.value)} placeholder="Misal: Kuis Evaluasi Aljabar" className="w-full border-slate-200 rounded-xl px-4 py-2 bg-slate-50 outline-none focus:border-indigo-500 transition-colors" />
+              <label className="text-sm font-black text-slate-800 block mb-2 uppercase tracking-wide">Judul Paket Kuis</label>
+              <input type="text" value={packageTitle} onChange={e => setPackageTitle(e.target.value)} placeholder="Misal: Kuis Evaluasi Aljabar" className="w-full border-2 border-slate-200 rounded-2xl px-4 py-3 bg-white outline-none focus:border-indigo-500 focus:ring-4 focus:ring-indigo-500/10 transition-all font-medium text-slate-700" />
             </div>
             
             <div>
-              <label className="text-sm font-bold text-slate-700 block mb-1">Jumlah Soal</label>
-              <select value={questionCount} onChange={e => setQuestionCount(e.target.value)} className="w-full border-slate-200 rounded-xl px-4 py-2 bg-slate-50 outline-none focus:border-indigo-500 transition-colors">
-                <option value="1">1 Soal</option>
-                <option value="3">3 Soal</option>
-                <option value="5">5 Soal</option>
-                <option value="10">10 Soal</option>
+              <label className="text-sm font-black text-slate-800 block mb-2 uppercase tracking-wide">Jumlah Soal</label>
+              <select value={questionCount} onChange={e => setQuestionCount(e.target.value)} className="w-full md:w-1/2 border-2 border-slate-200 rounded-2xl px-4 py-3 bg-white outline-none focus:border-indigo-500 focus:ring-4 focus:ring-indigo-500/10 transition-all font-medium text-slate-700 cursor-pointer appearance-none">
+                <option value="1">1 Soal (Quick Test)</option>
+                <option value="3">3 Soal (Short Quiz)</option>
+                <option value="5">5 Soal (Standard)</option>
+                <option value="10">10 Soal (Full Assessment)</option>
               </select>
             </div>
 
             {subtopics && subtopics.length > 0 && (
               <div>
-                <label className="text-sm font-bold text-slate-700 block mb-2">Subtopik yang Diujikan</label>
-                <div className="flex flex-wrap gap-3">
-                  {subtopics.map((st) => (
-                    <label key={st} className="flex items-center gap-2 text-sm text-slate-700 cursor-pointer">
-                      <input 
-                        type="checkbox" 
-                        checked={selectedSubtopics.includes(st)} 
-                        onChange={e => setSelectedSubtopics(prev => e.target.checked ? [...prev, st] : prev.filter(s => s !== st))}
-                        className="w-4 h-4 text-indigo-600 rounded border-slate-300 focus:ring-indigo-600"
-                      />
-                      {st}
-                    </label>
-                  ))}
+                <label className="text-sm font-black text-slate-800 block mb-3 uppercase tracking-wide">Pilih Subtopik Pendukung</label>
+                <div className="flex flex-wrap gap-2">
+                  {subtopics.map((st) => {
+                    const isSelected = selectedSubtopics.includes(st);
+                    return (
+                      <button
+                        key={st}
+                        onClick={() => setSelectedSubtopics(prev => isSelected ? prev.filter(s => s !== st) : [...prev, st])}
+                        className={`px-4 py-2 rounded-xl text-sm font-bold border-2 transition-all ${
+                          isSelected 
+                          ? 'border-indigo-600 bg-indigo-600 text-white shadow-md shadow-indigo-200' 
+                          : 'border-slate-200 bg-white text-slate-600 hover:border-indigo-300'
+                        }`}
+                      >
+                        {st}
+                      </button>
+                    );
+                  })}
                 </div>
               </div>
             )}
 
             <div>
-              <label className="text-sm font-bold text-slate-700 block mb-2">Tipe Soal yang Dimasukkan</label>
-              <div className="flex flex-wrap gap-4">
-                <label className="flex items-center gap-2 text-sm text-slate-700 cursor-pointer">
-                  <input 
-                    type="checkbox" 
-                    checked={questionTypes.includes('cek_konsep')} 
-                    onChange={e => setQuestionTypes(prev => e.target.checked ? [...prev, 'cek_konsep'] : prev.filter(t => t !== 'cek_konsep'))}
-                    className="w-4 h-4 text-indigo-600 rounded border-slate-300 focus:ring-indigo-600"
-                  />
-                  Cek Konsep (Mudah)
-                </label>
-                <label className="flex items-center gap-2 text-sm text-slate-700 cursor-pointer">
-                  <input 
-                    type="checkbox" 
-                    checked={questionTypes.includes('latihan_soal')} 
-                    onChange={e => setQuestionTypes(prev => e.target.checked ? [...prev, 'latihan_soal'] : prev.filter(t => t !== 'latihan_soal'))}
-                    className="w-4 h-4 text-indigo-600 rounded border-slate-300 focus:ring-indigo-600"
-                  />
-                  Latihan Soal (Sedang)
-                </label>
-                <label className="flex items-center gap-2 text-sm text-slate-700 cursor-pointer">
-                  <input 
-                    type="checkbox" 
-                    checked={questionTypes.includes('hots')} 
-                    onChange={e => setQuestionTypes(prev => e.target.checked ? [...prev, 'hots'] : prev.filter(t => t !== 'hots'))}
-                    className="w-4 h-4 text-indigo-600 rounded border-slate-300 focus:ring-indigo-600"
-                  />
-                  HOTS (Sulit)
-                </label>
-                <label className="flex items-center gap-2 text-sm text-slate-700 cursor-pointer">
-                  <input 
-                    type="checkbox" 
-                    checked={questionTypes.includes('complex_mcq')} 
-                    onChange={e => setQuestionTypes(prev => e.target.checked ? [...prev, 'complex_mcq'] : prev.filter(t => t !== 'complex_mcq'))}
-                    className="w-4 h-4 text-indigo-600 rounded border-slate-300 focus:ring-indigo-600"
-                  />
-                  Pilihan Ganda Kompleks
-                </label>
+              <label className="text-sm font-black text-slate-800 block mb-3 uppercase tracking-wide">Komposisi & Tipe Soal (Pilih Minimal 1)</label>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                {[
+                  { id: 'cek_konsep', label: 'Cek Konsep (Mudah)', stars: 2, icon: '🌟', desc: 'Pemahaman dasar' },
+                  { id: 'latihan_soal', label: 'Latihan Soal (Sedang)', stars: 3, icon: '🌟🌟', desc: 'Penerapan konsep' },
+                  { id: 'hots', label: 'HOTS (Sulit)', stars: 4, icon: '🔥', desc: 'Analisis mendalam' },
+                  { id: 'complex_mcq', label: 'Pilihan Ganda Kompleks', stars: 2, icon: '✨', desc: 'Lebih dari 1 jawaban' },
+                ].map(type => {
+                  const isSelected = questionTypes.includes(type.id);
+                  return (
+                    <button
+                      key={type.id}
+                      onClick={() => setQuestionTypes(prev => isSelected ? prev.filter(t => t !== type.id) : [...prev, type.id])}
+                      className={`p-4 rounded-2xl border-2 transition-all flex flex-col items-start gap-1 text-left ${
+                        isSelected 
+                        ? 'border-indigo-600 bg-indigo-50 shadow-md shadow-indigo-100' 
+                        : 'border-slate-200 bg-white hover:border-indigo-300'
+                      }`}
+                    >
+                      <div className="flex justify-between w-full items-center">
+                        <span className={`font-black ${isSelected ? 'text-indigo-800' : 'text-slate-700'}`}>{type.label}</span>
+                        <span className="text-lg">{type.icon}</span>
+                      </div>
+                      <p className={`text-xs font-medium ${isSelected ? 'text-indigo-600' : 'text-slate-500'}`}>{type.desc} (+{type.stars} Bintang)</p>
+                    </button>
+                  );
+                })}
               </div>
             </div>
             
-            <div className="bg-indigo-50 p-4 rounded-xl border border-indigo-100">
-              <p className="text-sm text-indigo-800">
-                AI akan membaca konteks sesi ini (<strong>{level} - {subject} - {topic}</strong>) dan secara otomatis membuatkan variasi tingkat kesulitan dan tipe soal.
+            <div className="bg-indigo-600/5 p-5 rounded-2xl border border-indigo-600/10 flex items-start gap-4">
+              <div className="bg-indigo-100 p-2 rounded-full shrink-0"><Sparkles className="w-5 h-5 text-indigo-600" /></div>
+              <p className="text-sm text-indigo-900 leading-relaxed font-medium">
+                AI akan membaca konteks sesi ini (<strong>{level} - {subject} - {topic}</strong>) dan secara otomatis meracik soal interaktif yang akan langsung muncul di HP/Laptop siswa Anda tanpa perlu ketik manual.
               </p>
             </div>
             
-            <Button onClick={handleGenerateAI} disabled={isGenerating} className="w-full bg-indigo-600 hover:bg-indigo-700 h-12">
-              {isGenerating ? <Loader2 className="w-5 h-5 animate-spin mr-2" /> : <Sparkles className="w-5 h-5 mr-2" />}
-              Generate Paket Soal Sekarang
+            <Button onClick={handleGenerateAI} disabled={isGenerating || questionTypes.length === 0 || !packageTitle} className="w-full bg-indigo-600 hover:bg-indigo-700 h-14 rounded-2xl text-lg font-black shadow-lg shadow-indigo-200 transition-all hover:scale-[1.01] hover:-translate-y-0.5">
+              {isGenerating ? (
+                <><Loader2 className="w-6 h-6 animate-spin mr-2" /> Meracik Soal AI...</>
+              ) : (
+                <><Sparkles className="w-6 h-6 mr-2" /> Generate Kuis Sekarang</>
+              )}
             </Button>
           </div>
         </Card>
