@@ -33,6 +33,7 @@ export default function SessionCbtManager({
   // Form states
   const [packageTitle, setPackageTitle] = useState("");
   const [questionCount, setQuestionCount] = useState("5");
+  const [questionTypes, setQuestionTypes] = useState<string[]>(['mcq', 'complex_mcq']);
   
   // Specific package being viewed/edited
   const [selectedPackage, setSelectedPackage] = useState<any>(null);
@@ -82,7 +83,8 @@ export default function SessionCbtManager({
           mapel: subject,
           topik: topic,
           subtopik: subtopics.join(', '),
-          jumlahSoal: parseInt(questionCount)
+          jumlahSoal: parseInt(questionCount),
+          tipeSoal: questionTypes
         })
       });
 
@@ -103,30 +105,6 @@ export default function SessionCbtManager({
         
       if (pkgError) throw pkgError;
 
-      // Save Questions to DB
-      const questionsToInsert = data.questions.map((q: any, i: number) => ({
-        package_id: pkgData.id,
-        question_text: q.question,
-        question_type: q.type || 'mcq',
-        difficulty: q.difficulty || 'sedang',
-        options: q.options,
-        explanation: q.explanation,
-        order_index: i
-      }));
-      
-      // Need to format correct answers in options array as a separate concept.
-      // Wait, CBT Builder uses `options` and `correct_index`. But `session_cbt_questions` uses JSONB.
-      // Let's store correct answers directly in the `options` JSONB if we want, or add `correct_answers` column.
-      // Let's just adjust the `questionsToInsert` to embed correct answers inside the JSON or update DB.
-      // Wait, in `create_session_cbt.sql` I defined `options jsonb NOT NULL`. I should just use `options: q.options` and I need a way to store the answer.
-      // Let's add a `correct_answers` column to `session_cbt_questions` via supabase upsert.
-      
-      const { error: qError } = await supabase.rpc('execute_sql', {
-        query: `ALTER TABLE session_cbt_questions ADD COLUMN IF NOT EXISTS correct_answers jsonb;`
-      }).catch(() => {}); // ignore error if exists or rpc not found
-
-      // Actually, since I can't guarantee rpc, I'll store the answer inside options array as `{ text: string, is_correct: boolean }`.
-      
       const formattedQuestions = data.questions.map((q: any, i: number) => {
         const formattedOptions = q.options.map((opt: string) => ({
           text: opt,
@@ -312,10 +290,35 @@ export default function SessionCbtManager({
             <div>
               <label className="text-sm font-bold text-slate-700 block mb-1">Jumlah Soal</label>
               <select value={questionCount} onChange={e => setQuestionCount(e.target.value)} className="w-full border-slate-200 rounded-xl px-4 py-2 bg-slate-50 outline-none focus:border-indigo-500 transition-colors">
+                <option value="1">1 Soal</option>
                 <option value="3">3 Soal</option>
                 <option value="5">5 Soal</option>
                 <option value="10">10 Soal</option>
               </select>
+            </div>
+
+            <div>
+              <label className="text-sm font-bold text-slate-700 block mb-2">Tipe Soal yang Dimasukkan</label>
+              <div className="flex gap-4">
+                <label className="flex items-center gap-2 text-sm text-slate-700 cursor-pointer">
+                  <input 
+                    type="checkbox" 
+                    checked={questionTypes.includes('mcq')} 
+                    onChange={e => setQuestionTypes(prev => e.target.checked ? [...prev, 'mcq'] : prev.filter(t => t !== 'mcq'))}
+                    className="w-4 h-4 text-indigo-600 rounded border-slate-300 focus:ring-indigo-600"
+                  />
+                  Pilihan Ganda
+                </label>
+                <label className="flex items-center gap-2 text-sm text-slate-700 cursor-pointer">
+                  <input 
+                    type="checkbox" 
+                    checked={questionTypes.includes('complex_mcq')} 
+                    onChange={e => setQuestionTypes(prev => e.target.checked ? [...prev, 'complex_mcq'] : prev.filter(t => t !== 'complex_mcq'))}
+                    className="w-4 h-4 text-indigo-600 rounded border-slate-300 focus:ring-indigo-600"
+                  />
+                  Pilihan Ganda Kompleks
+                </label>
+              </div>
             </div>
             
             <div className="bg-indigo-50 p-4 rounded-xl border border-indigo-100">

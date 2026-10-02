@@ -11,7 +11,7 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: "Gemini API key not configured" }, { status: 500 });
     }
 
-    const { jenjang, mapel, topik, subtopik, jumlahSoal } = await req.json();
+    const { jenjang, mapel, topik, subtopik, jumlahSoal, tipeSoal } = await req.json();
 
     if (!jenjang || !mapel || !topik || !jumlahSoal) {
       return NextResponse.json({ error: 'Data jenjang, mapel, topik, dan jumlah soal wajib diisi' }, { status: 400 });
@@ -25,7 +25,9 @@ Tugas Anda adalah membuat paket soal berisi ${jumlahSoal} soal kuis berdasarkan 
 - Subtopik: ${subtopik || 'Umum / Keseluruhan Topik'}
 
 Sertakan tingkat kesulitan yang bervariasi: 'mudah', 'sedang', 'sulit'.
-Sertakan juga tipe kuis: 'mcq' (satu jawaban benar) atau 'complex_mcq' (lebih dari satu jawaban benar, soal analisis/sebab-akibat).
+Pastikan soal yang dihasilkan HANYA MENGGUNAKAN TIPE SOAL BERIKUT: ${tipeSoal && tipeSoal.length > 0 ? tipeSoal.join(', ') : 'mcq, complex_mcq'}.
+- 'mcq' (Pilihan Ganda biasa, satu jawaban benar)
+- 'complex_mcq' (Pilihan Ganda Kompleks, lebih dari satu jawaban benar).
 
 KEMBALIKAN HANYA FORMAT JSON TANPA MARKDOWN ATAU TEKS TAMBAHAN.
 STRUKTUR JSON YANG DIHARAPKAN:
