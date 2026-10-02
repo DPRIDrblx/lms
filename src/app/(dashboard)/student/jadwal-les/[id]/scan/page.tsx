@@ -67,9 +67,9 @@ export default function QRScannerPage({ params }: { params: Promise<{ id: string
       const timeChunk = parseInt(timeChunkStr, 10);
       const currentChunk = Math.floor(Date.now() / 10000);
       
-      // Allow +- 1 chunk for latency (so 30 seconds window)
-      if (Math.abs(currentChunk - timeChunk) > 1) {
-        toast.error("QR Code sudah kedaluwarsa. Silakan scan ulang QR terbaru.");
+      // Allow +- 12 chunks for latency and device clock skew (2 minutes window)
+      if (Math.abs(currentChunk - timeChunk) > 12) {
+        toast.error("QR Code sudah kedaluwarsa. Silakan scan ulang QR terbaru di layar.");
         setTimeout(() => setScanning(true), 2000);
         return;
       }
