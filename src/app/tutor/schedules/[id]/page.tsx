@@ -257,6 +257,25 @@ export default function LessonWorkspacePage() {
           return newMap;
         });
       }
+
+      // Poll Student Stars (e.g. from CBT activities)
+      const { data: starData } = await supabase
+        .from("student_stars")
+        .select("student_id, stars")
+        .eq("schedule_id", schedule.id);
+        
+      if (starData && starData.length > 0) {
+        setStudentStars(prev => {
+          const newMap = { ...prev };
+          starData.forEach((s: any) => {
+             // Only update if it's different to avoid unnecessary re-renders
+             if (newMap[s.student_id] !== s.stars) {
+               newMap[s.student_id] = s.stars;
+             }
+          });
+          return newMap;
+        });
+      }
     }, 5000);
     
     return () => clearInterval(interval);
