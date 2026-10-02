@@ -42,11 +42,8 @@ export default function StudentLiveInteractions({
   const [isSavingNotes, setIsSavingNotes] = useState(false);
   const [lastSaved, setLastSaved] = useState<Date | null>(null);
 
-  // Quiz
-  const [activeQuiz, setActiveQuiz] = useState<any>(null);
-  const [selectedAnswers, setSelectedAnswers] = useState<string[]>([]);
-  const [hasAnswered, setHasAnswered] = useState(false);
-  const [isCorrect, setIsCorrect] = useState<boolean | null>(null);
+  // Quiz Packages
+  const [cbtPackages, setCbtPackages] = useState<any[]>([]);
 
   useEffect(() => {
     // Initial fetch
@@ -55,52 +52,26 @@ export default function StudentLiveInteractions({
       const { data: noteData } = await supabase.from('center_schedules').select('shared_notes').eq('id', scheduleId).single();
       if (noteData && noteData.shared_notes) setNotes(noteData.shared_notes);
 
-      // Quiz (Active or Discussing)
-      const { data: activeQ } = await supabase.from('class_live_quizzes').select('*').eq('schedule_id', scheduleId).in('status', ['active', 'discussing']).order('created_at', { ascending: false }).limit(1).single();
-      if (activeQ) {
-        setActiveQuiz(activeQ);
-        // Check if already answered
-        const { data: ans } = await supabase.from('class_live_quiz_answers').select('*').eq('quiz_id', activeQ.id).eq('student_id', studentId).single();
-        if (ans) {
-          setHasAnswered(true);
-          setSelectedAnswers(ans.answer);
-          setIsCorrect(ans.is_correct);
-        }
-      }
+      // CBT Packages (Active or Ended)
+      const { data: pkgs } = await supabase
+        .from('session_cbt_packages')
+        .select('*')
+        .eq('schedule_id', scheduleId)
+        .in('status', ['active', 'ended'])
+        .order('created_at', { ascending: false });
+      if (pkgs) setCbtPackages(pkgs);
     };
     fetchInitial();
 
-    // Polling for Quizzes (every 3 seconds for better real-time feel)
+    // Polling for Packages and Notes
     const interval = setInterval(async () => {
-      const { data: activeQ } = await supabase.from('class_live_quizzes').select('*').eq('schedule_id', scheduleId).in('status', ['active', 'discussing']).order('created_at', { ascending: false }).limit(1).single();
-      
-      if (activeQ) {
-        if (!activeQuiz || activeQuiz.id !== activeQ.id || activeQuiz.status !== activeQ.status) {
-          setActiveQuiz(activeQ);
-          
-          if (!activeQuiz || activeQuiz.id !== activeQ.id) {
-            // New quiz entirely
-            setHasAnswered(false);
-            setSelectedAnswers([]);
-            setIsCorrect(null);
-            
-            // Check if already answered just in case
-            const { data: ans } = await supabase.from('class_live_quiz_answers').select('*').eq('quiz_id', activeQ.id).eq('student_id', studentId).single();
-            if (ans) {
-              setHasAnswered(true);
-              setSelectedAnswers(ans.answer);
-              setIsCorrect(ans.is_correct);
-            }
-          }
-        }
-      } else {
-        if (activeQuiz) {
-          setActiveQuiz(null); // quiz ended
-          setHasAnswered(false);
-          setSelectedAnswers([]);
-          setIsCorrect(null);
-        }
-      }
+      const { data: pkgs } = await supabase
+        .from('session_cbt_packages')
+        .select('*')
+        .eq('schedule_id', scheduleId)
+        .in('status', ['active', 'ended'])
+        .order('created_at', { ascending: false });
+      if (pkgs) setCbtPackages(pkgs);
       
       // Poll notes
       if (!isSavingNotes) {
@@ -109,10 +80,10 @@ export default function StudentLiveInteractions({
           setNotes(noteData.shared_notes || '');
         }
       }
-    }, 3000);
+    }, 5000);
 
     return () => clearInterval(interval);
-  }, [scheduleId, studentId, supabase, activeQuiz]);
+  }, [scheduleId, supabase]);
 
   const handleMood = async (m: string) => {
     setMood(m);
@@ -153,36 +124,7 @@ export default function StudentLiveInteractions({
     return () => clearTimeout(delayDebounceFn);
   }, [notes, scheduleId, studentId, supabase]);
 
-  const handleQuizSubmit = async () => {
-    if (selectedAnswers.length === 0) return;
-    
-    // Evaluate answer
-    const checkCorrect = JSON.stringify(selectedAnswers.sort()) === JSON.stringify(activeQuiz.correct_answer.sort());
-    
-    const toastId = toast.loading("Mengumpulkan jawaban...");
-    const { error } = await supabase.from('class_live_quiz_answers').insert({
-      quiz_id: activeQuiz.id,
-      student_id: studentId,
-      answer: selectedAnswers,
-      is_correct: checkCorrect
-    });
 
-    if (error) {
-      toast.error(error.message, { id: toastId });
-    } else {
-      toast.success("Jawaban tersimpan! Menunggu pembahasan tutor...", { id: toastId });
-      setHasAnswered(true);
-      setIsCorrect(checkCorrect);
-    }
-  };
-
-  const toggleQuizAnswer = (opt: string) => {
-    if (activeQuiz.quiz_type.toLowerCase().includes('kompleks')) {
-      setSelectedAnswers(prev => prev.includes(opt) ? prev.filter(x => x !== opt) : [...prev, opt]);
-    } else {
-      setSelectedAnswers([opt]);
-    }
-  };
 
   return (
     <>
@@ -234,90 +176,90 @@ export default function StudentLiveInteractions({
             </div>
           )}
 
-          {/* Live Quiz Modal */}
-          {activeQuiz && renderModal(
-            <div className="fixed inset-0 z-[100] bg-slate-50 overflow-y-auto w-full h-full animate-in fade-in duration-300">
-              <div className="min-h-full w-full max-w-3xl mx-auto p-4 md:p-8 pt-8 pb-24">
-                <div className="bg-white rounded-3xl shadow-xl overflow-hidden border border-slate-100">
-                  <div className="p-6 md:p-10">
-                    <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-8">
-                    <div className="bg-gradient-to-r from-red-500 to-orange-500 text-white font-black px-4 py-1.5 rounded-full text-xs flex items-center gap-2 shadow-sm animate-pulse">
-                      <Sparkles className="w-3 h-3" /> {activeQuiz.status === 'discussing' ? 'PEMBAHASAN KUIS' : 'KUIS KILAT LIVE'}
-                    </div>
-                      {hasAnswered && activeQuiz.status === 'active' && <span className="bg-amber-100 text-amber-700 text-sm font-bold px-4 py-2 rounded-full">⏳ Menunggu Tutor...</span>}
-                      {hasAnswered && activeQuiz.status === 'discussing' && (
-                        <span className={`text-sm font-bold px-4 py-2 rounded-full flex items-center gap-2 shadow-sm ${isCorrect ? 'bg-green-100 text-green-700 ring-1 ring-green-400' : 'bg-red-100 text-red-700 ring-1 ring-red-400'}`}>
-                          {isCorrect ? '✅ Jawaban Benar!' : '❌ Kurang Tepat'}
-                        </span>
+          {/* CBT Packages List */}
+          {cbtPackages.length > 0 && (
+            <div className="mb-6 space-y-3 mt-4">
+              <h3 className="font-bold text-slate-800 flex items-center gap-2">
+                <Sparkles className="w-5 h-5 text-indigo-500" /> Aktivitas Kelas
+              </h3>
+              {cbtPackages.map(pkg => {
+                const isCbt = !pkg.activity_type || pkg.activity_type === 'cbt';
+                const isPdf = pkg.activity_type === 'pdf';
+                const isLink = pkg.activity_type === 'link';
+
+                return (
+                  <Card key={pkg.id} className={`p-4 border-l-4 ${pkg.status === 'active' ? 'border-l-indigo-500 hover:border-indigo-200' : 'border-l-slate-300'} transition-all`}>
+                    <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+                      <div>
+                        <h4 className="font-black text-slate-800 text-lg flex items-center gap-2">
+                          {pkg.title}
+                          {pkg.status === 'active' && <span className="text-[10px] uppercase font-black tracking-wider bg-red-100 text-red-600 px-2 py-0.5 rounded-full animate-pulse">Berlangsung</span>}
+                          {pkg.status === 'ended' && <span className="text-[10px] uppercase font-black tracking-wider bg-slate-100 text-slate-500 px-2 py-0.5 rounded-full">Selesai</span>}
+                        </h4>
+                        <p className="text-sm text-slate-500 mt-1">
+                          {isCbt ? "Selesaikan paket soal ini untuk mengumpulkan bintang tambahan!" : `Buka ${isPdf ? 'PDF' : 'Tautan'} ini untuk mendapatkan 2 bintang.`}
+                        </p>
+                      </div>
+                      
+                      {isCbt ? (
+                        pkg.status === 'active' ? (
+                          <Button onClick={() => window.location.href = `/student/jadwal-les/${scheduleId}/cbt/${pkg.id}`} className="w-full sm:w-auto bg-indigo-600 hover:bg-indigo-700 font-bold rounded-xl shadow-lg shadow-indigo-200">
+                            Kerjakan Sekarang
+                          </Button>
+                        ) : (
+                          <Button variant="secondary" onClick={() => window.location.href = `/student/jadwal-les/${scheduleId}/cbt/${pkg.id}`} className="w-full sm:w-auto font-bold rounded-xl">
+                            Lihat Hasil
+                          </Button>
+                        )
+                      ) : (
+                        <Button 
+                          onClick={async () => {
+                            window.open(isPdf ? pkg.file_url : pkg.link_url, '_blank');
+                            
+                            // Award 2 stars if not already awarded
+                            const { data: existingSub } = await supabase
+                              .from('session_cbt_submissions')
+                              .select('*')
+                              .eq('package_id', pkg.id)
+                              .eq('student_id', studentId)
+                              .single();
+                              
+                            if (!existingSub) {
+                              await supabase.from('session_cbt_submissions').insert({
+                                package_id: pkg.id,
+                                student_id: studentId,
+                                score: 100,
+                                stars_earned: 2
+                              });
+                              
+                              const { data: existingStars } = await supabase
+                                .from("student_stars")
+                                .select("id, stars")
+                                .eq("schedule_id", scheduleId)
+                                .eq("student_id", studentId)
+                                .single();
+                                
+                              if (existingStars) {
+                                await supabase.from("student_stars").update({ stars: existingStars.stars + 2 }).eq("id", existingStars.id);
+                              } else {
+                                await supabase.from("student_stars").insert({
+                                  student_id: studentId,
+                                  schedule_id: scheduleId,
+                                  stars: 2
+                                });
+                              }
+                              toast.success("Horee! +2 Bintang ditambahkan!");
+                            }
+                          }} 
+                          className="w-full sm:w-auto bg-indigo-600 hover:bg-indigo-700 font-bold rounded-xl shadow-lg shadow-indigo-200"
+                        >
+                          Buka {isPdf ? 'PDF' : 'Tautan'}
+                        </Button>
                       )}
                     </div>
-                    <h2 className="text-xl md:text-2xl font-bold text-slate-900 mb-8 leading-relaxed whitespace-pre-wrap">{activeQuiz.question}</h2>
-                    
-                    <div className="space-y-4">
-                      {activeQuiz.options.map((opt: string, i: number) => {
-                        const isSelected = selectedAnswers.includes(opt);
-                        const isCorrectOption = activeQuiz.correct_answer.includes(opt);
-                        const isDiscussing = activeQuiz.status === 'discussing';
-
-                        let buttonClass = 'border-slate-200 bg-white text-slate-700'; // default
-
-                        if (isDiscussing) {
-                          if (isCorrectOption) {
-                            buttonClass = 'border-green-500 bg-green-50 text-green-700 font-bold shadow-md shadow-green-100';
-                          } else if (isSelected && !isCorrectOption) {
-                            buttonClass = 'border-red-500 bg-red-50 text-red-700';
-                          } else {
-                            buttonClass = 'border-slate-200 bg-slate-50 text-slate-400 opacity-60';
-                          }
-                        } else {
-                          // Active status
-                          if (isSelected) {
-                            buttonClass = 'border-indigo-600 bg-indigo-50 text-indigo-700 font-bold shadow-md shadow-indigo-100';
-                          } else if (!hasAnswered) {
-                            buttonClass = 'border-slate-200 hover:border-indigo-300 bg-white text-slate-700';
-                          } else {
-                            buttonClass = 'border-slate-200 bg-slate-50 text-slate-400 opacity-60';
-                          }
-                        }
-
-                        return (
-                          <button
-                            key={i}
-                            disabled={hasAnswered}
-                            onClick={() => toggleQuizAnswer(opt)}
-                            className={`w-full text-left p-5 rounded-2xl border-2 transition-all group hover:scale-[1.01] ${buttonClass}`}
-                          >
-                            <span className="inline-block w-8 text-lg font-black opacity-50">{String.fromCharCode(65+i)}.</span> 
-                            <span className="text-lg">{opt}</span>
-                          </button>
-                        );
-                      })}
-                    </div>
-
-                    {!hasAnswered && (
-                      <Button onClick={handleQuizSubmit} disabled={selectedAnswers.length === 0} className="w-full mt-8 bg-indigo-600 hover:bg-indigo-700 text-white rounded-2xl py-7 text-xl font-black shadow-lg shadow-indigo-200 transition-transform hover:scale-[1.02]">
-                        Kunci Jawaban! 🚀
-                      </Button>
-                    )}
-
-                    {hasAnswered && activeQuiz.status === 'active' && (
-                      <div className="mt-8 p-6 bg-amber-50 border border-amber-200 rounded-2xl text-center animate-pulse">
-                        <p className="text-lg font-black text-amber-800">✅ Jawaban Berhasil Disimpan!</p>
-                        <p className="text-sm font-bold text-amber-600 mt-2">Duduk manis dan tunggu tutor membahas soal ini ya...</p>
-                      </div>
-                    )}
-
-                    {activeQuiz.status === 'discussing' && activeQuiz.explanation && (
-                      <div className="mt-10 p-6 bg-gradient-to-br from-indigo-50 to-blue-50 border border-indigo-100 rounded-2xl animate-in fade-in slide-in-from-bottom-4 shadow-sm">
-                        <p className="text-sm font-black text-indigo-600 uppercase tracking-widest mb-4 flex items-center gap-2">
-                          <Lightbulb className="w-5 h-5" /> Penjelasan Tutor / AI
-                        </p>
-                        <p className="text-base text-slate-800 leading-relaxed font-medium whitespace-pre-wrap">{activeQuiz.explanation}</p>
-                      </div>
-                    )}
-                  </div>
-                </div>
-              </div>
+                  </Card>
+                );
+              })}
             </div>
           )}
         </>

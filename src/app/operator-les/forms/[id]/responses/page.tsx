@@ -47,7 +47,7 @@ export default function FormResponsesPage() {
     // 3. Fetch responses with answers and profiles
     const { data: responsesData } = await supabase
       .from("form_responses")
-      .select("*, profiles(full_name, email), form_answers(*)")
+      .select("*, profiles(full_name), form_answers(*)")
       .eq("form_id", id)
       .order("submitted_at", { ascending: false });
 

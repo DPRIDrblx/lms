@@ -12,6 +12,7 @@ import {
   Camera, FileText, Loader2, KeyRound, Sparkles, MapPin, Star, Plus, Minus
 } from "lucide-react";
 import LiveInteractionsPanel from "@/components/tutor/LiveInteractionsPanel";
+import AttendanceQRCode from "@/components/tutor/AttendanceQRCode";
 import toast from "react-hot-toast";
 import jsPDF from "jspdf";
 
@@ -849,10 +850,7 @@ export default function LessonWorkspacePage() {
                 {schedule.is_attendance_closed && (
                   <span className="text-xs font-bold bg-red-100 text-red-700 px-2 py-1 rounded">Ditutup</span>
                 )}
-                <div className="flex items-center gap-2 bg-slate-100 px-3 py-1 rounded-lg">
-                  <KeyRound className="w-4 h-4 text-slate-500" />
-                  <span className="font-mono font-bold tracking-widest text-slate-900">{schedule.attendance_code}</span>
-                </div>
+                <AttendanceQRCode scheduleId={schedule.id} />
               </div>
             </div>
             

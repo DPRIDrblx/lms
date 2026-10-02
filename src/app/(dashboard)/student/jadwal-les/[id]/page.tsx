@@ -11,6 +11,7 @@ import { format } from "date-fns";
 import { id } from "date-fns/locale";
 import StudentLiveInteractions from '@/components/student/LiveClassInteractions';
 import { SessionLeaderboard } from '@/components/student/SessionLeaderboard';
+import QRScanner from '@/components/student/QRScanner';
 import toast from "react-hot-toast";
 import { cn } from "@/lib/utils";
 
@@ -49,6 +50,7 @@ export default function StudentScheduleDetail({ params }: { params: Promise<{ id
   const [attendanceCodeInput, setAttendanceCodeInput] = useState("");
   const [excuseReason, setExcuseReason] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [showScanner, setShowScanner] = useState(false);
 
   // Rating & Feedback Form
   const [ratingHover, setRatingHover] = useState(0);
@@ -119,23 +121,7 @@ export default function StudentScheduleDetail({ params }: { params: Promise<{ id
     return () => clearInterval(timer);
   }, [schedule]);
 
-  const handleAttend = async () => {
-    if (!schedule || !profile) return;
-    if (!attendanceCodeInput) {
-      toast.error("Masukkan kode presensi dari guru/TU");
-      return;
-    }
-    
-    if (attendanceCodeInput.toUpperCase() !== schedule.attendance_code?.toUpperCase()) {
-      toast.error("Kode presensi tidak valid");
-      return;
-    }
-    
-    if (schedule.is_attendance_closed) {
-      toast.error("Presensi sudah ditutup oleh Tutor");
-      return;
-    }
-
+  const recordAttendance = async () => {
     setIsSubmitting(true);
     const { data, error } = await supabase
       .from("center_schedule_attendances")
@@ -174,6 +160,62 @@ export default function StudentScheduleDetail({ params }: { params: Promise<{ id
       }
     }
   };
+
+  const handleAttendManual = async (code: string) => {
+    if (!schedule || !profile) return;
+    if (code.toUpperCase() !== schedule.attendance_code?.toUpperCase()) {
+      toast.error("Kode presensi tidak valid");
+      return;
+    }
+    
+    if (schedule.is_attendance_closed) {
+      toast.error("Presensi sudah ditutup oleh Tutor");
+      return;
+    }
+    await recordAttendance();
+  };
+
+  const handleScanQR = async (decodedText: string) => {
+    if (!schedule || !profile) return;
+    setShowScanner(false);
+
+    try {
+      const data = JSON.parse(decodedText);
+      if (data.type !== 'attendance' || data.scheduleId !== schedule.id) {
+        toast.error("QR Code tidak valid untuk sesi ini.");
+        return;
+      }
+
+      // Verify the time-based token
+      const rawString = atob(data.token);
+      const [id, timeChunkStr] = rawString.split('-');
+      if (id !== schedule.id) {
+        toast.error("QR Code tidak valid.");
+        return;
+      }
+
+      const timeChunk = parseInt(timeChunkStr, 10);
+      const currentChunk = Math.floor(Date.now() / 10000);
+      
+      // Allow +- 1 chunk for latency (so 30 seconds window)
+      if (Math.abs(currentChunk - timeChunk) > 1) {
+        toast.error("QR Code sudah kedaluwarsa. Silakan scan ulang QR terbaru.");
+        return;
+      }
+
+      if (schedule.is_attendance_closed) {
+        toast.error("Presensi sudah ditutup oleh Tutor");
+        return;
+      }
+
+      await recordAttendance();
+
+    } catch (e) {
+      toast.error("Format QR Code tidak dikenali.");
+    }
+  };
+
+
 
   const handleExcuse = async () => {
     if (!schedule || !profile) return;
@@ -560,23 +602,38 @@ export default function StudentScheduleDetail({ params }: { params: Promise<{ id
                       {attendanceMode === 'hadir' ? (
                         <div className="space-y-4">
                           <div className="bg-amber-50 p-4 rounded-xl border border-amber-100 text-amber-800 text-sm font-medium">
-                            Minta kode presensi 6-digit kepada Tutor di kelas.
+                            Scan QR Code yang ditampilkan oleh Tutor di depan kelas untuk melakukan presensi.
                           </div>
-                          <input
-                            type="text"
-                            placeholder="KODE"
-                            maxLength={6}
-                            value={attendanceCodeInput}
-                            onChange={(e) => setAttendanceCodeInput(e.target.value.toUpperCase())}
-                            className="w-full text-center tracking-[0.5em] text-2xl font-black uppercase text-slate-800 border-2 border-slate-200 focus:border-amber-500 rounded-2xl py-4 outline-none transition-colors"
-                          />
+                          
                           <Button 
-                            onClick={handleAttend}
-                            disabled={isSubmitting || attendanceCodeInput.length < 4}
-                            className="w-full h-12 bg-amber-500 hover:bg-amber-600 text-white font-bold rounded-xl"
+                            onClick={() => setShowScanner(true)}
+                            className="w-full h-14 bg-slate-900 hover:bg-slate-800 text-white font-bold rounded-xl gap-2 shadow-lg"
                           >
-                            {isSubmitting ? <CenterLoader size="sm" /> : "Presensi Sekarang"}
+                            <Camera className="w-5 h-5" />
+                            Scan QR Presensi
                           </Button>
+                          
+                          <div className="text-center text-xs text-slate-400 font-medium">
+                            Atau masukkan kode secara manual jika kamera tidak berfungsi
+                          </div>
+                          
+                          <div className="flex gap-2">
+                            <input
+                              type="text"
+                              placeholder="KODE"
+                              maxLength={6}
+                              value={attendanceCodeInput}
+                              onChange={(e) => setAttendanceCodeInput(e.target.value.toUpperCase())}
+                              className="flex-1 text-center tracking-widest text-lg font-black uppercase text-slate-800 border-2 border-slate-200 focus:border-amber-500 rounded-xl outline-none transition-colors"
+                            />
+                            <Button 
+                              onClick={() => handleAttendManual(attendanceCodeInput)}
+                              disabled={isSubmitting || attendanceCodeInput.length < 4}
+                              className="bg-amber-500 hover:bg-amber-600 text-white font-bold rounded-xl h-auto"
+                            >
+                              {isSubmitting ? <Loader2 className="w-4 h-4 animate-spin" /> : "Kirim"}
+                            </Button>
+                          </div>
                         </div>
                       ) : (
                         <div className="space-y-4">
@@ -625,6 +682,12 @@ export default function StudentScheduleDetail({ params }: { params: Promise<{ id
         </div>
 
       </div>
+      {showScanner && (
+        <QRScanner 
+          onScan={handleScanQR}
+          onClose={() => setShowScanner(false)}
+        />
+      )}
     </div>
   );
 }
