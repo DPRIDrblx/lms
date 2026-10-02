@@ -185,7 +185,7 @@ export default function StudentCbtPage({
     <div className="fixed inset-0 z-[100] bg-slate-50 flex flex-col md:flex-row overflow-hidden animate-in fade-in">
       {/* Mobile header / Top bar */}
       <div className="md:hidden flex items-center justify-between p-4 bg-white border-b border-slate-200">
-        <Button variant="ghost" size="icon" onClick={() => router.push(`/student/jadwal-les/${resolvedParams.id}`)}>
+        <Button variant="ghost" className="w-10 h-10 p-0" onClick={() => router.push(`/student/jadwal-les/${resolvedParams.id}`)}>
           <ArrowLeft className="w-5 h-5" />
         </Button>
         <span className="font-bold text-slate-800 text-sm truncate px-2">{pkg.title}</span>
