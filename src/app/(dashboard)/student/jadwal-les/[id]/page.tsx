@@ -4,7 +4,7 @@ import { useEffect, useState, use } from "react";
 import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase";
 import { useAuth } from "@/lib/auth-context";
-import { Calendar, Clock, MapPin, User, BookOpen, Link2, FileText, ChevronLeft, Star, KeyRound, CheckCircle2, MessageSquare, Send, ThumbsUp, AlertCircle } from "lucide-react";
+import { Calendar, Clock, MapPin, User, BookOpen, Link2, FileText, ChevronLeft, Star, KeyRound, CheckCircle2, MessageSquare, Send, ThumbsUp, AlertCircle, Camera, Loader2 } from "lucide-react";
 import { CenterLoader } from "@/components/ui/center-loader";
 import { Button } from "@/components/ui/button";
 import { format } from "date-fns";
