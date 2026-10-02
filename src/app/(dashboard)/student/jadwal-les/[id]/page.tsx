@@ -11,7 +11,6 @@ import { format } from "date-fns";
 import { id } from "date-fns/locale";
 import StudentLiveInteractions from '@/components/student/LiveClassInteractions';
 import { SessionLeaderboard } from '@/components/student/SessionLeaderboard';
-import QRScanner from '@/components/student/QRScanner';
 import toast from "react-hot-toast";
 import { cn } from "@/lib/utils";
 
@@ -50,7 +49,6 @@ export default function StudentScheduleDetail({ params }: { params: Promise<{ id
   const [attendanceCodeInput, setAttendanceCodeInput] = useState("");
   const [excuseReason, setExcuseReason] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [showScanner, setShowScanner] = useState(false);
 
   // Rating & Feedback Form
   const [ratingHover, setRatingHover] = useState(0);
@@ -176,45 +174,7 @@ export default function StudentScheduleDetail({ params }: { params: Promise<{ id
     await recordAttendance();
   };
 
-  const handleScanQR = async (decodedText: string) => {
-    if (!schedule || !profile) return;
-    setShowScanner(false);
 
-    try {
-      const data = JSON.parse(decodedText);
-      if (data.type !== 'attendance' || data.scheduleId !== schedule.id) {
-        toast.error("QR Code tidak valid untuk sesi ini.");
-        return;
-      }
-
-      // Verify the time-based token
-      const rawString = atob(data.token);
-      const [id, timeChunkStr] = rawString.split('-');
-      if (id !== schedule.id) {
-        toast.error("QR Code tidak valid.");
-        return;
-      }
-
-      const timeChunk = parseInt(timeChunkStr, 10);
-      const currentChunk = Math.floor(Date.now() / 10000);
-      
-      // Allow +- 1 chunk for latency (so 30 seconds window)
-      if (Math.abs(currentChunk - timeChunk) > 1) {
-        toast.error("QR Code sudah kedaluwarsa. Silakan scan ulang QR terbaru.");
-        return;
-      }
-
-      if (schedule.is_attendance_closed) {
-        toast.error("Presensi sudah ditutup oleh Tutor");
-        return;
-      }
-
-      await recordAttendance();
-
-    } catch (e) {
-      toast.error("Format QR Code tidak dikenali.");
-    }
-  };
 
 
 
@@ -607,7 +567,7 @@ export default function StudentScheduleDetail({ params }: { params: Promise<{ id
                           </div>
                           
                           <Button 
-                            onClick={() => setShowScanner(true)}
+                            onClick={() => router.push(`/student/jadwal-les/${schedule.id}/scan`)}
                             className="w-full h-14 bg-slate-900 hover:bg-slate-800 text-white font-bold rounded-xl gap-2 shadow-lg"
                           >
                             <Camera className="w-5 h-5" />
@@ -683,12 +643,6 @@ export default function StudentScheduleDetail({ params }: { params: Promise<{ id
         </div>
 
       </div>
-      {showScanner && (
-        <QRScanner 
-          onScan={handleScanQR}
-          onClose={() => setShowScanner(false)}
-        />
-      )}
     </div>
   );
 }
