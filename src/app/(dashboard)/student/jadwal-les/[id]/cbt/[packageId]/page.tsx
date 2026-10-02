@@ -3,7 +3,7 @@
 import React, { useEffect, useState, use } from 'react';
 import { createClient } from '@/lib/supabase';
 import { Button } from '@/components/ui/button';
-import { ChevronLeft, ChevronRight, CheckCircle2, Clock, Star, Brain, ArrowLeft, Loader2 } from 'lucide-react';
+import { ChevronLeft, ChevronRight, CheckCircle2, Clock, Star, Brain, ArrowLeft, Loader2, Sparkles } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import toast from 'react-hot-toast';
 import { awardCbtStars } from '@/app/actions/cbt';
@@ -293,7 +293,7 @@ export default function StudentCbtPage({
         {!hasSubmitted && (
           <div className="bg-white/80 backdrop-blur-xl border-t border-slate-200/60 p-4 md:p-6 flex justify-between items-center z-10 shrink-0 shadow-[0_-4px_20px_rgba(0,0,0,0.03)]">
             <Button 
-              variant="outline" 
+              variant="secondary" 
               className="rounded-2xl h-14 px-6 md:px-8 font-black border-slate-200 text-slate-600 hover:bg-slate-50"
               onClick={() => setCurrentIndex(prev => prev - 1)}
               disabled={isFirstQ}
