@@ -3,7 +3,7 @@
 import React, { useState, useEffect } from 'react';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Sparkles, Save, Trash2, ListChecks, ArrowRight, BookOpen, Clock, Users, PlayCircle, Loader2 } from 'lucide-react';
+import { Sparkles, Save, Trash2, ListChecks, ArrowRight, ArrowLeft, BookOpen, Clock, Users, PlayCircle, Loader2 } from 'lucide-react';
 import { createClient } from '@/lib/supabase';
 import toast from 'react-hot-toast';
 
