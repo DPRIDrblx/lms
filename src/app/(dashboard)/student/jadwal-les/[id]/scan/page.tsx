@@ -150,7 +150,6 @@ export default function QRScannerPage({ params }: { params: Promise<{ id: string
                 toast.error("Kamera gagal dimuat atau tidak diizinkan.");
               }}
               components={{
-                audio: false,
                 finder: true,
                 onOff: true,
               }}
