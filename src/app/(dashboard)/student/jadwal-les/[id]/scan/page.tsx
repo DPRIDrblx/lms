@@ -57,7 +57,9 @@ export default function QRScannerPage({ params }: { params: Promise<{ id: string
 
       // Verify the time-based token
       const rawString = atob(data.token);
-      const [id, timeChunkStr] = rawString.split('-');
+      const lastDashIndex = rawString.lastIndexOf('-');
+      const id = rawString.substring(0, lastDashIndex);
+      const timeChunkStr = rawString.substring(lastDashIndex + 1);
       if (id !== schedule.id) {
         toast.error("QR Code tidak valid.");
         setTimeout(() => setScanning(true), 2000);
