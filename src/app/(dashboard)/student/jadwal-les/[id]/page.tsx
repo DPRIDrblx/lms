@@ -122,6 +122,7 @@ export default function StudentScheduleDetail({ params }: { params: Promise<{ id
   }, [schedule]);
 
   const recordAttendance = async () => {
+    if (!profile) return;
     setIsSubmitting(true);
     const { data, error } = await supabase
       .from("center_schedule_attendances")
