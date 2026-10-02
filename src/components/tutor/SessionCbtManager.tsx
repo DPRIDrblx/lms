@@ -240,35 +240,65 @@ export default function SessionCbtManager({
           </div>
 
           {loading ? (
-            <div className="flex justify-center p-8"><Loader2 className="w-8 h-8 animate-spin text-indigo-500" /></div>
+            <div className="flex justify-center items-center p-12 bg-white rounded-3xl border border-slate-100 shadow-sm">
+              <div className="flex flex-col items-center gap-4">
+                <Loader2 className="w-10 h-10 animate-spin text-indigo-500" />
+                <p className="text-slate-500 font-medium">Memuat aktivitas...</p>
+              </div>
+            </div>
           ) : packages.length === 0 ? (
-            <div className="text-center p-8 border-2 border-dashed border-slate-200 rounded-2xl">
-              <ListChecks className="w-12 h-12 text-slate-300 mx-auto mb-3" />
-              <p className="font-bold text-slate-700 mb-1">Belum ada aktivitas</p>
-              <p className="text-sm text-slate-500">Buat paket soal, PDF, atau materi agar siswa bisa mengerjakan/melihat.</p>
+            <div className="text-center p-12 bg-gradient-to-b from-slate-50 to-white border-2 border-dashed border-slate-200 rounded-3xl animate-in fade-in">
+              <div className="w-20 h-20 bg-indigo-50 rounded-full flex items-center justify-center mx-auto mb-4">
+                <ListChecks className="w-10 h-10 text-indigo-400" />
+              </div>
+              <h4 className="text-xl font-black text-slate-800 mb-2">Belum ada aktivitas</h4>
+              <p className="text-sm text-slate-500 max-w-md mx-auto mb-6">Buat paket kuis interaktif dengan AI atau unggah materi PDF/Link agar siswa bisa mulai belajar.</p>
+              <Button onClick={() => setActiveView('create_ai')} className="bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl h-12 px-6 font-bold shadow-lg shadow-indigo-200 transition-all hover:-translate-y-0.5">
+                <Sparkles className="w-5 h-5 mr-2" /> Mulai Buat Kuis AI
+              </Button>
             </div>
           ) : (
-            <div className="grid gap-3">
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
               {packages.map(pkg => (
-                <Card key={pkg.id} className="p-4 hover:border-indigo-200 transition-colors flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
-                  <div className="flex-1 cursor-pointer" onClick={() => pkg.activity_type === 'cbt' ? loadPackageDetail(pkg) : null}>
-                    <h4 className="font-bold text-slate-800 flex items-center gap-2 text-lg">
-                      {pkg.title}
-                      {pkg.status === 'active' && <span className="text-[10px] uppercase font-black tracking-wider bg-emerald-100 text-emerald-700 px-2 py-1 rounded-md shadow-sm border border-emerald-200">Aktif</span>}
-                      {pkg.status === 'ended' && <span className="text-[10px] uppercase font-black tracking-wider bg-slate-100 text-slate-500 px-2 py-1 rounded-md shadow-sm border border-slate-200">Selesai</span>}
-                      {pkg.status === 'draft' && <span className="text-[10px] uppercase font-black tracking-wider bg-amber-100 text-amber-700 px-2 py-1 rounded-md shadow-sm border border-amber-200">Draft</span>}
-                      <span className="text-[10px] bg-indigo-100 text-indigo-700 px-2 py-1 rounded-md uppercase font-black shadow-sm border border-indigo-200">{pkg.activity_type === 'cbt' ? 'CBT (Kuis)' : pkg.activity_type.toUpperCase()}</span>
-                    </h4>
-                    <p className="text-sm text-slate-500 mt-1 flex items-center gap-1">
-                      <Clock className="w-3 h-3" /> Dibuat pada {new Date(pkg.created_at).toLocaleString('id-ID')}
-                    </p>
+                <Card key={pkg.id} className="p-0 overflow-hidden border-0 shadow-md ring-1 ring-slate-100 hover:ring-indigo-300 hover:shadow-xl transition-all duration-300 group bg-white rounded-2xl flex flex-col h-full">
+                  <div className={`h-2 w-full ${pkg.status === 'active' ? 'bg-emerald-500' : pkg.status === 'ended' ? 'bg-slate-300' : 'bg-amber-400'}`}></div>
+                  
+                  <div className="p-5 flex-1 flex flex-col justify-between cursor-pointer" onClick={() => pkg.activity_type === 'cbt' ? loadPackageDetail(pkg) : null}>
+                    <div>
+                      <div className="flex justify-between items-start mb-3">
+                        <span className={`text-[10px] uppercase font-black tracking-wider px-2.5 py-1 rounded-md shadow-sm border ${
+                          pkg.status === 'active' ? 'bg-emerald-50 text-emerald-700 border-emerald-200' : 
+                          pkg.status === 'ended' ? 'bg-slate-50 text-slate-600 border-slate-200' : 
+                          'bg-amber-50 text-amber-700 border-amber-200'
+                        }`}>
+                          {pkg.status === 'active' ? 'Sedang Aktif' : pkg.status === 'ended' ? 'Selesai' : 'Draft'}
+                        </span>
+                        
+                        <span className="text-[10px] bg-indigo-50 text-indigo-700 px-2.5 py-1 rounded-md uppercase font-black shadow-sm border border-indigo-100 flex items-center gap-1">
+                          {pkg.activity_type === 'cbt' ? <><Sparkles className="w-3 h-3" /> Kuis CBT</> : pkg.activity_type.toUpperCase()}
+                        </span>
+                      </div>
+                      
+                      <h4 className="font-black text-slate-800 text-lg group-hover:text-indigo-700 transition-colors line-clamp-2 leading-snug">
+                        {pkg.title}
+                      </h4>
+                    </div>
+                    
+                    <div className="mt-4 pt-4 border-t border-slate-100 flex items-center justify-between text-xs text-slate-500">
+                      <span className="flex items-center gap-1 font-medium"><Clock className="w-3.5 h-3.5" /> {new Date(pkg.created_at).toLocaleDateString('id-ID', { day:'numeric', month:'short' })}</span>
+                    </div>
                   </div>
-                  <div className="flex items-center gap-2">
-                    <Button variant="secondary" size="sm" onClick={() => handleRenamePackage(pkg.id, pkg.title)}>Rename</Button>
-                    <Button variant="ghost" size="sm" className="text-red-500" onClick={() => handleDelete(pkg.id)}><Trash2 className="w-4 h-4" /></Button>
-                    {pkg.activity_type === 'cbt' && (
-                      <Button variant="ghost" size="sm" className="h-8" onClick={(e) => { e.stopPropagation(); loadPackageDetail(pkg); }}>Lihat <ArrowRight className="w-4 h-4 ml-1" /></Button>
-                    )}
+                  
+                  <div className="px-3 py-2 bg-slate-50/50 border-t border-slate-100 flex items-center justify-between opacity-0 group-hover:opacity-100 transition-opacity">
+                    <Button variant="ghost" size="sm" onClick={(e) => { e.stopPropagation(); handleRenamePackage(pkg.id, pkg.title) }} className="text-slate-500 hover:text-indigo-600 h-8 px-2 text-xs">Ubah Nama</Button>
+                    <div className="flex gap-1">
+                      <Button variant="ghost" size="sm" className="text-red-500 hover:bg-red-50 h-8 w-8 p-0 rounded-full" onClick={(e) => { e.stopPropagation(); handleDelete(pkg.id) }}><Trash2 className="w-4 h-4" /></Button>
+                      {pkg.activity_type === 'cbt' && (
+                        <Button variant="ghost" size="sm" className="h-8 px-3 text-indigo-600 bg-indigo-50 hover:bg-indigo-100 rounded-lg text-xs font-bold" onClick={(e) => { e.stopPropagation(); loadPackageDetail(pkg); }}>
+                          Kelola <ArrowRight className="w-3 h-3 ml-1" />
+                        </Button>
+                      )}
+                    </div>
                   </div>
                 </Card>
               ))}
@@ -377,51 +407,78 @@ export default function SessionCbtManager({
       )}
 
       {activeView === 'edit' && selectedPackage && (
-        <div className="space-y-6">
-          <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+        <div className="space-y-6 animate-in fade-in slide-in-from-right-4 duration-300">
+          <div className="bg-white p-6 rounded-3xl border border-slate-100 shadow-sm flex flex-col lg:flex-row justify-between items-start lg:items-center gap-6">
             <div>
-              <Button variant="ghost" size="sm" onClick={() => setActiveView('list')} className="-ml-3 text-slate-500 mb-1">← Kembali ke Daftar</Button>
-              <h3 className="text-2xl font-black text-slate-800">{selectedPackage.title}</h3>
-              <p className="text-sm text-slate-500">{packageQuestions.length} Soal Tersedia</p>
+              <Button variant="ghost" size="sm" onClick={() => setActiveView('list')} className="-ml-3 text-slate-500 mb-2 hover:bg-slate-100 rounded-full h-8"><ArrowLeft className="w-4 h-4 mr-1" /> Daftar Aktivitas</Button>
+              <h3 className="text-2xl md:text-3xl font-black text-slate-800 tracking-tight leading-tight">{selectedPackage.title}</h3>
+              <p className="text-sm font-medium text-slate-500 mt-2 flex items-center gap-2">
+                <span className="bg-indigo-50 text-indigo-600 px-2 py-0.5 rounded-md font-bold">{packageQuestions.length} Soal</span> 
+                Tersedia untuk sesi ini.
+              </p>
             </div>
             
-            <div className="flex flex-wrap gap-2">
-              <Button variant="secondary" size="sm" onClick={() => handleDelete(selectedPackage.id)} className="text-red-500 border-red-200 hover:bg-red-50"><Trash2 className="w-4 h-4 mr-1" /> Hapus</Button>
+            <div className="flex flex-wrap gap-3 w-full lg:w-auto">
               {selectedPackage.status === 'draft' || selectedPackage.status === 'ended' ? (
-                <Button size="sm" onClick={() => handlePublish(selectedPackage.id)} className="bg-emerald-600 hover:bg-emerald-700"><PlayCircle className="w-4 h-4 mr-1" /> Mulai Bagikan ke Siswa</Button>
+                <Button onClick={() => handlePublish(selectedPackage.id)} className="flex-1 lg:flex-none bg-emerald-600 hover:bg-emerald-700 text-white shadow-lg shadow-emerald-200 h-12 px-6 rounded-xl font-bold transition-all hover:scale-[1.02]">
+                  <PlayCircle className="w-5 h-5 mr-2" /> Mulai & Bagikan
+                </Button>
               ) : (
-                <Button size="sm" onClick={() => handleEnd(selectedPackage.id)} variant="danger">Hentikan Kuis</Button>
+                <Button onClick={() => handleEnd(selectedPackage.id)} className="flex-1 lg:flex-none bg-rose-600 hover:bg-rose-700 text-white shadow-lg shadow-rose-200 h-12 px-6 rounded-xl font-bold transition-all hover:scale-[1.02]">
+                  Tutup Akses Kuis
+                </Button>
               )}
             </div>
           </div>
 
-          <div className="space-y-4">
+          <div className="grid gap-6 max-w-4xl mx-auto">
             {packageQuestions.map((q, i) => (
-              <Card key={q.id} className="p-5 border-slate-200 shadow-sm relative overflow-hidden group">
-                <div className="absolute top-0 right-0 p-3 bg-slate-50 border-l border-b border-slate-100 text-xs font-bold text-slate-500 rounded-bl-xl uppercase tracking-widest">
-                  {q.difficulty} • {q.question_type === 'mcq' ? 'PG Biasa' : 'PG Kompleks'}
+              <div key={q.id} className="bg-white rounded-3xl p-6 md:p-8 shadow-sm border border-slate-100 relative overflow-hidden group">
+                <div className="absolute top-0 right-0">
+                  <div className={`px-4 py-1.5 rounded-bl-2xl text-[10px] font-black uppercase tracking-widest ${
+                    q.difficulty.toLowerCase() === 'mudah' ? 'bg-emerald-100 text-emerald-700' :
+                    q.difficulty.toLowerCase() === 'sedang' ? 'bg-amber-100 text-amber-700' :
+                    'bg-rose-100 text-rose-700'
+                  }`}>
+                    {q.difficulty} • {q.question_type === 'mcq' ? 'PG Biasa' : 'PG Kompleks'}
+                  </div>
                 </div>
-                <h4 className="font-bold text-slate-800 pr-32 mb-4">
-                  {i+1}. {q.question_text}
-                </h4>
                 
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 mb-4">
+                <div className="flex items-start gap-4 mb-6">
+                  <div className="w-10 h-10 shrink-0 bg-slate-900 text-white rounded-full flex items-center justify-center font-black text-lg">
+                    {i+1}
+                  </div>
+                  <h4 className="font-bold text-slate-800 text-lg md:text-xl leading-snug pt-1.5 pr-20">
+                    {q.question_text}
+                  </h4>
+                </div>
+                
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mb-6 pl-14">
                   {q.options.map((opt: any, optIdx: number) => (
-                    <div key={optIdx} className={`p-3 rounded-xl border text-sm flex items-start gap-3 ${opt.is_correct ? 'bg-emerald-50 border-emerald-200 text-emerald-800 font-medium' : 'bg-white border-slate-200 text-slate-700'}`}>
-                      <div className={`w-5 h-5 shrink-0 rounded-full border flex items-center justify-center text-[10px] font-bold ${opt.is_correct ? 'bg-emerald-500 border-emerald-600 text-white' : 'border-slate-300'}`}>
+                    <div key={optIdx} className={`p-4 rounded-2xl border-2 text-sm flex items-start gap-3 transition-colors ${
+                      opt.is_correct 
+                      ? 'bg-emerald-50 border-emerald-500 text-emerald-900 font-bold shadow-sm shadow-emerald-100' 
+                      : 'bg-slate-50 border-transparent text-slate-600'
+                    }`}>
+                      <div className={`w-6 h-6 shrink-0 rounded-full flex items-center justify-center text-xs font-black ${
+                        opt.is_correct ? 'bg-emerald-500 text-white' : 'bg-slate-200 text-slate-500'
+                      }`}>
                         {String.fromCharCode(65 + optIdx)}
                       </div>
-                      <span className="flex-1">{opt.text}</span>
+                      <span className="flex-1 pt-0.5 leading-relaxed">{opt.text}</span>
                     </div>
                   ))}
                 </div>
                 
                 {q.explanation && (
-                  <div className="bg-blue-50 text-blue-800 text-sm p-4 rounded-xl border border-blue-100">
-                    <strong>Penjelasan:</strong> {q.explanation}
+                  <div className="ml-14 bg-indigo-50 text-indigo-900 text-sm p-5 rounded-2xl border border-indigo-100 font-medium leading-relaxed">
+                    <strong className="text-indigo-700 uppercase tracking-wider text-xs block mb-1 flex items-center gap-1">
+                      <Sparkles className="w-3 h-3" /> Penjelasan Jawaban
+                    </strong> 
+                    {q.explanation}
                   </div>
                 )}
-              </Card>
+              </div>
             ))}
           </div>
         </div>

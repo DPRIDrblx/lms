@@ -6,7 +6,7 @@ import { Button } from '@/components/ui/button';
 import { ChevronLeft, ChevronRight, CheckCircle2, Clock, Star, Brain, ArrowLeft, Loader2 } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import toast from 'react-hot-toast';
-
+import { awardCbtStars } from '@/app/actions/cbt';
 export default function StudentCbtPage({ 
   params 
 }: { 
@@ -148,23 +148,12 @@ export default function StudentCbtPage({
       return;
     }
 
-    // Award stars
+    // Award stars using Server Action to bypass RLS
     if (starsEarned > 0) {
-      const { data: existingStars } = await supabase
-        .from("student_stars")
-        .select("id, stars")
-        .eq("schedule_id", resolvedParams.id)
-        .eq("student_id", profile.id)
-        .single();
-        
-      if (existingStars) {
-        await supabase.from("student_stars").update({ stars: existingStars.stars + starsEarned }).eq("id", existingStars.id);
-      } else {
-        await supabase.from("student_stars").insert({
-          student_id: profile.id,
-          schedule_id: resolvedParams.id,
-          stars: starsEarned
-        });
+      const res = await awardCbtStars(profile.id, resolvedParams.id, starsEarned);
+      if (!res.success) {
+        console.error("Failed to award stars:", res.error);
+        // We don't block the user, just log it. They still submitted the quiz.
       }
     }
 
