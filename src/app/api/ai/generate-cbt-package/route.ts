@@ -17,6 +17,13 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: 'Data jenjang, mapel, topik, dan jumlah soal wajib diisi' }, { status: 400 });
     }
 
+    const instructions = [
+      tipeSoal?.includes('cek_konsep') ? "- Cek Konsep: Buat soal dengan tingkat kesulitan 'mudah' tipe 'mcq' (satu jawaban benar)." : "",
+      tipeSoal?.includes('latihan_soal') ? "- Latihan Soal: Buat soal dengan tingkat kesulitan 'sedang' tipe 'mcq' (satu jawaban benar)." : "",
+      tipeSoal?.includes('hots') ? "- HOTS: Buat soal dengan tingkat kesulitan 'sulit' tipe 'mcq' (satu jawaban benar)." : "",
+      tipeSoal?.includes('complex_mcq') ? "- Pilihan Ganda Kompleks: Buat soal dengan tipe 'complex_mcq' (lebih dari satu jawaban benar) tingkat kesulitan bebas (mudah/sedang/sulit)." : ""
+    ].filter(Boolean).join('\n');
+
     const prompt = `Anda adalah asisten pembuat kuis cerdas untuk aplikasi bimbingan belajar.
 Tugas Anda adalah membuat paket soal berisi ${jumlahSoal} soal kuis berdasarkan kriteria berikut:
 - Jenjang: ${jenjang}
@@ -24,10 +31,8 @@ Tugas Anda adalah membuat paket soal berisi ${jumlahSoal} soal kuis berdasarkan 
 - Topik: ${topik}
 - Subtopik: ${subtopik || 'Umum / Keseluruhan Topik'}
 
-Sertakan tingkat kesulitan yang bervariasi: 'mudah', 'sedang', 'sulit'.
-Pastikan soal yang dihasilkan HANYA MENGGUNAKAN TIPE SOAL BERIKUT: ${tipeSoal && tipeSoal.length > 0 ? tipeSoal.join(', ') : 'mcq, complex_mcq'}.
-- 'mcq' (Pilihan Ganda biasa, satu jawaban benar)
-- 'complex_mcq' (Pilihan Ganda Kompleks, lebih dari satu jawaban benar).
+Sertakan HANYA tipe soal dan tingkat kesulitan yang diminta berikut ini, dan bagi secara proporsional sesuai jumlah soal:
+${instructions || "- Buat campuran soal pilihan ganda (mcq) mudah, sedang, sulit."}
 
 KEMBALIKAN HANYA FORMAT JSON TANPA MARKDOWN ATAU TEKS TAMBAHAN.
 STRUKTUR JSON YANG DIHARAPKAN:

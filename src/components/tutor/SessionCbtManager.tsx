@@ -33,7 +33,8 @@ export default function SessionCbtManager({
   // Form states
   const [packageTitle, setPackageTitle] = useState("");
   const [questionCount, setQuestionCount] = useState("5");
-  const [questionTypes, setQuestionTypes] = useState<string[]>(['mcq', 'complex_mcq']);
+  const [questionTypes, setQuestionTypes] = useState<string[]>(['cek_konsep', 'latihan_soal', 'hots', 'complex_mcq']);
+  const [selectedSubtopics, setSelectedSubtopics] = useState<string[]>(subtopics || []);
   
   // Specific package being viewed/edited
   const [selectedPackage, setSelectedPackage] = useState<any>(null);
@@ -82,7 +83,7 @@ export default function SessionCbtManager({
           jenjang: level,
           mapel: subject,
           topik: topic,
-          subtopik: subtopics.join(', '),
+          subtopik: selectedSubtopics.length > 0 ? selectedSubtopics.join(', ') : 'Umum',
           jumlahSoal: parseInt(questionCount),
           tipeSoal: questionTypes
         })
@@ -297,17 +298,54 @@ export default function SessionCbtManager({
               </select>
             </div>
 
+            {subtopics && subtopics.length > 0 && (
+              <div>
+                <label className="text-sm font-bold text-slate-700 block mb-2">Subtopik yang Diujikan</label>
+                <div className="flex flex-wrap gap-3">
+                  {subtopics.map((st) => (
+                    <label key={st} className="flex items-center gap-2 text-sm text-slate-700 cursor-pointer">
+                      <input 
+                        type="checkbox" 
+                        checked={selectedSubtopics.includes(st)} 
+                        onChange={e => setSelectedSubtopics(prev => e.target.checked ? [...prev, st] : prev.filter(s => s !== st))}
+                        className="w-4 h-4 text-indigo-600 rounded border-slate-300 focus:ring-indigo-600"
+                      />
+                      {st}
+                    </label>
+                  ))}
+                </div>
+              </div>
+            )}
+
             <div>
               <label className="text-sm font-bold text-slate-700 block mb-2">Tipe Soal yang Dimasukkan</label>
-              <div className="flex gap-4">
+              <div className="flex flex-wrap gap-4">
                 <label className="flex items-center gap-2 text-sm text-slate-700 cursor-pointer">
                   <input 
                     type="checkbox" 
-                    checked={questionTypes.includes('mcq')} 
-                    onChange={e => setQuestionTypes(prev => e.target.checked ? [...prev, 'mcq'] : prev.filter(t => t !== 'mcq'))}
+                    checked={questionTypes.includes('cek_konsep')} 
+                    onChange={e => setQuestionTypes(prev => e.target.checked ? [...prev, 'cek_konsep'] : prev.filter(t => t !== 'cek_konsep'))}
                     className="w-4 h-4 text-indigo-600 rounded border-slate-300 focus:ring-indigo-600"
                   />
-                  Pilihan Ganda
+                  Cek Konsep (Mudah)
+                </label>
+                <label className="flex items-center gap-2 text-sm text-slate-700 cursor-pointer">
+                  <input 
+                    type="checkbox" 
+                    checked={questionTypes.includes('latihan_soal')} 
+                    onChange={e => setQuestionTypes(prev => e.target.checked ? [...prev, 'latihan_soal'] : prev.filter(t => t !== 'latihan_soal'))}
+                    className="w-4 h-4 text-indigo-600 rounded border-slate-300 focus:ring-indigo-600"
+                  />
+                  Latihan Soal (Sedang)
+                </label>
+                <label className="flex items-center gap-2 text-sm text-slate-700 cursor-pointer">
+                  <input 
+                    type="checkbox" 
+                    checked={questionTypes.includes('hots')} 
+                    onChange={e => setQuestionTypes(prev => e.target.checked ? [...prev, 'hots'] : prev.filter(t => t !== 'hots'))}
+                    className="w-4 h-4 text-indigo-600 rounded border-slate-300 focus:ring-indigo-600"
+                  />
+                  HOTS (Sulit)
                 </label>
                 <label className="flex items-center gap-2 text-sm text-slate-700 cursor-pointer">
                   <input 
