@@ -283,7 +283,7 @@ export default function StudentCbtPage({
         {!hasSubmitted && (
           <div className="bg-white border-t border-slate-200 p-4 md:p-6 flex justify-between items-center z-10 shrink-0">
             <Button 
-              variant="outline" 
+              variant="secondary" 
               className="rounded-xl h-12 px-6 font-bold"
               onClick={() => setCurrentIndex(prev => prev - 1)}
               disabled={isFirstQ}
