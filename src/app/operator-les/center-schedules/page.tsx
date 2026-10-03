@@ -260,6 +260,10 @@ export default function CenterSchedulesManager() {
                   <option value="midnight_indigo">Midnight Indigo</option>
                   <option value="cherry_blossom">Cherry Blossom</option>
                   <option value="forest_pine">Forest Pine</option>
+                  <option value="cyberpunk_neon">Cyberpunk Neon</option>
+                  <option value="lavender_mist">Lavender Mist</option>
+                  <option value="obsidian_dark">Obsidian Dark</option>
+                  <option value="peach_sunrise">Peach Sunrise</option>
                 </select>
               </div>
 

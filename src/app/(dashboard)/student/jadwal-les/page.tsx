@@ -26,6 +26,10 @@ const THEME_STYLES: Record<string, string> = {
   midnight_indigo: "from-indigo-900 via-indigo-800 to-blue-900",
   cherry_blossom: "from-pink-500 via-fuchsia-400 to-rose-400",
   forest_pine: "from-green-800 via-emerald-700 to-teal-800",
+  cyberpunk_neon: "from-fuchsia-600 via-purple-600 to-cyan-500",
+  lavender_mist: "from-indigo-300 via-purple-300 to-pink-300",
+  obsidian_dark: "from-gray-900 via-slate-800 to-gray-800",
+  peach_sunrise: "from-rose-400 via-orange-300 to-amber-200",
   default: "from-[#108B96] via-teal-500 to-emerald-400"
 };
 
