@@ -14,6 +14,7 @@ export function TutorProfileWidget() {
 
   const handleUploadPhoto = async (e: React.ChangeEvent<HTMLInputElement>, useAI: boolean) => {
     try {
+      if (!profile) return;
       if (!e.target.files || e.target.files.length === 0) return;
       const file = e.target.files[0];
       setUploading(true);
