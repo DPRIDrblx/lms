@@ -76,7 +76,7 @@ export default function StudentScheduleDetail({ params }: { params: Promise<{ id
       
       const { data: schedData } = await supabase
         .from("center_schedules")
-        .select("*, tutor:tutor_id(full_name), branch:branch_id(name), room:room_id(room_number)")
+        .select("*, tutor:tutor_id(full_name, avatar_url), branch:branch_id(name), room:room_id(room_number)")
         .eq("id", resolvedParams.id)
         .single();
         
@@ -362,10 +362,27 @@ export default function StudentScheduleDetail({ params }: { params: Promise<{ id
             </div>
 
             {!isPast && (
-              <div className="bg-white rounded-2xl p-4 shadow-2xl border border-white/40 transform md:-translate-y-4 md:rotate-3 flex flex-col items-center justify-center min-w-[200px] backdrop-blur-xl bg-white/90">
-                <p className="text-xs font-black uppercase tracking-widest text-slate-400 mb-1">Mulai dalam</p>
-                <div className="text-xl font-black text-blue-600">
-                  {timeLeft || "Menghitung..."}
+              <div className="relative transform md:-translate-y-4 md:rotate-3 mt-8 md:mt-0">
+                {/* Tutor Info partially behind the countdown box */}
+                <div className="absolute -top-6 -left-6 md:-top-10 md:-left-8 flex items-center gap-3 bg-white/20 backdrop-blur-md pr-4 pl-12 md:pl-16 py-2 rounded-full border border-white/30 z-0 shadow-lg">
+                   <div className="absolute -left-2 w-12 h-12 md:w-16 md:h-16 rounded-full border-4 border-white shadow-xl overflow-hidden bg-slate-100 flex items-center justify-center">
+                      {schedule.tutor?.avatar_url ? (
+                        <img src={schedule.tutor.avatar_url} alt={schedule.tutor?.full_name} className="w-full h-full object-cover" />
+                      ) : (
+                        <User className="w-6 h-6 md:w-8 md:h-8 text-slate-400" />
+                      )}
+                   </div>
+                   <div className="text-left ml-2">
+                     <p className="text-[9px] md:text-[10px] uppercase font-black text-white/80 tracking-wider">Bersama</p>
+                     <p className="text-sm md:text-base font-black text-white drop-shadow-sm truncate max-w-[120px] md:max-w-[150px]">{schedule.tutor?.full_name?.split(' ')[0] || "Tutor"}</p>
+                   </div>
+                </div>
+
+                <div className="bg-white rounded-2xl p-4 md:p-5 shadow-2xl border border-white flex flex-col items-center justify-center min-w-[220px] backdrop-blur-xl relative z-10">
+                  <p className="text-xs font-black uppercase tracking-widest text-slate-400 mb-1">Mulai dalam</p>
+                  <div className="text-xl md:text-2xl font-black bg-gradient-to-r from-blue-600 to-indigo-600 bg-clip-text text-transparent">
+                    {timeLeft || "Menghitung..."}
+                  </div>
                 </div>
               </div>
             )}
