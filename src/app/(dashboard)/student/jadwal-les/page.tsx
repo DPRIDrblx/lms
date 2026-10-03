@@ -15,6 +15,15 @@ import { cn } from "@/lib/utils";
 import { DateSlider, DateItem } from "@/components/ui/date-slider";
 import { LeaderboardWidget } from "@/components/student/LeaderboardWidget";
 
+const THEME_STYLES: Record<string, string> = {
+  ocean_blue: "from-blue-600 via-blue-500 to-cyan-500",
+  sunset_orange: "from-orange-500 via-orange-400 to-amber-500",
+  royal_purple: "from-purple-600 via-purple-500 to-indigo-500",
+  emerald_green: "from-emerald-500 via-emerald-400 to-teal-500",
+  slate_gray: "from-slate-600 via-slate-500 to-slate-400",
+  default: "from-[#108B96] via-teal-500 to-emerald-400"
+};
+
 const generateDates = (): DateItem[] => {
   const dates: DateItem[] = [];
   const today = new Date();
@@ -162,27 +171,24 @@ export default function JadwalLesPage() {
                       onClick={() => handleOpenSchedule(schedule)}
                       className="bg-white rounded-[16px] border border-slate-200 overflow-hidden flex flex-col cursor-pointer hover:border-[#108B96]/50 hover:shadow-md transition-all group"
                     >
-                      {schedule.banner_url ? (
-                        <div className="w-full aspect-[21/9] bg-slate-100 relative">
-                          <img src={schedule.banner_url} alt={schedule.title} className="w-full h-full object-cover" />
-                          <div className={cn(
-                            "absolute top-3 left-3 px-3 py-1.5 rounded-lg shadow-sm flex items-center gap-1.5 border",
-                            isToday ? "bg-teal-50 text-[#108B96] border-teal-200" : "bg-white text-slate-600 border-slate-200"
-                          )}>
-                            <Calendar className="w-3.5 h-3.5" />
-                            <span className="text-xs font-bold">{date.toLocaleDateString('id-ID', { day: 'numeric', month: 'short' })}</span>
-                          </div>
-                        </div>
-                      ) : (
+                      <div className={cn("w-full aspect-[21/9] sm:h-36 relative overflow-hidden bg-gradient-to-br", THEME_STYLES[schedule.color_theme] || THEME_STYLES.default)}>
+                        {/* Decorative background elements */}
+                        <div className="absolute top-0 right-0 w-40 h-40 bg-white/10 rounded-full blur-2xl -mr-10 -mt-10"></div>
+                        <div className="absolute bottom-0 left-0 w-32 h-32 bg-black/10 rounded-full blur-xl -ml-10 -mb-10"></div>
+                        <div className="absolute inset-0 bg-[url('https://www.transparenttextures.com/patterns/cubes.png')] opacity-20"></div>
+                        
                         <div className={cn(
-                          "w-full h-16 sm:h-auto sm:w-28 p-3 sm:p-5 flex flex-row sm:flex-col items-center justify-center shrink-0 gap-2 border-b sm:border-b-0 sm:border-r border-slate-100 transition-colors",
-                          isToday ? "bg-teal-50 text-[#108B96]" : "bg-slate-50 text-slate-500 group-hover:bg-teal-50 group-hover:text-[#108B96]"
+                          "absolute top-3 left-3 px-3 py-1.5 rounded-lg shadow-sm flex items-center gap-1.5 border backdrop-blur-md",
+                          isToday ? "bg-white/90 text-slate-800 border-white/50" : "bg-black/20 text-white border-white/10"
                         )}>
-                          <span className="text-[11px] font-bold uppercase tracking-wider hidden sm:block">{date.toLocaleDateString('id-ID', { month: 'short' })}</span>
-                          <span className="text-2xl sm:text-[32px] font-black leading-none">{date.getDate()}</span>
-                          <span className="text-[11px] font-bold uppercase tracking-wider sm:hidden">{date.toLocaleDateString('id-ID', { month: 'short' })}</span>
+                          <Calendar className="w-3.5 h-3.5" />
+                          <span className="text-xs font-bold">{date.toLocaleDateString('id-ID', { day: 'numeric', month: 'short' })}</span>
                         </div>
-                      )}
+                        
+                        <div className="absolute bottom-3 right-3 opacity-20">
+                          <BookOpen className="w-16 h-16 text-white" />
+                        </div>
+                      </div>
                       
                       <div className="p-5 flex-1 flex flex-col min-w-0">
                         <div className="flex items-start justify-between gap-3 mb-2">
