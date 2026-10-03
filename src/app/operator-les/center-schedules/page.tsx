@@ -255,6 +255,11 @@ export default function CenterSchedulesManager() {
                   <option value="royal_purple">Royal Purple</option>
                   <option value="emerald_green">Emerald Green</option>
                   <option value="slate_gray">Slate Gray</option>
+                  <option value="ruby_red">Ruby Red</option>
+                  <option value="golden_yellow">Golden Yellow</option>
+                  <option value="midnight_indigo">Midnight Indigo</option>
+                  <option value="cherry_blossom">Cherry Blossom</option>
+                  <option value="forest_pine">Forest Pine</option>
                 </select>
               </div>
 

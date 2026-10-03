@@ -38,6 +38,11 @@ const THEME_STYLES: Record<string, string> = {
   royal_purple: "from-purple-600 via-purple-500 to-indigo-500",
   emerald_green: "from-emerald-500 via-emerald-400 to-teal-500",
   slate_gray: "from-slate-600 via-slate-500 to-slate-400",
+  ruby_red: "from-red-600 via-rose-500 to-pink-500",
+  golden_yellow: "from-yellow-500 via-amber-400 to-orange-400",
+  midnight_indigo: "from-indigo-900 via-indigo-800 to-blue-900",
+  cherry_blossom: "from-pink-500 via-fuchsia-400 to-rose-400",
+  forest_pine: "from-green-800 via-emerald-700 to-teal-800",
   default: "from-slate-800 via-slate-700 to-slate-600"
 };
 
