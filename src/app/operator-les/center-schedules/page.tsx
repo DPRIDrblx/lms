@@ -8,26 +8,7 @@ import { Calendar, Clock, Trash2, Plus, Users, Link2, KeyRound, FileText, Chevro
 import toast from "react-hot-toast";
 import { Modal } from "@/components/ui/modal";
 
-const PREDEFINED_BANNERS = [
-  "BAHASA INDONESIA.png",
-  "BAHASA INGGRIS.png",
-  "DASAR PEMROGRAMAN.png",
-  "DESIGN GRAFIS & UI_UX APLIKASI.png",
-  "IPA.png",
-  "IPS.png",
-  "KEAMANAN SIBER.png",
-  "LOGIKA & ALGORITMA DIGITAL.png",
-  "Matematika.png",
-  "PENGEMBANGAN GAME KOMPUTER DASAR.png",
-  "PENGENALAN IOT & SENSOR.png",
-  "PPKN.png",
-  "TES MINAT BAKAT.png",
-  "TRYOUT.png",
-  "NTC SKILL UP.png",
-  "Skill Up Agustusan.png",
-  "Kelas Pengganti NTO.png",
-  "None.png"
-];
+
 
 export default function CenterSchedulesManager() {
   const supabase = createClient();
@@ -43,7 +24,7 @@ export default function CenterSchedulesManager() {
   const [description, setDescription] = useState("");
   const [targetClassIds, setTargetClassIds] = useState<string[]>([]);
   const [driveLink, setDriveLink] = useState("");
-  const [bannerUrl, setBannerUrl] = useState("");
+  const [colorTheme, setColorTheme] = useState("ocean_blue");
   const [branchId, setBranchId] = useState("");
   const [editingId, setEditingId] = useState<string | null>(null);
 
@@ -104,7 +85,7 @@ export default function CenterSchedulesManager() {
         target_class_ids: targetClassIds,
         class_id: targetClassIds[0] || null, // Fallback
         drive_link: driveLink,
-        banner_url: bannerUrl || null,
+        color_theme: colorTheme,
         branch_id: branchId || null
       }).eq("id", editingId);
 
@@ -125,7 +106,7 @@ export default function CenterSchedulesManager() {
         class_id: targetClassIds[0] || null, // Fallback
         drive_link: driveLink,
         attendance_code: attendanceCode,
-        banner_url: bannerUrl || null,
+        color_theme: colorTheme,
         branch_id: branchId || null
       });
 
@@ -145,7 +126,7 @@ export default function CenterSchedulesManager() {
     setScheduleTime("");
     setDescription("");
     setDriveLink("");
-    setBannerUrl("");
+    setColorTheme("ocean_blue");
     setBranchId("");
     setTargetClassIds([]);
     setEditingId(null);
@@ -159,7 +140,7 @@ export default function CenterSchedulesManager() {
     setDescription(schedule.description || "");
     setTargetClassIds(schedule.target_class_ids || (schedule.class_id ? [schedule.class_id] : []));
     setDriveLink(schedule.drive_link || "");
-    setBannerUrl(schedule.banner_url || "");
+    setColorTheme(schedule.color_theme || "ocean_blue");
     setBranchId(schedule.branch_id || "");
     setEditingId(schedule.id);
     
@@ -263,16 +244,17 @@ export default function CenterSchedulesManager() {
               </div>
 
               <div>
-                <label className="block text-sm font-bold text-slate-700 mb-1">Banner Pilihan (Opsional)</label>
+                <label className="block text-sm font-bold text-slate-700 mb-1">Warna Tema (Premium)</label>
                 <select 
                   className="w-full p-3 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500"
-                  value={bannerUrl}
-                  onChange={(e) => setBannerUrl(e.target.value)}
+                  value={colorTheme}
+                  onChange={(e) => setColorTheme(e.target.value)}
                 >
-                  <option value="">-- Tanpa Banner --</option>
-                  {PREDEFINED_BANNERS.map(b => (
-                    <option key={b} value={`/banners/${b}`}>{b.replace('.png', '')}</option>
-                  ))}
+                  <option value="ocean_blue">Ocean Blue</option>
+                  <option value="sunset_orange">Sunset Orange</option>
+                  <option value="royal_purple">Royal Purple</option>
+                  <option value="emerald_green">Emerald Green</option>
+                  <option value="slate_gray">Slate Gray</option>
                 </select>
               </div>
 

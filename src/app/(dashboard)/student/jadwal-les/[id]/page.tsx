@@ -4,11 +4,11 @@ import { useEffect, useState, use } from "react";
 import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase";
 import { useAuth } from "@/lib/auth-context";
-import { Calendar, Clock, MapPin, User, BookOpen, Link2, FileText, ChevronLeft, Star, KeyRound, CheckCircle2, MessageSquare, Send, ThumbsUp, AlertCircle, Camera, Loader2 } from "lucide-react";
+import { Calendar, Clock, MapPin, User, BookOpen, Link2, FileText, ChevronLeft, Star, KeyRound, CheckCircle2, MessageSquare, Send, ThumbsUp, AlertCircle, Camera, Loader2, ChevronDown, ChevronUp, PlayCircle, Users } from "lucide-react";
 import { CenterLoader } from "@/components/ui/center-loader";
 import { Button } from "@/components/ui/button";
 import { format } from "date-fns";
-import { id } from "date-fns/locale";
+import { id as localeId } from "date-fns/locale";
 import StudentLiveInteractions from '@/components/student/LiveClassInteractions';
 import { SessionLeaderboard } from '@/components/student/SessionLeaderboard';
 import toast from "react-hot-toast";
@@ -32,6 +32,15 @@ const FEEDBACK_TAGS_BAD = [
   "Kondisi kelas berisik"
 ];
 
+const THEME_STYLES: Record<string, string> = {
+  ocean_blue: "from-blue-600 via-blue-500 to-cyan-500",
+  sunset_orange: "from-orange-500 via-orange-400 to-amber-500",
+  royal_purple: "from-purple-600 via-purple-500 to-indigo-500",
+  emerald_green: "from-emerald-500 via-emerald-400 to-teal-500",
+  slate_gray: "from-slate-600 via-slate-500 to-slate-400",
+  default: "from-slate-800 via-slate-700 to-slate-600"
+};
+
 export default function StudentScheduleDetail({ params }: { params: Promise<{ id: string }> }) {
   const resolvedParams = use(params);
   const router = useRouter();
@@ -40,9 +49,14 @@ export default function StudentScheduleDetail({ params }: { params: Promise<{ id
 
   const [schedule, setSchedule] = useState<any>(null);
   const [attendance, setAttendance] = useState<any>(null);
+  const [activities, setActivities] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [timeLeft, setTimeLeft] = useState<string>("");
   const [isPast, setIsPast] = useState(false);
+
+  // Accordion State
+  const [openSection, setOpenSection] = useState<string>('overview');
+  const [clickedLinks, setClickedLinks] = useState<Set<string>>(new Set());
 
   // Attendance Form
   const [attendanceMode, setAttendanceMode] = useState<'hadir' | 'izin'>('hadir');
@@ -51,7 +65,6 @@ export default function StudentScheduleDetail({ params }: { params: Promise<{ id
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   // Rating & Feedback Form
-  const [ratingHover, setRatingHover] = useState(0);
   const [selectedRating, setSelectedRating] = useState(0);
   const [selectedTags, setSelectedTags] = useState<string[]>([]);
   const [feedbackText, setFeedbackText] = useState("");
@@ -83,6 +96,15 @@ export default function StudentScheduleDetail({ params }: { params: Promise<{ id
           if (attData.feedback_tags) setSelectedTags(attData.feedback_tags);
           if (attData.feedback_text) setFeedbackText(attData.feedback_text);
         }
+
+        const { data: actData } = await supabase
+          .from('session_cbt_packages')
+          .select('*')
+          .eq('schedule_id', schedData.id)
+          .eq('status', 'active')
+          .order('created_at', { ascending: true });
+        
+        if (actData) setActivities(actData);
       }
       setLoading(false);
     }
@@ -140,7 +162,6 @@ export default function StudentScheduleDetail({ params }: { params: Promise<{ id
       toast.success("Berhasil presensi kehadiran! +2 Bintang 🌟");
       setAttendance(data);
       
-      // Give 2 stars automatically
       const { data: existing } = await supabase
         .from("student_stars")
         .select("id, stars")
@@ -173,10 +194,6 @@ export default function StudentScheduleDetail({ params }: { params: Promise<{ id
     }
     await recordAttendance();
   };
-
-
-
-
 
   const handleExcuse = async () => {
     if (!schedule || !profile) return;
@@ -248,6 +265,44 @@ export default function StudentScheduleDetail({ params }: { params: Promise<{ id
     }
   };
 
+  const handleActivityClick = async (activity: any) => {
+    if (activity.activity_type === 'cbt' || !activity.activity_type) {
+      router.push(`/student/jadwal-les/${schedule.id}/cbt/${activity.id}`);
+      return;
+    }
+    
+    const url = activity.link_url || activity.file_url;
+    if (url) {
+      window.open(url, '_blank');
+      
+      if (!clickedLinks.has(activity.id) && profile) {
+        setClickedLinks(prev => new Set(prev).add(activity.id));
+        toast.success(`Mendapat 2 Bintang dari aktivitas ${activity.title}! 🌟`);
+        
+        const { data: existing } = await supabase
+          .from("student_stars")
+          .select("id, stars")
+          .eq("schedule_id", schedule.id)
+          .eq("student_id", profile.id)
+          .single();
+          
+        if (existing) {
+          await supabase.from("student_stars").update({ stars: existing.stars + 2 }).eq("id", existing.id);
+        } else {
+          await supabase.from("student_stars").insert({
+            student_id: profile.id,
+            schedule_id: schedule.id,
+            stars: 2
+          });
+        }
+      }
+    }
+  };
+
+  const toggleSection = (section: string) => {
+    setOpenSection(prev => prev === section ? '' : section);
+  };
+
   if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-slate-50">
@@ -275,13 +330,14 @@ export default function StudentScheduleDetail({ params }: { params: Promise<{ id
   const isCompleted = schedule.status === 'completed';
   const tagsList = selectedRating >= 4 ? FEEDBACK_TAGS_GOOD : FEEDBACK_TAGS_BAD;
 
+  const bgGradient = THEME_STYLES[schedule.color_theme] || THEME_STYLES['default'];
+
   return (
     <div className="min-h-screen bg-slate-50 pb-24 font-sans">
-      {/* Header Banner - Colorful aesthetic */}
-      <div className="bg-gradient-to-br from-red-500 via-red-600 to-yellow-500 pt-8 pb-16 px-6 md:px-12 relative overflow-hidden shadow-xl rounded-b-[40px] md:rounded-b-[60px]">
-        {/* Abstract Shapes */}
-        <div className="absolute top-0 right-0 w-[400px] h-[400px] bg-yellow-300/30 rounded-full blur-3xl -mr-32 -mt-32 mix-blend-overlay"></div>
-        <div className="absolute bottom-0 left-0 w-[300px] h-[300px] bg-blue-500/40 rounded-full blur-3xl -ml-20 -mb-20 mix-blend-overlay"></div>
+      {/* Header Banner - Dynamic Colorful aesthetic */}
+      <div className={`bg-gradient-to-br ${bgGradient} pt-8 pb-16 px-6 md:px-12 relative overflow-hidden shadow-xl rounded-b-[40px] md:rounded-b-[60px]`}>
+        <div className="absolute top-0 right-0 w-[400px] h-[400px] bg-white/20 rounded-full blur-3xl -mr-32 -mt-32 mix-blend-overlay"></div>
+        <div className="absolute bottom-0 left-0 w-[300px] h-[300px] bg-black/20 rounded-full blur-3xl -ml-20 -mb-20 mix-blend-overlay"></div>
         
         <div className="max-w-5xl mx-auto relative z-10">
           <button 
@@ -294,18 +350,17 @@ export default function StudentScheduleDetail({ params }: { params: Promise<{ id
           <div className="flex flex-col lg:flex-row lg:items-end justify-between gap-6">
             <div className="text-white max-w-2xl min-w-0">
               <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-lg bg-black/20 backdrop-blur-md border border-white/20 font-bold text-sm mb-4 shadow-sm">
-                <Calendar className="w-4 h-4 text-yellow-300" />
+                <Calendar className="w-4 h-4 text-white/80" />
                 {dateObj.toLocaleDateString('id-ID', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' })}
               </div>
               <h1 className="text-3xl md:text-5xl font-black tracking-tight mb-4 drop-shadow-md leading-tight break-words whitespace-pre-wrap">
                 {schedule.title}
               </h1>
-              <p className="text-red-100 font-medium text-base md:text-xl drop-shadow-sm opacity-90 max-w-xl break-words whitespace-pre-wrap">
+              <p className="text-white/80 font-medium text-base md:text-xl drop-shadow-sm max-w-xl break-words whitespace-pre-wrap">
                 {schedule.description || "Mari bersiap untuk sesi belajar yang menyenangkan!"}
               </p>
             </div>
 
-            {/* Countdown Badge */}
             {!isPast && (
               <div className="bg-white rounded-2xl p-4 shadow-2xl border border-white/40 transform md:-translate-y-4 md:rotate-3 flex flex-col items-center justify-center min-w-[200px] backdrop-blur-xl bg-white/90">
                 <p className="text-xs font-black uppercase tracking-widest text-slate-400 mb-1">Mulai dalam</p>
@@ -355,9 +410,9 @@ export default function StudentScheduleDetail({ params }: { params: Promise<{ id
           </div>
         </div>
 
-        {/* Content Tabs / Sections */}
+        {/* Layout Berbasis Accordion / Tabs */}
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-          <div className="lg:col-span-2 space-y-6">
+          <div className="lg:col-span-2 space-y-4">
             
             {/* Voting Banner */}
             {!schedule.topic && schedule.is_voting_active && (
@@ -376,65 +431,169 @@ export default function StudentScheduleDetail({ params }: { params: Promise<{ id
               </div>
             )}
 
-            {/* Materi */}
-            {schedule.topic && (
-              <div className="bg-white rounded-[32px] p-8 shadow-sm border border-slate-100">
-                <h3 className="text-xl font-black text-slate-800 mb-6 flex items-center gap-3">
+            {/* ACCORDION: OVERVIEW */}
+            <div className="bg-white rounded-[24px] shadow-sm border border-slate-100 overflow-hidden">
+              <button 
+                onClick={() => toggleSection('overview')}
+                className="w-full flex justify-between items-center p-6 bg-white hover:bg-slate-50 transition-colors"
+              >
+                <div className="flex items-center gap-3">
                   <div className="w-10 h-10 bg-indigo-50 rounded-xl flex items-center justify-center">
                     <BookOpen className="w-5 h-5 text-indigo-500" />
                   </div>
-                  Materi Pembelajaran
-                </h3>
-                <div className="bg-slate-50 p-5 rounded-2xl border border-slate-100">
-                  <p className="font-bold text-slate-800 text-lg mb-1 break-words whitespace-pre-wrap">{schedule.topic}</p>
-                  {schedule.subtopic && <p className="text-slate-500 font-medium break-words whitespace-pre-wrap">{schedule.subtopic}</p>}
+                  <h3 className="text-lg font-black text-slate-800">Ikhtisar Materi</h3>
                 </div>
-              </div>
-            )}
-
-            {/* Links */}
-            {(schedule.meeting_link || schedule.material_link) && (
-              <div className="bg-white rounded-[32px] p-8 shadow-sm border border-slate-100">
-                <h3 className="text-xl font-black text-slate-800 mb-6 flex items-center gap-3">
-                  <div className="w-10 h-10 bg-blue-50 rounded-xl flex items-center justify-center">
-                    <Link2 className="w-5 h-5 text-blue-500" />
+                {openSection === 'overview' ? <ChevronUp className="w-5 h-5 text-slate-400" /> : <ChevronDown className="w-5 h-5 text-slate-400" />}
+              </button>
+              
+              {openSection === 'overview' && (
+                <div className="p-6 pt-0 border-t border-slate-100 animate-in slide-in-from-top-2 duration-300">
+                  <div className="bg-slate-50 p-5 rounded-2xl border border-slate-100 mb-6 mt-4">
+                    <p className="font-bold text-slate-800 text-lg mb-1 break-words">{schedule.topic || "Belum ada topik spesifik"}</p>
+                    {schedule.subtopic && <p className="text-slate-500 font-medium break-words">{schedule.subtopic}</p>}
                   </div>
-                  Tautan Penting
-                </h3>
-                <div className="space-y-3">
-                  {schedule.meeting_link && (
-                    <a href={schedule.meeting_link} target="_blank" rel="noreferrer" className="flex items-center justify-between p-4 bg-blue-50 rounded-2xl border border-blue-100 hover:bg-blue-100 transition-colors group">
-                      <div className="flex items-center gap-3 font-bold text-blue-800">
-                        <div className="w-10 h-10 bg-white rounded-xl shadow-sm flex items-center justify-center">
-                          <Link2 className="w-5 h-5 text-blue-600" />
-                        </div>
-                        Join Meeting
-                      </div>
-                      <div className="w-8 h-8 bg-white rounded-full flex items-center justify-center shadow-sm text-blue-400 group-hover:text-blue-600">
-                         →
-                      </div>
-                    </a>
-                  )}
-                  {schedule.material_link && (
-                    <a href={schedule.material_link} target="_blank" rel="noreferrer" className="flex items-center justify-between p-4 bg-emerald-50 rounded-2xl border border-emerald-100 hover:bg-emerald-100 transition-colors group">
-                      <div className="flex items-center gap-3 font-bold text-emerald-800">
-                        <div className="w-10 h-10 bg-white rounded-xl shadow-sm flex items-center justify-center">
-                          <FileText className="w-5 h-5 text-emerald-600" />
-                        </div>
-                        Modul Pelajaran
-                      </div>
-                      <div className="w-8 h-8 bg-white rounded-full flex items-center justify-center shadow-sm text-emerald-400 group-hover:text-emerald-600">
-                         →
-                      </div>
-                    </a>
+
+                  {(schedule.meeting_link || schedule.material_link) && (
+                    <div className="space-y-3">
+                      {schedule.meeting_link && (
+                        <a href={schedule.meeting_link} target="_blank" rel="noreferrer" className="flex items-center justify-between p-4 bg-blue-50 rounded-2xl border border-blue-100 hover:bg-blue-100 transition-colors group">
+                          <div className="flex items-center gap-3 font-bold text-blue-800">
+                            <div className="w-10 h-10 bg-white rounded-xl shadow-sm flex items-center justify-center">
+                              <Link2 className="w-5 h-5 text-blue-600" />
+                            </div>
+                            Join Meeting
+                          </div>
+                          <div className="w-8 h-8 bg-white rounded-full flex items-center justify-center shadow-sm text-blue-400 group-hover:text-blue-600">
+                             →
+                          </div>
+                        </a>
+                      )}
+                      {schedule.material_link && (
+                        <a href={schedule.material_link} target="_blank" rel="noreferrer" className="flex items-center justify-between p-4 bg-emerald-50 rounded-2xl border border-emerald-100 hover:bg-emerald-100 transition-colors group">
+                          <div className="flex items-center gap-3 font-bold text-emerald-800">
+                            <div className="w-10 h-10 bg-white rounded-xl shadow-sm flex items-center justify-center">
+                              <FileText className="w-5 h-5 text-emerald-600" />
+                            </div>
+                            Modul Pelajaran
+                          </div>
+                          <div className="w-8 h-8 bg-white rounded-full flex items-center justify-center shadow-sm text-emerald-400 group-hover:text-emerald-600">
+                             →
+                          </div>
+                        </a>
+                      )}
+                    </div>
                   )}
                 </div>
-              </div>
-            )}
+              )}
+            </div>
+
+            {/* ACCORDION: ACTIVITIES (COURSE STYLE) */}
+            <div className="bg-white rounded-[24px] shadow-sm border border-slate-100 overflow-hidden">
+              <button 
+                onClick={() => toggleSection('activities')}
+                className="w-full flex justify-between items-center p-6 bg-white hover:bg-slate-50 transition-colors"
+              >
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 bg-amber-50 rounded-xl flex items-center justify-center">
+                    <PlayCircle className="w-5 h-5 text-amber-500" />
+                  </div>
+                  <h3 className="text-lg font-black text-slate-800">Aktivitas Kelas</h3>
+                </div>
+                <div className="flex items-center gap-3">
+                  {activities.length > 0 && (
+                    <span className="bg-amber-100 text-amber-800 text-xs font-black px-2 py-1 rounded-md">{activities.length} Modul</span>
+                  )}
+                  {openSection === 'activities' ? <ChevronUp className="w-5 h-5 text-slate-400" /> : <ChevronDown className="w-5 h-5 text-slate-400" />}
+                </div>
+              </button>
+              
+              {openSection === 'activities' && (
+                <div className="p-6 pt-0 border-t border-slate-100 animate-in slide-in-from-top-2 duration-300">
+                  <div className="mt-4 space-y-3">
+                    {activities.length === 0 ? (
+                      <div className="text-center py-8 text-slate-400 font-medium">
+                        Belum ada aktivitas yang dibagikan oleh Tutor.
+                      </div>
+                    ) : (
+                      activities.map((act: any, idx: number) => (
+                        <div 
+                          key={act.id} 
+                          onClick={() => handleActivityClick(act)}
+                          className="flex items-center gap-4 p-4 rounded-2xl border border-slate-200 hover:border-amber-300 hover:bg-amber-50 cursor-pointer transition-all group"
+                        >
+                          <div className="w-12 h-12 bg-slate-100 group-hover:bg-amber-100 rounded-xl flex items-center justify-center shrink-0">
+                            {act.activity_type === 'pdf' ? <FileText className="w-6 h-6 text-slate-400 group-hover:text-amber-500" /> :
+                             act.activity_type === 'link' ? <Link2 className="w-6 h-6 text-slate-400 group-hover:text-amber-500" /> :
+                             <BookOpen className="w-6 h-6 text-slate-400 group-hover:text-amber-500" />}
+                          </div>
+                          <div className="flex-1 min-w-0">
+                            <h4 className="font-bold text-slate-800 group-hover:text-amber-900 truncate">{act.title}</h4>
+                            <p className="text-xs font-medium text-slate-400 uppercase">
+                              Modul {idx + 1} • {act.activity_type === 'pdf' ? 'Materi Bacaan' : act.activity_type === 'link' ? 'Tautan Eksternal' : 'Kuis CBT'}
+                            </p>
+                          </div>
+                          {(act.activity_type === 'pdf' || act.activity_type === 'link') && !clickedLinks.has(act.id) && (
+                            <div className="bg-yellow-100 text-yellow-700 text-xs font-black px-2 py-1 rounded-md shrink-0 flex items-center gap-1">
+                              <Star className="w-3 h-3 fill-yellow-500 text-yellow-500" /> +2
+                            </div>
+                          )}
+                          <div className="w-8 h-8 bg-white rounded-full flex items-center justify-center shadow-sm text-slate-300 group-hover:text-amber-500 shrink-0">
+                            →
+                          </div>
+                        </div>
+                      ))
+                    )}
+                  </div>
+                </div>
+              )}
+            </div>
+
+            {/* ACCORDION: LEADERBOARD & INTERACTION */}
+            <div className="bg-white rounded-[24px] shadow-sm border border-slate-100 overflow-hidden">
+              <button 
+                onClick={() => toggleSection('interactions')}
+                className="w-full flex justify-between items-center p-6 bg-white hover:bg-slate-50 transition-colors"
+              >
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 bg-emerald-50 rounded-xl flex items-center justify-center">
+                    <Users className="w-5 h-5 text-emerald-500" />
+                  </div>
+                  <h3 className="text-lg font-black text-slate-800">Interaksi & Papan Skor</h3>
+                </div>
+                {openSection === 'interactions' ? <ChevronUp className="w-5 h-5 text-slate-400" /> : <ChevronDown className="w-5 h-5 text-slate-400" />}
+              </button>
+              
+              {openSection === 'interactions' && (
+                <div className="p-6 pt-0 border-t border-slate-100 animate-in slide-in-from-top-2 duration-300">
+                  <div className="mt-4 space-y-6">
+                    {(isCompleted || (isAttended && !isIzin)) ? (
+                      <>
+                        <StudentLiveInteractions 
+                          scheduleId={resolvedParams.id} 
+                          studentId={profile?.id || ""} 
+                          isCompleted={isCompleted}
+                          isHadir={isAttended && !isIzin}
+                        />
+                        <div className="mt-8">
+                          <SessionLeaderboard 
+                            scheduleId={resolvedParams.id}
+                            studentId={profile?.id || ""}
+                          />
+                        </div>
+                      </>
+                    ) : (
+                      <div className="text-center py-8 text-slate-400 font-medium">
+                        Fitur interaksi terbuka setelah kamu melakukan presensi kehadiran.
+                      </div>
+                    )}
+                  </div>
+                </div>
+              )}
+            </div>
 
             {/* Feedback & Rating - ONLY IF HADIR */}
             {isAttended && isHadir && (
-              <div className="bg-white rounded-[32px] p-8 shadow-sm border border-slate-100">
+              <div className="bg-white rounded-[32px] p-8 shadow-sm border border-slate-100 mt-6">
                 <h3 className="text-xl font-black text-slate-800 mb-2 flex items-center gap-3">
                   <div className="w-10 h-10 bg-yellow-50 rounded-xl flex items-center justify-center">
                     <Star className="w-5 h-5 text-yellow-500" />
@@ -444,7 +603,6 @@ export default function StudentScheduleDetail({ params }: { params: Promise<{ id
                 <p className="text-slate-500 font-medium mb-8">Beritahu kami bagaimana pengalaman belajarmu hari ini!</p>
 
                 {attendance?.rating ? (
-                  // Submitted State
                   <div className="bg-slate-50 rounded-3xl p-8 border border-slate-100 text-center space-y-4 flex flex-col items-center">
                     <div className="flex justify-center gap-2 mb-4">
                       {[1,2,3,4,5].map(star => (
@@ -470,7 +628,6 @@ export default function StudentScheduleDetail({ params }: { params: Promise<{ id
                     </div>
                   </div>
                 ) : (
-                  // Action button to go to rating page
                   <div className="text-center p-6 bg-gradient-to-br from-yellow-50 to-red-50 rounded-3xl border border-yellow-100">
                     <div className="flex justify-center gap-2 mb-6">
                       <Star className="w-10 h-10 fill-yellow-400 text-yellow-400" />
@@ -490,36 +647,6 @@ export default function StudentScheduleDetail({ params }: { params: Promise<{ id
               </div>
             )}
             
-            {isAttended && isIzin && (
-              <div className="bg-amber-50 rounded-[32px] p-8 shadow-sm border border-amber-100 flex items-center gap-6">
-                <div className="w-16 h-16 bg-white rounded-2xl flex items-center justify-center shadow-sm shrink-0">
-                  <AlertCircle className="w-8 h-8 text-amber-500" />
-                </div>
-                <div>
-                  <h3 className="text-xl font-black text-amber-900 mb-1">Status: Izin</h3>
-                  <p className="text-amber-800 font-medium">Kamu tidak dapat memberi rating karena berstatus izin.</p>
-                </div>
-              </div>
-            )}
-            
-            {/* Live Interactions & Notes */}
-            {(isCompleted || (isAttended && !isIzin)) && (
-              <>
-                <StudentLiveInteractions 
-                  scheduleId={resolvedParams.id} 
-                  studentId={profile?.id || ""} 
-                  isCompleted={isCompleted}
-                  isHadir={isAttended && !isIzin}
-                />
-                
-                <div className="mt-8">
-                  <SessionLeaderboard 
-                    scheduleId={resolvedParams.id}
-                    studentId={profile?.id || ""}
-                  />
-                </div>
-              </>
-            )}
           </div>
 
           <div className="lg:col-span-1 space-y-6">

@@ -167,6 +167,39 @@ export default function SessionCbtManager({
     }
   };
 
+  const handleGenerateMockAi = async (type: 'assignment' | 'form' | 'material') => {
+    if (!topic && !subject) return toast.error("Topik dan mata pelajaran belum diatur untuk kelas ini");
+    
+    const toastId = toast.loading(`AI sedang menyusun ${type === 'assignment' ? 'Tugas' : type === 'form' ? 'Formulir' : 'Materi'}...`);
+    
+    // Simulate AI generation time
+    await new Promise(resolve => setTimeout(resolve, 3000));
+    
+    const titles = {
+      'assignment': `📝 Tugas AI: ${topic || subject || 'Latihan Mandiri'}`,
+      'form': `📊 Formulir Evaluasi AI: ${topic || subject || 'Feedback'}`,
+      'material': `📚 Modul Rangkuman AI: ${topic || subject || 'Materi Belajar'}`
+    };
+
+    const { error } = await supabase
+      .from('session_cbt_packages')
+      .insert({
+        schedule_id: scheduleId,
+        tutor_id: tutorId,
+        title: titles[type],
+        status: 'active',
+        activity_type: 'link', // Store as link to open mock generated document
+        link_url: `https://example.com/ai-generated-${type}-${Date.now()}`
+      });
+
+    if (error) {
+      toast.error(error.message, { id: toastId });
+    } else {
+      toast.success(`Berhasil membuat ${type === 'assignment' ? 'Tugas' : type === 'form' ? 'Formulir' : 'Materi'} dengan AI!`, { id: toastId });
+      fetchPackages();
+    }
+  };
+
   const handleRenamePackage = async (pkgId: string, oldTitle: string) => {
     const newTitle = prompt("Masukkan nama baru:", oldTitle);
     if (!newTitle || newTitle === oldTitle) return;
@@ -233,6 +266,12 @@ export default function SessionCbtManager({
               <Button onClick={() => handleAddLinkOrPdf('link')} variant="secondary" className="gap-2">
                 Tambah Link
               </Button>
+              <Button onClick={() => handleGenerateMockAi('material')} variant="secondary" className="gap-2 border-indigo-200 text-indigo-600 hover:bg-indigo-50">
+                <Sparkles className="w-4 h-4" /> Materi AI
+              </Button>
+              <Button onClick={() => handleGenerateMockAi('assignment')} variant="secondary" className="gap-2 border-indigo-200 text-indigo-600 hover:bg-indigo-50">
+                <Sparkles className="w-4 h-4" /> Tugas AI
+              </Button>
               <Button onClick={() => setActiveView('create_ai')} className="gap-2 bg-indigo-600 hover:bg-indigo-700">
                 <Sparkles className="w-4 h-4" /> Paket CBT
               </Button>
@@ -252,10 +291,18 @@ export default function SessionCbtManager({
                 <ListChecks className="w-10 h-10 text-indigo-400" />
               </div>
               <h4 className="text-xl font-black text-slate-800 mb-2">Belum ada aktivitas</h4>
-              <p className="text-sm text-slate-500 max-w-md mx-auto mb-6">Buat paket kuis interaktif dengan AI atau unggah materi PDF/Link agar siswa bisa mulai belajar.</p>
-              <Button onClick={() => setActiveView('create_ai')} className="bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl h-12 px-6 font-bold shadow-lg shadow-indigo-200 transition-all hover:-translate-y-0.5">
-                <Sparkles className="w-5 h-5 mr-2" /> Mulai Buat Kuis AI
-              </Button>
+              <p className="text-sm text-slate-500 max-w-md mx-auto mb-6">Buat paket kuis interaktif, materi bacaan, atau tugas dengan bantuan AI untuk kelas ini.</p>
+              <div className="flex flex-wrap justify-center gap-3">
+                <Button onClick={() => handleGenerateMockAi('material')} className="bg-white hover:bg-indigo-50 text-indigo-600 border border-indigo-200 rounded-xl h-12 px-6 font-bold shadow-sm transition-all hover:-translate-y-0.5">
+                  <Sparkles className="w-5 h-5 mr-2" /> Buat Materi AI
+                </Button>
+                <Button onClick={() => handleGenerateMockAi('assignment')} className="bg-white hover:bg-indigo-50 text-indigo-600 border border-indigo-200 rounded-xl h-12 px-6 font-bold shadow-sm transition-all hover:-translate-y-0.5">
+                  <Sparkles className="w-5 h-5 mr-2" /> Buat Tugas AI
+                </Button>
+                <Button onClick={() => setActiveView('create_ai')} className="bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl h-12 px-6 font-bold shadow-lg shadow-indigo-200 transition-all hover:-translate-y-0.5">
+                  <Sparkles className="w-5 h-5 mr-2" /> Kuis CBT AI
+                </Button>
+              </div>
             </div>
           ) : (
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
