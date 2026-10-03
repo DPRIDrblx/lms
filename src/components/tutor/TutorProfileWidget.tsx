@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { createClient } from "@/lib/supabase";
 import { useAuth } from "@/lib/auth-context";
-import { Camera, Loader2, User } from "lucide-react";
+import { Camera, Loader2, User, Sparkles } from "lucide-react";
 import toast from "react-hot-toast";
 import { removeBackground } from "@imgly/background-removal";
 
@@ -12,20 +12,22 @@ export function TutorProfileWidget() {
   const supabase = createClient();
   const [uploading, setUploading] = useState(false);
 
-  const handleUploadPhoto = async (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleUploadPhoto = async (e: React.ChangeEvent<HTMLInputElement>, useAI: boolean) => {
     try {
       if (!e.target.files || e.target.files.length === 0) return;
       const file = e.target.files[0];
       setUploading(true);
-      const toastId = toast.loading("Memproses AI Remove Background (Mungkin butuh waktu agak lama)...");
+      const toastId = toast.loading(useAI ? "Memproses AI Remove Background (Mungkin butuh waktu agak lama)..." : "Mengunggah foto profil...");
 
       let processedFile: File = file;
-      try {
-        const blob = await removeBackground(file);
-        processedFile = new File([blob], file.name.replace(/\.[^/.]+$/, ".png"), { type: "image/png" });
-      } catch (bgError) {
-        console.error("Background removal failed:", bgError);
-        toast.error("Gagal menghapus background otomatis. Mengunggah versi asli...", { id: toastId });
+      if (useAI) {
+        try {
+          const blob = await removeBackground(file);
+          processedFile = new File([blob], file.name.replace(/\.[^/.]+$/, ".png"), { type: "image/png" });
+        } catch (bgError) {
+          console.error("Background removal failed:", bgError);
+          toast.error("Gagal menghapus background otomatis. Mengunggah versi asli...", { id: toastId });
+        }
       }
 
       const fileExt = processedFile.name.split('.').pop();
@@ -75,22 +77,24 @@ export function TutorProfileWidget() {
               <User className="w-8 h-8 text-slate-400" />
             )}
           </div>
-          <label className="absolute bottom-0 right-0 w-8 h-8 bg-slate-900 rounded-full flex items-center justify-center text-white cursor-pointer hover:bg-slate-800 transition-colors shadow-sm ring-2 ring-white">
-            {uploading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Camera className="w-4 h-4" />}
-            <input 
-              type="file" 
-              accept="image/*" 
-              className="hidden" 
-              onChange={handleUploadPhoto}
-              disabled={uploading}
-            />
-          </label>
         </div>
-        
         <div>
           <h2 className="text-xl font-black text-slate-900">{profile.full_name}</h2>
-          <p className="text-slate-500 font-medium">Tutor / Pengajar</p>
-          <p className="text-xs text-amber-600 mt-1 font-bold">Upload foto tanpa background (PNG) agar tampil keren di jadwal siswa!</p>
+          <p className="text-slate-500 font-medium mb-3">Tutor / Pengajar</p>
+          
+          <div className="flex flex-wrap gap-2">
+            <label className="bg-slate-900 hover:bg-slate-800 text-white px-3 py-2 rounded-lg text-xs font-bold cursor-pointer transition-colors flex items-center gap-1.5 shadow-sm">
+               {uploading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Camera className="w-4 h-4" />}
+               Upload Normal (Cepat)
+               <input type="file" accept="image/*" className="hidden" onChange={(e) => handleUploadPhoto(e, false)} disabled={uploading} />
+            </label>
+            <label className="bg-gradient-to-r from-teal-500 to-emerald-500 hover:from-teal-600 hover:to-emerald-600 text-white px-3 py-2 rounded-lg text-xs font-bold cursor-pointer transition-colors flex items-center gap-1.5 shadow-sm">
+               {uploading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Sparkles className="w-4 h-4" />}
+               Upload + AI Hapus BG
+               <input type="file" accept="image/*" className="hidden" onChange={(e) => handleUploadPhoto(e, true)} disabled={uploading} />
+            </label>
+          </div>
+          <p className="text-[11px] text-slate-500 mt-2 font-medium max-w-sm">Pastikan foto tanpa background (PNG) agar menyatu dengan sempurna di jadwal siswa.</p>
         </div>
       </div>
     </div>
