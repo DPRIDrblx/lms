@@ -5,7 +5,7 @@ import { createClient } from "@/lib/supabase";
 import { useAuth } from "@/lib/auth-context";
 import { Camera, Loader2, User } from "lucide-react";
 import toast from "react-hot-toast";
-import imglyRemoveBackground from "@imgly/background-removal";
+import { removeBackground } from "@imgly/background-removal";
 
 export function TutorProfileWidget() {
   const { profile } = useAuth();
@@ -21,7 +21,7 @@ export function TutorProfileWidget() {
 
       let processedFile: File = file;
       try {
-        const blob = await imglyRemoveBackground(file);
+        const blob = await removeBackground(file);
         processedFile = new File([blob], file.name.replace(/\.[^/.]+$/, ".png"), { type: "image/png" });
       } catch (bgError) {
         console.error("Background removal failed:", bgError);
