@@ -5,6 +5,7 @@ import { createClient } from "@/lib/supabase";
 import { useAuth } from "@/lib/auth-context";
 import { Camera, Loader2, User } from "lucide-react";
 import toast from "react-hot-toast";
+import imglyRemoveBackground from "@imgly/background-removal";
 
 export function TutorProfileWidget() {
   const { profile } = useAuth();
@@ -16,16 +17,25 @@ export function TutorProfileWidget() {
       if (!e.target.files || e.target.files.length === 0) return;
       const file = e.target.files[0];
       setUploading(true);
-      const toastId = toast.loading("Mengunggah foto profil...");
+      const toastId = toast.loading("Memproses AI Remove Background (Mungkin butuh waktu agak lama)...");
 
-      const fileExt = file.name.split('.').pop();
+      let processedFile: File = file;
+      try {
+        const blob = await imglyRemoveBackground(file);
+        processedFile = new File([blob], file.name.replace(/\.[^/.]+$/, ".png"), { type: "image/png" });
+      } catch (bgError) {
+        console.error("Background removal failed:", bgError);
+        toast.error("Gagal menghapus background otomatis. Mengunggah versi asli...", { id: toastId });
+      }
+
+      const fileExt = processedFile.name.split('.').pop();
       const fileName = `${profile?.id}-${Math.random()}.${fileExt}`;
       const filePath = `${fileName}`;
 
       // Upload to avatars bucket
       const { error: uploadError } = await supabase.storage
         .from('avatars')
-        .upload(filePath, file);
+        .upload(filePath, processedFile);
 
       if (uploadError) throw uploadError;
 
@@ -60,7 +70,7 @@ export function TutorProfileWidget() {
         <div className="relative">
           <div className="w-20 h-20 rounded-full bg-slate-100 border-4 border-white shadow-md overflow-hidden flex items-center justify-center">
             {profile.avatar_url ? (
-              <img src={profile.avatar_url} alt={profile.full_name} className="w-full h-full object-cover" />
+              <img src={profile.avatar_url} alt={profile.full_name || "Profile"} className="w-full h-full object-cover" />
             ) : (
               <User className="w-8 h-8 text-slate-400" />
             )}
