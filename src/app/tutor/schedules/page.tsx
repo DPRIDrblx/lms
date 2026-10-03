@@ -9,6 +9,7 @@ import { Calendar, Clock, MapPin, Users, UserPlus, ArrowRight, CheckCircle2, Bui
 import toast from "react-hot-toast";
 import { useRouter } from "next/navigation";
 import { Modal } from "@/components/ui/modal";
+import { TutorProfileWidget } from "@/components/tutor/TutorProfileWidget";
 
 export default function TutorSchedulesPage() {
   const { profile } = useAuth();
@@ -103,6 +104,8 @@ export default function TutorSchedulesPage() {
         <h1 className="text-3xl font-black text-slate-900">Jadwal Ajar</h1>
         <p className="text-slate-500 font-medium">Kelola kelas bimbingan Anda atau klaim jadwal baru yang tersedia.</p>
       </div>
+
+      <TutorProfileWidget />
 
       {mySchedules.length > 0 && (
         <section>

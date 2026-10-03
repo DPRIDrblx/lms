@@ -61,7 +61,7 @@ export default function JadwalLesPage() {
     // Fetch Schedules
     const { data: schedData } = await supabase
       .from("center_schedules")
-      .select("*, tutor:tutor_id(full_name), branch:branch_id(name), room:room_id(room_number)")
+      .select("*, tutor:tutor_id(full_name, avatar_url), branch:branch_id(name), room:room_id(room_number)")
       .contains("target_class_ids", [profile.class_id])
       .order("schedule_time", { ascending: true });
       
@@ -171,22 +171,45 @@ export default function JadwalLesPage() {
                       onClick={() => handleOpenSchedule(schedule)}
                       className="bg-white rounded-[16px] border border-slate-200 overflow-hidden flex flex-col cursor-pointer hover:border-[#108B96]/50 hover:shadow-md transition-all group"
                     >
-                      <div className={cn("w-full aspect-[21/9] sm:h-36 relative overflow-hidden bg-gradient-to-br", THEME_STYLES[schedule.color_theme] || THEME_STYLES.default)}>
+                      <div className={cn("w-full aspect-[21/9] sm:h-40 relative overflow-hidden bg-gradient-to-br", THEME_STYLES[schedule.color_theme] || THEME_STYLES.default)}>
                         {/* Decorative background elements */}
                         <div className="absolute top-0 right-0 w-40 h-40 bg-white/10 rounded-full blur-2xl -mr-10 -mt-10"></div>
                         <div className="absolute bottom-0 left-0 w-32 h-32 bg-black/10 rounded-full blur-xl -ml-10 -mb-10"></div>
                         <div className="absolute inset-0 bg-[url('https://www.transparenttextures.com/patterns/cubes.png')] opacity-20"></div>
                         
                         <div className={cn(
-                          "absolute top-3 left-3 px-3 py-1.5 rounded-lg shadow-sm flex items-center gap-1.5 border backdrop-blur-md",
+                          "absolute top-3 left-3 px-3 py-1.5 rounded-lg shadow-sm flex items-center gap-1.5 border backdrop-blur-md z-10",
                           isToday ? "bg-white/90 text-slate-800 border-white/50" : "bg-black/20 text-white border-white/10"
                         )}>
                           <Calendar className="w-3.5 h-3.5" />
                           <span className="text-xs font-bold">{date.toLocaleDateString('id-ID', { day: 'numeric', month: 'short' })}</span>
                         </div>
                         
-                        <div className="absolute bottom-3 right-3 opacity-20">
-                          <BookOpen className="w-16 h-16 text-white" />
+                        {/* Class Title in Center Left */}
+                        <div className="absolute left-4 sm:left-6 top-1/2 -translate-y-1/2 z-10 w-[60%] sm:w-[50%]">
+                          <h2 className="text-2xl sm:text-3xl font-black text-white leading-tight drop-shadow-md line-clamp-2">
+                            {schedule.title}
+                          </h2>
+                        </div>
+
+                        {/* Tutor Information in Bottom Right */}
+                        <div className="absolute bottom-0 right-4 sm:right-8 flex flex-col items-center z-10">
+                          {schedule.tutor?.avatar_url && (
+                            <img 
+                              src={schedule.tutor.avatar_url} 
+                              alt={schedule.tutor.full_name} 
+                              className="h-24 sm:h-32 object-contain drop-shadow-2xl -mb-2" 
+                            />
+                          )}
+                          {schedule.tutor?.full_name && (
+                            <div className="bg-black/40 backdrop-blur-md px-3 py-1 rounded-t-lg text-white font-bold text-[10px] sm:text-xs">
+                              {schedule.tutor.full_name}
+                            </div>
+                          )}
+                        </div>
+                        
+                        <div className="absolute bottom-3 right-1/2 opacity-10">
+                          <BookOpen className="w-24 h-24 text-white" />
                         </div>
                       </div>
                       
