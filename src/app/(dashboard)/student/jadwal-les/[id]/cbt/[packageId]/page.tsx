@@ -97,7 +97,7 @@ export default function StudentCbtPage({
     
     questions.forEach(q => {
       const userAns = answers[q.id] || [];
-      const correctOpts = q.options.filter((o:any) => o.is_correct).map((o:any) => o.text);
+      const correctOpts = (q.options || []).filter((o:any) => o.is_correct).map((o:any) => o.text);
       
       const isCorrect = JSON.stringify(userAns.sort()) === JSON.stringify(correctOpts.sort());
       if (isCorrect) {
@@ -257,9 +257,21 @@ export default function StudentCbtPage({
                     {currentQ.question_text}
                   </h2>
                   
-                  {/* Options */}
+                  {/* Options / Essay Input */}
                   <div className="space-y-4">
-                    {currentQ.options.map((opt: any, i: number) => {
+                    {currentQ.question_type === 'essay' ? (
+                       <textarea 
+                         value={answers[currentQ.id]?.[0] || ''} 
+                         onChange={e => toggleOption(currentQ.id, e.target.value, 'essay')}
+                         className="w-full border-2 border-slate-200 rounded-2xl p-6 min-h-[200px] text-lg bg-slate-50 focus:bg-white transition-colors outline-none focus:border-indigo-500 focus:ring-4 focus:ring-indigo-500/10"
+                         placeholder="Ketik jawaban kamu di sini..."
+                       ></textarea>
+                    ) : currentQ.question_type === 'material_text' ? (
+                       <div className="p-6 bg-slate-50 rounded-2xl border border-slate-200 text-slate-600 italic">
+                          Silakan baca materi di atas dengan seksama. Klik 'Selanjutnya' jika sudah selesai.
+                       </div>
+                    ) : (
+                      currentQ.options?.map((opt: any, i: number) => {
                       const isSelected = (answers[currentQ.id] || []).includes(opt.text);
                       return (
                         <button
@@ -281,7 +293,7 @@ export default function StudentCbtPage({
                           </span>
                         </button>
                       );
-                    })}
+                    }))}
                   </div>
                 </div>
               </div>
