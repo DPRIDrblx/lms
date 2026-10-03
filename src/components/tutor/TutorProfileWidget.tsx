@@ -34,24 +34,21 @@ export function TutorProfileWidget() {
       const fileName = `${profile?.id}-${Math.random()}.${fileExt}`;
       const filePath = `${fileName}`;
 
-      // Upload to avatars bucket
-      const { error: uploadError } = await supabase.storage
-        .from('avatars')
-        .upload(filePath, processedFile);
+      // Upload to avatars bucket and update profile via API to bypass RLS
+      const formData = new FormData();
+      formData.append('file', processedFile);
+      formData.append('filePath', filePath);
+      formData.append('profileId', profile.id);
 
-      if (uploadError) throw uploadError;
+      const res = await fetch('/api/upload-avatar', {
+        method: 'POST',
+        body: formData
+      });
 
-      const { data: publicUrlData } = supabase.storage
-        .from('avatars')
-        .getPublicUrl(filePath);
-
-      // Update profile
-      const { error: updateError } = await supabase
-        .from('profiles')
-        .update({ avatar_url: publicUrlData.publicUrl })
-        .eq('id', profile?.id);
-
-      if (updateError) throw updateError;
+      if (!res.ok) {
+        const errorData = await res.json();
+        throw new Error(errorData.error || 'Failed to upload avatar');
+      }
 
       toast.success("Foto profil berhasil diperbarui!", { id: toastId });
       // Force reload to update auth context
