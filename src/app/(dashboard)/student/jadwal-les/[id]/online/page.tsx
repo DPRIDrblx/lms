@@ -87,12 +87,12 @@ export default function OnlineClassStage({ params }: { params: Promise<{ id: str
       </header>
 
       {/* Main Content Area */}
-      <div className="flex-1 flex overflow-hidden relative z-10 p-4 gap-4">
+      <div className="flex-1 min-h-0 flex overflow-hidden relative z-10 p-4 gap-4">
         
         {/* Stage / Podium Area (Center) */}
-        <main className="flex-1 flex flex-col relative bg-slate-200/50 rounded-2xl border border-slate-200 overflow-hidden shadow-inner">
+        <main className="flex-1 min-w-0 flex flex-col relative bg-slate-200/50 rounded-2xl border border-slate-200 overflow-hidden shadow-inner">
           
-          <div className="flex-1 relative flex items-center justify-center p-4">
+          <div className="flex-1 min-h-0 relative flex items-center justify-center p-4">
             
             {/* Tutor Video Placeholder */}
             <div className="w-full h-full relative bg-black rounded-xl overflow-hidden shadow-lg border border-slate-300 flex flex-col items-center justify-center">
