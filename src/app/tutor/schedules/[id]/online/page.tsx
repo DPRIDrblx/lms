@@ -23,6 +23,7 @@ export default function TutorOnlineClassStage({ params }: { params: Promise<{ id
   const [chatInput, setChatInput] = useState("");
   const [showManageStudents, setShowManageStudents] = useState(false);
   const [showSettings, setShowSettings] = useState(false);
+  const [onlineUsers, setOnlineUsers] = useState<any[]>([]);
   
   const channelRef = useRef<any>(null);
 
@@ -64,18 +65,31 @@ export default function TutorOnlineClassStage({ params }: { params: Promise<{ id
 
     // Setup Realtime Channel
     const channel = supabase.channel(`room_${resolvedParams.id}`, {
-      config: { broadcast: { self: true } } // Allow receiving our own broadcasts
+      config: { 
+        broadcast: { self: true }, // Allow receiving our own broadcasts
+        presence: { key: user?.id }
+      }
     });
 
     channel
+      .on('presence', { event: 'sync' }, () => {
+        const state = channel.presenceState();
+        const users = Object.values(state).map((presenceArray: any) => presenceArray[0]);
+        setOnlineUsers(users.filter(u => u.role === 'student'));
+      })
       .on('broadcast', { event: 'chat' }, ({ payload }: { payload: any }) => {
         setMessages(prev => [...prev, payload]);
       })
       .on('broadcast', { event: 'hand_raise' }, ({ payload }: { payload: any }) => {
         toast(`${payload.name} mengacungkan tangan!`, { icon: '✋' });
       })
-      .subscribe((status: any) => {
+      .subscribe(async (status: any) => {
         if (status === 'SUBSCRIBED') {
+          await channel.track({
+            user_id: user?.id,
+            name: schedData?.tutor?.full_name || 'Tutor',
+            role: 'tutor'
+          });
           channel.send({
             type: 'broadcast',
             event: 'tutor_state',
@@ -411,14 +425,14 @@ export default function TutorOnlineClassStage({ params }: { params: Promise<{ id
             {/* Right: Tools */}
             <div className="flex gap-2">
               <button 
-                onClick={() => setShowManageStudents(!showManageStudents)}
+                onClick={() => { setShowManageStudents(!showManageStudents); setShowSettings(false); }}
                 className="h-10 px-3 rounded-lg font-bold flex items-center gap-2 transition-all bg-white hover:bg-slate-50 text-slate-600 border border-slate-200 shadow-sm text-sm"
               >
                 <Users className="w-4 h-4 text-blue-500" />
-                <span className="hidden lg:inline">Kelola Siswa</span>
+                <span className="hidden lg:inline">Kelola Siswa ({onlineUsers.length})</span>
               </button>
               <button 
-                onClick={() => setShowSettings(!showSettings)}
+                onClick={() => { setShowSettings(!showSettings); setShowManageStudents(false); }}
                 className="w-10 h-10 rounded-lg flex items-center justify-center transition-all bg-white hover:bg-slate-50 text-slate-600 border border-slate-200 shadow-sm"
               >
                 <Settings className="w-4 h-4 text-slate-500" />
@@ -498,7 +512,24 @@ export default function TutorOnlineClassStage({ params }: { params: Promise<{ id
 
               {showManageStudents && (
                 <div className="space-y-4">
-                  <p className="text-sm text-slate-500 text-center py-4">Belum ada siswa yang bergabung secara interaktif.</p>
+                  {onlineUsers.length === 0 ? (
+                    <p className="text-sm text-slate-500 text-center py-4">Belum ada siswa yang bergabung secara interaktif.</p>
+                  ) : (
+                    <div className="space-y-2">
+                      <p className="text-sm font-bold text-slate-600">{onlineUsers.length} Siswa Hadir</p>
+                      {onlineUsers.map((u: any, idx) => (
+                        <div key={idx} className="flex items-center justify-between p-3 bg-slate-50 border border-slate-200 rounded-xl">
+                          <div className="flex items-center gap-3">
+                            <div className="w-8 h-8 bg-blue-100 rounded-full flex items-center justify-center text-blue-600">
+                              <UserCircle2 className="w-5 h-5" />
+                            </div>
+                            <span className="font-bold text-sm text-slate-700">{u.name}</span>
+                          </div>
+                          <span className="text-[10px] bg-emerald-100 text-emerald-700 font-bold px-2 py-1 rounded-full">Hadir</span>
+                        </div>
+                      ))}
+                    </div>
+                  )}
                 </div>
               )}
 

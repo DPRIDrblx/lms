@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase";
 import { useAuth } from "@/lib/auth-context";
 import { Button } from "@/components/ui/button";
-import { ChevronLeft, Hand, MessageSquare, MonitorPlay, Sparkles, X, UserCircle2, MicOff, VideoOff, Users, MonitorUp, Video } from "lucide-react";
+import { ChevronLeft, Hand, MessageSquare, MonitorPlay, X, UserCircle2, MicOff, RotateCcw } from "lucide-react";
 import { CenterLoader } from "@/components/ui/center-loader";
 import { cn } from "@/lib/utils";
 
@@ -57,7 +57,9 @@ export default function OnlineClassStage({ params }: { params: Promise<{ id: str
 
     // Setup Realtime
     if (resolvedParams.id && user) {
-      const channel = supabase.channel(`room_${resolvedParams.id}`);
+      const channel = supabase.channel(`room_${resolvedParams.id}`, {
+        config: { presence: { key: user.id } }
+      });
 
       channel
         .on('broadcast', { event: 'chat' }, ({ payload }: { payload: any }) => {
@@ -70,7 +72,15 @@ export default function OnlineClassStage({ params }: { params: Promise<{ id: str
           setActivePoll(payload);
           setSelectedPollOption(null);
         })
-        .subscribe();
+        .subscribe(async (status) => {
+          if (status === 'SUBSCRIBED') {
+            await channel.track({
+              user_id: user.id,
+              name: (user as any)?.full_name || 'Siswa',
+              role: 'student'
+            });
+          }
+        });
         
       channelRef.current = channel;
 
@@ -115,9 +125,16 @@ export default function OnlineClassStage({ params }: { params: Promise<{ id: str
   if (!schedule) return null;
 
   return (
-    <div className="fixed inset-0 z-[100] bg-slate-50 text-slate-800 flex flex-col overflow-hidden font-sans">
-      
-      {/* Header */}
+    <>
+      <div className="portrait:flex landscape:hidden fixed inset-0 z-[200] bg-slate-900 text-white flex-col items-center justify-center p-6 text-center">
+        <RotateCcw className="w-12 h-12 mb-4 animate-bounce text-amber-400" />
+        <h2 className="text-xl font-bold mb-2">Mohon Putar Perangkat Anda</h2>
+        <p className="text-slate-400">Untuk pengalaman belajar terbaik dan ruang yang optimal, kelas ini hanya dapat diakses dalam mode lanskap (mendatar).</p>
+      </div>
+
+      <div className="portrait:hidden landscape:flex fixed inset-0 z-[100] bg-slate-50 text-slate-800 flex flex-col overflow-hidden font-sans">
+        
+        {/* Header */}
       <header className="h-16 border-b border-slate-200 bg-white flex items-center justify-between px-6 shadow-sm relative z-20">
         <div className="flex items-center gap-4">
           <button 
@@ -213,7 +230,7 @@ export default function OnlineClassStage({ params }: { params: Promise<{ id: str
         </main>
 
         {/* Right Sidebar (Chat & Activities) */}
-        <aside className="w-80 bg-white border border-slate-200 rounded-2xl shadow-sm hidden lg:flex flex-col relative z-20 overflow-hidden">
+        <aside className="w-64 md:w-80 shrink-0 bg-white border-l border-slate-200 shadow-sm flex flex-col relative z-20 overflow-hidden">
           <div className="p-4 border-b border-slate-100 bg-slate-50/50">
              <h3 className="font-bold text-slate-800 flex items-center gap-2 text-sm">
                <MessageSquare className="w-4 h-4 text-blue-500" /> Diskusi & Aktivitas
@@ -285,7 +302,7 @@ export default function OnlineClassStage({ params }: { params: Promise<{ id: str
                 type="text" 
                 value={chatInput}
                 onChange={e => setChatInput(e.target.value)}
-                placeholder="Kirim pesan ke kelas..." 
+                placeholder="Pesan..." 
                 className="w-full bg-slate-50 border border-slate-200 rounded-xl py-2 pl-3 pr-2 text-sm text-slate-700 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-shadow"
               />
               <button type="submit" disabled={!chatInput.trim()} className="bg-blue-600 hover:bg-blue-700 text-white rounded-lg px-3 py-2 text-sm font-bold disabled:opacity-50 transition-colors">
@@ -296,5 +313,6 @@ export default function OnlineClassStage({ params }: { params: Promise<{ id: str
         </aside>
       </div>
     </div>
+    </>
   );
 }
