@@ -28,6 +28,7 @@ function TutorOnlineClassStageInner({ params }: { params: Promise<{ id: string }
   const [showSettings, setShowSettings] = useState(false);
   const [showPollModal, setShowPollModal] = useState(false);
   const [pollForm, setPollForm] = useState({ question: "", options: ["", ""] });
+  const [pollResults, setPollResults] = useState<{ [key: string]: number }>({});
   const [onlineUsers, setOnlineUsers] = useState<any[]>([]);
   
   const channelRef = useRef<any>(null);
@@ -55,7 +56,13 @@ function TutorOnlineClassStageInner({ params }: { params: Promise<{ id: string }
           setMessages(prev => [...prev, payload]);
         })
         .on('broadcast', { event: 'student_poll_answer' }, ({ payload }: { payload: any }) => {
-          // You could collect answers here
+          setPollResults(prev => ({
+            ...prev,
+            [payload.optionIndex]: (prev[payload.optionIndex] || 0) + 1
+          }));
+        })
+        .on('broadcast', { event: 'raise_hand' }, ({ payload }: { payload: any }) => {
+          toast(`${payload.studentName} mengacungkan tangan! ✋`, { icon: '✋' });
         })
         .on('presence', { event: 'sync' }, () => {
           const state = channel.presenceState();
@@ -71,7 +78,7 @@ function TutorOnlineClassStageInner({ params }: { params: Promise<{ id: string }
           if (status === 'SUBSCRIBED') {
             await channel.track({
               user_id: user.id,
-              name: (user as any)?.full_name || 'Tutor',
+              name: (user as any)?.user_metadata?.full_name || 'Tutor',
               role: 'tutor'
             });
           }
@@ -86,36 +93,24 @@ function TutorOnlineClassStageInner({ params }: { params: Promise<{ id: string }
   }, [resolvedParams.id, user, supabase]);
 
   // AV State
-  const { localParticipant, cameraTrack, microphoneTrack } = useLocalParticipant();
-  const isCameraOn = !!cameraTrack;
-  const isMicOn = !!microphoneTrack;
-  const isScreenSharing = localParticipant.isScreenShareEnabled;
+  const { localParticipant, isCameraEnabled, isMicrophoneEnabled, isScreenShareEnabled } = useLocalParticipant();
+  const isCameraOn = isCameraEnabled;
+  const isMicOn = isMicrophoneEnabled;
+  const isScreenSharing = isScreenShareEnabled;
   
   const tracks = useTracks([Track.Source.ScreenShare], { onlySubscribed: false });
   const screenShareTrack = tracks.find(t => t.source === Track.Source.ScreenShare && t.participant.isLocal);
 
   const toggleCamera = async () => {
-    if (cameraTrack) {
-      await localParticipant.setCameraEnabled(false);
-    } else {
-      await localParticipant.setCameraEnabled(true);
-    }
+    await localParticipant.setCameraEnabled(!isCameraEnabled);
   };
 
   const toggleMic = async () => {
-    if (microphoneTrack) {
-      await localParticipant.setMicrophoneEnabled(false);
-    } else {
-      await localParticipant.setMicrophoneEnabled(true);
-    }
+    await localParticipant.setMicrophoneEnabled(!isMicrophoneEnabled);
   };
 
   const toggleScreenShare = async () => {
-    if (isScreenSharing) {
-      await localParticipant.setScreenShareEnabled(false);
-    } else {
-      await localParticipant.setScreenShareEnabled(true);
-    }
+    await localParticipant.setScreenShareEnabled(!isScreenShareEnabled);
   };
 
   const stopAllStreams = async () => {
@@ -129,7 +124,7 @@ function TutorOnlineClassStageInner({ params }: { params: Promise<{ id: string }
     if (!chatInput.trim()) return;
     const msg = {
       id: Date.now().toString(),
-      sender: schedule?.tutor?.full_name || 'Tutor',
+      sender: schedule?.tutor?.full_name || (user as any)?.user_metadata?.full_name || 'Tutor',
       text: chatInput,
       time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
       isHost: true
@@ -151,9 +146,10 @@ function TutorOnlineClassStageInner({ params }: { params: Promise<{ id: string }
       return;
     }
 
+    setPollResults({});
     channelRef.current?.send({
       type: 'broadcast',
-      event: 'tutor_poll',
+      event: 'poll',
       payload: {
         question: pollForm.question,
         options: validOptions
@@ -392,7 +388,22 @@ function TutorOnlineClassStageInner({ params }: { params: Promise<{ id: string }
           </div>
 
           {/* Quick Actions (Poll, Activity) */}
-          <div className="px-4 pb-2 shrink-0">
+          <div className="px-4 pb-2 shrink-0 flex flex-col gap-2">
+            {Object.keys(pollResults).length > 0 && (
+              <div className="bg-indigo-50 border border-indigo-100 p-3 rounded-xl text-left text-xs mb-2">
+                <p className="font-bold text-indigo-800 mb-1">Hasil Polling Terakhir:</p>
+                {pollForm.options.map((opt, idx) => {
+                  if (!opt.trim()) return null;
+                  const count = pollResults[idx] || 0;
+                  return (
+                    <div key={idx} className="flex justify-between items-center bg-white px-2 py-1 rounded shadow-sm mb-1">
+                      <span className="truncate flex-1 pr-2">{opt}</span>
+                      <span className="font-bold text-indigo-600 bg-indigo-100 px-1.5 py-0.5 rounded">{count}</span>
+                    </div>
+                  );
+                })}
+              </div>
+            )}
             <Button onClick={() => setShowPollModal(true)} variant="secondary" className="w-full h-8 text-xs font-bold gap-2 text-indigo-600 border border-indigo-200 hover:bg-indigo-50">
               <MonitorPlay className="w-3 h-3" /> Buat Aktivitas / Polling
             </Button>
@@ -540,7 +551,7 @@ export default function TutorOnlineClassStage({ params }: { params: Promise<{ id
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
          roomName: `room_${resolvedParams.id}`,
-         participantName: (user as any)?.full_name || 'Tutor',
+         participantName: (user as any)?.user_metadata?.full_name || 'Tutor',
          participantId: user?.id,
          isTutor: true
       })

@@ -80,7 +80,7 @@ function StudentOnlineClassStageInner({ params }: { params: Promise<{ id: string
           if (status === 'SUBSCRIBED') {
             await channel.track({
               user_id: user.id,
-              name: (user as any)?.full_name || 'Siswa',
+              name: (user as any)?.user_metadata?.full_name || 'Siswa',
               role: 'student'
             });
           }
@@ -99,7 +99,7 @@ function StudentOnlineClassStageInner({ params }: { params: Promise<{ id: string
     if (!chatInput.trim()) return;
     const msg = {
       id: Date.now().toString(),
-      sender: (user as any)?.full_name || 'Siswa',
+      sender: (user as any)?.user_metadata?.full_name || 'Siswa',
       text: chatInput,
       time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
       isHost: false
@@ -113,7 +113,7 @@ function StudentOnlineClassStageInner({ params }: { params: Promise<{ id: string
     const newState = !isHandRaised;
     setIsHandRaised(newState);
     if (newState) {
-       channelRef.current?.send({ type: 'broadcast', event: 'hand_raise', payload: { id: user?.id, name: (user as any)?.full_name || 'Siswa' } });
+       channelRef.current?.send({ type: 'broadcast', event: 'raise_hand', payload: { id: user?.id, studentName: (user as any)?.user_metadata?.full_name || 'Siswa' } });
     }
   };
 
@@ -288,6 +288,11 @@ function StudentOnlineClassStageInner({ params }: { params: Promise<{ id: string
                     key={idx}
                     onClick={() => {
                       setSelectedPollOption(idx);
+                      channelRef.current?.send({
+                        type: 'broadcast',
+                        event: 'student_poll_answer',
+                        payload: { studentName: (user as any)?.user_metadata?.full_name || 'Siswa', optionIndex: idx }
+                      });
                       toast.success("Jawaban Anda berhasil dikirim ke Tutor!", { icon: "✅" });
                       setTimeout(() => setActivePoll(null), 1500); // Auto close after submit
                     }}
@@ -319,19 +324,22 @@ function TutorStreamRenderer({ schedule, tutorState }: { schedule: any, tutorSta
   const screenTrack = tracks.find(t => t.source === Track.Source.ScreenShare);
   const camTrack = tracks.find(t => t.source === Track.Source.Camera);
 
-  if (screenTrack) {
+  if (screenTrack || camTrack) {
     return (
       <>
-        <VideoTrack trackRef={screenTrack} className="w-full h-full object-contain absolute inset-0" />
-        <RoomAudioRenderer />
-      </>
-    );
-  }
-
-  if (camTrack) {
-    return (
-      <>
-        <VideoTrack trackRef={camTrack} className="w-full h-full object-cover absolute inset-0" />
+        {screenTrack && (
+          <VideoTrack trackRef={screenTrack} className="w-full h-full object-contain absolute inset-0" />
+        )}
+        {camTrack && (
+          <div className={cn(
+            "relative bg-black overflow-hidden shadow-lg border border-slate-700 transition-all duration-300",
+            screenTrack 
+              ? "absolute bottom-6 left-6 w-48 aspect-video rounded-xl z-20 shadow-2xl ring-2 ring-white/20" 
+              : "w-full h-full absolute inset-0"
+          )}>
+            <VideoTrack trackRef={camTrack} className={cn("w-full h-full", screenTrack ? "object-cover" : "object-contain scale-x-[-1]")} />
+          </div>
+        )}
         <RoomAudioRenderer />
       </>
     );
@@ -379,7 +387,7 @@ export default function StudentOnlineClassStage({ params }: { params: Promise<{ 
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
          roomName: `room_${resolvedParams.id}`,
-         participantName: (user as any)?.full_name || 'Siswa',
+         participantName: (user as any)?.user_metadata?.full_name || 'Siswa',
          participantId: user?.id,
          isTutor: false
       })
