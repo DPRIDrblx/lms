@@ -370,6 +370,7 @@ export default function StudentOnlineClassStage({ params }: { params: Promise<{ 
   const resolvedParams = use(params);
   const { user } = useAuth();
   const [token, setToken] = useState("");
+  const [wsUrl, setWsUrl] = useState("");
 
   useEffect(() => {
     if (!resolvedParams.id || !user) return;
@@ -383,8 +384,9 @@ export default function StudentOnlineClassStage({ params }: { params: Promise<{ 
          isTutor: false
       })
     }).then(r => r.json()).then(d => {
-       if (d.token) {
+       if (d.token && d.wsUrl) {
          setToken(d.token);
+         setWsUrl(d.wsUrl);
        } else {
          toast.error(d.error || "Gagal mendapatkan token kelas");
        }
@@ -393,12 +395,12 @@ export default function StudentOnlineClassStage({ params }: { params: Promise<{ 
     });
   }, [resolvedParams.id, user]);
 
-  if (!token) return <div className="min-h-screen flex items-center justify-center bg-slate-50"><CenterLoader size="lg" /></div>;
+  if (!token || !wsUrl) return <div className="min-h-screen flex items-center justify-center bg-slate-50"><CenterLoader size="lg" /></div>;
 
   return (
     <LiveKitRoom
       token={token}
-      serverUrl={process.env.NEXT_PUBLIC_LIVEKIT_URL}
+      serverUrl={wsUrl}
       connect={true}
     >
       <StudentOnlineClassStageInner params={params} />
