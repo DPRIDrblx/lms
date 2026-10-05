@@ -18,6 +18,14 @@ export default function TutorOnlineClassStage({ params }: { params: Promise<{ id
   const [schedule, setSchedule] = useState<any>(null);
   const [loading, setLoading] = useState(true);
 
+  // Realtime State
+  const [messages, setMessages] = useState<{id: string, sender: string, text: string, time: string, isHost?: boolean}[]>([]);
+  const [chatInput, setChatInput] = useState("");
+  const [showManageStudents, setShowManageStudents] = useState(false);
+  const [showSettings, setShowSettings] = useState(false);
+  
+  const channelRef = useRef<any>(null);
+
   // AV State
   const [isCameraOn, setIsCameraOn] = useState(false);
   const [isMicOn, setIsMicOn] = useState(false);
@@ -54,9 +62,34 @@ export default function TutorOnlineClassStage({ params }: { params: Promise<{ id
     };
     fetchSchedule();
 
+    // Setup Realtime Channel
+    const channel = supabase.channel(`room_${resolvedParams.id}`, {
+      config: { broadcast: { self: true } } // Allow receiving our own broadcasts
+    });
+
+    channel
+      .on('broadcast', { event: 'chat' }, ({ payload }) => {
+        setMessages(prev => [...prev, payload]);
+      })
+      .on('broadcast', { event: 'hand_raise' }, ({ payload }) => {
+        toast(`${payload.name} mengacungkan tangan!`, { icon: '✋' });
+      })
+      .subscribe((status) => {
+        if (status === 'SUBSCRIBED') {
+          channel.send({
+            type: 'broadcast',
+            event: 'tutor_state',
+            payload: { isCameraOn: localStreamRef.current !== null, isScreenSharing: screenStreamRef.current !== null }
+          });
+        }
+      });
+      
+    channelRef.current = channel;
+
     return () => {
       // Cleanup streams on unmount
       stopAllStreams();
+      supabase.removeChannel(channel);
     };
   }, [resolvedParams.id]);
 
@@ -72,6 +105,41 @@ export default function TutorOnlineClassStage({ params }: { params: Promise<{ id
       screenRef.current.srcObject = screenStream;
     }
   }, [screenStream, isScreenSharing]);
+
+  // Sync AV state to students
+  useEffect(() => {
+    if (channelRef.current) {
+      channelRef.current.send({
+        type: 'broadcast',
+        event: 'tutor_state',
+        payload: { isCameraOn, isScreenSharing }
+      });
+    }
+  }, [isCameraOn, isScreenSharing]);
+
+  const handleSendChat = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!chatInput.trim()) return;
+    const msg = {
+      id: Date.now().toString(),
+      sender: schedule?.tutor?.full_name || 'Tutor',
+      text: chatInput,
+      time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+      isHost: true
+    };
+    channelRef.current?.send({ type: 'broadcast', event: 'chat', payload: msg });
+    setChatInput("");
+  };
+
+  const pushPoll = () => {
+    const poll = {
+      id: Date.now().toString(),
+      question: "Apakah kalian sudah paham materi sejauh ini?",
+      options: ["Sudah paham", "Masih sedikit bingung", "Belum paham sama sekali"]
+    };
+    channelRef.current?.send({ type: 'broadcast', event: 'poll', payload: poll });
+    toast.success("Polling cepat berhasil dikirim ke semua siswa!");
+  };
 
   const stopAllStreams = () => {
     if (localStreamRef.current) {
@@ -342,11 +410,17 @@ export default function TutorOnlineClassStage({ params }: { params: Promise<{ id
 
             {/* Right: Tools */}
             <div className="flex gap-2">
-              <button className="h-10 px-3 rounded-lg font-bold flex items-center gap-2 transition-all bg-white hover:bg-slate-50 text-slate-600 border border-slate-200 shadow-sm text-sm">
+              <button 
+                onClick={() => setShowManageStudents(!showManageStudents)}
+                className="h-10 px-3 rounded-lg font-bold flex items-center gap-2 transition-all bg-white hover:bg-slate-50 text-slate-600 border border-slate-200 shadow-sm text-sm"
+              >
                 <Users className="w-4 h-4 text-blue-500" />
                 <span className="hidden lg:inline">Kelola Siswa</span>
               </button>
-              <button className="w-10 h-10 rounded-lg flex items-center justify-center transition-all bg-white hover:bg-slate-50 text-slate-600 border border-slate-200 shadow-sm">
+              <button 
+                onClick={() => setShowSettings(!showSettings)}
+                className="w-10 h-10 rounded-lg flex items-center justify-center transition-all bg-white hover:bg-slate-50 text-slate-600 border border-slate-200 shadow-sm"
+              >
                 <Settings className="w-4 h-4 text-slate-500" />
               </button>
             </div>
@@ -361,26 +435,99 @@ export default function TutorOnlineClassStage({ params }: { params: Promise<{ id
              </h3>
           </div>
           
-          <div className="flex-1 p-6 flex flex-col items-center justify-center text-center">
-             <div className="w-16 h-16 bg-blue-50 rounded-full flex items-center justify-center mb-4 border border-blue-100">
-               <MonitorPlay className="w-8 h-8 text-blue-400" />
-             </div>
-             <p className="text-sm font-medium text-slate-500">Sistem Polling & CBT Interaktif akan muncul di sini.</p>
-             <p className="text-xs text-slate-400 mt-2">Siswa belum mengirimkan pesan.</p>
+          <div className="flex-1 p-4 flex flex-col items-center justify-center text-center overflow-y-auto">
+             {messages.length === 0 ? (
+               <div className="flex flex-col items-center opacity-50">
+                 <div className="w-16 h-16 bg-blue-50 rounded-full flex items-center justify-center mb-4 border border-blue-100">
+                   <MessageSquare className="w-8 h-8 text-blue-400" />
+                 </div>
+                 <p className="text-sm font-medium text-slate-500">Belum ada obrolan.</p>
+               </div>
+             ) : (
+               <div className="w-full h-full flex flex-col gap-3 justify-end items-start text-left">
+                 {messages.map((msg) => (
+                   <div key={msg.id} className={cn("max-w-[85%] p-3 rounded-2xl text-sm", msg.isHost ? "bg-blue-100 text-blue-900 self-end rounded-br-sm" : "bg-slate-100 text-slate-800 self-start rounded-bl-sm")}>
+                     <div className="flex justify-between items-end gap-2 mb-1">
+                       <span className="font-bold text-xs">{msg.sender}</span>
+                       <span className="text-[10px] opacity-60">{msg.time}</span>
+                     </div>
+                     <p>{msg.text}</p>
+                   </div>
+                 ))}
+               </div>
+             )}
           </div>
 
-          {/* Dummy Chat Input */}
-          <div className="p-4 border-t border-slate-100 bg-white">
-            <div className="relative">
+          {/* Quick Actions (Poll, Activity) */}
+          <div className="px-4 pb-2 shrink-0">
+            <Button onClick={pushPoll} variant="outline" className="w-full h-8 text-xs font-bold gap-2 text-indigo-600 border-indigo-200 hover:bg-indigo-50">
+              <MonitorPlay className="w-3 h-3" /> Luncurkan Polling Pemahaman
+            </Button>
+          </div>
+
+          {/* Chat Input */}
+          <form onSubmit={handleSendChat} className="p-4 border-t border-slate-100 bg-white shrink-0">
+            <div className="relative flex items-center gap-2">
               <input 
                 type="text" 
+                value={chatInput}
+                onChange={e => setChatInput(e.target.value)}
                 placeholder="Kirim pesan ke kelas..." 
-                className="w-full bg-slate-50 border border-slate-200 rounded-xl py-3 pl-4 pr-10 text-sm text-slate-700 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-shadow"
+                className="w-full bg-slate-50 border border-slate-200 rounded-xl py-2 pl-3 pr-2 text-sm text-slate-700 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-shadow"
               />
+              <button type="submit" disabled={!chatInput.trim()} className="bg-blue-600 hover:bg-blue-700 text-white rounded-lg px-3 py-2 text-sm font-bold disabled:opacity-50 transition-colors">
+                Kirim
+              </button>
             </div>
-          </div>
+          </form>
         </aside>
       </div>
+
+      {/* Modals Overlay for Settings/Students */}
+      {(showManageStudents || showSettings) && (
+        <div className="absolute inset-0 bg-slate-900/40 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+          <div className="bg-white rounded-2xl shadow-2xl w-full max-w-md overflow-hidden relative animate-in fade-in zoom-in duration-200">
+            <button onClick={() => {setShowManageStudents(false); setShowSettings(false);}} className="absolute top-4 right-4 w-8 h-8 bg-slate-100 rounded-full flex items-center justify-center hover:bg-slate-200 text-slate-600">
+              <X className="w-4 h-4" />
+            </button>
+            
+            <div className="p-6">
+              <h2 className="text-xl font-black text-slate-800 mb-6 flex items-center gap-2">
+                {showManageStudents ? <><Users className="w-5 h-5 text-blue-500" /> Kelola Siswa</> : <><Settings className="w-5 h-5 text-slate-500" /> Pengaturan A/V</>}
+              </h2>
+
+              {showManageStudents && (
+                <div className="space-y-4">
+                  <p className="text-sm text-slate-500 text-center py-4">Belum ada siswa yang bergabung secara interaktif.</p>
+                </div>
+              )}
+
+              {showSettings && (
+                <div className="space-y-6">
+                  <div>
+                    <label className="text-sm font-bold text-slate-700 block mb-2">Pilih Kamera</label>
+                    <select className="w-full p-3 border border-slate-200 rounded-xl bg-slate-50 text-sm">
+                      <option>Kamera Default Sistem</option>
+                    </select>
+                  </div>
+                  <div>
+                    <label className="text-sm font-bold text-slate-700 block mb-2">Efek Wajah / Avatar AR</label>
+                    <select className="w-full p-3 border border-slate-200 rounded-xl bg-slate-50 text-sm">
+                      <option>Tanpa Efek (Normal)</option>
+                      <option>VTuber Anime Model</option>
+                      <option>Filter Kucing Lucu</option>
+                      <option>Latar Belakang Kabur</option>
+                    </select>
+                    <p className="text-xs text-indigo-500 mt-2 font-medium flex items-center gap-1">
+                      <Sparkles className="w-3 h-3" /> Fitur Avatar didukung oleh MediaPipe
+                    </p>
+                  </div>
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

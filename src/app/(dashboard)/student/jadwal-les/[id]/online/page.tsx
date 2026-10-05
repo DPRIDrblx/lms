@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState, use } from "react";
+import { useEffect, useState, use, useRef } from "react";
 import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase";
 import { useAuth } from "@/lib/auth-context";
@@ -17,6 +17,15 @@ export default function OnlineClassStage({ params }: { params: Promise<{ id: str
   const [schedule, setSchedule] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [isHandRaised, setIsHandRaised] = useState(false);
+  
+  // Realtime State
+  const [messages, setMessages] = useState<{id: string, sender: string, text: string, time: string, isHost?: boolean}[]>([]);
+  const [chatInput, setChatInput] = useState("");
+  const [tutorState, setTutorState] = useState({ isCameraOn: false, isScreenSharing: false });
+  const [activePoll, setActivePoll] = useState<any>(null);
+  const [selectedPollOption, setSelectedPollOption] = useState<number | null>(null);
+  
+  const channelRef = useRef<any>(null);
 
   useEffect(() => {
     const fetchScheduleAndAttend = async () => {
@@ -45,7 +54,54 @@ export default function OnlineClassStage({ params }: { params: Promise<{ id: str
       setLoading(false);
     };
     fetchScheduleAndAttend();
+
+    // Setup Realtime
+    if (resolvedParams.id && user) {
+      const channel = supabase.channel(`room_${resolvedParams.id}`);
+
+      channel
+        .on('broadcast', { event: 'chat' }, ({ payload }) => {
+          setMessages(prev => [...prev, payload]);
+        })
+        .on('broadcast', { event: 'tutor_state' }, ({ payload }) => {
+          setTutorState(payload);
+        })
+        .on('broadcast', { event: 'poll' }, ({ payload }) => {
+          setActivePoll(payload);
+          setSelectedPollOption(null);
+        })
+        .subscribe();
+        
+      channelRef.current = channel;
+
+      return () => {
+        supabase.removeChannel(channel);
+      };
+    }
   }, [resolvedParams.id, user]);
+
+  const handleSendChat = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!chatInput.trim()) return;
+    const msg = {
+      id: Date.now().toString(),
+      sender: user?.full_name || 'Siswa',
+      text: chatInput,
+      time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+      isHost: false
+    };
+    channelRef.current?.send({ type: 'broadcast', event: 'chat', payload: msg });
+    setMessages(prev => [...prev, msg]);
+    setChatInput("");
+  };
+
+  const toggleHandRaise = () => {
+    const newState = !isHandRaised;
+    setIsHandRaised(newState);
+    if (newState) {
+       channelRef.current?.send({ type: 'broadcast', event: 'hand_raise', payload: { id: user?.id, name: user?.full_name } });
+    }
+  };
 
   if (loading) {
     return (
@@ -108,8 +164,17 @@ export default function OnlineClassStage({ params }: { params: Promise<{ id: str
                   <MicOff className="w-4 h-4 text-red-400" />
                 </div>
               </div>
-              <h2 className="text-2xl font-black text-white drop-shadow-md mb-2">Tutor {schedule.tutor?.full_name?.split(' ')[0] || ''}</h2>
-              <p className="text-slate-400 font-medium">Video Tutor akan muncul di sini saat sesi dimulai.</p>
+              </div>
+              <h2 className="text-2xl font-black text-white drop-shadow-md mb-2">
+                Tutor {schedule.tutor?.full_name?.split(' ')[0] || ''}
+              </h2>
+              {tutorState.isScreenSharing ? (
+                <p className="text-blue-400 font-bold bg-blue-900/30 px-4 py-2 rounded-lg">Memulai Share Screen...</p>
+              ) : tutorState.isCameraOn ? (
+                <p className="text-emerald-400 font-bold bg-emerald-900/30 px-4 py-2 rounded-lg">Tutor sedang menyalakan kamera...</p>
+              ) : (
+                <p className="text-slate-400 font-medium">Video Tutor akan muncul di sini saat sesi dimulai.</p>
+              )}
               
               <div className="absolute top-4 left-4 bg-indigo-600/90 backdrop-blur-md px-3 py-1.5 rounded-lg text-white flex items-center gap-2 shadow-sm">
                 <MonitorPlay className="w-4 h-4" />
@@ -132,7 +197,7 @@ export default function OnlineClassStage({ params }: { params: Promise<{ id: str
             {/* Center: Student Controls */}
             <div className="flex items-center gap-4">
               <button 
-                onClick={() => setIsHandRaised(!isHandRaised)}
+                onClick={toggleHandRaise}
                 className={cn(
                   "h-12 px-6 rounded-xl font-bold flex items-center gap-2 transition-all shadow-sm border",
                   isHandRaised 
@@ -156,24 +221,79 @@ export default function OnlineClassStage({ params }: { params: Promise<{ id: str
              </h3>
           </div>
           
-          <div className="flex-1 p-6 flex flex-col items-center justify-center text-center">
-             <div className="w-16 h-16 bg-blue-50 rounded-full flex items-center justify-center mb-4 border border-blue-100">
-               <MonitorPlay className="w-8 h-8 text-blue-400" />
+          <div className="flex-1 flex flex-col overflow-hidden">
+             
+             {/* Poll Area (if active) */}
+             {activePoll && (
+               <div className="shrink-0 p-4 bg-indigo-50 border-b border-indigo-100 relative">
+                 <button onClick={() => setActivePoll(null)} className="absolute top-2 right-2 p-1 text-indigo-400 hover:bg-indigo-100 rounded-md">
+                   <X className="w-3 h-3" />
+                 </button>
+                 <h4 className="font-bold text-indigo-800 text-xs mb-2 flex items-center gap-1">
+                   <MonitorPlay className="w-3 h-3" /> CBT Polling Tutor
+                 </h4>
+                 <p className="text-sm font-medium text-slate-700 mb-3">{activePoll.question}</p>
+                 <div className="space-y-2">
+                   {activePoll.options.map((opt: string, idx: number) => (
+                     <button
+                       key={idx}
+                       onClick={() => setSelectedPollOption(idx)}
+                       className={cn(
+                         "w-full text-left text-xs p-2 rounded-lg border transition-all",
+                         selectedPollOption === idx 
+                           ? "bg-indigo-600 border-indigo-700 text-white shadow-md shadow-indigo-500/20" 
+                           : "bg-white border-slate-200 hover:border-indigo-300 text-slate-700"
+                       )}
+                     >
+                       {opt}
+                     </button>
+                   ))}
+                 </div>
+               </div>
+             )}
+
+             {/* Chat Messages */}
+             <div className="flex-1 p-4 overflow-y-auto flex flex-col">
+               {messages.length === 0 ? (
+                 <div className="flex-1 flex flex-col items-center justify-center text-center opacity-50">
+                   <div className="w-16 h-16 bg-blue-50 rounded-full flex items-center justify-center mb-4 border border-blue-100">
+                     <MessageSquare className="w-8 h-8 text-blue-400" />
+                   </div>
+                   <p className="text-sm font-medium text-slate-500">Tutor belum mengirimkan instruksi.</p>
+                 </div>
+               ) : (
+                 <div className="w-full flex flex-col gap-3 justify-end items-start text-left mt-auto">
+                   {messages.map((msg) => (
+                     <div key={msg.id} className={cn("max-w-[85%] p-3 rounded-2xl text-sm", msg.isHost ? "bg-blue-100 text-blue-900 self-start rounded-bl-sm" : "bg-slate-100 text-slate-800 self-end rounded-br-sm")}>
+                       <div className="flex justify-between items-end gap-2 mb-1">
+                         <span className={cn("font-bold text-xs", msg.isHost && "text-blue-700")}>
+                           {msg.sender} {msg.isHost && "👑"}
+                         </span>
+                         <span className="text-[10px] opacity-60">{msg.time}</span>
+                       </div>
+                       <p>{msg.text}</p>
+                     </div>
+                   ))}
+                 </div>
+               )}
              </div>
-             <p className="text-sm font-medium text-slate-500">Sistem Polling & CBT Interaktif akan muncul di sini.</p>
-             <p className="text-xs text-slate-400 mt-2">Belum ada aktivitas.</p>
           </div>
 
-          {/* Dummy Chat Input */}
-          <div className="p-4 border-t border-slate-100 bg-white">
-            <div className="relative">
+          {/* Chat Input */}
+          <form onSubmit={handleSendChat} className="p-4 border-t border-slate-100 bg-white shrink-0">
+            <div className="relative flex items-center gap-2">
               <input 
                 type="text" 
+                value={chatInput}
+                onChange={e => setChatInput(e.target.value)}
                 placeholder="Kirim pesan ke kelas..." 
-                className="w-full bg-slate-50 border border-slate-200 rounded-xl py-3 pl-4 pr-10 text-sm text-slate-700 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-shadow"
+                className="w-full bg-slate-50 border border-slate-200 rounded-xl py-2 pl-3 pr-2 text-sm text-slate-700 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-shadow"
               />
+              <button type="submit" disabled={!chatInput.trim()} className="bg-blue-600 hover:bg-blue-700 text-white rounded-lg px-3 py-2 text-sm font-bold disabled:opacity-50 transition-colors">
+                Kirim
+              </button>
             </div>
-          </div>
+          </form>
         </aside>
       </div>
     </div>
