@@ -6,10 +6,14 @@ import { createClient } from "@/lib/supabase";
 import { useAuth } from "@/lib/auth-context";
 import { Button } from "@/components/ui/button";
 import { ChevronLeft, Hand, MessageSquare, MonitorPlay, X, UserCircle2, MicOff, RotateCcw } from "lucide-react";
+import { LiveKitRoom, useTracks, VideoTrack, RoomAudioRenderer } from "@livekit/components-react";
+import { Track } from "livekit-client";
+import "@livekit/components-styles";
 import { CenterLoader } from "@/components/ui/center-loader";
 import { cn } from "@/lib/utils";
+import toast from "react-hot-toast";
 
-export default function OnlineClassStage({ params }: { params: Promise<{ id: string }> }) {
+function StudentOnlineClassStageInner({ params }: { params: Promise<{ id: string }> }) {
   const resolvedParams = use(params);
   const router = useRouter();
   const { user } = useAuth();
@@ -72,7 +76,7 @@ export default function OnlineClassStage({ params }: { params: Promise<{ id: str
           setActivePoll(payload);
           setSelectedPollOption(null);
         })
-        .subscribe(async (status) => {
+        .subscribe(async (status: any) => {
           if (status === 'SUBSCRIBED') {
             await channel.track({
               user_id: user.id,
@@ -169,28 +173,7 @@ export default function OnlineClassStage({ params }: { params: Promise<{ id: str
             
             {/* Tutor Video Placeholder */}
             <div className="w-full h-full relative bg-black rounded-xl overflow-hidden shadow-lg border border-slate-300 flex flex-col items-center justify-center">
-              <div className="relative mb-6">
-                <div className="w-24 h-24 bg-slate-800 rounded-full border-4 border-slate-700 flex items-center justify-center shadow-2xl">
-                  {schedule.tutor?.avatar_url ? (
-                    <img src={schedule.tutor.avatar_url} className="w-full h-full rounded-full object-cover" alt="Tutor" />
-                  ) : (
-                    <UserCircle2 className="w-12 h-12 text-slate-500" />
-                  )}
-                </div>
-                <div className="absolute -bottom-2 -right-2 bg-slate-900 border border-slate-700 p-2 rounded-full shadow-sm">
-                  <MicOff className="w-4 h-4 text-red-400" />
-                </div>
-              </div>
-              <h2 className="text-2xl font-black text-white drop-shadow-md mb-2">
-                Tutor {schedule.tutor?.full_name?.split(' ')[0] || ''}
-              </h2>
-              {tutorState.isScreenSharing ? (
-                <p className="text-blue-400 font-bold bg-blue-900/30 px-4 py-2 rounded-lg">Memulai Share Screen...</p>
-              ) : tutorState.isCameraOn ? (
-                <p className="text-emerald-400 font-bold bg-emerald-900/30 px-4 py-2 rounded-lg">Tutor sedang menyalakan kamera...</p>
-              ) : (
-                <p className="text-slate-400 font-medium">Video Tutor akan muncul di sini saat sesi dimulai.</p>
-              )}
+              <TutorStreamRenderer schedule={schedule} tutorState={tutorState} />
               
               <div className="absolute top-4 left-4 bg-indigo-600/90 backdrop-blur-md px-3 py-1.5 rounded-lg text-white flex items-center gap-2 shadow-sm">
                 <MonitorPlay className="w-4 h-4" />
@@ -283,6 +266,7 @@ export default function OnlineClassStage({ params }: { params: Promise<{ id: str
           </form>
         </aside>
       </div>
+      </div>
 
       {/* Pop-up Polling/Aktivitas */}
       {activePoll && (
@@ -326,5 +310,92 @@ export default function OnlineClassStage({ params }: { params: Promise<{ id: str
         </div>
       )}
     </>
+  );
+}
+
+
+function TutorStreamRenderer({ schedule, tutorState }: { schedule: any, tutorState: any }) {
+  const tracks = useTracks([Track.Source.Camera, Track.Source.ScreenShare], { onlySubscribed: true });
+  const screenTrack = tracks.find(t => t.source === Track.Source.ScreenShare);
+  const camTrack = tracks.find(t => t.source === Track.Source.Camera);
+
+  if (screenTrack) {
+    return (
+      <>
+        <VideoTrack trackRef={screenTrack} className="w-full h-full object-contain absolute inset-0" />
+        <RoomAudioRenderer />
+      </>
+    );
+  }
+
+  if (camTrack) {
+    return (
+      <>
+        <VideoTrack trackRef={camTrack} className="w-full h-full object-cover absolute inset-0" />
+        <RoomAudioRenderer />
+      </>
+    );
+  }
+
+  return (
+    <>
+      <div className="relative mb-6 z-10">
+        <div className="w-24 h-24 bg-slate-800 rounded-full border-4 border-slate-700 flex items-center justify-center shadow-2xl">
+          {schedule.tutor?.avatar_url ? (
+            <img src={schedule.tutor.avatar_url} className="w-full h-full rounded-full object-cover" alt="Tutor" />
+          ) : (
+            <UserCircle2 className="w-12 h-12 text-slate-500" />
+          )}
+        </div>
+        <div className="absolute -bottom-2 -right-2 bg-slate-900 border border-slate-700 p-2 rounded-full shadow-sm">
+          <MicOff className="w-4 h-4 text-red-400" />
+        </div>
+      </div>
+      <h2 className="text-2xl font-black text-white drop-shadow-md mb-2 relative z-10">
+        Tutor {schedule.tutor?.full_name?.split(' ')[0] || ''}
+      </h2>
+      {tutorState.isScreenSharing ? (
+        <p className="text-blue-400 font-bold bg-blue-900/30 px-4 py-2 rounded-lg relative z-10">Memulai Share Screen...</p>
+      ) : tutorState.isCameraOn ? (
+        <p className="text-emerald-400 font-bold bg-emerald-900/30 px-4 py-2 rounded-lg relative z-10">Tutor sedang menyalakan kamera...</p>
+      ) : (
+        <p className="text-slate-400 font-medium relative z-10">Video Tutor akan muncul di sini saat sesi dimulai.</p>
+      )}
+      <RoomAudioRenderer />
+    </>
+  );
+}
+
+export default function StudentOnlineClassStage({ params }: { params: Promise<{ id: string }> }) {
+  const resolvedParams = use(params);
+  const { user } = useAuth();
+  const [token, setToken] = useState("");
+
+  useEffect(() => {
+    if (!resolvedParams.id || !user) return;
+    fetch('/api/livekit/token', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+         roomName: `room_${resolvedParams.id}`,
+         participantName: (user as any)?.full_name || 'Siswa',
+         participantId: user?.id,
+         isTutor: false
+      })
+    }).then(r => r.json()).then(d => {
+       if (d.token) setToken(d.token);
+    });
+  }, [resolvedParams.id, user]);
+
+  if (!token) return <div className="min-h-screen flex items-center justify-center bg-slate-50"><CenterLoader size="lg" /></div>;
+
+  return (
+    <LiveKitRoom
+      token={token}
+      serverUrl={process.env.NEXT_PUBLIC_LIVEKIT_URL}
+      connect={true}
+    >
+      <StudentOnlineClassStageInner params={params} />
+    </LiveKitRoom>
   );
 }

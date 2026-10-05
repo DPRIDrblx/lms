@@ -6,11 +6,14 @@ import { createClient } from "@/lib/supabase";
 import { useAuth } from "@/lib/auth-context";
 import { Button } from "@/components/ui/button";
 import { ChevronLeft, MessageSquare, MonitorUp, X, UserCircle2, MicOff, VideoOff, Settings, Users, Video, Mic, MonitorPlay, Sparkles } from "lucide-react";
+import { LiveKitRoom, useLocalParticipant, VideoTrack, useTracks } from "@livekit/components-react";
+import { Track } from "livekit-client";
+import "@livekit/components-styles";
 import { CenterLoader } from "@/components/ui/center-loader";
 import { cn } from "@/lib/utils";
 import toast from "react-hot-toast";
 
-export default function TutorOnlineClassStage({ params }: { params: Promise<{ id: string }> }) {
+function TutorOnlineClassStageInner({ params }: { params: Promise<{ id: string }> }) {
   const resolvedParams = use(params);
   const router = useRouter();
   const { user } = useAuth();
@@ -30,108 +33,43 @@ export default function TutorOnlineClassStage({ params }: { params: Promise<{ id
   const channelRef = useRef<any>(null);
 
   // AV State
-  const [isCameraOn, setIsCameraOn] = useState(false);
-  const [isMicOn, setIsMicOn] = useState(false);
-  const [isScreenSharing, setIsScreenSharing] = useState(false);
+  const { localParticipant, cameraTrack, microphoneTrack } = useLocalParticipant();
+  const isCameraOn = !!cameraTrack;
+  const isMicOn = !!microphoneTrack;
+  const isScreenSharing = localParticipant.isScreenShareEnabled;
   
-  // Streams
-  const [localStream, setLocalStream] = useState<MediaStream | null>(null);
-  const [screenStream, setScreenStream] = useState<MediaStream | null>(null);
+  const tracks = useTracks([Track.Source.ScreenShare], { onlySubscribed: false });
+  const screenShareTrack = tracks.find(t => t.source === Track.Source.ScreenShare && t.participant.isLocal);
 
-  const localStreamRef = useRef<MediaStream | null>(null);
-  const screenStreamRef = useRef<MediaStream | null>(null);
-
-  useEffect(() => {
-    localStreamRef.current = localStream;
-  }, [localStream]);
-
-  useEffect(() => {
-    screenStreamRef.current = screenStream;
-  }, [screenStream]);
-
-  const videoRef = useRef<HTMLVideoElement>(null);
-  const screenRef = useRef<HTMLVideoElement>(null);
-
-  useEffect(() => {
-    const fetchSchedule = async () => {
-      const { data: schedData } = await supabase
-        .from("center_schedules")
-        .select("*, tutor:tutor_id(full_name, avatar_url)")
-        .eq("id", resolvedParams.id)
-        .single();
-      
-      setSchedule(schedData);
-      setLoading(false);
-    };
-    fetchSchedule();
-
-    // Setup Realtime Channel
-    const channel = supabase.channel(`room_${resolvedParams.id}`, {
-      config: { 
-        broadcast: { self: true }, // Allow receiving our own broadcasts
-        presence: { key: user?.id }
-      }
-    });
-
-    channel
-      .on('presence', { event: 'sync' }, () => {
-        const state = channel.presenceState();
-        const users = Object.values(state).map((presenceArray: any) => presenceArray[0]);
-        setOnlineUsers(users.filter(u => u.role === 'student'));
-      })
-      .on('broadcast', { event: 'chat' }, ({ payload }: { payload: any }) => {
-        setMessages(prev => [...prev, payload]);
-      })
-      .on('broadcast', { event: 'hand_raise' }, ({ payload }: { payload: any }) => {
-        toast(`${payload.name} mengacungkan tangan!`, { icon: '✋' });
-      })
-      .subscribe(async (status: any) => {
-        if (status === 'SUBSCRIBED') {
-          await channel.track({
-            user_id: user?.id,
-            name: schedData?.tutor?.full_name || 'Tutor',
-            role: 'tutor'
-          });
-          channel.send({
-            type: 'broadcast',
-            event: 'tutor_state',
-            payload: { isCameraOn: localStreamRef.current !== null, isScreenSharing: screenStreamRef.current !== null }
-          });
-        }
-      });
-      
-    channelRef.current = channel;
-
-    return () => {
-      // Cleanup streams on unmount
-      stopAllStreams();
-      supabase.removeChannel(channel);
-    };
-  }, [resolvedParams.id]);
-
-  useEffect(() => {
-    // Attach stream to video element when it changes
-    if (videoRef.current && localStream) {
-      videoRef.current.srcObject = localStream;
+  const toggleCamera = async () => {
+    if (cameraTrack) {
+      await localParticipant.setCameraEnabled(false);
+    } else {
+      await localParticipant.setCameraEnabled(true);
     }
-  }, [localStream, isCameraOn]);
+  };
 
-  useEffect(() => {
-    if (screenRef.current && screenStream) {
-      screenRef.current.srcObject = screenStream;
+  const toggleMic = async () => {
+    if (microphoneTrack) {
+      await localParticipant.setMicrophoneEnabled(false);
+    } else {
+      await localParticipant.setMicrophoneEnabled(true);
     }
-  }, [screenStream, isScreenSharing]);
+  };
 
-  // Sync AV state to students
-  useEffect(() => {
-    if (channelRef.current) {
-      channelRef.current.send({
-        type: 'broadcast',
-        event: 'tutor_state',
-        payload: { isCameraOn, isScreenSharing }
-      });
+  const toggleScreenShare = async () => {
+    if (isScreenSharing) {
+      await localParticipant.setScreenShareEnabled(false);
+    } else {
+      await localParticipant.setScreenShareEnabled(true);
     }
-  }, [isCameraOn, isScreenSharing]);
+  };
+
+  const stopAllStreams = async () => {
+    if (cameraTrack) await localParticipant.setCameraEnabled(false);
+    if (microphoneTrack) await localParticipant.setMicrophoneEnabled(false);
+    if (isScreenSharing) await localParticipant.setScreenShareEnabled(false);
+  };
 
   const handleSendChat = (e: React.FormEvent) => {
     e.preventDefault();
@@ -160,103 +98,17 @@ export default function TutorOnlineClassStage({ params }: { params: Promise<{ id
       return;
     }
 
-    const poll = {
-      id: Date.now().toString(),
-      question: pollForm.question,
-      options: validOptions
-    };
-    
-    channelRef.current?.send({ type: 'broadcast', event: 'poll', payload: poll });
-    toast.success("Aktivitas/Polling berhasil dikirim ke semua siswa!");
+    channelRef.current?.send({
+      type: 'broadcast',
+      event: 'tutor_poll',
+      payload: {
+        question: pollForm.question,
+        options: validOptions
+      }
+    });
+
+    toast.success("Aktivitas/Polling berhasil dikirim ke layar siswa!");
     setShowPollModal(false);
-    setPollForm({ question: "", options: ["", ""] }); // Reset form
-  };
-
-  const stopAllStreams = () => {
-    if (localStreamRef.current) {
-      localStreamRef.current.getTracks().forEach(track => track.stop());
-      setLocalStream(null);
-    }
-    if (screenStreamRef.current) {
-      screenStreamRef.current.getTracks().forEach(track => track.stop());
-      setScreenStream(null);
-    }
-    setIsCameraOn(false);
-    setIsMicOn(false);
-    setIsScreenSharing(false);
-  };
-
-  const toggleCamera = async () => {
-    if (isCameraOn) {
-      // Turn off camera
-      if (localStream) {
-        localStream.getVideoTracks().forEach(track => track.stop());
-        // If mic is also off, we can kill the whole stream. Otherwise just remove video track.
-        if (!isMicOn) setLocalStream(null);
-      }
-      setIsCameraOn(false);
-    } else {
-      // Turn on camera
-      try {
-        const stream = await navigator.mediaDevices.getUserMedia({ video: true, audio: isMicOn });
-        if (localStream && isMicOn) {
-           // We already had audio, need to replace it with the new combined stream or add video track
-           setLocalStream(stream);
-        } else {
-           setLocalStream(stream);
-        }
-        setIsCameraOn(true);
-      } catch (err) {
-        toast.error("Gagal mengakses kamera. Pastikan Anda telah memberikan izin.");
-        console.error(err);
-      }
-    }
-  };
-
-  const toggleMic = async () => {
-    if (isMicOn) {
-      if (localStream) {
-        localStream.getAudioTracks().forEach(track => {
-            track.enabled = false;
-            track.stop();
-        });
-        if (!isCameraOn) setLocalStream(null);
-      }
-      setIsMicOn(false);
-    } else {
-      try {
-        const stream = await navigator.mediaDevices.getUserMedia({ audio: true, video: isCameraOn });
-        setLocalStream(stream);
-        setIsMicOn(true);
-      } catch (err) {
-        toast.error("Gagal mengakses mikrofon.");
-      }
-    }
-  };
-
-  const toggleScreenShare = async () => {
-    if (isScreenSharing) {
-      if (screenStream) {
-        screenStream.getTracks().forEach(track => track.stop());
-        setScreenStream(null);
-      }
-      setIsScreenSharing(false);
-    } else {
-      try {
-        const stream = await navigator.mediaDevices.getDisplayMedia({ video: true });
-        
-        // Listen for user clicking "Stop sharing" in Chrome UI
-        stream.getVideoTracks()[0].onended = () => {
-          setIsScreenSharing(false);
-          setScreenStream(null);
-        };
-
-        setScreenStream(stream);
-        setIsScreenSharing(true);
-      } catch (err) {
-        toast.error("Gagal membagikan layar.");
-      }
-    }
   };
 
   if (loading) {
@@ -308,12 +160,10 @@ export default function TutorOnlineClassStage({ params }: { params: Promise<{ id
           <div className="flex-1 min-h-0 relative flex items-center justify-center p-4">
             
             {/* 1. Screen Share Takes Priority */}
-            {isScreenSharing && (
+            {isScreenSharing && screenShareTrack && (
               <div className="w-full h-full relative bg-black rounded-xl overflow-hidden shadow-lg border border-slate-300">
-                <video 
-                  ref={screenRef} 
-                  autoPlay 
-                  playsInline 
+                <VideoTrack 
+                  trackRef={screenShareTrack} 
                   className="w-full h-full object-contain"
                 />
                 <div className="absolute top-4 left-4 bg-blue-600/90 backdrop-blur-md px-3 py-1.5 rounded-lg text-white flex items-center gap-2 shadow-sm">
@@ -331,13 +181,12 @@ export default function TutorOnlineClassStage({ params }: { params: Promise<{ id
                   ? "absolute bottom-6 right-6 w-48 aspect-video rounded-xl z-20 shadow-2xl ring-4 ring-white/50" 
                   : "w-full h-full rounded-xl"
               )}>
-                <video 
-                  ref={videoRef} 
-                  autoPlay 
-                  playsInline 
-                  muted // Mute local video to prevent feedback
-                  className={cn("w-full h-full", isScreenSharing ? "object-cover" : "object-contain")}
-                />
+                {tracks.find(t => t.source === Track.Source.Camera && t.participant.isLocal) && (
+                  <VideoTrack 
+                    trackRef={tracks.find(t => t.source === Track.Source.Camera && t.participant.isLocal) as any} 
+                    className={cn("w-full h-full", isScreenSharing ? "object-cover" : "object-contain scale-x-[-1]")}
+                  />
+                )}
                 {!isScreenSharing && (
                   <div className="absolute top-4 left-4 bg-emerald-600/90 backdrop-blur-md px-3 py-1.5 rounded-lg text-white flex items-center gap-2 shadow-sm">
                     <Video className="w-4 h-4" />
@@ -622,5 +471,39 @@ export default function TutorOnlineClassStage({ params }: { params: Promise<{ id
         </div>
       )}
     </div>
+  );
+}
+
+export default function TutorOnlineClassStage({ params }: { params: Promise<{ id: string }> }) {
+  const resolvedParams = use(params);
+  const { user } = useAuth();
+  const [token, setToken] = useState("");
+
+  useEffect(() => {
+    if (!resolvedParams.id || !user) return;
+    fetch('/api/livekit/token', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+         roomName: `room_${resolvedParams.id}`,
+         participantName: (user as any)?.full_name || 'Tutor',
+         participantId: user?.id,
+         isTutor: true
+      })
+    }).then(r => r.json()).then(d => {
+       if (d.token) setToken(d.token);
+    });
+  }, [resolvedParams.id, user]);
+
+  if (!token) return <div className="min-h-screen flex items-center justify-center bg-slate-50"><CenterLoader size="lg" /></div>;
+
+  return (
+    <LiveKitRoom
+      token={token}
+      serverUrl={process.env.NEXT_PUBLIC_LIVEKIT_URL}
+      connect={true}
+    >
+      <TutorOnlineClassStageInner params={params} />
+    </LiveKitRoom>
   );
 }
