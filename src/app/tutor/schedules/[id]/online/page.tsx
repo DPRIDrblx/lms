@@ -12,6 +12,7 @@ import "@livekit/components-styles";
 import { CenterLoader } from "@/components/ui/center-loader";
 import { cn } from "@/lib/utils";
 import toast from "react-hot-toast";
+import Draggable from 'react-draggable';
 
 function TutorOnlineClassStageInner({ params }: { params: Promise<{ id: string }> }) {
   const resolvedParams = use(params);
@@ -30,8 +31,22 @@ function TutorOnlineClassStageInner({ params }: { params: Promise<{ id: string }
   const [pollForm, setPollForm] = useState({ question: "", options: ["", ""] });
   const [pollResults, setPollResults] = useState<{ [key: string]: number }>({});
   const [onlineUsers, setOnlineUsers] = useState<any[]>([]);
+  const [raisedHands, setRaisedHands] = useState<any[]>([]);
   
   const channelRef = useRef<any>(null);
+
+  useEffect(() => {
+    if (resolvedParams.id) {
+      const saved = localStorage.getItem(`chat_${resolvedParams.id}`);
+      if (saved) setMessages(JSON.parse(saved));
+    }
+  }, [resolvedParams.id]);
+
+  useEffect(() => {
+    if (resolvedParams.id && messages.length > 0) {
+      localStorage.setItem(`chat_${resolvedParams.id}`, JSON.stringify(messages));
+    }
+  }, [messages, resolvedParams.id]);
 
   useEffect(() => {
     const fetchSchedule = async () => {
@@ -63,6 +78,10 @@ function TutorOnlineClassStageInner({ params }: { params: Promise<{ id: string }
         })
         .on('broadcast', { event: 'raise_hand' }, ({ payload }: { payload: any }) => {
           toast(`${payload.studentName} mengacungkan tangan! ✋`, { icon: '✋' });
+          setRaisedHands(prev => {
+             if (prev.find(h => h.id === payload.id)) return prev;
+             return [...prev, payload];
+          });
         })
         .on('presence', { event: 'sync' }, () => {
           const state = channel.presenceState();
@@ -110,7 +129,7 @@ function TutorOnlineClassStageInner({ params }: { params: Promise<{ id: string }
   };
 
   const toggleScreenShare = async () => {
-    await localParticipant.setScreenShareEnabled(!isScreenShareEnabled);
+    await localParticipant.setScreenShareEnabled(!isScreenShareEnabled, { audio: true });
   };
 
   const stopAllStreams = async () => {
@@ -224,29 +243,31 @@ function TutorOnlineClassStageInner({ params }: { params: Promise<{ id: string }
 
             {/* 2. Camera Display (If no screen share, camera is big. If screen share, camera is small in corner) */}
             {isCameraOn && (
-              <div className={cn(
-                "relative bg-black overflow-hidden shadow-lg border border-slate-300 transition-all duration-300",
-                isScreenSharing 
-                  ? "absolute bottom-6 right-6 w-48 aspect-video rounded-xl z-20 shadow-2xl ring-4 ring-white/50" 
-                  : "w-full h-full rounded-xl"
-              )}>
-                {tracks.find(t => t.source === Track.Source.Camera && t.participant.isLocal) && (
-                  <VideoTrack 
-                    trackRef={tracks.find(t => t.source === Track.Source.Camera && t.participant.isLocal) as any} 
-                    className={cn("w-full h-full", isScreenSharing ? "object-cover" : "object-contain scale-x-[-1]")}
-                  />
-                )}
-                {!isScreenSharing && (
-                  <div className="absolute top-4 left-4 bg-emerald-600/90 backdrop-blur-md px-3 py-1.5 rounded-lg text-white flex items-center gap-2 shadow-sm">
-                    <Video className="w-4 h-4" />
-                    <span className="text-xs font-bold">Kamera Anda</span>
+              <Draggable bounds="parent" disabled={!isScreenSharing}>
+                <div className={cn(
+                  "relative bg-black overflow-hidden shadow-lg border border-slate-300 transition-all duration-300",
+                  isScreenSharing 
+                    ? "absolute bottom-6 right-6 w-48 aspect-video rounded-xl z-20 shadow-2xl ring-4 ring-white/50 cursor-move" 
+                    : "w-full h-full rounded-xl"
+                )}>
+                  {tracks.find(t => t.source === Track.Source.Camera && t.participant.isLocal) && (
+                    <VideoTrack 
+                      trackRef={tracks.find(t => t.source === Track.Source.Camera && t.participant.isLocal) as any} 
+                      className={cn("w-full h-full", isScreenSharing ? "object-cover" : "object-contain scale-x-[-1]")}
+                    />
+                  )}
+                  {!isScreenSharing && (
+                    <div className="absolute top-4 left-4 bg-emerald-600/90 backdrop-blur-md px-3 py-1.5 rounded-lg text-white flex items-center gap-2 shadow-sm pointer-events-none">
+                      <Video className="w-4 h-4" />
+                      <span className="text-xs font-bold">Kamera Anda</span>
+                    </div>
+                  )}
+                  <div className="absolute bottom-2 right-2 bg-black/60 px-2 py-1 rounded text-white text-xs font-bold flex items-center gap-2 pointer-events-none">
+                    {!isMicOn && <MicOff className="w-3 h-3 text-red-400" />}
+                    {schedule.tutor?.full_name?.split(' ')[0]}
                   </div>
-                )}
-                <div className="absolute bottom-2 right-2 bg-black/60 px-2 py-1 rounded text-white text-xs font-bold flex items-center gap-2">
-                  {!isMicOn && <MicOff className="w-3 h-3 text-red-400" />}
-                  {schedule.tutor?.full_name?.split(' ')[0]}
                 </div>
-              </div>
+              </Draggable>
             )}
 
             {/* 3. Placeholder (If both are off) */}
@@ -389,6 +410,25 @@ function TutorOnlineClassStageInner({ params }: { params: Promise<{ id: string }
 
           {/* Quick Actions (Poll, Activity) */}
           <div className="px-4 pb-2 shrink-0 flex flex-col gap-2">
+            {raisedHands.length > 0 && (
+              <div className="bg-amber-50 border border-amber-200 p-3 rounded-xl text-left text-xs mb-2">
+                <p className="font-bold text-amber-800 mb-1">Antrean Bertanya ({raisedHands.length}):</p>
+                {raisedHands.map((h, i) => (
+                  <div key={i} className="flex justify-between items-center bg-white px-2 py-1.5 rounded shadow-sm mb-1">
+                    <span className="font-bold text-slate-700 truncate mr-2">{h.studentName}</span>
+                    <button 
+                      onClick={() => {
+                        channelRef.current?.send({ type: 'broadcast', event: 'accept_hand_raise', payload: { id: h.id } });
+                        setRaisedHands(prev => prev.filter(r => r.id !== h.id));
+                      }}
+                      className="bg-amber-500 hover:bg-amber-600 text-white px-2 py-1 rounded text-[10px] font-bold shrink-0"
+                    >
+                      Panggil
+                    </button>
+                  </div>
+                ))}
+              </div>
+            )}
             {Object.keys(pollResults).length > 0 && (
               <div className="bg-indigo-50 border border-indigo-100 p-3 rounded-xl text-left text-xs mb-2">
                 <p className="font-bold text-indigo-800 mb-1">Hasil Polling Terakhir:</p>

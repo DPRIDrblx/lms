@@ -33,7 +33,7 @@ export async function POST(req: Request) {
     at.addGrant({
       roomJoin: true,
       room: roomName,
-      canPublish: isTutor, // Only tutors can publish video/audio by default
+      canPublish: true, // Everyone can publish, but UI restricts it
       canSubscribe: true,
       canPublishData: true,
     });

@@ -5,8 +5,8 @@ import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase";
 import { useAuth } from "@/lib/auth-context";
 import { Button } from "@/components/ui/button";
-import { ChevronLeft, Hand, MessageSquare, MonitorPlay, X, UserCircle2, MicOff, RotateCcw } from "lucide-react";
-import { LiveKitRoom, useTracks, VideoTrack, RoomAudioRenderer } from "@livekit/components-react";
+import { ChevronLeft, Hand, MessageSquare, MonitorPlay, X, UserCircle2, MicOff, Mic, RotateCcw } from "lucide-react";
+import { LiveKitRoom, useTracks, VideoTrack, RoomAudioRenderer, useLocalParticipant } from "@livekit/components-react";
 import { Track } from "livekit-client";
 import "@livekit/components-styles";
 import { CenterLoader } from "@/components/ui/center-loader";
@@ -21,8 +21,10 @@ function StudentOnlineClassStageInner({ params }: { params: Promise<{ id: string
   const [schedule, setSchedule] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [isHandRaised, setIsHandRaised] = useState(false);
+  const [isOnStage, setIsOnStage] = useState(false);
   
-  // Realtime State
+  // AV State
+  const { localParticipant, isMicrophoneEnabled } = useLocalParticipant();
   const [messages, setMessages] = useState<{id: string, sender: string, text: string, time: string, isHost?: boolean}[]>([]);
   const [chatInput, setChatInput] = useState("");
   const [tutorState, setTutorState] = useState({ isCameraOn: false, isScreenSharing: false });
@@ -30,6 +32,19 @@ function StudentOnlineClassStageInner({ params }: { params: Promise<{ id: string
   const [selectedPollOption, setSelectedPollOption] = useState<number | null>(null);
   
   const channelRef = useRef<any>(null);
+
+  useEffect(() => {
+    if (resolvedParams.id) {
+      const saved = localStorage.getItem(`chat_${resolvedParams.id}`);
+      if (saved) setMessages(JSON.parse(saved));
+    }
+  }, [resolvedParams.id]);
+
+  useEffect(() => {
+    if (resolvedParams.id && messages.length > 0) {
+      localStorage.setItem(`chat_${resolvedParams.id}`, JSON.stringify(messages));
+    }
+  }, [messages, resolvedParams.id]);
 
   useEffect(() => {
     const fetchScheduleAndAttend = async () => {
@@ -75,6 +90,13 @@ function StudentOnlineClassStageInner({ params }: { params: Promise<{ id: string
         .on('broadcast', { event: 'poll' }, ({ payload }: { payload: any }) => {
           setActivePoll(payload);
           setSelectedPollOption(null);
+        })
+        .on('broadcast', { event: 'accept_hand_raise' }, ({ payload }: { payload: any }) => {
+          if (payload.id === user.id) {
+            toast.success("Tutor memanggil Anda ke panggung! Mic kini dapat diaktifkan.", { icon: "🎙️", duration: 5000 });
+            setIsOnStage(true);
+            setIsHandRaised(false);
+          }
         })
         .subscribe(async (status: any) => {
           if (status === 'SUBSCRIBED') {
@@ -195,18 +217,49 @@ function StudentOnlineClassStageInner({ params }: { params: Promise<{ id: string
             
             {/* Center: Student Controls */}
             <div className="flex items-center gap-4">
-              <button 
-                onClick={toggleHandRaise}
-                className={cn(
-                  "h-12 px-6 rounded-xl font-bold flex items-center gap-2 transition-all shadow-sm border",
-                  isHandRaised 
-                    ? "bg-amber-500 border-amber-600 text-white shadow-amber-500/20" 
-                    : "bg-white border-slate-200 text-slate-700 hover:bg-slate-50"
-                )}
-              >
-                <Hand className={cn("w-5 h-5", isHandRaised && "animate-bounce")} />
-                {isHandRaised ? "Turunkan Tangan" : "Raise Hand (Naik Panggung)"}
-              </button>
+              {isOnStage ? (
+                <div className="flex items-center gap-3">
+                  <span className="text-xs font-bold text-emerald-600 bg-emerald-100 px-3 py-2 rounded-lg border border-emerald-200">
+                    Anda berada di Panggung
+                  </span>
+                  <button 
+                    onClick={async () => {
+                       await localParticipant.setMicrophoneEnabled(!isMicrophoneEnabled);
+                    }}
+                    className={cn(
+                      "w-12 h-12 rounded-xl flex items-center justify-center transition-all shadow-sm border",
+                      isMicrophoneEnabled 
+                        ? "bg-white border-slate-200 text-slate-700 hover:bg-slate-50" 
+                        : "bg-red-50 border-red-200 text-red-500 hover:bg-red-100"
+                    )}
+                    title={isMicrophoneEnabled ? "Matikan Mic" : "Nyalakan Mic"}
+                  >
+                    {isMicrophoneEnabled ? <Mic className="w-5 h-5" /> : <MicOff className="w-5 h-5" />}
+                  </button>
+                  <button
+                    onClick={async () => {
+                       await localParticipant.setMicrophoneEnabled(false);
+                       setIsOnStage(false);
+                    }}
+                    className="h-12 px-4 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold rounded-xl transition-colors border border-slate-200 text-sm"
+                  >
+                    Turun Panggung
+                  </button>
+                </div>
+              ) : (
+                <button 
+                  onClick={toggleHandRaise}
+                  className={cn(
+                    "h-12 px-6 rounded-xl font-bold flex items-center gap-2 transition-all shadow-sm border",
+                    isHandRaised 
+                      ? "bg-amber-500 border-amber-600 text-white shadow-amber-500/20" 
+                      : "bg-white border-slate-200 text-slate-700 hover:bg-slate-50"
+                  )}
+                >
+                  <Hand className={cn("w-5 h-5", isHandRaised && "animate-bounce")} />
+                  {isHandRaised ? "Turunkan Tangan" : "Raise Hand (Naik Panggung)"}
+                </button>
+              )}
             </div>
             
           </div>
