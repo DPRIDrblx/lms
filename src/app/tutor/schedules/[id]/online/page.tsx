@@ -114,9 +114,9 @@ function TutorOnlineClassStageInner({ params }: { params: Promise<{ id: string }
   };
 
   const stopAllStreams = async () => {
-    if (cameraTrack) await localParticipant.setCameraEnabled(false);
-    if (microphoneTrack) await localParticipant.setMicrophoneEnabled(false);
-    if (isScreenSharing) await localParticipant.setScreenShareEnabled(false);
+    if (isCameraEnabled) await localParticipant.setCameraEnabled(false);
+    if (isMicrophoneEnabled) await localParticipant.setMicrophoneEnabled(false);
+    if (isScreenShareEnabled) await localParticipant.setScreenShareEnabled(false);
   };
 
   const handleSendChat = (e: React.FormEvent) => {
