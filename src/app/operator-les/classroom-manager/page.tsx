@@ -254,6 +254,11 @@ export default function TUClassroomManager() {
                         <div className="flex items-center gap-3 mt-1">
                           <Badge variant="info">Academic Year 2024/2025</Badge>
                           <Badge variant="success">Active Session</Badge>
+                          {selectedClass.enrollment_code && (
+                            <Badge variant="warning" className="bg-amber-100 text-amber-800 border border-amber-300">
+                              Kode Kelas: <span className="font-mono font-black ml-1">{selectedClass.enrollment_code}</span>
+                            </Badge>
+                          )}
                         </div>
                       </div>
                     </div>
