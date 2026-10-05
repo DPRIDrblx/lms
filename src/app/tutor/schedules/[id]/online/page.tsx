@@ -491,7 +491,13 @@ export default function TutorOnlineClassStage({ params }: { params: Promise<{ id
          isTutor: true
       })
     }).then(r => r.json()).then(d => {
-       if (d.token) setToken(d.token);
+       if (d.token) {
+         setToken(d.token);
+       } else {
+         toast.error(d.error || "Gagal mendapatkan token kelas");
+       }
+    }).catch(err => {
+       toast.error("Terjadi kesalahan sistem saat menghubungi server");
     });
   }, [resolvedParams.id, user]);
 
