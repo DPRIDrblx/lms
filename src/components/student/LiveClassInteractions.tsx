@@ -183,7 +183,7 @@ export default function StudentLiveInteractions({
                 <Sparkles className="w-5 h-5 text-indigo-500" /> Aktivitas Kelas
               </h3>
               {cbtPackages.map(pkg => {
-                const isCbt = !pkg.activity_type || pkg.activity_type === 'cbt';
+                const isCbt = ['cbt', 'assignment', 'material', 'form'].includes(pkg.activity_type) || !pkg.activity_type;
                 const isPdf = pkg.activity_type === 'pdf';
                 const isLink = pkg.activity_type === 'link';
 

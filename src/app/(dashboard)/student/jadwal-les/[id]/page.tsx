@@ -110,7 +110,7 @@ export default function StudentScheduleDetail({ params }: { params: Promise<{ id
           .from('session_cbt_packages')
           .select('*')
           .eq('schedule_id', schedData.id)
-          .eq('status', 'active')
+          .in('status', ['active', 'ended'])
           .order('created_at', { ascending: true });
         
         if (actData) setActivities(actData);
@@ -275,7 +275,7 @@ export default function StudentScheduleDetail({ params }: { params: Promise<{ id
   };
 
   const handleActivityClick = async (activity: any) => {
-    if (activity.activity_type === 'cbt' || !activity.activity_type) {
+    if (['cbt', 'assignment', 'material', 'form'].includes(activity.activity_type) || !activity.activity_type) {
       router.push(`/student/jadwal-les/${schedule.id}/cbt/${activity.id}`);
       return;
     }
