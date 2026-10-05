@@ -238,35 +238,6 @@ export default function OnlineClassStage({ params }: { params: Promise<{ id: str
           </div>
           
           <div className="flex-1 flex flex-col overflow-hidden">
-             
-             {/* Poll Area (if active) */}
-             {activePoll && (
-               <div className="shrink-0 p-4 bg-indigo-50 border-b border-indigo-100 relative">
-                 <button onClick={() => setActivePoll(null)} className="absolute top-2 right-2 p-1 text-indigo-400 hover:bg-indigo-100 rounded-md">
-                   <X className="w-3 h-3" />
-                 </button>
-                 <h4 className="font-bold text-indigo-800 text-xs mb-2 flex items-center gap-1">
-                   <MonitorPlay className="w-3 h-3" /> CBT Polling Tutor
-                 </h4>
-                 <p className="text-sm font-medium text-slate-700 mb-3">{activePoll.question}</p>
-                 <div className="space-y-2">
-                   {activePoll.options.map((opt: string, idx: number) => (
-                     <button
-                       key={idx}
-                       onClick={() => setSelectedPollOption(idx)}
-                       className={cn(
-                         "w-full text-left text-xs p-2 rounded-lg border transition-all",
-                         selectedPollOption === idx 
-                           ? "bg-indigo-600 border-indigo-700 text-white shadow-md shadow-indigo-500/20" 
-                           : "bg-white border-slate-200 hover:border-indigo-300 text-slate-700"
-                       )}
-                     >
-                       {opt}
-                     </button>
-                   ))}
-                 </div>
-               </div>
-             )}
 
              {/* Chat Messages */}
              <div className="flex-1 p-4 overflow-y-auto flex flex-col">
@@ -312,7 +283,48 @@ export default function OnlineClassStage({ params }: { params: Promise<{ id: str
           </form>
         </aside>
       </div>
-    </div>
+
+      {/* Pop-up Polling/Aktivitas */}
+      {activePoll && (
+        <div className="absolute inset-0 bg-slate-900/60 backdrop-blur-sm z-[300] flex items-center justify-center p-4">
+          <div className="bg-white rounded-3xl shadow-2xl w-full max-w-lg overflow-hidden animate-in fade-in zoom-in-95 duration-200">
+            <div className="bg-indigo-600 p-6 relative">
+              <button onClick={() => setActivePoll(null)} className="absolute top-4 right-4 text-white/70 hover:text-white bg-indigo-500 hover:bg-indigo-400 p-1 rounded-full transition-colors">
+                <X className="w-5 h-5" />
+              </button>
+              <h4 className="font-black text-white text-xl flex items-center gap-2">
+                <MonitorPlay className="w-6 h-6" /> Aktivitas Langsung (Live CBT)
+              </h4>
+            </div>
+            <div className="p-8">
+              <p className="text-lg font-bold text-slate-800 mb-6">{activePoll.question}</p>
+              <div className="space-y-3">
+                {activePoll.options.map((opt: string, idx: number) => (
+                  <button
+                    key={idx}
+                    onClick={() => {
+                      setSelectedPollOption(idx);
+                      toast.success("Jawaban Anda berhasil dikirim ke Tutor!", { icon: "✅" });
+                      setTimeout(() => setActivePoll(null), 1500); // Auto close after submit
+                    }}
+                    className={cn(
+                      "w-full text-left p-4 rounded-2xl border-2 transition-all font-bold group hover:-translate-y-0.5",
+                      selectedPollOption === idx 
+                        ? "bg-indigo-50 border-indigo-500 text-indigo-700 shadow-md shadow-indigo-500/20" 
+                        : "bg-white border-slate-200 hover:border-indigo-300 text-slate-700"
+                    )}
+                  >
+                    <span className="inline-block w-8 h-8 rounded-full bg-slate-100 text-center leading-8 mr-3 group-hover:bg-indigo-100 group-hover:text-indigo-600 transition-colors">
+                      {String.fromCharCode(65 + idx)}
+                    </span>
+                    {opt}
+                  </button>
+                ))}
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </>
   );
 }

@@ -23,6 +23,8 @@ export default function TutorOnlineClassStage({ params }: { params: Promise<{ id
   const [chatInput, setChatInput] = useState("");
   const [showManageStudents, setShowManageStudents] = useState(false);
   const [showSettings, setShowSettings] = useState(false);
+  const [showPollModal, setShowPollModal] = useState(false);
+  const [pollForm, setPollForm] = useState({ question: "", options: ["", ""] });
   const [onlineUsers, setOnlineUsers] = useState<any[]>([]);
   
   const channelRef = useRef<any>(null);
@@ -145,14 +147,29 @@ export default function TutorOnlineClassStage({ params }: { params: Promise<{ id
     setChatInput("");
   };
 
-  const pushPoll = () => {
+  const handlePushPoll = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!pollForm.question.trim()) {
+      toast.error("Pertanyaan tidak boleh kosong!");
+      return;
+    }
+    
+    const validOptions = pollForm.options.filter(o => o.trim() !== "");
+    if (validOptions.length < 2) {
+      toast.error("Berikan minimal 2 pilihan jawaban!");
+      return;
+    }
+
     const poll = {
       id: Date.now().toString(),
-      question: "Apakah kalian sudah paham materi sejauh ini?",
-      options: ["Sudah paham", "Masih sedikit bingung", "Belum paham sama sekali"]
+      question: pollForm.question,
+      options: validOptions
     };
+    
     channelRef.current?.send({ type: 'broadcast', event: 'poll', payload: poll });
-    toast.success("Polling cepat berhasil dikirim ke semua siswa!");
+    toast.success("Aktivitas/Polling berhasil dikirim ke semua siswa!");
+    setShowPollModal(false);
+    setPollForm({ question: "", options: ["", ""] }); // Reset form
   };
 
   const stopAllStreams = () => {
@@ -474,8 +491,8 @@ export default function TutorOnlineClassStage({ params }: { params: Promise<{ id
 
           {/* Quick Actions (Poll, Activity) */}
           <div className="px-4 pb-2 shrink-0">
-            <Button onClick={pushPoll} variant="secondary" className="w-full h-8 text-xs font-bold gap-2 text-indigo-600 border border-indigo-200 hover:bg-indigo-50">
-              <MonitorPlay className="w-3 h-3" /> Luncurkan Polling Pemahaman
+            <Button onClick={() => setShowPollModal(true)} variant="secondary" className="w-full h-8 text-xs font-bold gap-2 text-indigo-600 border border-indigo-200 hover:bg-indigo-50">
+              <MonitorPlay className="w-3 h-3" /> Buat Aktivitas / Polling
             </Button>
           </div>
 
@@ -498,17 +515,62 @@ export default function TutorOnlineClassStage({ params }: { params: Promise<{ id
       </div>
 
       {/* Modals Overlay for Settings/Students */}
-      {(showManageStudents || showSettings) && (
+      {(showManageStudents || showSettings || showPollModal) && (
         <div className="absolute inset-0 bg-slate-900/40 backdrop-blur-sm z-50 flex items-center justify-center p-4">
           <div className="bg-white rounded-2xl shadow-2xl w-full max-w-md overflow-hidden relative animate-in fade-in zoom-in duration-200">
-            <button onClick={() => {setShowManageStudents(false); setShowSettings(false);}} className="absolute top-4 right-4 w-8 h-8 bg-slate-100 rounded-full flex items-center justify-center hover:bg-slate-200 text-slate-600">
+            <button onClick={() => {setShowManageStudents(false); setShowSettings(false); setShowPollModal(false);}} className="absolute top-4 right-4 w-8 h-8 bg-slate-100 rounded-full flex items-center justify-center hover:bg-slate-200 text-slate-600">
               <X className="w-4 h-4" />
             </button>
             
             <div className="p-6">
               <h2 className="text-xl font-black text-slate-800 mb-6 flex items-center gap-2">
-                {showManageStudents ? <><Users className="w-5 h-5 text-blue-500" /> Kelola Siswa</> : <><Settings className="w-5 h-5 text-slate-500" /> Pengaturan A/V</>}
+                {showManageStudents && <><Users className="w-5 h-5 text-blue-500" /> Kelola Siswa</>}
+                {showSettings && <><Settings className="w-5 h-5 text-slate-500" /> Pengaturan A/V</>}
+                {showPollModal && <><MonitorPlay className="w-5 h-5 text-indigo-500" /> Buat Aktivitas/Polling</>}
               </h2>
+
+              {showPollModal && (
+                <form onSubmit={handlePushPoll} className="space-y-4">
+                  <div>
+                    <label className="text-sm font-bold text-slate-700 block mb-2">Pertanyaan / Instruksi</label>
+                    <textarea 
+                      value={pollForm.question}
+                      onChange={e => setPollForm({...pollForm, question: e.target.value})}
+                      placeholder="Ketik pertanyaan untuk siswa..."
+                      className="w-full p-3 border border-slate-200 rounded-xl bg-slate-50 text-sm focus:ring-2 focus:ring-indigo-500 min-h-[80px]"
+                    />
+                  </div>
+                  <div>
+                    <label className="text-sm font-bold text-slate-700 block mb-2">Pilihan Jawaban</label>
+                    <div className="space-y-2 mb-2">
+                      {pollForm.options.map((opt, idx) => (
+                        <input 
+                          key={idx}
+                          type="text"
+                          value={opt}
+                          onChange={e => {
+                            const newOpts = [...pollForm.options];
+                            newOpts[idx] = e.target.value;
+                            setPollForm({...pollForm, options: newOpts});
+                          }}
+                          placeholder={`Pilihan ${idx + 1}`}
+                          className="w-full p-3 border border-slate-200 rounded-xl bg-slate-50 text-sm focus:ring-2 focus:ring-indigo-500"
+                        />
+                      ))}
+                    </div>
+                    <button 
+                      type="button" 
+                      onClick={() => setPollForm({...pollForm, options: [...pollForm.options, ""]})}
+                      className="text-xs font-bold text-indigo-600 hover:text-indigo-700"
+                    >
+                      + Tambah Pilihan
+                    </button>
+                  </div>
+                  <Button type="submit" className="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-bold h-12 rounded-xl mt-4">
+                    Kirim Sekarang
+                  </Button>
+                </form>
+              )}
 
               {showManageStudents && (
                 <div className="space-y-4">
