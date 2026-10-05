@@ -27,6 +27,17 @@ export default function TutorOnlineClassStage({ params }: { params: Promise<{ id
   const [localStream, setLocalStream] = useState<MediaStream | null>(null);
   const [screenStream, setScreenStream] = useState<MediaStream | null>(null);
 
+  const localStreamRef = useRef<MediaStream | null>(null);
+  const screenStreamRef = useRef<MediaStream | null>(null);
+
+  useEffect(() => {
+    localStreamRef.current = localStream;
+  }, [localStream]);
+
+  useEffect(() => {
+    screenStreamRef.current = screenStream;
+  }, [screenStream]);
+
   const videoRef = useRef<HTMLVideoElement>(null);
   const screenRef = useRef<HTMLVideoElement>(null);
 
@@ -63,12 +74,12 @@ export default function TutorOnlineClassStage({ params }: { params: Promise<{ id
   }, [screenStream, isScreenSharing]);
 
   const stopAllStreams = () => {
-    if (localStream) {
-      localStream.getTracks().forEach(track => track.stop());
+    if (localStreamRef.current) {
+      localStreamRef.current.getTracks().forEach(track => track.stop());
       setLocalStream(null);
     }
-    if (screenStream) {
-      screenStream.getTracks().forEach(track => track.stop());
+    if (screenStreamRef.current) {
+      screenStreamRef.current.getTracks().forEach(track => track.stop());
       setScreenStream(null);
     }
     setIsCameraOn(false);
