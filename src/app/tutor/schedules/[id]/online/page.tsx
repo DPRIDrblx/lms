@@ -32,6 +32,59 @@ function TutorOnlineClassStageInner({ params }: { params: Promise<{ id: string }
   
   const channelRef = useRef<any>(null);
 
+  useEffect(() => {
+    const fetchSchedule = async () => {
+      const { data: schedData } = await supabase
+        .from("center_schedules")
+        .select("*, tutor:tutor_id(full_name, avatar_url)")
+        .eq("id", resolvedParams.id)
+        .single();
+      
+      setSchedule(schedData);
+      setLoading(false);
+    };
+    fetchSchedule();
+
+    if (resolvedParams.id && user) {
+      const channel = supabase.channel(`room_${resolvedParams.id}`, {
+        config: { presence: { key: user.id } }
+      });
+
+      channel
+        .on('broadcast', { event: 'chat' }, ({ payload }: { payload: any }) => {
+          setMessages(prev => [...prev, payload]);
+        })
+        .on('broadcast', { event: 'student_poll_answer' }, ({ payload }: { payload: any }) => {
+          // You could collect answers here
+        })
+        .on('presence', { event: 'sync' }, () => {
+          const state = channel.presenceState();
+          const users: any[] = [];
+          Object.values(state).forEach((presences: any) => {
+            presences.forEach((p: any) => {
+              if (p.role === 'student') users.push(p);
+            });
+          });
+          setOnlineUsers(users);
+        })
+        .subscribe(async (status: any) => {
+          if (status === 'SUBSCRIBED') {
+            await channel.track({
+              user_id: user.id,
+              name: (user as any)?.full_name || 'Tutor',
+              role: 'tutor'
+            });
+          }
+        });
+
+      channelRef.current = channel;
+
+      return () => {
+        supabase.removeChannel(channel);
+      };
+    }
+  }, [resolvedParams.id, user, supabase]);
+
   // AV State
   const { localParticipant, cameraTrack, microphoneTrack } = useLocalParticipant();
   const isCameraOn = !!cameraTrack;
