@@ -1,13 +1,14 @@
 "use client";
 
-import { useEffect, useState, use } from "react";
+import { useEffect, useState, use, useRef } from "react";
 import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase";
 import { useAuth } from "@/lib/auth-context";
 import { Button } from "@/components/ui/button";
-import { ChevronLeft, Hand, MessageSquare, MonitorPlay, Sparkles, X, UserCircle2, MicOff, VideoOff, Settings, Users } from "lucide-react";
+import { ChevronLeft, MessageSquare, MonitorUp, X, UserCircle2, MicOff, VideoOff, Settings, Users, Video, Mic, MonitorPlay } from "lucide-react";
 import { CenterLoader } from "@/components/ui/center-loader";
 import { cn } from "@/lib/utils";
+import toast from "react-hot-toast";
 
 export default function TutorOnlineClassStage({ params }: { params: Promise<{ id: string }> }) {
   const resolvedParams = use(params);
@@ -16,11 +17,21 @@ export default function TutorOnlineClassStage({ params }: { params: Promise<{ id
   const supabase = createClient();
   const [schedule, setSchedule] = useState<any>(null);
   const [loading, setLoading] = useState(true);
-  const [isHandRaised, setIsHandRaised] = useState(false);
+
+  // AV State
+  const [isCameraOn, setIsCameraOn] = useState(false);
+  const [isMicOn, setIsMicOn] = useState(false);
+  const [isScreenSharing, setIsScreenSharing] = useState(false);
+  
+  // Streams
+  const [localStream, setLocalStream] = useState<MediaStream | null>(null);
+  const [screenStream, setScreenStream] = useState<MediaStream | null>(null);
+
+  const videoRef = useRef<HTMLVideoElement>(null);
+  const screenRef = useRef<HTMLVideoElement>(null);
 
   useEffect(() => {
     const fetchSchedule = async () => {
-      // 1. Fetch schedule
       const { data: schedData } = await supabase
         .from("center_schedules")
         .select("*, tutor:tutor_id(full_name, avatar_url)")
@@ -31,13 +42,118 @@ export default function TutorOnlineClassStage({ params }: { params: Promise<{ id
       setLoading(false);
     };
     fetchSchedule();
+
+    return () => {
+      // Cleanup streams on unmount
+      stopAllStreams();
+    };
   }, [resolvedParams.id]);
+
+  useEffect(() => {
+    // Attach stream to video element when it changes
+    if (videoRef.current && localStream) {
+      videoRef.current.srcObject = localStream;
+    }
+  }, [localStream, isCameraOn]);
+
+  useEffect(() => {
+    if (screenRef.current && screenStream) {
+      screenRef.current.srcObject = screenStream;
+    }
+  }, [screenStream, isScreenSharing]);
+
+  const stopAllStreams = () => {
+    if (localStream) {
+      localStream.getTracks().forEach(track => track.stop());
+      setLocalStream(null);
+    }
+    if (screenStream) {
+      screenStream.getTracks().forEach(track => track.stop());
+      setScreenStream(null);
+    }
+    setIsCameraOn(false);
+    setIsMicOn(false);
+    setIsScreenSharing(false);
+  };
+
+  const toggleCamera = async () => {
+    if (isCameraOn) {
+      // Turn off camera
+      if (localStream) {
+        localStream.getVideoTracks().forEach(track => track.stop());
+        // If mic is also off, we can kill the whole stream. Otherwise just remove video track.
+        if (!isMicOn) setLocalStream(null);
+      }
+      setIsCameraOn(false);
+    } else {
+      // Turn on camera
+      try {
+        const stream = await navigator.mediaDevices.getUserMedia({ video: true, audio: isMicOn });
+        if (localStream && isMicOn) {
+           // We already had audio, need to replace it with the new combined stream or add video track
+           setLocalStream(stream);
+        } else {
+           setLocalStream(stream);
+        }
+        setIsCameraOn(true);
+      } catch (err) {
+        toast.error("Gagal mengakses kamera. Pastikan Anda telah memberikan izin.");
+        console.error(err);
+      }
+    }
+  };
+
+  const toggleMic = async () => {
+    if (isMicOn) {
+      if (localStream) {
+        localStream.getAudioTracks().forEach(track => {
+            track.enabled = false;
+            track.stop();
+        });
+        if (!isCameraOn) setLocalStream(null);
+      }
+      setIsMicOn(false);
+    } else {
+      try {
+        const stream = await navigator.mediaDevices.getUserMedia({ audio: true, video: isCameraOn });
+        setLocalStream(stream);
+        setIsMicOn(true);
+      } catch (err) {
+        toast.error("Gagal mengakses mikrofon.");
+      }
+    }
+  };
+
+  const toggleScreenShare = async () => {
+    if (isScreenSharing) {
+      if (screenStream) {
+        screenStream.getTracks().forEach(track => track.stop());
+        setScreenStream(null);
+      }
+      setIsScreenSharing(false);
+    } else {
+      try {
+        const stream = await navigator.mediaDevices.getDisplayMedia({ video: true });
+        
+        // Listen for user clicking "Stop sharing" in Chrome UI
+        stream.getVideoTracks()[0].onended = () => {
+          setIsScreenSharing(false);
+          setScreenStream(null);
+        };
+
+        setScreenStream(stream);
+        setIsScreenSharing(true);
+      } catch (err) {
+        toast.error("Gagal membagikan layar.");
+      }
+    }
+  };
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-slate-950 flex flex-col items-center justify-center">
+      <div className="min-h-screen bg-slate-50 flex flex-col items-center justify-center">
         <CenterLoader size="lg" />
-        <p className="text-slate-400 mt-4 animate-pulse font-medium">Memasuki ruangan panggung...</p>
+        <p className="text-slate-500 mt-4 animate-pulse font-medium">Menyiapkan Ruangan Kelas...</p>
       </div>
     );
   }
@@ -45,169 +161,215 @@ export default function TutorOnlineClassStage({ params }: { params: Promise<{ id
   if (!schedule) return null;
 
   return (
-    <div className="fixed inset-0 z-[100] bg-slate-950 text-white flex flex-col overflow-hidden font-sans selection:bg-indigo-500/30">
+    <div className="fixed inset-0 z-[100] bg-slate-50 text-slate-800 flex flex-col overflow-hidden font-sans">
       
-      {/* Background Particles / Stars Animation */}
-      <div className="absolute inset-0 pointer-events-none overflow-hidden">
-        {[...Array(20)].map((_, i) => (
-          <div 
-            key={i}
-            className="absolute rounded-full bg-white animate-pulse"
-            style={{
-              top: `${Math.random() * 100}%`,
-              left: `${Math.random() * 100}%`,
-              width: `${Math.random() * 3 + 1}px`,
-              height: `${Math.random() * 3 + 1}px`,
-              opacity: Math.random() * 0.5 + 0.1,
-              animationDuration: `${Math.random() * 3 + 2}s`,
-              animationDelay: `${Math.random() * 2}s`
-            }}
-          />
-        ))}
-        {/* Subtle glowing orbs */}
-        <div className="absolute top-1/4 left-1/4 w-96 h-96 bg-indigo-500/10 rounded-full blur-[120px]"></div>
-        <div className="absolute bottom-1/4 right-1/4 w-96 h-96 bg-emerald-500/10 rounded-full blur-[120px]"></div>
-      </div>
-
       {/* Header */}
-      <header className="h-16 border-b border-white/10 bg-black/40 backdrop-blur-md flex items-center justify-between px-6 relative z-20">
+      <header className="h-16 border-b border-slate-200 bg-white flex items-center justify-between px-6 shadow-sm relative z-20">
         <div className="flex items-center gap-4">
           <button 
             onClick={() => router.back()}
-            className="w-10 h-10 rounded-full bg-white/5 hover:bg-white/10 flex items-center justify-center transition-colors"
+            className="w-10 h-10 rounded-full bg-slate-100 hover:bg-slate-200 flex items-center justify-center transition-colors"
           >
-            <ChevronLeft className="w-5 h-5 text-white/80" />
+            <ChevronLeft className="w-5 h-5 text-slate-600" />
           </button>
           <div className="flex flex-col">
-            <h1 className="font-bold text-base md:text-lg text-white leading-tight flex items-center gap-2">
+            <h1 className="font-bold text-base md:text-lg text-slate-900 leading-tight flex items-center gap-2">
               {schedule.title}
-              <span className="bg-red-500 text-[10px] font-black uppercase px-2 py-0.5 rounded-full tracking-wider animate-pulse">Live</span>
+              <span className="bg-red-500 text-white text-[10px] font-black uppercase px-2 py-0.5 rounded-full tracking-wider animate-pulse">Live</span>
             </h1>
-            <p className="text-xs text-white/50">Tuan Rumah (Host) • Panggung Virtual</p>
+            <p className="text-xs text-slate-500 font-medium">Panggung Virtual • Tuan Rumah (Host)</p>
           </div>
         </div>
         <Button 
-          onClick={() => router.back()}
-          className="bg-red-500/20 hover:bg-red-500/40 text-red-400 border border-red-500/30 rounded-xl"
+          onClick={() => { stopAllStreams(); router.back(); }}
+          className="bg-red-50 hover:bg-red-100 text-red-600 font-bold border border-red-200 rounded-xl"
         >
-          Keluar
+          Akhiri Kelas
         </Button>
       </header>
 
       {/* Main Content Area */}
-      <div className="flex-1 flex overflow-hidden relative z-10">
+      <div className="flex-1 flex overflow-hidden relative z-10 p-4 gap-4">
         
         {/* Stage / Podium Area (Center) */}
-        <main className="flex-1 p-4 md:p-8 flex flex-col items-center justify-center relative">
+        <main className="flex-1 flex flex-col relative bg-slate-200/50 rounded-2xl border border-slate-200 overflow-hidden shadow-inner">
           
-          <div className="w-full max-w-5xl aspect-video bg-black/60 rounded-[32px] border border-white/10 shadow-2xl relative overflow-hidden flex flex-col items-center justify-center backdrop-blur-sm group">
+          {/* Main Video Display */}
+          <div className="flex-1 relative flex items-center justify-center p-4">
             
-            {/* Podium Glow Effect */}
-            <div className="absolute bottom-0 w-3/4 h-1/2 bg-gradient-to-t from-indigo-500/20 to-transparent blur-3xl"></div>
-            
-            <div className="relative z-10 flex flex-col items-center text-center p-8">
-              <div className="relative mb-6">
-                <div className="w-24 h-24 bg-slate-800 rounded-full border-4 border-slate-700 flex items-center justify-center shadow-2xl">
+            {/* 1. Screen Share Takes Priority */}
+            {isScreenSharing && (
+              <div className="w-full h-full relative bg-black rounded-xl overflow-hidden shadow-lg border border-slate-300">
+                <video 
+                  ref={screenRef} 
+                  autoPlay 
+                  playsInline 
+                  className="w-full h-full object-contain"
+                />
+                <div className="absolute top-4 left-4 bg-blue-600/90 backdrop-blur-md px-3 py-1.5 rounded-lg text-white flex items-center gap-2 shadow-sm">
+                  <MonitorUp className="w-4 h-4" />
+                  <span className="text-xs font-bold">Membagikan Layar</span>
+                </div>
+              </div>
+            )}
+
+            {/* 2. Camera Display (If no screen share, camera is big. If screen share, camera is small in corner) */}
+            {isCameraOn && (
+              <div className={cn(
+                "relative bg-black overflow-hidden shadow-lg border border-slate-300 transition-all duration-300",
+                isScreenSharing 
+                  ? "absolute bottom-6 right-6 w-48 aspect-video rounded-xl z-20 shadow-2xl ring-4 ring-white/50" 
+                  : "w-full h-full rounded-xl"
+              )}>
+                <video 
+                  ref={videoRef} 
+                  autoPlay 
+                  playsInline 
+                  muted // Mute local video to prevent feedback
+                  className={cn("w-full h-full", isScreenSharing ? "object-cover" : "object-contain")}
+                />
+                {!isScreenSharing && (
+                  <div className="absolute top-4 left-4 bg-emerald-600/90 backdrop-blur-md px-3 py-1.5 rounded-lg text-white flex items-center gap-2 shadow-sm">
+                    <Video className="w-4 h-4" />
+                    <span className="text-xs font-bold">Kamera Anda</span>
+                  </div>
+                )}
+                <div className="absolute bottom-2 right-2 bg-black/60 px-2 py-1 rounded text-white text-xs font-bold flex items-center gap-2">
+                  {!isMicOn && <MicOff className="w-3 h-3 text-red-400" />}
+                  {schedule.tutor?.full_name?.split(' ')[0]}
+                </div>
+              </div>
+            )}
+
+            {/* 3. Placeholder (If both are off) */}
+            {!isScreenSharing && !isCameraOn && (
+              <div className="flex flex-col items-center justify-center text-center p-8">
+                <div className="w-28 h-28 bg-white rounded-full border-4 border-slate-100 flex items-center justify-center shadow-md mb-6 relative">
                   {schedule.tutor?.avatar_url ? (
                     <img src={schedule.tutor.avatar_url} className="w-full h-full rounded-full object-cover" alt="Tutor" />
                   ) : (
-                    <UserCircle2 className="w-12 h-12 text-slate-500" />
+                    <UserCircle2 className="w-12 h-12 text-slate-300" />
+                  )}
+                  {!isMicOn && (
+                    <div className="absolute -bottom-2 -right-2 bg-white border border-slate-200 p-2 rounded-full shadow-sm">
+                      <MicOff className="w-4 h-4 text-red-500" />
+                    </div>
                   )}
                 </div>
-                <div className="absolute -bottom-2 -right-2 bg-slate-900 border border-slate-700 p-2 rounded-full">
-                  <MicOff className="w-4 h-4 text-red-400" />
+                <h2 className="text-2xl font-black text-slate-800 mb-2">Panggung Virtual Anda</h2>
+                <p className="text-slate-500 font-medium max-w-sm">
+                  Aktifkan Kamera atau Share Screen di panel bawah untuk mulai membagikan materi ke siswa.
+                </p>
+                
+                <div className="mt-8 flex gap-3">
+                  <Button onClick={toggleCamera} className="bg-blue-600 hover:bg-blue-700 text-white font-bold h-12 rounded-xl gap-2 shadow-md">
+                    <Video className="w-5 h-5" /> Buka Kamera
+                  </Button>
                 </div>
               </div>
-              <h2 className="text-2xl font-black text-white drop-shadow-md mb-2">Tutor {schedule.tutor?.full_name?.split(' ')[0] || ''}</h2>
-              <p className="text-slate-400 font-medium">Video akan muncul di sini</p>
+            )}
+
+          </div>
+
+          {/* Bottom Control Bar */}
+          <div className="h-20 bg-white border-t border-slate-200 flex items-center justify-between px-6 shrink-0 relative z-30 shadow-[0_-4px_20px_rgba(0,0,0,0.02)]">
+            
+            {/* Left: Info */}
+            <div className="flex items-center gap-2 hidden md:flex">
+               <div className="w-10 h-10 bg-indigo-50 rounded-lg flex items-center justify-center text-indigo-600">
+                 <MonitorPlay className="w-5 h-5" />
+               </div>
+               <div>
+                 <p className="text-sm font-bold text-slate-800">Sesi Aktif</p>
+                 <p className="text-xs text-slate-500">Rekaman Otomatis</p>
+               </div>
+            </div>
+
+            {/* Center: AV Controls */}
+            <div className="flex items-center gap-3 absolute left-1/2 -translate-x-1/2">
+              <button 
+                onClick={toggleMic}
+                className={cn(
+                  "w-12 h-12 rounded-xl flex items-center justify-center transition-all shadow-sm border",
+                  isMicOn 
+                    ? "bg-white border-slate-200 text-slate-700 hover:bg-slate-50" 
+                    : "bg-red-50 border-red-200 text-red-500 hover:bg-red-100"
+                )}
+                title={isMicOn ? "Matikan Mic" : "Nyalakan Mic"}
+              >
+                {isMicOn ? <Mic className="w-5 h-5" /> : <MicOff className="w-5 h-5" />}
+              </button>
               
-              <div className="mt-8 flex flex-col gap-3">
-                <Button className="bg-white text-black hover:bg-slate-200 font-bold h-12 rounded-xl gap-2">
-                  <VideoOff className="w-5 h-5" /> Mulai Kamera
-                </Button>
-                <div className="flex items-center justify-center gap-2 text-indigo-400 text-xs font-semibold">
-                  <Sparkles className="w-3 h-3" /> Mendukung Filter AR & VTuber Avatar
-                </div>
-              </div>
+              <button 
+                onClick={toggleCamera}
+                className={cn(
+                  "w-12 h-12 rounded-xl flex items-center justify-center transition-all shadow-sm border",
+                  isCameraOn 
+                    ? "bg-white border-slate-200 text-slate-700 hover:bg-slate-50" 
+                    : "bg-red-50 border-red-200 text-red-500 hover:bg-red-100"
+                )}
+                title={isCameraOn ? "Matikan Kamera" : "Nyalakan Kamera"}
+              >
+                {isCameraOn ? <Video className="w-5 h-5" /> : <VideoOff className="w-5 h-5" />}
+              </button>
+
+              <div className="w-px h-8 bg-slate-200 mx-1"></div>
+
+              <button 
+                onClick={toggleScreenShare}
+                className={cn(
+                  "h-12 px-4 rounded-xl flex items-center gap-2 font-bold transition-all shadow-sm border",
+                  isScreenSharing 
+                    ? "bg-blue-600 border-blue-700 text-white hover:bg-blue-700 shadow-blue-500/20" 
+                    : "bg-white border-slate-200 text-slate-700 hover:bg-slate-50"
+                )}
+              >
+                <MonitorUp className="w-5 h-5" />
+                <span className="hidden sm:inline">{isScreenSharing ? "Berhenti Share" : "Share Screen"}</span>
+              </button>
             </div>
 
-            {/* Overlays / Labels */}
-            <div className="absolute top-4 left-4 bg-black/60 backdrop-blur-md px-3 py-1.5 rounded-lg border border-white/10 flex items-center gap-2">
-              <MonitorPlay className="w-4 h-4 text-indigo-400" />
-              <span className="text-xs font-bold text-white/90">Layar Utama</span>
+            {/* Right: Tools */}
+            <div className="flex gap-2">
+              <button className="h-10 px-3 rounded-lg font-bold flex items-center gap-2 transition-all bg-white hover:bg-slate-50 text-slate-600 border border-slate-200 shadow-sm text-sm">
+                <Users className="w-4 h-4 text-blue-500" />
+                <span className="hidden lg:inline">Kelola Siswa</span>
+              </button>
+              <button className="w-10 h-10 rounded-lg flex items-center justify-center transition-all bg-white hover:bg-slate-50 text-slate-600 border border-slate-200 shadow-sm">
+                <Settings className="w-4 h-4 text-slate-500" />
+              </button>
             </div>
-
           </div>
-
-          {/* Student "On Stage" Area (Bottom of screen) */}
-          <div className="mt-8 flex gap-4 w-full max-w-5xl justify-center h-24">
-             {/* This area is reserved for students who are invited to stage */}
-             <div className="w-40 h-full bg-white/5 border border-white/10 border-dashed rounded-2xl flex items-center justify-center text-xs text-white/30 font-medium text-center px-4">
-                Area Siswa Naik Panggung
-             </div>
-          </div>
-
         </main>
 
         {/* Right Sidebar (Chat & Activities) */}
-        <aside className="w-80 border-l border-white/10 bg-black/40 backdrop-blur-md hidden lg:flex flex-col relative z-20">
-          <div className="p-4 border-b border-white/10">
-             <h3 className="font-bold text-white flex items-center gap-2">
-               <MessageSquare className="w-4 h-4 text-indigo-400" /> Diskusi & Aktivitas
+        <aside className="w-80 bg-white border border-slate-200 rounded-2xl shadow-sm hidden lg:flex flex-col relative z-20 overflow-hidden">
+          <div className="p-4 border-b border-slate-100 bg-slate-50/50">
+             <h3 className="font-bold text-slate-800 flex items-center gap-2 text-sm">
+               <MessageSquare className="w-4 h-4 text-blue-500" /> Diskusi & Aktivitas
              </h3>
           </div>
           
-          <div className="flex-1 p-6 flex flex-col items-center justify-center text-center opacity-50">
-             <div className="w-16 h-16 bg-white/5 rounded-full flex items-center justify-center mb-4">
-               <MonitorPlay className="w-8 h-8 text-white/50" />
+          <div className="flex-1 p-6 flex flex-col items-center justify-center text-center">
+             <div className="w-16 h-16 bg-blue-50 rounded-full flex items-center justify-center mb-4 border border-blue-100">
+               <MonitorPlay className="w-8 h-8 text-blue-400" />
              </div>
-             <p className="text-sm font-medium text-white/60">Sistem Polling & CBT Interaktif akan muncul di sini.</p>
+             <p className="text-sm font-medium text-slate-500">Sistem Polling & CBT Interaktif akan muncul di sini.</p>
+             <p className="text-xs text-slate-400 mt-2">Siswa belum mengirimkan pesan.</p>
           </div>
 
           {/* Dummy Chat Input */}
-          <div className="p-4 border-t border-white/10 bg-black/20">
+          <div className="p-4 border-t border-slate-100 bg-white">
             <div className="relative">
               <input 
                 type="text" 
-                placeholder="Ketik pesan..." 
-                className="w-full bg-white/10 border border-white/20 rounded-xl py-3 pl-4 pr-10 text-sm text-white placeholder:text-white/30 focus:outline-none focus:ring-2 focus:ring-indigo-500"
-                disabled
+                placeholder="Kirim pesan ke kelas..." 
+                className="w-full bg-slate-50 border border-slate-200 rounded-xl py-3 pl-4 pr-10 text-sm text-slate-700 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-shadow"
               />
             </div>
           </div>
         </aside>
       </div>
-
-      {/* Footer Controls */}
-      <footer className="h-20 bg-black/60 border-t border-white/10 backdrop-blur-xl flex items-center justify-center px-6 relative z-30">
-        <div className="flex items-center gap-4">
-          
-          <div className="flex bg-white/5 rounded-2xl p-1 border border-white/10">
-            <button className="w-12 h-12 rounded-xl flex items-center justify-center text-red-400 hover:bg-white/10 transition-colors" title="Kamera Mati">
-              <VideoOff className="w-5 h-5" />
-            </button>
-            <button className="w-12 h-12 rounded-xl flex items-center justify-center text-red-400 hover:bg-white/10 transition-colors" title="Mic Mati">
-              <MicOff className="w-5 h-5" />
-            </button>
-          </div>
-
-          <div className="flex gap-2">
-            <button 
-              className="h-14 px-4 rounded-2xl font-bold flex items-center gap-2 transition-all duration-300 bg-white/10 hover:bg-white/20 text-white border border-white/20"
-            >
-              <Users className="w-5 h-5" />
-              Kelola Siswa
-            </button>
-            <button 
-              className="h-14 px-4 rounded-2xl font-bold flex items-center gap-2 transition-all duration-300 bg-white/10 hover:bg-white/20 text-white border border-white/20"
-            >
-              <Settings className="w-5 h-5" />
-              Pengaturan A/V
-            </button>
-          </div>
-        </div>
-      </footer>
-
     </div>
   );
 }
