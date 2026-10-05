@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase";
 import { useAuth } from "@/lib/auth-context";
 import { Button } from "@/components/ui/button";
-import { ChevronLeft, MessageSquare, MonitorUp, X, UserCircle2, MicOff, VideoOff, Settings, Users, Video, Mic, MonitorPlay } from "lucide-react";
+import { ChevronLeft, MessageSquare, MonitorUp, X, UserCircle2, MicOff, VideoOff, Settings, Users, Video, Mic, MonitorPlay, Sparkles } from "lucide-react";
 import { CenterLoader } from "@/components/ui/center-loader";
 import { cn } from "@/lib/utils";
 import toast from "react-hot-toast";
@@ -68,13 +68,13 @@ export default function TutorOnlineClassStage({ params }: { params: Promise<{ id
     });
 
     channel
-      .on('broadcast', { event: 'chat' }, ({ payload }) => {
+      .on('broadcast', { event: 'chat' }, ({ payload }: { payload: any }) => {
         setMessages(prev => [...prev, payload]);
       })
-      .on('broadcast', { event: 'hand_raise' }, ({ payload }) => {
+      .on('broadcast', { event: 'hand_raise' }, ({ payload }: { payload: any }) => {
         toast(`${payload.name} mengacungkan tangan!`, { icon: '✋' });
       })
-      .subscribe((status) => {
+      .subscribe((status: any) => {
         if (status === 'SUBSCRIBED') {
           channel.send({
             type: 'broadcast',
@@ -460,7 +460,7 @@ export default function TutorOnlineClassStage({ params }: { params: Promise<{ id
 
           {/* Quick Actions (Poll, Activity) */}
           <div className="px-4 pb-2 shrink-0">
-            <Button onClick={pushPoll} variant="outline" className="w-full h-8 text-xs font-bold gap-2 text-indigo-600 border-indigo-200 hover:bg-indigo-50">
+            <Button onClick={pushPoll} variant="secondary" className="w-full h-8 text-xs font-bold gap-2 text-indigo-600 border border-indigo-200 hover:bg-indigo-50">
               <MonitorPlay className="w-3 h-3" /> Luncurkan Polling Pemahaman
             </Button>
           </div>

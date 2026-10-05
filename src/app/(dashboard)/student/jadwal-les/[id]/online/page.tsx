@@ -60,13 +60,13 @@ export default function OnlineClassStage({ params }: { params: Promise<{ id: str
       const channel = supabase.channel(`room_${resolvedParams.id}`);
 
       channel
-        .on('broadcast', { event: 'chat' }, ({ payload }) => {
+        .on('broadcast', { event: 'chat' }, ({ payload }: { payload: any }) => {
           setMessages(prev => [...prev, payload]);
         })
-        .on('broadcast', { event: 'tutor_state' }, ({ payload }) => {
+        .on('broadcast', { event: 'tutor_state' }, ({ payload }: { payload: any }) => {
           setTutorState(payload);
         })
-        .on('broadcast', { event: 'poll' }, ({ payload }) => {
+        .on('broadcast', { event: 'poll' }, ({ payload }: { payload: any }) => {
           setActivePoll(payload);
           setSelectedPollOption(null);
         })
@@ -85,7 +85,7 @@ export default function OnlineClassStage({ params }: { params: Promise<{ id: str
     if (!chatInput.trim()) return;
     const msg = {
       id: Date.now().toString(),
-      sender: user?.full_name || 'Siswa',
+      sender: (user as any)?.full_name || 'Siswa',
       text: chatInput,
       time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
       isHost: false
@@ -99,7 +99,7 @@ export default function OnlineClassStage({ params }: { params: Promise<{ id: str
     const newState = !isHandRaised;
     setIsHandRaised(newState);
     if (newState) {
-       channelRef.current?.send({ type: 'broadcast', event: 'hand_raise', payload: { id: user?.id, name: user?.full_name } });
+       channelRef.current?.send({ type: 'broadcast', event: 'hand_raise', payload: { id: user?.id, name: (user as any)?.full_name || 'Siswa' } });
     }
   };
 
@@ -163,7 +163,6 @@ export default function OnlineClassStage({ params }: { params: Promise<{ id: str
                 <div className="absolute -bottom-2 -right-2 bg-slate-900 border border-slate-700 p-2 rounded-full shadow-sm">
                   <MicOff className="w-4 h-4 text-red-400" />
                 </div>
-              </div>
               </div>
               <h2 className="text-2xl font-black text-white drop-shadow-md mb-2">
                 Tutor {schedule.tutor?.full_name?.split(' ')[0] || ''}
