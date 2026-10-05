@@ -41,6 +41,7 @@ export default function LoginPage() {
   const [password, setPassword] = useState("");
   const [fullName, setFullName] = useState("");
   const [role, setRole] = useState<"student" | "teacher" | "principal">("student");
+  const [classCode, setClassCode] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -57,7 +58,7 @@ export default function LoginPage() {
         setLoading(false);
       }
     } else {
-      const { error: err } = await signUpWithEmail(email, password, fullName, role);
+      const { error: err } = await signUpWithEmail(email, password, fullName, role, classCode);
       if (err) setError(err);
       else setError("Check your email for a confirmation link.");
       setLoading(false);
@@ -159,6 +160,26 @@ export default function LoginPage() {
                     </select>
                     {role && <Check className="absolute right-2 top-1/2 -translate-y-1/2 w-5 h-5 text-[#2ec4b6]" />}
                   </div>
+
+                  <AnimatePresence>
+                    {role === "student" && (
+                      <motion.div 
+                        initial={{ opacity: 0, height: 0 }}
+                        animate={{ opacity: 1, height: 'auto' }}
+                        exit={{ opacity: 0, height: 0 }}
+                        className="relative group overflow-hidden"
+                      >
+                        <Key className="absolute left-0 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-300 group-focus-within:text-[#4361ee] transition-colors" />
+                        <input
+                          type="text"
+                          value={classCode}
+                          onChange={(e) => setClassCode(e.target.value)}
+                          placeholder="Kode Kelas (Opsional)"
+                          className="w-full h-12 pl-10 pr-10 bg-transparent border-b-2 border-slate-100 focus:border-[#4361ee] outline-none text-slate-700 font-medium transition-colors"
+                        />
+                      </motion.div>
+                    )}
+                  </AnimatePresence>
                 </motion.div>
               )}
             </AnimatePresence>

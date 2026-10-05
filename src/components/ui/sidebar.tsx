@@ -260,7 +260,7 @@ export function Sidebar() {
     profile?.role === "parent" ? parentNav : 
     profile?.role === "tu" ? tuNav :
     profile?.role === "principal" ? principalNav :
-    studentNav;
+    (profile?.class_name === "9D" ? [...studentNav, { href: "/student/drills", label: "Latihan Soal (9D)", icon: BookOpen }] : studentNav);
 
 
   return (
