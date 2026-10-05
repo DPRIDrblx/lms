@@ -409,7 +409,7 @@ export default function StudentScheduleDetail({ params }: { params: Promise<{ id
             </div>
             <div className="min-w-0 flex-1">
               <p className="text-[10px] md:text-xs font-black uppercase text-slate-400 truncate">Waktu</p>
-              <p className="font-bold text-slate-800 text-sm md:text-lg truncate">{schedule.schedule_time.substring(0, 5)} WIB</p>
+              <p className="font-bold text-slate-800 text-sm md:text-lg truncate">{format(dateObj, 'HH:mm')} WIB</p>
             </div>
           </div>
           

@@ -519,18 +519,22 @@ export default function LessonWorkspacePage() {
       if (schedError) throw schedError;
 
       // 2. Upsert attendances
-      const attendancePayload = students.map(s => ({
-        schedule_id: schedule.id,
-        student_id: s.id,
-        status: attendances[s.id] || 'hadir',
-        created_at: new Date().toISOString()
-      }));
+      const attendancePayload = students
+        .filter(s => attendances[s.id]) // Only upsert if there's an explicit status
+        .map(s => ({
+          schedule_id: schedule.id,
+          student_id: s.id,
+          status: attendances[s.id],
+          created_at: new Date().toISOString()
+        }));
 
-      const { error: attError } = await supabase
-        .from("center_schedule_attendances")
-        .upsert(attendancePayload, { onConflict: 'schedule_id, student_id' });
+      if (attendancePayload.length > 0) {
+        const { error: attError } = await supabase
+          .from("center_schedule_attendances")
+          .upsert(attendancePayload, { onConflict: 'schedule_id, student_id' });
 
-      if (attError) throw attError;
+        if (attError) throw attError;
+      }
 
       toast.success("Workspace berhasil disimpan!", { id: toastId });
       
