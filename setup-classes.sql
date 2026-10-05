@@ -37,3 +37,6 @@ BEGIN
   RETURN new;
 END;
 $$;
+
+-- 5. Tambahkan kolom is_online untuk fitur Kelas Online
+ALTER TABLE center_schedules ADD COLUMN IF NOT EXISTS is_online boolean DEFAULT false;

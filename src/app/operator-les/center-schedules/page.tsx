@@ -26,6 +26,7 @@ export default function CenterSchedulesManager() {
   const [driveLink, setDriveLink] = useState("");
   const [colorTheme, setColorTheme] = useState("ocean_blue");
   const [branchId, setBranchId] = useState("");
+  const [isOnline, setIsOnline] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
 
   // Summary Modal State
@@ -86,7 +87,8 @@ export default function CenterSchedulesManager() {
         class_id: targetClassIds[0] || null, // Fallback
         drive_link: driveLink,
         color_theme: colorTheme,
-        branch_id: branchId || null
+        branch_id: branchId || null,
+        is_online: isOnline
       }).eq("id", editingId);
 
       if (error) {
@@ -107,7 +109,8 @@ export default function CenterSchedulesManager() {
         drive_link: driveLink,
         attendance_code: attendanceCode,
         color_theme: colorTheme,
-        branch_id: branchId || null
+        branch_id: branchId || null,
+        is_online: isOnline
       });
 
       if (error) {
@@ -128,6 +131,7 @@ export default function CenterSchedulesManager() {
     setDriveLink("");
     setColorTheme("ocean_blue");
     setBranchId("");
+    setIsOnline(false);
     setTargetClassIds([]);
     setEditingId(null);
   };
@@ -142,6 +146,7 @@ export default function CenterSchedulesManager() {
     setDriveLink(schedule.drive_link || "");
     setColorTheme(schedule.color_theme || "ocean_blue");
     setBranchId(schedule.branch_id || "");
+    setIsOnline(schedule.is_online || false);
     setEditingId(schedule.id);
     
     // Scroll to form (mobile friendly)
@@ -232,15 +237,34 @@ export default function CenterSchedulesManager() {
               <div>
                 <label className="block text-sm font-bold text-slate-700 mb-1">Cabang (Opsional)</label>
                 <select 
-                  className="w-full p-3 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500"
+                  className="w-full p-3 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 disabled:opacity-50"
                   value={branchId}
                   onChange={(e) => setBranchId(e.target.value)}
+                  disabled={isOnline}
                 >
                   <option value="">-- Bebas Cabang / Tentukan Nanti --</option>
                   {branches.map(b => (
                     <option key={b.id} value={b.id}>{b.name}</option>
                   ))}
                 </select>
+              </div>
+
+              <div>
+                <label className="flex items-center gap-3 p-3 border border-indigo-200 bg-indigo-50/50 rounded-xl cursor-pointer hover:bg-indigo-50 transition-colors">
+                  <input 
+                    type="checkbox" 
+                    className="w-5 h-5 text-indigo-600 rounded border-indigo-300 focus:ring-indigo-500"
+                    checked={isOnline}
+                    onChange={(e) => {
+                      setIsOnline(e.target.checked);
+                      if (e.target.checked) setBranchId("");
+                    }}
+                  />
+                  <div className="flex flex-col">
+                    <span className="text-sm font-bold text-indigo-900">Jadikan Kelas Online (NIA Tutoring Online)</span>
+                    <span className="text-xs text-indigo-600">Siswa akan bergabung via panggung virtual</span>
+                  </div>
+                </label>
               </div>
 
               <div>
@@ -378,7 +402,14 @@ export default function CenterSchedulesManager() {
                         </div>
                       </div>
 
-                      <h3 className="font-black text-lg text-slate-800 ml-2 mb-3 leading-tight">{s.title}</h3>
+                      <h3 className="font-black text-lg text-slate-800 ml-2 mb-3 leading-tight flex items-center flex-wrap gap-2">
+                        {s.title}
+                        {s.is_online && (
+                          <span className="inline-flex items-center gap-1 bg-indigo-100 text-indigo-700 px-2 py-0.5 rounded text-[10px] font-black uppercase tracking-wider">
+                            <span className="w-1.5 h-1.5 rounded-full bg-indigo-500 animate-pulse"></span> Online
+                          </span>
+                        )}
+                      </h3>
                       
                       <div className="ml-2 space-y-2 text-sm text-slate-500 font-medium mb-4">
                         <div className="flex items-center gap-2">

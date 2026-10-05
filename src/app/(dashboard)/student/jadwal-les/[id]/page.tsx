@@ -4,7 +4,7 @@ import { useEffect, useState, use } from "react";
 import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase";
 import { useAuth } from "@/lib/auth-context";
-import { Calendar, Clock, MapPin, User, BookOpen, Link2, FileText, ChevronLeft, Star, KeyRound, CheckCircle2, MessageSquare, Send, ThumbsUp, AlertCircle, Camera, Loader2, ChevronDown, ChevronUp, PlayCircle, Users } from "lucide-react";
+import { Calendar, Clock, MapPin, User, BookOpen, Link2, FileText, ChevronLeft, Star, KeyRound, CheckCircle2, MessageSquare, Send, ThumbsUp, AlertCircle, Camera, Loader2, ChevronDown, ChevronUp, PlayCircle, Users, Video } from "lucide-react";
 import { CenterLoader } from "@/components/ui/center-loader";
 import { Button } from "@/components/ui/button";
 import { format } from "date-fns";
@@ -439,6 +439,38 @@ export default function StudentScheduleDetail({ params }: { params: Promise<{ id
         {/* Layout Berbasis Accordion / Tabs */}
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
           <div className="lg:col-span-2 space-y-4">
+            
+            {/* Join Online Class Banner */}
+            {schedule.is_online && (
+              <div className="bg-indigo-900 rounded-[32px] p-6 shadow-xl border border-indigo-700 flex flex-col md:flex-row items-center justify-between gap-6 relative overflow-hidden group">
+                <div className="absolute inset-0 opacity-10 bg-[url('data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSI0MCIgaGVpZ2h0PSI0MCI+CjxwYXRoIGQ9Ik0wIDBoNDB2NDBIMHoiIGZpbGw9Im5vbmUiLz4KPHBhdGggZD0iTTAgMGw0MCA0ME00MCAwbC00MCA0MCIgc3Ryb2tlPSIjZmZmIiBzdHJva2Utd2lkdGg9IjEiIG9wYWNpdHk9IjAuMSIvPgo8L3N2Zz4=')]"></div>
+                <div className="absolute top-0 right-0 w-48 h-48 bg-indigo-500/30 rounded-full blur-3xl -mr-10 -mt-10 pointer-events-none"></div>
+                <div className="relative z-10 text-white flex items-center gap-4 w-full md:w-auto">
+                  <div className="w-14 h-14 bg-indigo-500 rounded-2xl flex items-center justify-center shrink-0 border border-indigo-400 shadow-inner">
+                    <Video className="w-7 h-7 text-white" />
+                  </div>
+                  <div>
+                    <h3 className="text-xl font-black mb-1 flex items-center gap-2">
+                      NIA Tutoring Online
+                      {schedule.status === 'ongoing' && <span className="bg-red-500 text-white text-[10px] uppercase font-black px-2 py-0.5 rounded-full animate-pulse">LIVE</span>}
+                    </h3>
+                    <p className="text-indigo-200 font-medium text-sm">Masuk ke panggung virtual interaktif.</p>
+                  </div>
+                </div>
+                <Button 
+                  disabled={schedule.status !== 'ongoing'}
+                  onClick={() => router.push(`/student/jadwal-les/${schedule.id}/online`)}
+                  className={cn(
+                    "relative z-10 h-14 px-8 rounded-2xl font-black text-base shadow-xl shrink-0 w-full md:w-auto transition-all",
+                    schedule.status === 'ongoing' 
+                      ? "bg-gradient-to-r from-emerald-400 to-emerald-600 hover:from-emerald-500 hover:to-emerald-700 text-white shadow-emerald-500/30 hover:scale-105" 
+                      : "bg-slate-800 text-slate-400 border border-slate-700 cursor-not-allowed"
+                  )}
+                >
+                  {schedule.status === 'ongoing' ? "Gabung Kelas Sekarang" : "Tutor Belum Memulai"}
+                </Button>
+              </div>
+            )}
             
             {/* Voting Banner */}
             {!schedule.topic && schedule.is_voting_active && (

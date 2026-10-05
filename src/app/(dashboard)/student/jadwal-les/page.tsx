@@ -224,7 +224,14 @@ export default function JadwalLesPage() {
                       
                       <div className="p-5 flex-1 flex flex-col min-w-0">
                         <div className="flex items-start justify-between gap-3 mb-2">
-                          <h3 className="text-[17px] font-black text-slate-800 leading-tight group-hover:text-[#108B96] transition-colors line-clamp-2">{schedule.title}</h3>
+                          <div className="flex flex-wrap items-center gap-2">
+                            <h3 className="text-[17px] font-black text-slate-800 leading-tight group-hover:text-[#108B96] transition-colors line-clamp-2">{schedule.title}</h3>
+                            {schedule.is_online && (
+                              <span className="shrink-0 flex items-center gap-1 px-2.5 py-1 rounded-[6px] text-[10px] font-black uppercase tracking-wider bg-indigo-100 text-indigo-700 border border-indigo-200 shadow-sm">
+                                <span className="w-1.5 h-1.5 rounded-full bg-indigo-500 animate-pulse"></span> Online
+                              </span>
+                            )}
+                          </div>
                           {isToday && (
                             <span className="shrink-0 px-2.5 py-1 rounded-[6px] text-[10px] font-black uppercase tracking-wider bg-teal-100 text-[#0D6D76]">
                               Hari Ini
