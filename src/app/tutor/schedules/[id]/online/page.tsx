@@ -245,10 +245,10 @@ function TutorOnlineClassStageInner({ params }: { params: Promise<{ id: string }
             {isCameraOn && (
               <Draggable bounds="parent" disabled={!isScreenSharing}>
                 <div className={cn(
-                  "relative bg-black overflow-hidden shadow-lg border border-slate-300 transition-all duration-300",
+                  "relative bg-black overflow-hidden shadow-lg border border-slate-300",
                   isScreenSharing 
                     ? "absolute bottom-6 right-6 w-48 aspect-video rounded-xl z-20 shadow-2xl ring-4 ring-white/50 cursor-move" 
-                    : "w-full h-full rounded-xl"
+                    : "w-full h-full rounded-xl transition-all duration-300"
                 )}>
                   {tracks.find(t => t.source === Track.Source.Camera && t.participant.isLocal) && (
                     <VideoTrack 

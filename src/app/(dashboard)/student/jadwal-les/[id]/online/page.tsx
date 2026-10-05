@@ -12,6 +12,7 @@ import "@livekit/components-styles";
 import { CenterLoader } from "@/components/ui/center-loader";
 import { cn } from "@/lib/utils";
 import toast from "react-hot-toast";
+import Draggable from 'react-draggable';
 
 function StudentOnlineClassStageInner({ params }: { params: Promise<{ id: string }> }) {
   const resolvedParams = use(params);
@@ -384,14 +385,16 @@ function TutorStreamRenderer({ schedule, tutorState }: { schedule: any, tutorSta
           <VideoTrack trackRef={screenTrack} className="w-full h-full object-contain absolute inset-0" />
         )}
         {camTrack && (
-          <div className={cn(
-            "relative bg-black overflow-hidden shadow-lg border border-slate-700 transition-all duration-300",
-            screenTrack 
-              ? "absolute bottom-6 left-6 w-48 aspect-video rounded-xl z-20 shadow-2xl ring-2 ring-white/20" 
-              : "w-full h-full absolute inset-0"
-          )}>
-            <VideoTrack trackRef={camTrack} className={cn("w-full h-full", screenTrack ? "object-cover" : "object-contain scale-x-[-1]")} />
-          </div>
+          <Draggable bounds="parent" disabled={!screenTrack}>
+            <div className={cn(
+              "relative bg-black overflow-hidden shadow-lg border border-slate-700",
+              screenTrack 
+                ? "absolute bottom-6 left-6 w-48 aspect-video rounded-xl z-20 shadow-2xl ring-2 ring-white/20 cursor-move" 
+                : "w-full h-full absolute inset-0 transition-all duration-300"
+            )}>
+              <VideoTrack trackRef={camTrack} className={cn("w-full h-full", screenTrack ? "object-cover" : "object-contain scale-x-[-1]")} />
+            </div>
+          </Draggable>
         )}
         <RoomAudioRenderer />
       </>
