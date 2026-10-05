@@ -6,6 +6,7 @@ import { createClient } from "@/lib/supabase";
 import { Button } from "@/components/ui/button";
 import { ChevronLeft, Hand, MessageSquare, MonitorPlay, Sparkles, X, UserCircle2, MicOff, VideoOff } from "lucide-react";
 import { CenterLoader } from "@/components/ui/center-loader";
+import { cn } from "@/lib/utils";
 
 export default function OnlineClassStage({ params }: { params: Promise<{ id: string }> }) {
   const resolvedParams = use(params);
