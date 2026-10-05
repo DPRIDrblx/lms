@@ -714,7 +714,15 @@ export default function StudentScheduleDetail({ params }: { params: Promise<{ id
               
               {!isAttended ? (
                 <div className="space-y-6">
-                  {schedule.is_attendance_closed ? (
+                  {schedule.is_online ? (
+                    <div className="bg-indigo-50 text-indigo-700 p-5 rounded-2xl border border-indigo-100 text-center">
+                      <div className="w-16 h-16 bg-indigo-200 rounded-full flex items-center justify-center mx-auto mb-4">
+                        <Video className="w-8 h-8 text-indigo-700" />
+                      </div>
+                      <h4 className="font-black text-indigo-900 text-lg mb-1">Kelas Online</h4>
+                      <p className="font-medium text-sm">Kehadiran akan dicatat otomatis saat kamu bergabung ke Panggung Virtual.</p>
+                    </div>
+                  ) : schedule.is_attendance_closed ? (
                     attendance?.status === 'absen' ? (
                       <div className="bg-rose-50 text-rose-700 p-5 rounded-2xl border border-rose-100 text-center">
                         <div className="w-16 h-16 bg-rose-200 rounded-full flex items-center justify-center mx-auto mb-4">

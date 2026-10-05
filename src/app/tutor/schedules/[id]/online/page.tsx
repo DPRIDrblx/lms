@@ -5,11 +5,11 @@ import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase";
 import { useAuth } from "@/lib/auth-context";
 import { Button } from "@/components/ui/button";
-import { ChevronLeft, Hand, MessageSquare, MonitorPlay, Sparkles, X, UserCircle2, MicOff, VideoOff } from "lucide-react";
+import { ChevronLeft, Hand, MessageSquare, MonitorPlay, Sparkles, X, UserCircle2, MicOff, VideoOff, Settings, Users } from "lucide-react";
 import { CenterLoader } from "@/components/ui/center-loader";
 import { cn } from "@/lib/utils";
 
-export default function OnlineClassStage({ params }: { params: Promise<{ id: string }> }) {
+export default function TutorOnlineClassStage({ params }: { params: Promise<{ id: string }> }) {
   const resolvedParams = use(params);
   const router = useRouter();
   const { user } = useAuth();
@@ -19,7 +19,7 @@ export default function OnlineClassStage({ params }: { params: Promise<{ id: str
   const [isHandRaised, setIsHandRaised] = useState(false);
 
   useEffect(() => {
-    const fetchScheduleAndAttend = async () => {
+    const fetchSchedule = async () => {
       // 1. Fetch schedule
       const { data: schedData } = await supabase
         .from("center_schedules")
@@ -28,24 +28,10 @@ export default function OnlineClassStage({ params }: { params: Promise<{ id: str
         .single();
       
       setSchedule(schedData);
-
-      // 2. Auto-record attendance if student joined online stage
-      if (user && schedData?.is_online) {
-        // We use upsert to avoid duplicate entries and ensure status is 'hadir'
-        await supabase
-          .from("center_schedule_attendances")
-          .upsert({
-            schedule_id: resolvedParams.id,
-            student_id: user.id,
-            status: "hadir",
-            attended_at: new Date().toISOString()
-          }, { onConflict: "schedule_id,student_id" });
-      }
-
       setLoading(false);
     };
-    fetchScheduleAndAttend();
-  }, [resolvedParams.id, user]);
+    fetchSchedule();
+  }, [resolvedParams.id]);
 
   if (loading) {
     return (
@@ -97,7 +83,7 @@ export default function OnlineClassStage({ params }: { params: Promise<{ id: str
               {schedule.title}
               <span className="bg-red-500 text-[10px] font-black uppercase px-2 py-0.5 rounded-full tracking-wider animate-pulse">Live</span>
             </h1>
-            <p className="text-xs text-white/50">{schedule.tutor?.full_name} • Panggung Virtual</p>
+            <p className="text-xs text-white/50">Tuan Rumah (Host) • Panggung Virtual</p>
           </div>
         </div>
         <Button 
@@ -135,9 +121,13 @@ export default function OnlineClassStage({ params }: { params: Promise<{ id: str
               <h2 className="text-2xl font-black text-white drop-shadow-md mb-2">Tutor {schedule.tutor?.full_name?.split(' ')[0] || ''}</h2>
               <p className="text-slate-400 font-medium">Video akan muncul di sini</p>
               
-              <div className="mt-8 flex items-center gap-3 bg-white/5 border border-white/10 px-4 py-2 rounded-2xl backdrop-blur-md">
-                <Sparkles className="w-5 h-5 text-indigo-400 animate-pulse" />
-                <span className="text-sm font-semibold text-indigo-200">Menunggu sesi dimulai sepenuhnya...</span>
+              <div className="mt-8 flex flex-col gap-3">
+                <Button className="bg-white text-black hover:bg-slate-200 font-bold h-12 rounded-xl gap-2">
+                  <VideoOff className="w-5 h-5" /> Mulai Kamera
+                </Button>
+                <div className="flex items-center justify-center gap-2 text-indigo-400 text-xs font-semibold">
+                  <Sparkles className="w-3 h-3" /> Mendukung Filter AR & VTuber Avatar
+                </div>
               </div>
             </div>
 
@@ -201,18 +191,20 @@ export default function OnlineClassStage({ params }: { params: Promise<{ id: str
             </button>
           </div>
 
-          <button 
-            onClick={() => setIsHandRaised(!isHandRaised)}
-            className={cn(
-              "h-14 px-6 rounded-2xl font-bold flex items-center gap-2 transition-all duration-300",
-              isHandRaised 
-                ? "bg-amber-500 text-black shadow-[0_0_20px_rgba(245,158,11,0.4)]" 
-                : "bg-white/10 hover:bg-white/20 text-white border border-white/20"
-            )}
-          >
-            <Hand className={cn("w-5 h-5", isHandRaised && "animate-bounce")} />
-            {isHandRaised ? "Turunkan Tangan" : "Raise Hand"}
-          </button>
+          <div className="flex gap-2">
+            <button 
+              className="h-14 px-4 rounded-2xl font-bold flex items-center gap-2 transition-all duration-300 bg-white/10 hover:bg-white/20 text-white border border-white/20"
+            >
+              <Users className="w-5 h-5" />
+              Kelola Siswa
+            </button>
+            <button 
+              className="h-14 px-4 rounded-2xl font-bold flex items-center gap-2 transition-all duration-300 bg-white/10 hover:bg-white/20 text-white border border-white/20"
+            >
+              <Settings className="w-5 h-5" />
+              Pengaturan A/V
+            </button>
+          </div>
         </div>
       </footer>
 

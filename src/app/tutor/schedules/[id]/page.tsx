@@ -9,7 +9,7 @@ import { Button } from "@/components/ui/button";
 import { TUTORING_TOPICS, EducationLevel, Subject, Topic } from "@/lib/tutoring-topics";
 import { 
   ArrowLeft, Clock, Users, BookOpen, Save, CheckCircle2, 
-  Camera, FileText, Loader2, KeyRound, Sparkles, MapPin, Star, Plus, Minus
+  Camera, FileText, Loader2, KeyRound, Sparkles, MapPin, Star, Plus, Minus, Video
 } from "lucide-react";
 import LiveInteractionsPanel from "@/components/tutor/LiveInteractionsPanel";
 import AttendanceQRCode from "@/components/tutor/AttendanceQRCode";
@@ -609,6 +609,34 @@ export default function LessonWorkspacePage() {
           </p>
         </div>
       </div>
+
+      {schedule.is_online && (
+        <div className="bg-indigo-900 rounded-2xl p-6 text-white shadow-xl flex flex-col md:flex-row items-center justify-between gap-4 border border-indigo-700 relative overflow-hidden">
+          <div className="absolute top-0 right-0 w-64 h-64 bg-indigo-500/20 rounded-full blur-3xl -mr-20 -mt-20 pointer-events-none"></div>
+          <div className="relative z-10 flex items-center gap-4 text-center md:text-left flex-col md:flex-row">
+            <div className="w-12 h-12 bg-indigo-500 rounded-xl flex items-center justify-center border border-indigo-400 shrink-0">
+              <Video className="w-6 h-6 text-white" />
+            </div>
+            <div>
+              <h2 className="text-xl font-black">NIA Tutoring Online</h2>
+              <p className="text-indigo-200 text-sm font-medium">Jadwal ini diatur sebagai Kelas Online interaktif.</p>
+            </div>
+          </div>
+          <Button 
+            onClick={async () => {
+              if (schedule.status !== 'ongoing') {
+                const toastId = toast.loading("Memulai sesi...");
+                await supabase.from("center_schedules").update({ status: 'ongoing' }).eq("id", schedule.id);
+                toast.success("Sesi dimulai!", { id: toastId });
+              }
+              router.push(`/tutor/schedules/${schedule.id}/online`);
+            }}
+            className="relative z-10 bg-emerald-500 hover:bg-emerald-600 text-white font-bold h-12 px-6 rounded-xl shadow-lg w-full md:w-auto"
+          >
+            Masuk Panggung Virtual
+          </Button>
+        </div>
+      )}
 
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
         {/* Left Column */}
