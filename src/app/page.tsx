@@ -8,7 +8,8 @@ import {
   useScroll, 
   useTransform, 
   useSpring, 
-  AnimatePresence 
+  AnimatePresence,
+  useMotionValue
 } from "framer-motion";
 import { 
   GraduationCap, 
@@ -27,19 +28,21 @@ import {
   QrCode, 
   Calendar, 
   FileText, 
-  HelpCircle,
-  Menu,
+  Volume2, 
+  VolumeX, 
+  ArrowUpRight, 
+  Laptop, 
+  Heart, 
+  Check, 
+  Menu, 
   X,
-  Volume2,
-  VolumeX,
-  Laptop,
-  Heart,
-  Smile,
-  Compass,
-  ArrowUpRight
+  Play,
+  RotateCcw,
+  MousePointer2
 } from "lucide-react";
 import Link from "next/link";
 import Image from "next/image";
+import confetti from "canvas-confetti";
 import { PwaInstallButton } from "@/components/ui/pwa-install-button";
 import { Mascot } from "@/components/ui/mascot";
 
@@ -49,40 +52,95 @@ export default function RootPage() {
 
   // Navigation & Interactive States
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
-  const [portalTab, setPortalTab] = useState<"all" | "mmis" | "nia">("all");
-  const [activeFeatureTab, setActiveFeatureTab] = useState<"school" | "tutoring" | "cbt" | "live">("school");
+  const [soundActive, setSoundActive] = useState(false);
+  const [mascotMood, setMascotMood] = useState<"idle" | "correct">("idle");
   const [openFaq, setOpenFaq] = useState<number | null>(0);
-  const [mascotState, setMascotState] = useState<"idle" | "correct">("idle");
-  const [soundOn, setSoundOn] = useState(false);
-  const [sliderPosition, setSliderPosition] = useState<number>(65);
+  const [activePortal, setActivePortal] = useState<"mmis" | "nia">("mmis");
+  const [cbtSelectedOption, setCbtSelectedOption] = useState<string>("B");
 
-  // Scroll Parallax Hooks
-  const { scrollYProgress } = useScroll();
+  // Web Audio Synth for Cheerful Ambience & Chimes
+  const audioCtxRef = useRef<AudioContext | null>(null);
+  const playSoundChime = () => {
+    try {
+      const AudioCtx = window.AudioContext || (window as any).webkitAudioContext;
+      if (AudioCtx) {
+        const ctx = audioCtxRef.current || new AudioCtx();
+        audioCtxRef.current = ctx;
+        if (ctx.state === "suspended") ctx.resume();
+        const osc = ctx.createOscillator();
+        const gain = ctx.createGain();
+        osc.type = "sine";
+        osc.frequency.setValueAtTime(523.25, ctx.currentTime); // C5
+        osc.frequency.exponentialRampToValueAtTime(659.25, ctx.currentTime + 0.15); // E5
+        osc.frequency.exponentialRampToValueAtTime(783.99, ctx.currentTime + 0.3); // G5
+        gain.gain.setValueAtTime(0.08, ctx.currentTime);
+        gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.8);
+        osc.connect(gain);
+        gain.connect(ctx.destination);
+        osc.start();
+        osc.stop(ctx.currentTime + 0.8);
+      }
+    } catch (e) {
+      console.error(e);
+    }
+  };
+
+  const toggleSound = () => {
+    if (!soundActive) {
+      playSoundChime();
+      setSoundActive(true);
+    } else {
+      setSoundActive(false);
+    }
+  };
+
+  const triggerConfetti = () => {
+    setMascotMood("correct");
+    playSoundChime();
+    confetti({
+      particleCount: 50,
+      spread: 60,
+      origin: { y: 0.8 },
+      colors: ["#F59E0B", "#10B981", "#3B82F6", "#EC4899", "#8B5CF6"]
+    });
+    setTimeout(() => setMascotMood("idle"), 2500);
+  };
+
+  // Mouse Movement Parallax Values
+  const mouseX = useMotionValue(0);
+  const mouseY = useMotionValue(0);
+  const smoothMouseX = useSpring(mouseX, { stiffness: 45, damping: 25 });
+  const smoothMouseY = useSpring(mouseY, { stiffness: 45, damping: 25 });
+
+  const handleMouseMove = (e: React.MouseEvent) => {
+    const { clientWidth, clientHeight } = document.documentElement;
+    const x = (e.clientX / clientWidth - 0.5) * 30;
+    const y = (e.clientY / clientHeight - 0.5) * 30;
+    mouseX.set(x);
+    mouseY.set(y);
+  };
+
+  // Scroll Hooks (Window Scroll - 100% Hydration-Safe, No Blank Screen Gaps)
+  const { scrollY, scrollYProgress } = useScroll();
   const smoothProgress = useSpring(scrollYProgress, { stiffness: 100, damping: 30, restDelta: 0.001 });
 
-  // Hero Parallax Layer References & Transforms
-  const heroRef = useRef<HTMLDivElement>(null);
-  const { scrollYProgress: heroProgress } = useScroll({
-    target: heroRef,
-    offset: ["start start", "end start"],
-  });
+  // Continuous Parallax Layer Transforms
+  const sunY = useTransform(scrollY, [0, 800], [0, 160]);
+  const sunScale = useTransform(scrollY, [0, 800], [1, 1.2]);
+  const mountainY = useTransform(scrollY, [0, 800], [0, 100]);
+  const hillsY = useTransform(scrollY, [0, 800], [0, 50]);
+  const foregroundY = useTransform(scrollY, [0, 800], [0, 260]);
+  const heroCardY = useTransform(scrollY, [0, 800], [0, -60]);
+  const heroCardScale = useTransform(scrollY, [0, 800], [1, 0.96]);
 
-  // Multilayer Scenic Parallax (Inspired by the Dribbble Reference Video)
-  // Far sky & sun move slowest
-  const sunY = useTransform(heroProgress, [0, 1], [0, 80]);
-  const sunScale = useTransform(heroProgress, [0, 1], [1, 1.15]);
-  // Midground terracotta mountains
-  const mountainY = useTransform(heroProgress, [0, 1], [0, 140]);
-  // Terraced green hills
-  const hillsY = useTransform(heroProgress, [0, 1], [0, 220]);
-  // Foreground lush tea plants & character
-  const foregroundY = useTransform(heroProgress, [0, 1], [0, 320]);
-  // Central framed viewport scaling/morphing
-  const frameScale = useTransform(heroProgress, [0, 0.8], [1, 0.94]);
-  const frameY = useTransform(heroProgress, [0, 1], [0, 60]);
-  // Floating frosted cards parallax offset
-  const cardFloat1Y = useTransform(heroProgress, [0, 1], [0, -140]);
-  const cardFloat2Y = useTransform(heroProgress, [0, 1], [0, -80]);
+  // Floating Badges Offsets
+  const badge1Y = useTransform(scrollY, [0, 800], [0, -180]);
+  const badge2Y = useTransform(scrollY, [0, 800], [0, -140]);
+  const badge3Y = useTransform(scrollY, [0, 800], [0, -220]);
+
+  // Staggered Parallax on Dual Wing Section
+  const wingLeftY = useTransform(scrollY, [500, 1400], [60, -40]);
+  const wingRightY = useTransform(scrollY, [500, 1400], [-30, 50]);
 
   // Auth Redirection
   useEffect(() => {
@@ -105,57 +163,60 @@ export default function RootPage() {
 
   if (loading || user) {
     return (
-      <div className="min-h-screen bg-[#FDFBF7] flex flex-col items-center justify-center gap-4 text-emerald-950">
+      <div className="min-h-screen bg-[#FAF6EE] flex flex-col items-center justify-center gap-4 text-emerald-950">
         <motion.div 
           animate={{ rotate: 360 }} 
           transition={{ repeat: Infinity, duration: 1.2, ease: "linear" }}
-          className="w-14 h-14 border-4 border-amber-500 border-t-transparent rounded-full shadow-lg shadow-amber-400/20"
+          className="w-14 h-14 border-4 border-amber-500 border-t-transparent rounded-full shadow-lg shadow-amber-400/25"
         />
-        <p className="text-amber-900 text-sm font-bold tracking-wide">Menyiapkan Ruang Belajar IGNITE...</p>
+        <p className="text-emerald-950 text-sm font-black tracking-wide">Menghubungkan ke Portal IGNITE...</p>
       </div>
     );
   }
 
   const faqs = [
     {
-      q: "Apa perbedaan antara MMIS School dan NIA Tutoring di dalam IGNITE?",
-      a: "IGNITE adalah ekosistem super-platform yang menaungi dua layanan terpadu: MMIS School (/login) untuk operasional sekolah formal (jadwal pelajaran, presensi QR, penilaian guru, dan e-rapor), serta NIA Tutoring (/app) untuk bimbingan belajar intensif (persiapan UTBK-SNBT, klinik konsultasi 1-on-1, tryout CBT, dan kelas interaktif LiveKit)."
+      q: "Apa perbedaan MMIS School (/login) dan NIA Tutoring (/app)?",
+      a: "IGNITE adalah ekosistem super-platform terpadu: MMIS School (/login) khusus untuk sekolah formal (jadwal KBM harian, presensi QR guru & murid, penilaian berkala, dan e-rapor). Sedangkan NIA Tutoring (/app) khusus bimbingan belajar intensif (persiapan tembus UTBK-SNBT, tryout CBT KaTeX, klinik konsultasi privat 1-on-1, dan ruang kelas LiveKit)."
     },
     {
-      q: "Bagaimana cara murid atau guru masuk ke MMIS School?",
-      a: "Bagi siswa, guru, wali murid, dan staf MMIS School, cukup klik tombol 'Masuk MMIS School' di navbar atau portal selector untuk diarahkan ke halaman login resmi (/login)."
+      q: "Bagaimana cara siswa atau guru masuk ke portal MMIS School?",
+      a: "Klik tombol 'Masuk MMIS School' di navbar atau pilih tab MMIS School di launcher utama untuk langsung menuju ke halaman resmi /login. Anda dapat masuk dengan akun email terdaftar di sekolah."
     },
     {
-      q: "Bagaimana cara siswa les masuk ke NIA Tutoring?",
-      a: "Bagi siswa bimbingan belajar NIA, tutor, dan sobat NIA, klik 'Masuk NIA Tutoring' untuk diarahkan langsung ke portal belajar NIA Tutoring (/app)."
+      q: "Bagaimana cara murid les masuk ke portal NIA Tutoring?",
+      a: "Klik tombol 'Masuk NIA Tutoring' di navbar atau pilih tab NIA Tutoring untuk menuju ke halaman /app, tempat jadwal bimbel, tryout, dan klinik konsultasi berlangsung."
     },
     {
-      q: "Apakah platform ini bisa diakses di smartphone tanpa download aplikasi besar?",
-      a: "Tentu! IGNITE dilengkapi teknologi Progressive Web App (PWA) yang sangat ringan. Anda cukup membuka website di browser HP lalu klik 'Install Aplikasi PWA' untuk menyimpan ikon aplikasi di layar utama."
+      q: "Apakah platform ini bisa diinstall ke smartphone tanpa download file besar?",
+      a: "Tentu! IGNITE mendukung teknologi Progressive Web App (PWA). Cukup klik tombol 'Install Aplikasi PWA' di website ini untuk memasang ikon aplikasi di layar utama ponsel atau laptop."
     },
     {
-      q: "Bagaimana sistem kelas online dan klinik konsultasi bekerja?",
-      a: "Kelas online menggunakan teknologi video HD real-time LiveKit berlatensi rendah, dengan fitur webcam PIP yang dapat digeser bebas, share screen bersuara jernih, dan polling kuis instan. Sedangkan Klinik Konsultasi memungkinkan siswa booking sesi bedah soal 1-on-1 bersama tutor ahli."
+      q: "Bagaimana cara kerja Klinik Konsultasi 1-on-1 di NIA Tutoring?",
+      a: "Siswa yang merasa bingung dengan PR atau materi pelajaran di sekolah dapat menjadwalkan sesi privat bersama tutor ahli. Anda bisa upload foto lembar soal terlebih dahulu, lalu bedah langkah demi langkah di ruang interaktif."
     }
   ];
 
   return (
-    <div className="min-h-screen bg-[#FAF7F2] text-slate-800 font-sans selection:bg-amber-400 selection:text-emerald-950 overflow-x-hidden relative">
+    <div 
+      onMouseMove={handleMouseMove}
+      className="min-h-screen bg-[#FAF6EE] text-slate-800 font-sans selection:bg-amber-300 selection:text-emerald-950 relative overflow-x-clip"
+    >
       
-      {/* 🚀 Parallax Top Progress Bar (Warm Sunrise Colors) */}
+      {/* 🚀 Top Smooth Scroll Progress Bar */}
       <motion.div 
         style={{ scaleX: smoothProgress }}
-        className="fixed top-0 left-0 right-0 h-1.5 bg-gradient-to-r from-amber-400 via-orange-500 to-emerald-500 z-50 origin-left"
+        className="fixed top-0 left-0 right-0 h-1.5 bg-gradient-to-r from-amber-400 via-orange-500 to-emerald-600 z-50 origin-left"
       />
 
-      {/* 🧭 Sticky Fun Frosted Glass Navbar */}
-      <header className="sticky top-0 z-40 backdrop-blur-xl bg-[#FAF7F2]/80 border-b border-amber-900/10 transition-all">
+      {/* 🧭 Sticky Frosted Floating Header */}
+      <header className="fixed top-0 inset-x-0 z-40 backdrop-blur-xl bg-[#FAF6EE]/85 border-b border-amber-900/10 transition-all">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-20 flex items-center justify-between">
           
           {/* Logo & Brand Identity */}
-          <Link href="/" className="flex items-center gap-3 group">
+          <Link href="/" className="flex items-center gap-3.5 group">
             <div className="relative">
-              <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-amber-400 via-orange-400 to-emerald-500 flex items-center justify-center shadow-md shadow-amber-500/25 border-2 border-white group-hover:scale-105 transition-transform">
+              <div className="w-12 h-12 rounded-2xl bg-gradient-to-tr from-amber-400 via-orange-400 to-emerald-600 flex items-center justify-center shadow-md shadow-amber-500/25 border-2 border-white group-hover:scale-105 transition-transform">
                 <GraduationCap className="h-6 w-6 text-white" />
               </div>
               <span className="absolute -top-1 -right-1 w-3.5 h-3.5 bg-emerald-500 rounded-full border-2 border-white animate-pulse" />
@@ -163,37 +224,36 @@ export default function RootPage() {
             <div className="flex flex-col">
               <div className="flex items-center gap-2">
                 <span className="text-2xl font-black tracking-tight text-emerald-950">IGNITE</span>
-                <span className="px-2 py-0.5 rounded-full text-[10px] font-black tracking-wide uppercase bg-amber-400/30 text-amber-900 border border-amber-500/30">
-                  LMS & School
+                <span className="px-2 py-0.5 rounded-full text-[10px] font-black uppercase bg-amber-200/80 text-amber-900 border border-amber-300">
+                  Dual Ecosystem
                 </span>
               </div>
-              <span className="text-[11px] font-bold text-emerald-700 tracking-wider">
+              <span className="text-[11px] font-black text-emerald-700 tracking-wider">
                 MMIS School & NIA Tutoring
               </span>
             </div>
           </Link>
 
-          {/* Desktop Navigation Links */}
-          <nav className="hidden lg:flex items-center gap-8 text-sm font-bold text-slate-600">
-            <a href="#ekosistem" className="hover:text-emerald-800 transition-colors">Dua Sayap IGNITE</a>
-            <a href="#fitur" className="hover:text-emerald-800 transition-colors">Fitur Unggulan</a>
-            <a href="#prestasi" className="hover:text-emerald-800 transition-colors">Kisah Sukses</a>
-            <a href="#faq" className="hover:text-emerald-800 transition-colors">Tanya Jawab</a>
+          {/* Desktop Navigation */}
+          <nav className="hidden lg:flex items-center gap-8 text-sm font-black text-slate-600">
+            <a href="#launcher" className="hover:text-emerald-900 transition-colors">Portal Akses</a>
+            <a href="#ekosistem" className="hover:text-emerald-900 transition-colors">Dua Sayap</a>
+            <a href="#fitur" className="hover:text-emerald-900 transition-colors">Fitur Unggulan</a>
+            <a href="#prestasi" className="hover:text-emerald-900 transition-colors">Kisah Sukses</a>
+            <a href="#faq" className="hover:text-emerald-900 transition-colors">FAQ</a>
           </nav>
 
           {/* Dual Action Login Portals */}
-          <div className="hidden sm:flex items-center gap-2.5">
-            {/* MMIS School Portal Link */}
+          <div className="hidden sm:flex items-center gap-3">
             <Link href="/login">
-              <button className="px-4 py-2.5 rounded-xl text-xs font-black text-emerald-900 bg-white hover:bg-emerald-50 border-2 border-emerald-700/20 hover:border-emerald-700/40 shadow-sm transition-all flex items-center gap-1.5 active:scale-95">
+              <button className="px-4 py-2.5 rounded-2xl text-xs font-black text-emerald-950 bg-white hover:bg-emerald-50 border-2 border-emerald-600/30 hover:border-emerald-600 shadow-sm transition-all flex items-center gap-1.5 active:scale-95">
                 <School className="w-4 h-4 text-emerald-600" />
                 <span>MMIS School</span>
               </button>
             </Link>
 
-            {/* NIA Tutoring Portal Link */}
             <Link href="/app">
-              <button className="px-4 py-2.5 rounded-xl text-xs font-black text-white bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-400 hover:to-orange-400 shadow-md shadow-orange-500/20 transition-all flex items-center gap-1.5 active:scale-95">
+              <button className="px-4 py-2.5 rounded-2xl text-xs font-black text-white bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-400 hover:to-orange-400 shadow-md shadow-orange-500/25 transition-all flex items-center gap-1.5 active:scale-95">
                 <Target className="w-4 h-4 text-white" />
                 <span>NIA Tutoring</span>
                 <ArrowRight className="w-3.5 h-3.5" />
@@ -204,7 +264,7 @@ export default function RootPage() {
           {/* Mobile Menu Toggle */}
           <button 
             onClick={() => setMobileMenuOpen(!mobileMenuOpen)} 
-            className="lg:hidden p-2.5 rounded-xl bg-white border border-amber-900/15 text-slate-700 hover:text-emerald-800 shadow-sm"
+            className="lg:hidden p-2.5 rounded-2xl bg-white border border-amber-900/15 text-slate-700 shadow-sm"
             aria-label="Toggle Menu"
           >
             {mobileMenuOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
@@ -218,49 +278,46 @@ export default function RootPage() {
               initial={{ height: 0, opacity: 0 }}
               animate={{ height: "auto", opacity: 1 }}
               exit={{ height: 0, opacity: 0 }}
-              className="lg:hidden border-b border-amber-900/10 bg-[#FAF7F2]/95 backdrop-blur-2xl px-6 py-6 flex flex-col gap-4 overflow-hidden"
+              className="lg:hidden border-b border-amber-900/10 bg-[#FAF6EE]/95 backdrop-blur-2xl px-6 py-6 flex flex-col gap-4 overflow-hidden"
             >
+              <a 
+                href="#launcher" 
+                onClick={() => setMobileMenuOpen(false)} 
+                className="text-base font-black text-slate-700 hover:text-emerald-900 py-1"
+              >
+                Pilih Portal Belajar
+              </a>
               <a 
                 href="#ekosistem" 
                 onClick={() => setMobileMenuOpen(false)} 
-                className="text-base font-bold text-slate-700 hover:text-emerald-800 py-1"
+                className="text-base font-black text-slate-700 hover:text-emerald-900 py-1"
               >
                 Dua Sayap IGNITE (MMIS & NIA)
               </a>
               <a 
                 href="#fitur" 
                 onClick={() => setMobileMenuOpen(false)} 
-                className="text-base font-bold text-slate-700 hover:text-emerald-800 py-1"
+                className="text-base font-black text-slate-700 hover:text-emerald-900 py-1"
               >
                 Fitur Unggulan
               </a>
               <a 
                 href="#prestasi" 
                 onClick={() => setMobileMenuOpen(false)} 
-                className="text-base font-bold text-slate-700 hover:text-emerald-800 py-1"
+                className="text-base font-black text-slate-700 hover:text-emerald-900 py-1"
               >
-                Kisah Sukses
-              </a>
-              <a 
-                href="#faq" 
-                onClick={() => setMobileMenuOpen(false)} 
-                className="text-base font-bold text-slate-700 hover:text-emerald-800 py-1"
-              >
-                Tanya Jawab (FAQ)
+                Kisah Sukses Siswa
               </a>
 
               <div className="pt-4 border-t border-amber-900/10 flex flex-col gap-3">
-                <div className="text-xs font-black text-slate-500 uppercase tracking-wider">
-                  Pilih Portal Masuk:
-                </div>
                 <Link href="/login" className="w-full">
-                  <button className="w-full py-3.5 rounded-xl font-black text-center bg-white border-2 border-emerald-600/30 text-emerald-900 flex items-center justify-center gap-2 shadow-sm">
+                  <button className="w-full py-3.5 rounded-2xl font-black text-center bg-white border-2 border-emerald-600/30 text-emerald-950 flex items-center justify-center gap-2 shadow-sm">
                     <School className="w-4 h-4 text-emerald-600" />
                     <span>Masuk MMIS School (/login)</span>
                   </button>
                 </Link>
                 <Link href="/app" className="w-full">
-                  <button className="w-full py-3.5 rounded-xl font-black text-center bg-gradient-to-r from-amber-500 to-orange-500 text-white flex items-center justify-center gap-2 shadow-md shadow-orange-500/20">
+                  <button className="w-full py-3.5 rounded-2xl font-black text-center bg-gradient-to-r from-amber-500 to-orange-500 text-white flex items-center justify-center gap-2 shadow-md shadow-orange-500/20">
                     <Target className="w-4 h-4 text-white" />
                     <span>Masuk NIA Tutoring (/app)</span>
                   </button>
@@ -271,55 +328,96 @@ export default function RootPage() {
         </AnimatePresence>
       </header>
 
-      {/* 🌄 THE PARALLAX SCENIC HERO (WARM SUNRISE & TERRACED HILLS) */}
-      <section ref={heroRef} className="relative pt-6 pb-20 md:pt-10 md:pb-32 overflow-hidden z-10">
+      {/* ═══════════════════════════════════════════════════════════════════ */}
+      {/* 🌄 THE BREATHTAKING PARALLAX HERO SCENE */}
+      {/* ═══════════════════════════════════════════════════════════════════ */}
+      <section className="relative pt-24 pb-20 md:pt-28 md:pb-28 overflow-hidden z-10">
         
-        {/* The Outer Framed Viewport (Inspired directly by the Dribbble Reference Video) */}
+        {/* Floating Parallax Badges across the Canvas */}
+        <motion.div 
+          style={{ y: badge1Y }}
+          className="absolute top-28 left-[2%] sm:left-[4%] z-30 hidden xl:flex items-center gap-3 p-3.5 rounded-3xl bg-white/95 backdrop-blur-md border-2 border-white shadow-xl rotate-[-4deg]"
+        >
+          <div className="w-10 h-10 rounded-2xl bg-amber-500 text-white flex items-center justify-center font-black">
+            <Flame className="w-5 h-5 fill-current" />
+          </div>
+          <div>
+            <div className="text-[10px] font-black text-slate-400 uppercase">NIA Tutoring</div>
+            <div className="text-xs font-black text-emerald-950">Streak 14 Hari 🔥</div>
+          </div>
+        </motion.div>
+
+        <motion.div 
+          style={{ y: badge2Y }}
+          className="absolute top-28 right-[2%] sm:right-[4%] z-30 hidden xl:flex items-center gap-3 p-3.5 rounded-3xl bg-white/95 backdrop-blur-md border-2 border-white shadow-xl rotate-[4deg]"
+        >
+          <div className="w-10 h-10 rounded-2xl bg-emerald-600 text-white flex items-center justify-center font-black">
+            <QrCode className="w-5 h-5" />
+          </div>
+          <div>
+            <div className="text-[10px] font-black text-slate-400 uppercase">MMIS School</div>
+            <div className="text-xs font-black text-emerald-950">Presensi QR 98% Hadir</div>
+          </div>
+        </motion.div>
+
+        <motion.div 
+          style={{ y: badge3Y }}
+          className="absolute bottom-28 left-[8%] z-30 hidden lg:flex items-center gap-3 p-3.5 rounded-3xl bg-white/95 backdrop-blur-md border-2 border-white shadow-xl rotate-[3deg]"
+        >
+          <div className="w-10 h-10 rounded-2xl bg-gradient-to-tr from-orange-500 to-amber-500 text-white flex items-center justify-center font-black">
+            <Award className="w-5 h-5" />
+          </div>
+          <div>
+            <div className="text-[10px] font-black text-slate-400 uppercase">Tryout SNBT #5</div>
+            <div className="text-xs font-black text-emerald-950">Skor 745 • Top 3%</div>
+          </div>
+        </motion.div>
+
+        {/* The Outer Signature Framed Viewport (Directly from Dribbble Reference Video) */}
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <motion.div 
             style={{ 
-              scale: frameScale,
-              y: frameY 
+              x: smoothMouseX, 
+              y: smoothMouseY 
             }}
-            className="relative rounded-[2.5rem] sm:rounded-[3.25rem] border-4 sm:border-[6px] border-white shadow-2xl overflow-hidden bg-gradient-to-b from-[#FFF2D6] via-[#FED7AA] to-[#86EFAC] min-h-[640px] md:min-h-[760px] flex flex-col justify-between"
+            className="relative rounded-[2.5rem] sm:rounded-[3.25rem] border-4 sm:border-[6px] border-white shadow-2xl overflow-hidden bg-gradient-to-b from-[#FFF0D4] via-[#FDBA74] to-[#15803D] min-h-[760px] md:min-h-[860px] flex flex-col justify-between"
           >
             
-            {/* ☀️ PARALLAX LAYER 1: Deep Sky & Golden Sun */}
+            {/* ☀️ PARALLAX LAYER 1: Golden Sun & Sunset Glow */}
             <div className="absolute inset-0 pointer-events-none overflow-hidden">
               <motion.div 
                 style={{ y: sunY, scale: sunScale }}
-                className="absolute top-12 left-1/2 -translate-x-1/2 w-48 h-48 sm:w-64 sm:h-64 rounded-full bg-gradient-to-b from-[#FEF08A] to-[#F59E0B] shadow-[0_0_90px_rgba(245,158,11,0.55)] opacity-90"
+                className="absolute top-10 left-1/2 -translate-x-1/2 w-52 h-52 sm:w-80 sm:h-80 rounded-full bg-gradient-to-b from-[#FEF08A] to-[#F59E0B] shadow-[0_0_140px_rgba(245,158,11,0.65)]"
               />
-              {/* Soft Golden Sunset Clouds */}
-              <div className="absolute top-28 -left-12 w-96 h-28 bg-[#FDBA74]/40 rounded-full blur-2xl" />
-              <div className="absolute top-20 -right-16 w-[28rem] h-32 bg-[#FDE047]/40 rounded-full blur-2xl" />
+              <div className="absolute top-24 -left-12 w-[28rem] h-32 bg-[#FDBA74]/50 rounded-full blur-2xl" />
+              <div className="absolute top-20 -right-12 w-[34rem] h-36 bg-[#FDE047]/40 rounded-full blur-2xl" />
             </div>
 
-            {/* 🏔️ PARALLAX LAYER 2: Warm Terracotta Mountains */}
+            {/* 🏔️ PARALLAX LAYER 2: Terracotta Mountains */}
             <motion.div 
               style={{ y: mountainY }}
-              className="absolute inset-x-0 bottom-[22%] sm:bottom-[24%] h-[280px] pointer-events-none"
+              className="absolute inset-x-0 bottom-[28%] sm:bottom-[32%] h-[320px] pointer-events-none"
             >
               <svg 
-                viewBox="0 0 1440 320" 
+                viewBox="0 0 1440 340" 
                 fill="none" 
                 xmlns="http://www.w3.org/2000/svg" 
-                className="w-full h-full object-cover preserve-3d"
+                className="w-full h-full object-cover"
               >
                 <path 
-                  d="M0 240L180 160L360 210L560 120L760 190L980 110L1200 180L1440 140V320H0Z" 
-                  fill="#C2410C" 
-                  fillOpacity="0.45"
+                  d="M0 240L160 150L340 210L560 110L780 190L1020 100L1240 180L1440 130V340H0Z" 
+                  fill="#9A3412" 
+                  fillOpacity="0.5"
                 />
                 <path 
-                  d="M0 260L240 180L480 230L720 150L960 210L1200 160L1440 220V320H0Z" 
-                  fill="#EA580C" 
-                  fillOpacity="0.6"
+                  d="M0 270L220 170L460 230L700 140L940 210L1180 150L1440 210V340H0Z" 
+                  fill="#C2410C" 
+                  fillOpacity="0.8"
                 />
               </svg>
             </motion.div>
 
-            {/* 🌾 PARALLAX LAYER 3: Terraced Green Hills (Tea Plantation Contour Layers) */}
+            {/* 🌾 PARALLAX LAYER 3: Terraced Green Hills */}
             <motion.div 
               style={{ y: hillsY }}
               className="absolute inset-x-0 bottom-0 h-[380px] sm:h-[460px] pointer-events-none"
@@ -330,229 +428,247 @@ export default function RootPage() {
                 xmlns="http://www.w3.org/2000/svg" 
                 className="w-full h-full object-cover"
               >
-                {/* Hill Tier 1 (Back Lime) */}
                 <path 
-                  d="M0 220C240 170 480 280 720 190C960 100 1200 240 1440 180V480H0Z" 
+                  d="M0 200C220 150 460 260 700 180C940 90 1180 230 1440 170V480H0Z" 
                   fill="#65A30D" 
                 />
-                {/* Hill Tier 2 (Emerald Terraces with steps) */}
                 <path 
-                  d="M0 280C190 230 380 320 620 250C860 180 1150 290 1440 230V480H0Z" 
+                  d="M0 260C180 210 380 300 620 230C860 160 1140 270 1440 210V480H0Z" 
                   fill="#15803D" 
                 />
-                {/* Stepped Contour Curves */}
                 <path 
-                  d="M0 340C220 290 440 370 700 310C960 250 1220 350 1440 300V480H0Z" 
+                  d="M0 320C220 270 440 350 700 290C960 230 1220 330 1440 280V480H0Z" 
                   fill="#166534" 
                 />
-                {/* Hill Tier 3 (Deep Tea Green Base) */}
                 <path 
-                  d="M0 400C260 360 520 430 780 370C1040 310 1300 410 1440 360V480H0Z" 
+                  d="M0 380C260 340 520 410 780 350C1040 290 1300 390 1440 340V480H0Z" 
                   fill="#14532D" 
                 />
               </svg>
 
-              {/* Cozy Little Schoolhouse on the Hill */}
-              <div className="absolute top-[28%] right-[14%] hidden md:flex flex-col items-center drop-shadow-md">
-                <div className="w-10 h-7 bg-[#9A3412] rounded-t-lg relative flex items-center justify-center">
-                  <div className="w-3 h-3 bg-amber-300 rounded-sm shadow-inner" />
-                  <div className="absolute -top-3 w-12 h-3.5 bg-[#7C2D12] rounded-full" />
+              {/* Cozy Schoolhouse on Hill */}
+              <div className="absolute top-[28%] right-[14%] hidden md:flex flex-col items-center drop-shadow-xl">
+                <div className="w-12 h-8 bg-[#7C2D12] rounded-t-xl relative flex items-center justify-center">
+                  <div className="w-3.5 h-3.5 bg-amber-300 rounded-sm shadow-[0_0_10px_#FDE047]" />
+                  <div className="absolute -top-3.5 w-14 h-4 bg-[#451A03] rounded-full" />
                 </div>
-                <div className="w-14 h-6 bg-[#7C2D12] rounded-b-md" />
+                <div className="w-16 h-7 bg-[#451A03] rounded-b-lg flex items-center justify-around px-2">
+                  <div className="w-2.5 h-3 bg-amber-400/80 rounded-sm" />
+                  <div className="w-2.5 h-3 bg-amber-400/80 rounded-sm" />
+                </div>
               </div>
             </motion.div>
 
-            {/* 🌿 PARALLAX LAYER 4: Foreground Tea Leaves & Friendly Mascot */}
+            {/* 🌿 PARALLAX LAYER 4: Foreground Foliage & Cheerful Mascot */}
             <motion.div 
               style={{ y: foregroundY }}
-              className="absolute inset-x-0 bottom-0 pointer-events-none flex items-end justify-between px-6 sm:px-12 z-20"
+              className="absolute inset-x-0 bottom-0 pointer-events-none flex items-end justify-between px-6 sm:px-14 z-20"
             >
-              {/* Left Foreground Foliage */}
-              <div className="w-36 h-28 sm:w-56 sm:h-44 bg-gradient-to-tr from-[#052E16] to-[#166534] rounded-t-[4rem] -rotate-12 translate-y-8 blur-[0.5px] opacity-90 shadow-2xl" />
+              <div className="w-40 h-32 sm:w-64 sm:h-52 bg-gradient-to-tr from-[#022c22] to-[#15803D] rounded-t-[5rem] -rotate-12 translate-y-8 blur-[0.5px] opacity-95 shadow-2xl" />
               
-              {/* Cheerful Mascot in Foreground (like the character in the video!) */}
+              {/* Interactive Mascot with Confetti Click */}
               <div className="pointer-events-auto cursor-pointer pb-4 pr-2 sm:pr-8">
                 <motion.div 
                   whileHover={{ scale: 1.1, rotate: 3 }}
-                  onMouseEnter={() => setMascotState("correct")}
-                  onMouseLeave={() => setMascotState("idle")}
-                  className="bg-white/80 backdrop-blur-md p-3 sm:p-4 rounded-3xl border-2 border-white shadow-xl flex items-center gap-3"
+                  whileTap={{ scale: 0.95 }}
+                  onClick={triggerConfetti}
+                  className="bg-white/95 backdrop-blur-md p-3 sm:p-4 rounded-3xl border-2 border-white shadow-2xl flex items-center gap-3 group"
                 >
-                  <Mascot state={mascotState} className="w-16 h-16 sm:w-20 sm:h-20" />
+                  <Mascot state={mascotMood} className="w-16 h-16 sm:w-20 sm:h-20" />
                   <div className="text-left hidden sm:block">
-                    <div className="text-xs font-black text-emerald-950">Halo, Sobat IGNITE! 👋</div>
-                    <div className="text-[11px] font-bold text-emerald-700">Pilih sekolah atau bimbel di atas ya!</div>
+                    <div className="text-xs font-black text-emerald-950 flex items-center gap-1">
+                      <span>Klik Aku! 🎉</span>
+                    </div>
+                    <div className="text-[11px] font-bold text-emerald-700">Maskot NIA & MMIS</div>
                   </div>
                 </motion.div>
               </div>
 
-              {/* Right Foreground Foliage */}
-              <div className="w-44 h-32 sm:w-64 sm:h-52 bg-gradient-to-tl from-[#052E16] to-[#15803D] rounded-t-[5rem] rotate-12 translate-y-10 blur-[0.5px] opacity-90 shadow-2xl" />
+              <div className="w-48 h-36 sm:w-72 sm:h-60 bg-gradient-to-tl from-[#022c22] to-[#166534] rounded-t-[6rem] rotate-12 translate-y-10 blur-[0.5px] opacity-95 shadow-2xl" />
             </motion.div>
 
-            {/* 🌟 HERO CONTENT INSIDE THE FRAME */}
-            <div className="relative z-30 p-6 sm:p-12 md:p-16 flex flex-col justify-between h-full">
+            {/* 🌟 HERO INTERACTIVE CONTENT & PROMPT */}
+            <div className="relative z-30 p-6 sm:p-10 md:p-14 flex flex-col justify-between h-full">
               
-              {/* Top Pill Tags & Brand Banner */}
+              {/* Top Controls inside Frame */}
               <div className="flex flex-wrap items-center justify-between gap-4">
-                <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-white/85 backdrop-blur-md border border-white text-emerald-950 text-xs sm:text-sm font-black shadow-md">
-                  <span className="w-2.5 h-2.5 rounded-full bg-amber-500 animate-ping" />
-                  <span>Satu Ekosistem Super • Dua Masa Depan Cerah</span>
+                <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-white/90 backdrop-blur-md border border-white text-emerald-950 text-xs sm:text-sm font-black shadow-md">
+                  <Sparkles className="w-4 h-4 text-amber-500" />
+                  <span>Satu Platform Super • MMIS School & NIA Tutoring</span>
                 </div>
 
-                {/* Sound / Ambient Toggle Pill (As seen in the Dribbble Reference Video) */}
                 <button
-                  onClick={() => setSoundOn(!soundOn)}
-                  className="flex items-center gap-2 px-4 py-2 rounded-full bg-white/85 backdrop-blur-md border border-white text-emerald-950 text-xs font-black shadow-md hover:bg-white transition-all active:scale-95"
+                  onClick={toggleSound}
+                  className="flex items-center gap-2 px-4 py-2 rounded-full bg-white/90 backdrop-blur-md border border-white text-emerald-950 text-xs font-black shadow-md hover:bg-white transition-all active:scale-95"
                 >
-                  {soundOn ? <Volume2 className="w-4 h-4 text-emerald-600" /> : <VolumeX className="w-4 h-4 text-slate-400" />}
-                  <span>{soundOn ? "Suara Suasana: Aktif 🍃" : "Suara Suasana"}</span>
-                  <span className="w-1.5 h-1.5 rounded-full bg-amber-500" />
+                  {soundActive ? <Volume2 className="w-4 h-4 text-emerald-600 animate-bounce" /> : <VolumeX className="w-4 h-4 text-slate-400" />}
+                  <span>{soundActive ? "Suara Belajar: Aktif" : "Suara Suasana"}</span>
+                  <span className={`w-2 h-2 rounded-full ${soundActive ? "bg-emerald-500" : "bg-amber-500"}`} />
                 </button>
               </div>
 
-              {/* Center Main Stage & Frosted Glass Controller Card */}
-              <div className="my-10 max-w-4xl mx-auto text-center flex flex-col items-center">
-                
-                <motion.h1 
-                  initial={{ opacity: 0, y: 20 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ duration: 0.6 }}
-                  className="text-4xl sm:text-6xl md:text-7xl font-black text-emerald-950 tracking-tight leading-[1.08] mb-6 drop-shadow-sm"
-                >
+              {/* Center Stage Headline & Dual Portal Switcher */}
+              <motion.div 
+                style={{ y: heroCardY, scale: heroCardScale }}
+                className="my-2 sm:my-4 max-w-4xl mx-auto text-center flex flex-col items-center"
+              >
+                <h1 className="text-3xl sm:text-5xl md:text-6xl font-black text-emerald-950 tracking-tight leading-[1.1] mb-3 drop-shadow-sm">
                   Belajar Tanpa Batas,{" "}
                   <span className="text-transparent bg-clip-text bg-gradient-to-r from-amber-600 via-orange-600 to-emerald-700">
                     Tumbuh Bersama
                   </span>{" "}
                   IGNITE.
-                </motion.h1>
+                </h1>
 
-                <motion.p 
-                  initial={{ opacity: 0, y: 20 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ duration: 0.6, delay: 0.1 }}
-                  className="text-base sm:text-xl text-emerald-950/85 font-bold max-w-2xl mb-8 leading-relaxed drop-shadow-sm"
-                >
-                  Menghubungkan pendidikan formal di <strong className="text-emerald-900 underline decoration-amber-400 decoration-4">MMIS School</strong> dan bimbingan belajar intensif di <strong className="text-orange-900 underline decoration-orange-400 decoration-4">NIA Tutoring</strong> dalam satu genggaman.
-                </motion.p>
+                <p className="text-sm sm:text-lg text-emerald-950/90 font-black max-w-2xl mb-6 leading-relaxed">
+                  Menyatukan sekolah formal di <strong className="underline decoration-emerald-500 decoration-4 text-emerald-950">MMIS School</strong> dan bimbel juara di <strong className="underline decoration-orange-500 decoration-4 text-orange-950">NIA Tutoring</strong>.
+                </p>
 
-                {/* 🪟 CENTRAL FROSTED GLASS DUAL-PORTAL CARD (Inspired by the Video Reference) */}
-                <motion.div 
-                  initial={{ scale: 0.9, opacity: 0 }}
-                  animate={{ scale: 1, opacity: 1 }}
-                  transition={{ duration: 0.7, delay: 0.2 }}
-                  className="w-full max-w-2xl p-6 sm:p-8 rounded-[2.5rem] bg-white/70 backdrop-blur-2xl border-2 sm:border-4 border-white shadow-2xl relative text-left"
+                {/* 🪟 THE FROSTED GLASS DUAL-PORTAL LAUNCHPAD (Signature Component from Reference Video) */}
+                <div 
+                  id="launcher"
+                  className="w-full max-w-2xl p-6 sm:p-8 rounded-[2.75rem] bg-white/85 backdrop-blur-2xl border-4 border-white shadow-2xl relative text-left"
                 >
-                  {/* Card Header & Interactive Slider */}
-                  <div className="flex items-center justify-between pb-5 border-b border-emerald-900/10 mb-6">
+                  {/* Interactive Switcher Header */}
+                  <div className="flex items-center justify-between pb-4 border-b border-emerald-900/10 mb-6">
                     <div>
                       <span className="text-xs font-black uppercase tracking-wider text-emerald-800">
-                        Pintu Gerbang Belajar
+                        Pilih Portal Belajarmu
                       </span>
                       <h3 className="text-xl sm:text-2xl font-black text-emerald-950">
-                        Pilih Portal Aksesmu Sekarang
+                        {activePortal === "mmis" ? "MMIS School (Formal School)" : "NIA Tutoring (Intensive Bimbel)"}
                       </h3>
                     </div>
 
-                    {/* Interactive Slider Pill Indicator */}
-                    <div className="hidden sm:flex items-center gap-2 bg-emerald-900/10 p-1.5 rounded-full">
+                    {/* Interactive Slider Tabs */}
+                    <div className="flex items-center gap-1.5 bg-emerald-900/10 p-1.5 rounded-full">
                       <button 
-                        onClick={() => setPortalTab("mmis")}
-                        className={`px-3 py-1 rounded-full text-xs font-black transition-all ${
-                          portalTab === "mmis" ? "bg-white text-emerald-900 shadow-sm" : "text-emerald-800 hover:text-emerald-950"
+                        onClick={() => { setActivePortal("mmis"); playSoundChime(); }}
+                        className={`px-4 py-1.5 rounded-full text-xs font-black transition-all ${
+                          activePortal === "mmis" ? "bg-white text-emerald-950 shadow-md scale-105" : "text-emerald-800 hover:text-emerald-950"
                         }`}
                       >
-                        MMIS
+                        MMIS School
                       </button>
                       <button 
-                        onClick={() => setPortalTab("all")}
-                        className={`px-3 py-1 rounded-full text-xs font-black transition-all ${
-                          portalTab === "all" ? "bg-white text-emerald-900 shadow-sm" : "text-emerald-800 hover:text-emerald-950"
+                        onClick={() => { setActivePortal("nia"); playSoundChime(); }}
+                        className={`px-4 py-1.5 rounded-full text-xs font-black transition-all ${
+                          activePortal === "nia" ? "bg-white text-orange-950 shadow-md scale-105" : "text-emerald-800 hover:text-emerald-950"
                         }`}
                       >
-                        Keduanya
-                      </button>
-                      <button 
-                        onClick={() => setPortalTab("nia")}
-                        className={`px-3 py-1 rounded-full text-xs font-black transition-all ${
-                          portalTab === "nia" ? "bg-white text-orange-950 shadow-sm" : "text-emerald-800 hover:text-emerald-950"
-                        }`}
-                      >
-                        NIA
+                        NIA Tutoring
                       </button>
                     </div>
                   </div>
 
-                  {/* Dual Portal Selection Cards Grid */}
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                    
-                    {/* 🏫 PORTAL 1: MMIS School */}
-                    <Link 
-                      href="/login" 
-                      className="group p-5 rounded-3xl bg-gradient-to-br from-white to-emerald-50/80 border-2 border-emerald-600/30 hover:border-emerald-600 hover:shadow-xl transition-all flex flex-col justify-between"
-                    >
-                      <div>
-                        <div className="w-12 h-12 rounded-2xl bg-emerald-600 text-white flex items-center justify-center shadow-md mb-4 group-hover:scale-110 transition-transform">
-                          <School className="w-6 h-6" />
-                        </div>
-                        <div className="flex items-center gap-2">
-                          <h4 className="text-lg font-black text-emerald-950">MMIS School</h4>
-                          <span className="text-[10px] font-black px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-800">
-                            /login
+                  {/* Dynamic Portal Body Preview */}
+                  <AnimatePresence mode="wait">
+                    {activePortal === "mmis" ? (
+                      <motion.div
+                        key="mmis"
+                        initial={{ opacity: 0, x: -15 }}
+                        animate={{ opacity: 1, x: 0 }}
+                        exit={{ opacity: 0, x: 15 }}
+                        transition={{ duration: 0.25 }}
+                        className="space-y-4"
+                      >
+                        <div className="p-4 rounded-2xl bg-[#F7FBF8] border border-emerald-200/60 flex items-center justify-between">
+                          <div className="flex items-center gap-3">
+                            <div className="w-12 h-12 rounded-2xl bg-emerald-600 text-white flex items-center justify-center font-black shadow-md">
+                              <School className="w-6 h-6" />
+                            </div>
+                            <div>
+                              <div className="text-sm font-black text-emerald-950">MMIS School Digital Portal</div>
+                              <div className="text-xs text-slate-500 font-bold">Khusus Siswa, Guru, & Wali Kelas</div>
+                            </div>
+                          </div>
+                          <span className="text-xs font-black text-emerald-800 bg-emerald-100 px-3 py-1 rounded-full">
+                            Akreditasi A
                           </span>
                         </div>
-                        <p className="text-xs text-slate-600 font-semibold mt-2 leading-relaxed">
-                          Portal resmi siswa, guru, & wali kelas. Absensi QR pintar, jadwal harian, e-rapor, dan kelas digital.
-                        </p>
-                      </div>
 
-                      <div className="mt-5 pt-3 border-t border-emerald-900/10 flex items-center justify-between text-xs font-black text-emerald-800 group-hover:text-emerald-950">
-                        <span>Masuk Sekolah</span>
-                        <ArrowUpRight className="w-4 h-4 group-hover:translate-x-1 group-hover:-translate-y-1 transition-transform" />
-                      </div>
-                    </Link>
-
-                    {/* 🎯 PORTAL 2: NIA Tutoring */}
-                    <Link 
-                      href="/app" 
-                      className="group p-5 rounded-3xl bg-gradient-to-br from-white to-amber-50/80 border-2 border-orange-500/30 hover:border-orange-500 hover:shadow-xl transition-all flex flex-col justify-between"
-                    >
-                      <div>
-                        <div className="w-12 h-12 rounded-2xl bg-gradient-to-r from-amber-500 to-orange-500 text-white flex items-center justify-center shadow-md mb-4 group-hover:scale-110 transition-transform">
-                          <Target className="w-6 h-6" />
+                        <div className="grid grid-cols-2 gap-3 text-xs font-bold text-slate-600">
+                          <div className="p-3 rounded-xl bg-white border border-emerald-100 flex items-center gap-2">
+                            <QrCode className="w-4 h-4 text-emerald-600" />
+                            <span>Presensi QR Scanner</span>
+                          </div>
+                          <div className="p-3 rounded-xl bg-white border border-emerald-100 flex items-center gap-2">
+                            <Calendar className="w-4 h-4 text-emerald-600" />
+                            <span>Jadwal KBM & Guru</span>
+                          </div>
                         </div>
-                        <div className="flex items-center gap-2">
-                          <h4 className="text-lg font-black text-emerald-950">NIA Tutoring</h4>
-                          <span className="text-[10px] font-black px-2 py-0.5 rounded-full bg-orange-100 text-orange-900">
-                            /app
+
+                        <div className="pt-2">
+                          <Link href="/login" className="w-full block">
+                            <button className="w-full py-4 px-6 rounded-2xl bg-emerald-700 hover:bg-emerald-600 text-white font-black text-sm shadow-xl shadow-emerald-700/25 flex items-center justify-center gap-2 transition-all active:scale-95">
+                              <School className="w-4 h-4" />
+                              <span>Masuk ke MMIS School (/login)</span>
+                              <ArrowRight className="w-4 h-4" />
+                            </button>
+                          </Link>
+                        </div>
+                      </motion.div>
+                    ) : (
+                      <motion.div
+                        key="nia"
+                        initial={{ opacity: 0, x: 15 }}
+                        animate={{ opacity: 1, x: 0 }}
+                        exit={{ opacity: 0, x: -15 }}
+                        transition={{ duration: 0.25 }}
+                        className="space-y-4"
+                      >
+                        <div className="p-4 rounded-2xl bg-[#FFFBF5] border border-orange-200/60 flex items-center justify-between">
+                          <div className="flex items-center gap-3">
+                            <div className="w-12 h-12 rounded-2xl bg-gradient-to-r from-amber-500 to-orange-500 text-white flex items-center justify-center font-black shadow-md">
+                              <Target className="w-6 h-6" />
+                            </div>
+                            <div>
+                              <div className="text-sm font-black text-emerald-950">NIA Tutoring Bimbel Portal</div>
+                              <div className="text-xs text-slate-500 font-bold">Khusus Murid Bimbel & Sukses PTN</div>
+                            </div>
+                          </div>
+                          <span className="text-xs font-black text-rose-600 bg-rose-100 px-3 py-1 rounded-full flex items-center gap-1">
+                            <span className="w-2 h-2 rounded-full bg-rose-600 animate-ping" />
+                            LiveKit HD
                           </span>
                         </div>
-                        <p className="text-xs text-slate-600 font-semibold mt-2 leading-relaxed">
-                          Bimbel intensif UTBK-SNBT. Live Class LiveKit, CBT & Drills adaptif, klinik privat 1-on-1, dan gamifikasi XP.
-                        </p>
-                      </div>
 
-                      <div className="mt-5 pt-3 border-t border-orange-900/10 flex items-center justify-between text-xs font-black text-orange-800 group-hover:text-orange-950">
-                        <span>Mulai Bimbingan</span>
-                        <ArrowUpRight className="w-4 h-4 group-hover:translate-x-1 group-hover:-translate-y-1 transition-transform" />
-                      </div>
-                    </Link>
+                        <div className="grid grid-cols-2 gap-3 text-xs font-bold text-slate-600">
+                          <div className="p-3 rounded-xl bg-white border border-orange-100 flex items-center gap-2">
+                            <Video className="w-4 h-4 text-orange-600" />
+                            <span>Virtual Classroom PIP</span>
+                          </div>
+                          <div className="p-3 rounded-xl bg-white border border-orange-100 flex items-center gap-2">
+                            <BookOpen className="w-4 h-4 text-orange-600" />
+                            <span>CBT Drills & KaTeX</span>
+                          </div>
+                        </div>
 
-                  </div>
+                        <div className="pt-2">
+                          <Link href="/app" className="w-full block">
+                            <button className="w-full py-4 px-6 rounded-2xl bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-400 hover:to-orange-400 text-white font-black text-sm shadow-xl shadow-orange-500/25 flex items-center justify-center gap-2 transition-all active:scale-95">
+                              <Target className="w-4 h-4" />
+                              <span>Masuk ke NIA Tutoring (/app)</span>
+                              <ArrowRight className="w-4 h-4" />
+                            </button>
+                          </Link>
+                        </div>
+                      </motion.div>
+                    )}
+                  </AnimatePresence>
 
-                  {/* PWA Direct Installation Button */}
-                  <div className="mt-5 pt-4 border-t border-emerald-900/10">
+                  {/* PWA Helper Prompt */}
+                  <div className="mt-5 pt-4 border-t border-slate-100">
                     <PwaInstallButton />
                   </div>
+                </div>
 
-                </motion.div>
+              </motion.div>
 
-              </div>
-
-              {/* Bottom Quick Footnote inside Hero Frame */}
-              <div className="flex items-center justify-between text-xs font-black text-emerald-950/70 pt-4">
+              {/* Bottom Scenic Footnote */}
+              <div className="flex items-center justify-between text-xs font-black text-emerald-950/80 pt-2">
                 <span>© MMIS School & NIA Tutoring Unified Platform</span>
-                <span>Didukung Teknologi WebRTC & Supabase</span>
+                <span>WebRTC • KaTeX • Supabase SSR</span>
               </div>
 
             </div>
@@ -562,96 +678,92 @@ export default function RootPage() {
 
       </section>
 
-      {/* 🌿 DUA SAYAP IGNITE: MMIS SCHOOL & NIA TUTORING SHOWCASE */}
-      <section id="ekosistem" className="py-24 relative z-20">
+      {/* ═══════════════════════════════════════════════════════════════════ */}
+      {/* 🌾 SECTION 2: DUA SAYAP IGNITE (STAGGERED PARALLAX SHOWCASE) */}
+      {/* ═══════════════════════════════════════════════════════════════════ */}
+      <section id="ekosistem" className="py-28 relative z-20 bg-[#F5F1E8] border-t border-amber-900/10">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           
-          <div className="text-center max-w-3xl mx-auto mb-16">
-            <span className="text-xs font-black uppercase tracking-wider text-emerald-800 px-4 py-1.5 rounded-full bg-emerald-100 border border-emerald-200">
-              Harmoni Dua Dunia Pendidikan
+          <div className="text-center max-w-3xl mx-auto mb-20">
+            <span className="text-xs font-black uppercase tracking-wider text-emerald-900 px-4 py-1.5 rounded-full bg-emerald-100 border border-emerald-200">
+              Harmoni Dua Sayap Pendidikan
             </span>
             <h2 className="text-3xl sm:text-5xl font-black text-emerald-950 mt-4 mb-4">
-              Semua Kebutuhan Belajar dalam Satu Atap
+              Satu Ekosistem, Dua Portal Berbeda
             </h2>
-            <p className="text-slate-600 text-base sm:text-lg font-medium">
-              Baik aktivitas kurikulum harian sekolah formal maupun akselerasi persiapan ujian masuk perguruan tinggi negeri, IGNITE hadir mendampingi setiap langkahmu.
+            <p className="text-slate-600 text-base sm:text-lg font-bold">
+              Pelajari peran spesifik antara sekolah formal di MMIS School dan bimbingan belajar intensif di NIA Tutoring.
             </p>
           </div>
 
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 items-start">
             
-            {/* Wing 1: MMIS School */}
+            {/* Wing 1: MMIS School Card (with Staggered Parallax Y) */}
             <motion.div 
-              whileHover={{ y: -6 }} 
-              className="p-8 sm:p-10 rounded-[2.5rem] bg-white border-2 border-emerald-600/20 shadow-xl shadow-emerald-900/5 relative overflow-hidden"
+              style={{ y: wingLeftY }}
+              whileHover={{ y: -8 }} 
+              className="p-8 sm:p-12 rounded-[2.75rem] bg-white border-2 border-emerald-600/20 shadow-xl relative overflow-hidden"
             >
               <div className="flex items-center justify-between mb-8">
-                <div className="w-14 h-14 rounded-2xl bg-emerald-600 text-white flex items-center justify-center shadow-lg shadow-emerald-600/25">
-                  <School className="w-7 h-7" />
+                <div className="w-16 h-16 rounded-2xl bg-emerald-600 text-white flex items-center justify-center shadow-lg shadow-emerald-600/25">
+                  <School className="w-8 h-8" />
                 </div>
                 <Link href="/login">
-                  <button className="px-4 py-2 rounded-xl text-xs font-black text-emerald-800 bg-emerald-50 hover:bg-emerald-100 border border-emerald-200 transition-colors flex items-center gap-1.5">
-                    <span>Akses Portal /login</span>
-                    <ArrowRight className="w-3.5 h-3.5" />
+                  <button className="px-5 py-2.5 rounded-2xl text-xs font-black text-emerald-900 bg-emerald-50 hover:bg-emerald-100 border border-emerald-200 flex items-center gap-2">
+                    <span>Buka Portal /login</span>
+                    <ArrowRight className="w-4 h-4" />
                   </button>
                 </Link>
               </div>
 
               <h3 className="text-2xl sm:text-3xl font-black text-emerald-950 mb-3">
-                MMIS School: Sistem Akademik Sekolah Cerdas
+                MMIS School: Sistem Operasional Sekolah Formal
               </h3>
-              <p className="text-slate-600 text-sm sm:text-base font-medium mb-8 leading-relaxed">
-                Dirancang khusus untuk mendukung operasional harian sekolah. Guru, siswa, dan wali murid saling terhubung dalam ekosistem digital yang tertib dan akuntabel.
+              <p className="text-slate-600 text-sm sm:text-base font-bold mb-8 leading-relaxed">
+                Diperuntukkan bagi ekosistem sekolah resmi (SD, SMP, SMA). Memudahkan guru menyusun jadwal KBM, mencatat jurnal harian, memvalidasi kehadiran absensi QR, dan menghasilkan e-rapor komprehensif.
               </p>
 
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                <div className="p-4 rounded-2xl bg-[#F7FBF8] border border-emerald-100">
-                  <div className="w-8 h-8 rounded-xl bg-emerald-200/60 flex items-center justify-center text-emerald-800 mb-2 font-black">
-                    <QrCode className="w-4 h-4" />
-                  </div>
-                  <h4 className="text-sm font-black text-emerald-950">Presensi & QR Scanner</h4>
-                  <p className="text-xs text-slate-500 mt-1">Absensi harian cepat dan validasi piket guru real-time.</p>
+                <div className="p-5 rounded-2xl bg-[#F7FBF8] border border-emerald-100">
+                  <QrCode className="w-5 h-5 text-emerald-700 mb-2" />
+                  <h4 className="text-sm font-black text-emerald-950">Presensi QR Pintar</h4>
+                  <p className="text-xs text-slate-500 font-bold mt-1">Validasi absensi murid & piket guru anti curang.</p>
                 </div>
 
-                <div className="p-4 rounded-2xl bg-[#F7FBF8] border border-emerald-100">
-                  <div className="w-8 h-8 rounded-xl bg-emerald-200/60 flex items-center justify-center text-emerald-800 mb-2 font-black">
-                    <Calendar className="w-4 h-4" />
-                  </div>
+                <div className="p-5 rounded-2xl bg-[#F7FBF8] border border-emerald-100">
+                  <Calendar className="w-5 h-5 text-emerald-700 mb-2" />
                   <h4 className="text-sm font-black text-emerald-950">Jadwal Pelajaran KBM</h4>
-                  <p className="text-xs text-slate-500 mt-1">Sinkronisasi ruang kelas, mata pelajaran, dan modul ajar.</p>
+                  <p className="text-xs text-slate-500 font-bold mt-1">Sinkronisasi jam mengajar, ruang, & silabus kelas.</p>
                 </div>
 
-                <div className="p-4 rounded-2xl bg-[#F7FBF8] border border-emerald-100">
-                  <div className="w-8 h-8 rounded-xl bg-emerald-200/60 flex items-center justify-center text-emerald-800 mb-2 font-black">
-                    <FileText className="w-4 h-4" />
-                  </div>
-                  <h4 className="text-sm font-black text-emerald-950">E-Rapor & Jurnal Guru</h4>
-                  <p className="text-xs text-slate-500 mt-1">Rekap nilai tugas, UTS, UAS, dan catatan wali kelas.</p>
+                <div className="p-5 rounded-2xl bg-[#F7FBF8] border border-emerald-100">
+                  <FileText className="w-5 h-5 text-emerald-700 mb-2" />
+                  <h4 className="text-sm font-black text-emerald-950">E-Rapor Digital</h4>
+                  <p className="text-xs text-slate-500 font-bold mt-1">Rekapitulasi otomatis nilai harian, UTS, & rapor akhir.</p>
                 </div>
 
-                <div className="p-4 rounded-2xl bg-[#F7FBF8] border border-emerald-100">
-                  <div className="w-8 h-8 rounded-xl bg-emerald-200/60 flex items-center justify-center text-emerald-800 mb-2 font-black">
-                    <Users className="w-4 h-4" />
-                  </div>
-                  <h4 className="text-sm font-black text-emerald-950">Portal Multi-Peran</h4>
-                  <p className="text-xs text-slate-500 mt-1">Akses khusus Kepala Sekolah, Guru, Staf, & Orang Tua.</p>
+                <div className="p-5 rounded-2xl bg-[#F7FBF8] border border-emerald-100">
+                  <Users className="w-5 h-5 text-emerald-700 mb-2" />
+                  <h4 className="text-sm font-black text-emerald-950">Portal Multi-Role</h4>
+                  <p className="text-xs text-slate-500 font-bold mt-1">Akses khusus Kepala Sekolah, Guru, Staf, & Orang Tua.</p>
                 </div>
               </div>
             </motion.div>
 
-            {/* Wing 2: NIA Tutoring */}
+            {/* Wing 2: NIA Tutoring Card (with Staggered Parallax Y) */}
             <motion.div 
-              whileHover={{ y: -6 }} 
-              className="p-8 sm:p-10 rounded-[2.5rem] bg-white border-2 border-orange-500/20 shadow-xl shadow-orange-900/5 relative overflow-hidden"
+              style={{ y: wingRightY }}
+              whileHover={{ y: -8 }} 
+              className="p-8 sm:p-12 rounded-[2.75rem] bg-white border-2 border-orange-500/20 shadow-xl relative overflow-hidden"
             >
               <div className="flex items-center justify-between mb-8">
-                <div className="w-14 h-14 rounded-2xl bg-gradient-to-r from-amber-500 to-orange-500 text-white flex items-center justify-center shadow-lg shadow-orange-500/25">
-                  <Target className="w-7 h-7" />
+                <div className="w-16 h-16 rounded-2xl bg-gradient-to-r from-amber-500 to-orange-500 text-white flex items-center justify-center shadow-lg shadow-orange-500/25">
+                  <Target className="w-8 h-8" />
                 </div>
                 <Link href="/app">
-                  <button className="px-4 py-2 rounded-xl text-xs font-black text-orange-900 bg-orange-50 hover:bg-orange-100 border border-orange-200 transition-colors flex items-center gap-1.5">
-                    <span>Akses Portal /app</span>
-                    <ArrowRight className="w-3.5 h-3.5" />
+                  <button className="px-5 py-2.5 rounded-2xl text-xs font-black text-orange-900 bg-orange-50 hover:bg-orange-100 border border-orange-200 flex items-center gap-2">
+                    <span>Buka Portal /app</span>
+                    <ArrowRight className="w-4 h-4" />
                   </button>
                 </Link>
               </div>
@@ -659,41 +771,33 @@ export default function RootPage() {
               <h3 className="text-2xl sm:text-3xl font-black text-emerald-950 mb-3">
                 NIA Tutoring: Akselerasi Juara & Sukses PTN
               </h3>
-              <p className="text-slate-600 text-sm sm:text-base font-medium mb-8 leading-relaxed">
-                Bimbingan belajar intensif dengan kurikulum adaptif. Dari pemahaman konsep paling mendasar hingga trik cepat menembus ujian seleksi PTN dan Kedinasan.
+              <p className="text-slate-600 text-sm sm:text-base font-bold mb-8 leading-relaxed">
+                Diperuntukkan bagi bimbingan belajar intensif dan persiapan seleksi PTN (UTBK-SNBT, Mandiri, & Kedinasan). Menghadirkan kelas interaktif LiveKit, tryout CBT tajam, dan klinik privat 1-on-1.
               </p>
 
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                <div className="p-4 rounded-2xl bg-[#FFFBF5] border border-orange-100">
-                  <div className="w-8 h-8 rounded-xl bg-orange-200/60 flex items-center justify-center text-orange-900 mb-2 font-black">
-                    <Video className="w-4 h-4" />
-                  </div>
+                <div className="p-5 rounded-2xl bg-[#FFFBF5] border border-orange-100">
+                  <Video className="w-5 h-5 text-orange-600 mb-2" />
                   <h4 className="text-sm font-black text-emerald-950">Virtual Classroom LiveKit</h4>
-                  <p className="text-xs text-slate-500 mt-1">Webcam PIP draggable, audio share screen, dan polling.</p>
+                  <p className="text-xs text-slate-500 font-bold mt-1">PIP webcam draggable, audio share screen, & polling kuis.</p>
                 </div>
 
-                <div className="p-4 rounded-2xl bg-[#FFFBF5] border border-orange-100">
-                  <div className="w-8 h-8 rounded-xl bg-orange-200/60 flex items-center justify-center text-orange-900 mb-2 font-black">
-                    <BookOpen className="w-4 h-4" />
-                  </div>
+                <div className="p-5 rounded-2xl bg-[#FFFBF5] border border-orange-100">
+                  <BookOpen className="w-5 h-5 text-orange-600 mb-2" />
                   <h4 className="text-sm font-black text-emerald-950">CBT Tryout & Drills</h4>
-                  <p className="text-xs text-slate-500 mt-1">Simulasi standar SNBT, timer real-time, & rumus KaTeX.</p>
+                  <p className="text-xs text-slate-500 font-bold mt-1">Simulasi standar SNBT, timer real-time, & rumus KaTeX.</p>
                 </div>
 
-                <div className="p-4 rounded-2xl bg-[#FFFBF5] border border-orange-100">
-                  <div className="w-8 h-8 rounded-xl bg-orange-200/60 flex items-center justify-center text-orange-900 mb-2 font-black">
-                    <Heart className="w-4 h-4" />
-                  </div>
+                <div className="p-5 rounded-2xl bg-[#FFFBF5] border border-orange-100">
+                  <Heart className="w-5 h-5 text-orange-600 mb-2" />
                   <h4 className="text-sm font-black text-emerald-950">Klinik Konsultasi 1-on-1</h4>
-                  <p className="text-xs text-slate-500 mt-1">Sesi privat kupas tuntas PR dan materi sulit kapan saja.</p>
+                  <p className="text-xs text-slate-500 font-bold mt-1">Bedah PR dan materi sulit langsung bersama tutor ahli.</p>
                 </div>
 
-                <div className="p-4 rounded-2xl bg-[#FFFBF5] border border-orange-100">
-                  <div className="w-8 h-8 rounded-xl bg-orange-200/60 flex items-center justify-center text-orange-900 mb-2 font-black">
-                    <Flame className="w-4 h-4" />
-                  </div>
+                <div className="p-5 rounded-2xl bg-[#FFFBF5] border border-orange-100">
+                  <Flame className="w-5 h-5 text-orange-600 mb-2" />
                   <h4 className="text-sm font-black text-emerald-950">Gamifikasi XP & Streak</h4>
-                  <p className="text-xs text-slate-500 mt-1">Koleksi poin belajar harian, lencana, & leaderboard seru.</p>
+                  <p className="text-xs text-slate-500 font-bold mt-1">Koleksi poin belajar harian, lencana penghargaan, & ranking.</p>
                 </div>
               </div>
             </motion.div>
@@ -702,309 +806,105 @@ export default function RootPage() {
         </div>
       </section>
 
-      {/* 🚀 FITUR UNGGULAN DENGAN PARALLAX SLIDER */}
-      <section id="fitur" className="py-24 bg-[#F5F2EB] relative z-20 border-y border-amber-900/10">
+      {/* ═══════════════════════════════════════════════════════════════════ */}
+      {/* 🚀 SECTION 3: PARALLAX FEATURE CARDS GRID */}
+      {/* ═══════════════════════════════════════════════════════════════════ */}
+      <section id="fitur" className="py-28 relative z-20 bg-[#FAF6EE] border-t border-amber-900/10">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           
-          <div className="text-center max-w-3xl mx-auto mb-16">
-            <span className="text-xs font-black uppercase tracking-wider text-amber-900 px-4 py-1.5 rounded-full bg-amber-200/70 border border-amber-300">
-              Fitur Lengkap & Canggih
+          <div className="text-center max-w-3xl mx-auto mb-20">
+            <span className="text-xs font-black uppercase tracking-wider text-amber-900 px-4 py-1.5 rounded-full bg-amber-200/80 border border-amber-300">
+              Teknologi Pendidikan Terdepan
             </span>
             <h2 className="text-3xl sm:text-5xl font-black text-emerald-950 mt-4 mb-4">
-              Teknologi Pendidikan Tanpa Kompromi
+              Dibangun dengan Standar Kualitas Tertinggi
             </h2>
-            <p className="text-slate-600 text-base sm:text-lg font-medium">
-              Dirancang dengan perhatian penuh pada pengalaman belajar siswa dan kemudahan kerja pengajar.
+            <p className="text-slate-600 text-base sm:text-lg font-bold">
+              Infrastruktur canggih yang membuat belajar menjadi mudah, interaktif, dan terukur.
             </p>
           </div>
 
-          {/* Interactive Feature Pills */}
-          <div className="flex flex-wrap items-center justify-center gap-3 mb-12">
-            {[
-              { id: "school", label: "MMIS Digital School", icon: School },
-              { id: "live", label: "Live Classroom (LiveKit)", icon: Video },
-              { id: "cbt", label: "CBT & Smart Drills", icon: BookOpen },
-              { id: "tutoring", label: "Klinik 1-on-1 & Konsultasi", icon: Heart },
-            ].map((tab) => {
-              const Icon = tab.icon;
-              const isActive = activeFeatureTab === tab.id;
-              return (
-                <button
-                  key={tab.id}
-                  onClick={() => setActiveFeatureTab(tab.id as any)}
-                  className={`flex items-center gap-2 px-5 py-3 rounded-2xl font-black text-xs sm:text-sm transition-all border ${
-                    isActive 
-                      ? "bg-emerald-800 text-white border-emerald-900 shadow-md scale-105" 
-                      : "bg-white text-slate-600 border-amber-900/15 hover:bg-slate-50"
-                  }`}
-                >
-                  <Icon className={`w-4 h-4 ${isActive ? "text-amber-300" : "text-emerald-700"}`} />
-                  <span>{tab.label}</span>
-                </button>
-              );
-            })}
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+            
+            {/* Feature 1 */}
+            <motion.div 
+              whileHover={{ y: -8 }}
+              className="p-8 rounded-[2.5rem] bg-white border-2 border-emerald-100 shadow-lg flex flex-col justify-between"
+            >
+              <div>
+                <div className="w-14 h-14 rounded-2xl bg-emerald-100 text-emerald-800 flex items-center justify-center font-black mb-6">
+                  <Video className="w-7 h-7" />
+                </div>
+                <h3 className="text-xl font-black text-emerald-950 mb-3">Live Classroom HD Tanpa Lag</h3>
+                <p className="text-xs sm:text-sm text-slate-600 font-bold leading-relaxed mb-6">
+                  Engine WebRTC LiveKit memungkinkan interaksi dua arah seketika. Siswa dapat menggeser webcam tutor ke pojok layar sesuka hati saat menyimak share screen materi.
+                </p>
+              </div>
+              <div className="text-xs font-black text-emerald-700 flex items-center gap-1.5">
+                <Check className="w-4 h-4 text-emerald-600" />
+                <span>Webcam PIP Draggable & Audio Share</span>
+              </div>
+            </motion.div>
+
+            {/* Feature 2 */}
+            <motion.div 
+              whileHover={{ y: -8 }}
+              className="p-8 rounded-[2.5rem] bg-white border-2 border-orange-100 shadow-lg flex flex-col justify-between"
+            >
+              <div>
+                <div className="w-14 h-14 rounded-2xl bg-orange-100 text-orange-900 flex items-center justify-center font-black mb-6">
+                  <BookOpen className="w-7 h-7" />
+                </div>
+                <h3 className="text-xl font-black text-emerald-950 mb-3">CBT & Drills Berbasis KaTeX</h3>
+                <p className="text-xs sm:text-sm text-slate-600 font-bold leading-relaxed mb-6">
+                  Ucapkan selamat tinggal pada rumus matematika buram hasil tangkapan layar. Sistem rendering LaTeX KaTeX memastikan rumus integral, matriks, dan fisika tampil tajam.
+                </p>
+              </div>
+              <div className="text-xs font-black text-orange-800 flex items-center gap-1.5">
+                <Check className="w-4 h-4 text-orange-600" />
+                <span>Format Soal Standar UTBK SNBT</span>
+              </div>
+            </motion.div>
+
+            {/* Feature 3 */}
+            <motion.div 
+              whileHover={{ y: -8 }}
+              className="p-8 rounded-[2.5rem] bg-white border-2 border-emerald-100 shadow-lg flex flex-col justify-between"
+            >
+              <div>
+                <div className="w-14 h-14 rounded-2xl bg-emerald-100 text-emerald-800 flex items-center justify-center font-black mb-6">
+                  <Laptop className="w-7 h-7" />
+                </div>
+                <h3 className="text-xl font-black text-emerald-950 mb-3">Ringan & Praktis Berbasis PWA</h3>
+                <p className="text-xs sm:text-sm text-slate-600 font-bold leading-relaxed mb-6">
+                  Buka dari browser apa pun dan instal langsung ke home screen HP Anda. Lebih hemat kuota, hemat memori penyimpanan, dan responsif di tablet maupun laptop.
+                </p>
+              </div>
+              <div className="text-xs font-black text-emerald-700 flex items-center gap-1.5">
+                <Check className="w-4 h-4 text-emerald-600" />
+                <span>Kompatibel Android, iOS, Windows, & Mac</span>
+              </div>
+            </motion.div>
+
           </div>
-
-          {/* Feature Details Display */}
-          <div className="bg-white rounded-[2.5rem] p-8 sm:p-12 border-2 border-amber-900/10 shadow-xl">
-            <AnimatePresence mode="wait">
-              {activeFeatureTab === "school" && (
-                <motion.div 
-                  key="school"
-                  initial={{ opacity: 0, y: 15 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  exit={{ opacity: 0, y: -15 }}
-                  transition={{ duration: 0.3 }}
-                  className="grid grid-cols-1 lg:grid-cols-2 gap-10 items-center"
-                >
-                  <div className="space-y-6">
-                    <span className="px-3.5 py-1 rounded-full bg-emerald-100 text-emerald-800 text-xs font-black">
-                      Sekolah Formal Modern • MMIS School
-                    </span>
-                    <h3 className="text-2xl sm:text-4xl font-black text-emerald-950">
-                      Presensi QR, Jadwal KBM, & E-Rapor Terintegrasi
-                    </h3>
-                    <p className="text-slate-600 font-medium leading-relaxed">
-                      Sistem absensi berbasis QR scanner memastikan kehadiran siswa dan guru tercatat akurat dalam hitungan detik. Semua nilai tugas, kuis, dan ujian terakumulasi rapi menjadi buku rapor digital yang dapat diunduh kapan saja.
-                    </p>
-                    <ul className="space-y-3 text-sm font-bold text-slate-700">
-                      <li className="flex items-center gap-3">
-                        <CheckCircle2 className="w-5 h-5 text-emerald-600 shrink-0" />
-                        <span>Validasi kehadiran guru piket & jurnal materi harian</span>
-                      </li>
-                      <li className="flex items-center gap-3">
-                        <CheckCircle2 className="w-5 h-5 text-emerald-600 shrink-0" />
-                        <span>Pemberitahuan absensi langsung ke akun orang tua</span>
-                      </li>
-                      <li className="flex items-center gap-3">
-                        <CheckCircle2 className="w-5 h-5 text-emerald-600 shrink-0" />
-                        <span>Ekspor rapor PDF otomatis standar kementerian</span>
-                      </li>
-                    </ul>
-                    <div className="pt-2">
-                      <Link href="/login">
-                        <button className="px-6 py-3 rounded-2xl bg-emerald-700 hover:bg-emerald-600 text-white font-black text-xs flex items-center gap-2 shadow-md">
-                          <span>Buka Portal MMIS School</span>
-                          <ArrowRight className="w-4 h-4" />
-                        </button>
-                      </Link>
-                    </div>
-                  </div>
-
-                  <div className="rounded-3xl bg-[#FAF7F2] p-6 border-2 border-emerald-100 shadow-inner space-y-4">
-                    <div className="flex items-center justify-between pb-3 border-b border-emerald-900/10">
-                      <span className="text-xs font-black text-emerald-950">KARTU PRESENSI KELAS X-MIPA 1</span>
-                      <span className="text-xs font-bold text-emerald-700 bg-emerald-100 px-2.5 py-0.5 rounded-full">QR Aktif</span>
-                    </div>
-                    <div className="p-4 rounded-2xl bg-white border border-emerald-100 flex items-center justify-between">
-                      <div className="flex items-center gap-3">
-                        <div className="w-12 h-12 rounded-xl bg-emerald-600 text-white flex items-center justify-center font-black">
-                          <QrCode className="w-6 h-6" />
-                        </div>
-                        <div>
-                          <div className="text-sm font-black text-emerald-950">Scan QR Absensi Siswa</div>
-                          <div className="text-xs text-slate-500">Kamera aktif untuk validasi masuk</div>
-                        </div>
-                      </div>
-                      <span className="text-xs font-black text-emerald-700">98% Hadir</span>
-                    </div>
-                    <div className="p-4 rounded-2xl bg-white border border-emerald-100 text-xs space-y-2">
-                      <div className="flex justify-between font-bold text-slate-600">
-                        <span>Pelajaran Berlangsung:</span>
-                        <span className="text-emerald-900">Biologi - Sel & Jaringan</span>
-                      </div>
-                      <div className="flex justify-between font-bold text-slate-600">
-                        <span>Guru Pengampu:</span>
-                        <span className="text-emerald-900">Dra. Endang Sulistyowati</span>
-                      </div>
-                    </div>
-                  </div>
-                </motion.div>
-              )}
-
-              {activeFeatureTab === "live" && (
-                <motion.div 
-                  key="live"
-                  initial={{ opacity: 0, y: 15 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  exit={{ opacity: 0, y: -15 }}
-                  transition={{ duration: 0.3 }}
-                  className="grid grid-cols-1 lg:grid-cols-2 gap-10 items-center"
-                >
-                  <div className="space-y-6">
-                    <span className="px-3.5 py-1 rounded-full bg-orange-100 text-orange-900 text-xs font-black">
-                      Ruang Kelas Virtual • LiveKit WebRTC
-                    </span>
-                    <h3 className="text-2xl sm:text-4xl font-black text-emerald-950">
-                      Kamera PIP Bebas Geser & Share Screen Bersuara
-                    </h3>
-                    <p className="text-slate-600 font-medium leading-relaxed">
-                      Siswa dan tutor menikmati interaksi tatap muka layaknya di satu ruangan. Kamera tutor dalam format PIP (Picture-in-Picture) dapat digeser ke sudut mana saja, sementara screen share menyertakan suara materi yang jernih.
-                    </p>
-                    <ul className="space-y-3 text-sm font-bold text-slate-700">
-                      <li className="flex items-center gap-3">
-                        <CheckCircle2 className="w-5 h-5 text-orange-600 shrink-0" />
-                        <span>Draggable PIP Webcam: Letakkan video tutor di mana saja</span>
-                      </li>
-                      <li className="flex items-center gap-3">
-                        <CheckCircle2 className="w-5 h-5 text-orange-600 shrink-0" />
-                        <span>Antrean Raise Hand tertib dengan persetujuan tutor</span>
-                      </li>
-                      <li className="flex items-center gap-3">
-                        <CheckCircle2 className="w-5 h-5 text-orange-600 shrink-0" />
-                        <span>Polling kuis kilat langsung tampil di layar semua siswa</span>
-                      </li>
-                    </ul>
-                    <div className="pt-2">
-                      <Link href="/app">
-                        <button className="px-6 py-3 rounded-2xl bg-gradient-to-r from-amber-500 to-orange-500 text-white font-black text-xs flex items-center gap-2 shadow-md">
-                          <span>Eksplor Kelas NIA Tutoring</span>
-                          <ArrowRight className="w-4 h-4" />
-                        </button>
-                      </Link>
-                    </div>
-                  </div>
-
-                  <div className="rounded-3xl bg-[#FAF7F2] p-6 border-2 border-orange-100 shadow-inner space-y-4">
-                    <div className="flex items-center justify-between pb-3 border-b border-orange-900/10">
-                      <span className="text-xs font-black text-emerald-950">SESI LIVE: PENALARAN MATEMATIKA</span>
-                      <span className="text-xs font-bold text-rose-600 bg-rose-100 px-2.5 py-0.5 rounded-full flex items-center gap-1">
-                        <span className="w-2 h-2 rounded-full bg-rose-600 animate-ping" />
-                        LIVE HD
-                      </span>
-                    </div>
-                    <div className="h-44 rounded-2xl bg-slate-900 p-4 flex flex-col justify-between text-white relative overflow-hidden">
-                      <div className="text-xs font-mono text-amber-300">Share Screen: Tutor Ridwan M.Si</div>
-                      <div className="text-sm font-black">Integral Substitusi: ∫ 2x √(x² + 9) dx</div>
-                      <div className="absolute bottom-3 right-3 w-28 h-20 bg-slate-800 border-2 border-amber-400 rounded-xl flex items-center justify-center text-xs font-bold">
-                        PIP Tutor Cam
-                      </div>
-                    </div>
-                    <div className="p-3.5 rounded-2xl bg-white border border-orange-100 text-xs flex items-center justify-between">
-                      <span className="font-bold text-slate-700">Polling: 94% Siswa Menjawab Benar</span>
-                      <span className="font-black text-emerald-700">Opsi B ✓</span>
-                    </div>
-                  </div>
-                </motion.div>
-              )}
-
-              {activeFeatureTab === "cbt" && (
-                <motion.div 
-                  key="cbt"
-                  initial={{ opacity: 0, y: 15 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  exit={{ opacity: 0, y: -15 }}
-                  transition={{ duration: 0.3 }}
-                  className="grid grid-cols-1 lg:grid-cols-2 gap-10 items-center"
-                >
-                  <div className="space-y-6">
-                    <span className="px-3.5 py-1 rounded-full bg-amber-100 text-amber-900 text-xs font-black">
-                      Simulasi CBT Standar Nasional • NIA Drills
-                    </span>
-                    <h3 className="text-2xl sm:text-4xl font-black text-emerald-950">
-                      Simulasi UTBK Realistis dengan Rumus Tajam KaTeX
-                    </h3>
-                    <p className="text-slate-600 font-medium leading-relaxed">
-                      Latih kecepatan dan ketepatan dengan antarmuka yang dirancang presisi menyerupai sistem seleksi resmi. Timer otomatis, navigasi nomor kilat, dan pembahasan langkah demi langkah.
-                    </p>
-                    <ul className="space-y-3 text-sm font-bold text-slate-700">
-                      <li className="flex items-center gap-3">
-                        <CheckCircle2 className="w-5 h-5 text-amber-600 shrink-0" />
-                        <span>Rendering simbol sains dan matematika tanpa blur</span>
-                      </li>
-                      <li className="flex items-center gap-3">
-                        <CheckCircle2 className="w-5 h-5 text-amber-600 shrink-0" />
-                        <span>Analisis skor per-subtes untuk deteksi materi lemah</span>
-                      </li>
-                      <li className="flex items-center gap-3">
-                        <CheckCircle2 className="w-5 h-5 text-amber-600 shrink-0" />
-                        <span>Bank soal SNBT, Literasi Bahasa, & Ujian Mandiri</span>
-                      </li>
-                    </ul>
-                  </div>
-
-                  <div className="rounded-3xl bg-[#FAF7F2] p-6 border-2 border-amber-100 shadow-inner space-y-4">
-                    <div className="flex items-center justify-between pb-3 border-b border-amber-900/10 text-xs font-black">
-                      <span>TRYOUT SNBT #5</span>
-                      <span className="text-rose-600 font-mono">⏱️ 14:20 Tersisa</span>
-                    </div>
-                    <div className="p-4 rounded-2xl bg-white border border-amber-100 space-y-2">
-                      <div className="text-xs text-slate-500">Soal 12 dari 20:</div>
-                      <div className="text-sm font-bold text-slate-800">
-                        Jika matriks A tidak memiliki invers, maka nilai k adalah...
-                      </div>
-                      <div className="grid grid-cols-2 gap-2 pt-2 text-xs">
-                        <div className="p-2 rounded-xl bg-slate-50 border border-slate-200">A. -4</div>
-                        <div className="p-2 rounded-xl bg-amber-100 border-2 border-amber-500 font-bold text-amber-900">B. 2 (Dipilih)</div>
-                      </div>
-                    </div>
-                  </div>
-                </motion.div>
-              )}
-
-              {activeFeatureTab === "tutoring" && (
-                <motion.div 
-                  key="tutoring"
-                  initial={{ opacity: 0, y: 15 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  exit={{ opacity: 0, y: -15 }}
-                  transition={{ duration: 0.3 }}
-                  className="grid grid-cols-1 lg:grid-cols-2 gap-10 items-center"
-                >
-                  <div className="space-y-6">
-                    <span className="px-3.5 py-1 rounded-full bg-emerald-100 text-emerald-800 text-xs font-black">
-                      Bimbingan Khusus • Klinik Konsultasi
-                    </span>
-                    <h3 className="text-2xl sm:text-4xl font-black text-emerald-950">
-                      Klinik 1-on-1: Bedah PR & Soal Sulit Hingga Paham
-                    </h3>
-                    <p className="text-slate-600 font-medium leading-relaxed">
-                      Tidak perlu cemas saat menemukan soal pekerjaan rumah atau konsep yang belum kamu mengerti di sekolah. Jadwalkan sesi konsultasi langsung dengan tutor spesialis mata pelajaran.
-                    </p>
-                    <ul className="space-y-3 text-sm font-bold text-slate-700">
-                      <li className="flex items-center gap-3">
-                        <CheckCircle2 className="w-5 h-5 text-emerald-600 shrink-0" />
-                        <span>Pilih tutor favorit dan waktu sesi yang paling fleksibel</span>
-                      </li>
-                      <li className="flex items-center gap-3">
-                        <CheckCircle2 className="w-5 h-5 text-emerald-600 shrink-0" />
-                        <span>Upload foto lembar soal sebelum sesi dimulai</span>
-                      </li>
-                      <li className="flex items-center gap-3">
-                        <CheckCircle2 className="w-5 h-5 text-emerald-600 shrink-0" />
-                        <span>Bimbingan santai dua arah tanpa takut salah</span>
-                      </li>
-                    </ul>
-                  </div>
-
-                  <div className="rounded-3xl bg-[#FAF7F2] p-6 border-2 border-emerald-100 shadow-inner space-y-4">
-                    <div className="p-4 rounded-2xl bg-white border border-emerald-100">
-                      <div className="text-xs font-black text-emerald-800 mb-1">JADWAL KLINIK TERKONFIRMASI</div>
-                      <div className="text-sm font-black text-slate-800">Bedah Soal Kimia: Stoikiometri Larutan</div>
-                      <div className="text-xs text-slate-500 mt-1">Tutor: Kak Siti Rahma, S.Si • Besok 16:00 WIB</div>
-                    </div>
-                  </div>
-                </motion.div>
-              )}
-            </AnimatePresence>
-          </div>
-
         </div>
       </section>
 
-      {/* 🏆 TESTIMONIALS & KISAH SUKSES SISWA */}
-      <section id="prestasi" className="py-24 relative z-20">
+      {/* ═══════════════════════════════════════════════════════════════════ */}
+      {/* 🏆 SECTION 4: TESTIMONIALS & KISAH SUKSES */}
+      {/* ═══════════════════════════════════════════════════════════════════ */}
+      <section id="prestasi" className="py-28 relative z-20 bg-[#F5F1E8] border-t border-amber-900/10">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           
-          <div className="text-center max-w-3xl mx-auto mb-16">
-            <span className="text-xs font-black uppercase tracking-wider text-emerald-800 px-4 py-1.5 rounded-full bg-emerald-100 border border-emerald-200">
+          <div className="text-center max-w-3xl mx-auto mb-20">
+            <span className="text-xs font-black uppercase tracking-wider text-emerald-900 px-4 py-1.5 rounded-full bg-emerald-100 border border-emerald-200">
               Keluarga Besar IGNITE
             </span>
             <h2 className="text-3xl sm:text-5xl font-black text-emerald-950 mt-4 mb-4">
-              Kisah Nyata dari Murid & Pengajar
+              Kisah Nyata dari Siswa & Pengajar
             </h2>
-            <p className="text-slate-600 text-base sm:text-lg font-medium">
-              Bukti nyata bagaimana integrasi MMIS School dan NIA Tutoring mewujudkan mimpi-mimpi besar.
+            <p className="text-slate-600 text-base sm:text-lg font-bold">
+              Bagaimana integrasi MMIS School dan NIA Tutoring mewujudkan mimpi-mimpi besar mereka.
             </p>
           </div>
 
@@ -1018,12 +918,12 @@ export default function RootPage() {
                     <Star key={i} className="w-4 h-4 fill-current" />
                   ))}
                 </div>
-                <p className="text-slate-700 text-sm font-medium leading-relaxed italic mb-6">
+                <p className="text-slate-700 text-sm font-bold leading-relaxed italic mb-6">
                   &ldquo;Di MMIS School semua tugas dan absensi QR sangat teratur. Ditambah bimbingan intensif NIA Tutoring saat malam hari, aku berhasil lolos ke Kedokteran UI tanpa panik!&rdquo;
                 </p>
               </div>
               <div className="flex items-center gap-3.5 pt-4 border-t border-slate-100">
-                <div className="w-11 h-11 rounded-2xl bg-emerald-600 text-white flex items-center justify-center font-black">
+                <div className="w-12 h-12 rounded-2xl bg-emerald-600 text-white flex items-center justify-center font-black">
                   AR
                 </div>
                 <div>
@@ -1041,12 +941,12 @@ export default function RootPage() {
                     <Star key={i} className="w-4 h-4 fill-current" />
                   ))}
                 </div>
-                <p className="text-slate-700 text-sm font-medium leading-relaxed italic mb-6">
+                <p className="text-slate-700 text-sm font-bold leading-relaxed italic mb-6">
                   &ldquo;Fitur PIP webcam di kelas virtual NIA Tutoring beneran memudahkan fokus. Soal-soal drill CBT-nya sangat mirip dengan tipe soal asli UTBK SNBT.&rdquo;
                 </p>
               </div>
               <div className="flex items-center gap-3.5 pt-4 border-t border-slate-100">
-                <div className="w-11 h-11 rounded-2xl bg-orange-500 text-white flex items-center justify-center font-black">
+                <div className="w-12 h-12 rounded-2xl bg-gradient-to-r from-amber-500 to-orange-500 text-white flex items-center justify-center font-black">
                   DF
                 </div>
                 <div>
@@ -1064,12 +964,12 @@ export default function RootPage() {
                     <Star key={i} className="w-4 h-4 fill-current" />
                   ))}
                 </div>
-                <p className="text-slate-700 text-sm font-medium leading-relaxed italic mb-6">
+                <p className="text-slate-700 text-sm font-bold leading-relaxed italic mb-6">
                   &ldquo;Sebagai guru di MMIS School, portal penilaian dan jurnal sangat menghemat waktu kami. Rekap nilai otomatis dan orang tua bisa memantau perkembangan anak secara transparan.&rdquo;
                 </p>
               </div>
               <div className="flex items-center gap-3.5 pt-4 border-t border-slate-100">
-                <div className="w-11 h-11 rounded-2xl bg-emerald-800 text-white flex items-center justify-center font-black">
+                <div className="w-12 h-12 rounded-2xl bg-emerald-800 text-white flex items-center justify-center font-black">
                   BP
                 </div>
                 <div>
@@ -1083,18 +983,20 @@ export default function RootPage() {
         </div>
       </section>
 
-      {/* ❓ FAQ SECTION (ACCORDION) */}
-      <section id="faq" className="py-24 bg-[#F5F2EB] relative z-20 border-t border-amber-900/10">
+      {/* ═══════════════════════════════════════════════════════════════════ */}
+      {/* ❓ SECTION 5: FAQ ACCORDION */}
+      {/* ═══════════════════════════════════════════════════════════════════ */}
+      <section id="faq" className="py-28 bg-[#FAF6EE] relative z-20 border-t border-amber-900/10">
         <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
           
           <div className="text-center mb-16">
-            <span className="text-xs font-black uppercase tracking-wider text-emerald-800 px-4 py-1.5 rounded-full bg-emerald-100 border border-emerald-200">
+            <span className="text-xs font-black uppercase tracking-wider text-emerald-900 px-4 py-1.5 rounded-full bg-emerald-100 border border-emerald-200">
               Pertanyaan yang Sering Diajukan
             </span>
             <h2 className="text-3xl sm:text-5xl font-black text-emerald-950 mt-4 mb-4">
               Punya Pertanyaan Seputar IGNITE?
             </h2>
-            <p className="text-slate-600 text-base font-medium">
+            <p className="text-slate-600 text-base font-bold">
               Temukan jawaban seputar akses MMIS School dan NIA Tutoring di bawah ini.
             </p>
           </div>
@@ -1122,7 +1024,7 @@ export default function RootPage() {
                         exit={{ height: 0, opacity: 0 }}
                         transition={{ duration: 0.25 }}
                       >
-                        <div className="px-6 pb-6 text-sm font-medium text-slate-600 leading-relaxed border-t border-slate-100 pt-4">
+                        <div className="px-6 pb-6 text-sm font-bold text-slate-600 leading-relaxed border-t border-slate-100 pt-4">
                           {faq.a}
                         </div>
                       </motion.div>
@@ -1136,13 +1038,15 @@ export default function RootPage() {
         </div>
       </section>
 
-      {/* 🌾 GRAND PARALLAX FINAL CALL-TO-ACTION */}
+      {/* ═══════════════════════════════════════════════════════════════════ */}
+      {/* 🌅 GRAND SUNSET HORIZON CALL-TO-ACTION */}
+      {/* ═══════════════════════════════════════════════════════════════════ */}
       <section className="py-24 relative z-20">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="rounded-[3rem] p-10 sm:p-16 bg-gradient-to-br from-emerald-900 via-emerald-800 to-teal-950 text-white text-center relative overflow-hidden shadow-2xl border-4 border-white">
+          <div className="rounded-[3rem] p-10 sm:p-16 bg-gradient-to-br from-[#064E3B] via-[#047857] to-[#065F46] text-white text-center relative overflow-hidden shadow-2xl border-4 border-white">
             
-            {/* Background Glow */}
-            <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[350px] bg-amber-400/20 rounded-full blur-[100px] pointer-events-none" />
+            {/* Background Ambient Glow */}
+            <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[650px] h-[380px] bg-amber-400/25 rounded-full blur-[110px] pointer-events-none" />
 
             <div className="relative z-10 max-w-3xl mx-auto flex flex-col items-center">
               <span className="text-xs font-black uppercase tracking-wider text-amber-300 px-4 py-1.5 rounded-full bg-white/10 border border-white/20 mb-6">
@@ -1153,21 +1057,21 @@ export default function RootPage() {
                 Siap Melangkah Menuju Prestasi Terbaikmu?
               </h2>
 
-              <p className="text-white/80 text-base sm:text-lg font-medium mb-10 leading-relaxed">
+              <p className="text-white/90 text-base sm:text-lg font-bold mb-10 leading-relaxed">
                 Pilih portal yang sesuai dengan kebutuhan belajarmu hari ini dan nikmati kemudahan akses di semua perangkat.
               </p>
 
               {/* Dual Big CTA Buttons */}
               <div className="flex flex-col sm:flex-row items-center gap-4 w-full max-w-md">
                 <Link href="/login" className="w-full sm:w-1/2">
-                  <button className="w-full py-4 px-6 rounded-2xl bg-white hover:bg-emerald-50 text-emerald-950 font-black text-sm transition-all shadow-lg flex items-center justify-center gap-2 active:scale-95">
+                  <button className="w-full py-4 px-6 rounded-2xl bg-white hover:bg-emerald-50 text-emerald-950 font-black text-sm transition-all shadow-xl flex items-center justify-center gap-2 active:scale-95">
                     <School className="w-4 h-4 text-emerald-600" />
                     <span>MMIS School</span>
                   </button>
                 </Link>
 
                 <Link href="/app" className="w-full sm:w-1/2">
-                  <button className="w-full py-4 px-6 rounded-2xl bg-gradient-to-r from-amber-400 to-orange-500 hover:from-amber-300 hover:to-orange-400 text-white font-black text-sm transition-all shadow-lg flex items-center justify-center gap-2 active:scale-95">
+                  <button className="w-full py-4 px-6 rounded-2xl bg-gradient-to-r from-amber-400 to-orange-500 hover:from-amber-300 hover:to-orange-400 text-white font-black text-sm transition-all shadow-xl flex items-center justify-center gap-2 active:scale-95">
                     <Target className="w-4 h-4 text-white" />
                     <span>NIA Tutoring</span>
                   </button>
@@ -1180,7 +1084,7 @@ export default function RootPage() {
       </section>
 
       {/* ⚓ FOOTER BERSIH & RAMAH */}
-      <footer className="border-t border-amber-900/10 bg-[#FAF7F2] relative z-20 pt-16 pb-12 text-slate-600 text-sm">
+      <footer className="border-t border-amber-900/10 bg-[#FAF6EE] relative z-20 pt-16 pb-12 text-slate-600 text-sm">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="grid grid-cols-1 md:grid-cols-4 gap-10 pb-12 border-b border-amber-900/10">
             
@@ -1192,10 +1096,10 @@ export default function RootPage() {
                 </div>
                 <span className="text-xl font-black text-emerald-950 tracking-tight">IGNITE LMS</span>
               </div>
-              <p className="text-xs text-slate-500 font-medium leading-relaxed">
+              <p className="text-xs text-slate-500 font-bold leading-relaxed">
                 Ekosistem terintegrasi yang menyatukan manajemen sekolah formal di <strong>MMIS School</strong> dan bimbingan belajar intensif di <strong>NIA Tutoring</strong>.
               </p>
-              <div className="text-xs font-bold text-emerald-800">
+              <div className="text-xs font-black text-emerald-800">
                 © {new Date().getFullYear()} IGNITE LMS • Hak Cipta Dilindungi
               </div>
             </div>
@@ -1225,7 +1129,7 @@ export default function RootPage() {
             {/* Col 4: Keamanan & Status */}
             <div className="space-y-3">
               <div className="text-emerald-950 font-black text-sm tracking-wider uppercase">Infrastruktur & Status</div>
-              <p className="text-xs text-slate-500 font-medium leading-relaxed">
+              <p className="text-xs text-slate-500 font-bold leading-relaxed">
                 Didukung arsitektur cloud WebRTC berlatensi rendah dengan penyimpanan data terenkripsi.
               </p>
               <div className="flex items-center gap-2 p-3 rounded-2xl bg-white border border-emerald-100 text-xs font-bold text-emerald-800 shadow-sm">
