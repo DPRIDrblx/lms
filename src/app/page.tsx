@@ -142,37 +142,21 @@ export default function RootPage() {
   const wingLeftY = useTransform(scrollY, [500, 1400], [60, -40]);
   const wingRightY = useTransform(scrollY, [500, 1400], [-30, 50]);
 
-  // Auth Redirection
+  // Helper to get role dashboard URL
+  const getDashboardUrl = () => {
+    if (profile?.role === "sobat_nia") return "/sobat-nia";
+    if (profile?.role === "operator_les") return "/operator-les";
+    if (profile?.role === "pengurus_nia") return "/pengurus-nia";
+    if (profile?.role === "tutor") return "/tutor";
+    return "/dashboard";
+  };
+
+  // Only redirect if password change is forced
   useEffect(() => {
-    if (!loading && user) {
-      if (profile?.force_password_change) {
-        router.replace("/auth/change-password");
-      } else if (profile?.role === "sobat_nia") {
-        router.replace("/sobat-nia");
-      } else if (profile?.role === "operator_les") {
-        router.replace("/operator-les");
-      } else if (profile?.role === "pengurus_nia") {
-        router.replace("/pengurus-nia");
-      } else if (profile?.role === "tutor") {
-        router.replace("/tutor");
-      } else {
-        router.replace("/dashboard");
-      }
+    if (!loading && user && profile?.force_password_change) {
+      router.replace("/auth/change-password");
     }
   }, [user, profile, loading, router]);
-
-  if (loading || user) {
-    return (
-      <div className="min-h-screen bg-[#FAF6EE] flex flex-col items-center justify-center gap-4 text-emerald-950">
-        <motion.div 
-          animate={{ rotate: 360 }} 
-          transition={{ repeat: Infinity, duration: 1.2, ease: "linear" }}
-          className="w-14 h-14 border-4 border-amber-500 border-t-transparent rounded-full shadow-lg shadow-amber-400/25"
-        />
-        <p className="text-emerald-950 text-sm font-black tracking-wide">Menghubungkan ke Portal IGNITE...</p>
-      </div>
-    );
-  }
 
   const faqs = [
     {
@@ -245,20 +229,32 @@ export default function RootPage() {
 
           {/* Dual Action Login Portals */}
           <div className="hidden sm:flex items-center gap-3">
-            <Link href="/login">
-              <button className="px-4 py-2.5 rounded-2xl text-xs font-black text-emerald-950 bg-white hover:bg-emerald-50 border-2 border-emerald-600/30 hover:border-emerald-600 shadow-sm transition-all flex items-center gap-1.5 active:scale-95">
-                <School className="w-4 h-4 text-emerald-600" />
-                <span>MMIS School</span>
-              </button>
-            </Link>
+            {user ? (
+              <Link href={getDashboardUrl()}>
+                <button className="px-5 py-2.5 rounded-2xl text-xs font-black text-white bg-gradient-to-r from-emerald-600 to-teal-700 hover:from-emerald-500 hover:to-teal-600 shadow-md shadow-emerald-600/25 transition-all flex items-center gap-2 active:scale-95">
+                  <Laptop className="w-4 h-4" />
+                  <span>Buka Dashboard ({profile?.full_name?.split(" ")[0] || "Saya"})</span>
+                  <ArrowRight className="w-3.5 h-3.5" />
+                </button>
+              </Link>
+            ) : (
+              <>
+                <Link href="/login">
+                  <button className="px-4 py-2.5 rounded-2xl text-xs font-black text-emerald-950 bg-white hover:bg-emerald-50 border-2 border-emerald-600/30 hover:border-emerald-600 shadow-sm transition-all flex items-center gap-1.5 active:scale-95">
+                    <School className="w-4 h-4 text-emerald-600" />
+                    <span>MMIS School</span>
+                  </button>
+                </Link>
 
-            <Link href="/app">
-              <button className="px-4 py-2.5 rounded-2xl text-xs font-black text-white bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-400 hover:to-orange-400 shadow-md shadow-orange-500/25 transition-all flex items-center gap-1.5 active:scale-95">
-                <Target className="w-4 h-4 text-white" />
-                <span>NIA Tutoring</span>
-                <ArrowRight className="w-3.5 h-3.5" />
-              </button>
-            </Link>
+                <Link href="/app">
+                  <button className="px-4 py-2.5 rounded-2xl text-xs font-black text-white bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-400 hover:to-orange-400 shadow-md shadow-orange-500/25 transition-all flex items-center gap-1.5 active:scale-95">
+                    <Target className="w-4 h-4 text-white" />
+                    <span>NIA Tutoring</span>
+                    <ArrowRight className="w-3.5 h-3.5" />
+                  </button>
+                </Link>
+              </>
+            )}
           </div>
 
           {/* Mobile Menu Toggle */}
@@ -310,18 +306,29 @@ export default function RootPage() {
               </a>
 
               <div className="pt-4 border-t border-amber-900/10 flex flex-col gap-3">
-                <Link href="/login" className="w-full">
-                  <button className="w-full py-3.5 rounded-2xl font-black text-center bg-white border-2 border-emerald-600/30 text-emerald-950 flex items-center justify-center gap-2 shadow-sm">
-                    <School className="w-4 h-4 text-emerald-600" />
-                    <span>Masuk MMIS School (/login)</span>
-                  </button>
-                </Link>
-                <Link href="/app" className="w-full">
-                  <button className="w-full py-3.5 rounded-2xl font-black text-center bg-gradient-to-r from-amber-500 to-orange-500 text-white flex items-center justify-center gap-2 shadow-md shadow-orange-500/20">
-                    <Target className="w-4 h-4 text-white" />
-                    <span>Masuk NIA Tutoring (/app)</span>
-                  </button>
-                </Link>
+                {user ? (
+                  <Link href={getDashboardUrl()} className="w-full">
+                    <button className="w-full py-3.5 rounded-2xl font-black text-center bg-gradient-to-r from-emerald-600 to-teal-700 text-white flex items-center justify-center gap-2 shadow-md">
+                      <Laptop className="w-4 h-4" />
+                      <span>Buka Dashboard Saya</span>
+                    </button>
+                  </Link>
+                ) : (
+                  <>
+                    <Link href="/login" className="w-full">
+                      <button className="w-full py-3.5 rounded-2xl font-black text-center bg-white border-2 border-emerald-600/30 text-emerald-950 flex items-center justify-center gap-2 shadow-sm">
+                        <School className="w-4 h-4 text-emerald-600" />
+                        <span>Masuk MMIS School (/login)</span>
+                      </button>
+                    </Link>
+                    <Link href="/app" className="w-full">
+                      <button className="w-full py-3.5 rounded-2xl font-black text-center bg-gradient-to-r from-amber-500 to-orange-500 text-white flex items-center justify-center gap-2 shadow-md shadow-orange-500/20">
+                        <Target className="w-4 h-4 text-white" />
+                        <span>Masuk NIA Tutoring (/app)</span>
+                      </button>
+                    </Link>
+                  </>
+                )}
               </div>
             </motion.div>
           )}
@@ -529,6 +536,23 @@ export default function RootPage() {
                   id="launcher"
                   className="w-full max-w-2xl p-6 sm:p-8 rounded-[2.75rem] bg-white/85 backdrop-blur-2xl border-4 border-white shadow-2xl relative text-left"
                 >
+                  {/* User Logged-in Notice */}
+                  {user && (
+                    <div className="mb-4 p-3.5 rounded-2xl bg-emerald-50 border-2 border-emerald-600/30 flex items-center justify-between text-xs">
+                      <div className="flex items-center gap-2">
+                        <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
+                        <span className="font-black text-emerald-950">
+                          Halo, {profile?.full_name || user.email}! Anda sedang aktif login.
+                        </span>
+                      </div>
+                      <Link href={getDashboardUrl()}>
+                        <span className="px-3.5 py-1.5 rounded-xl bg-emerald-700 text-white font-black hover:bg-emerald-600 transition-colors flex items-center gap-1 shadow-sm">
+                          Ke Dashboard <ArrowRight className="w-3.5 h-3.5" />
+                        </span>
+                      </Link>
+                    </div>
+                  )}
+
                   {/* Interactive Switcher Header */}
                   <div className="flex items-center justify-between pb-4 border-b border-emerald-900/10 mb-6">
                     <div>
