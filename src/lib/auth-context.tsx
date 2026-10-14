@@ -20,6 +20,7 @@ export interface Profile {
   status?: "pending" | "approved" | "rejected";
   faction?: string;
   active_title?: string;
+  school_name?: string | null;
   is_hod?: boolean;
   is_hod_assistant?: boolean;
   is_assessment_head?: boolean;

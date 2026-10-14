@@ -5,7 +5,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useAuth } from "@/lib/auth-context";
 import { showLogo } from "@/lib/utils";
-import { Sparkles, BookOpen, User, LogOut, Menu, X, LayoutDashboard, Settings, MapPin, CreditCard, GraduationCap, Users, Bell } from "lucide-react";
+import { Sparkles, BookOpen, User, LogOut, Menu, X, LayoutDashboard, Settings, MapPin, CreditCard, GraduationCap, Users, Bell, Trophy } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 
 export function NiaShell({ children }: { children: React.ReactNode }) {
@@ -28,6 +28,7 @@ export function NiaShell({ children }: { children: React.ReactNode }) {
       { name: "Manajemen Materi", href: "/pengurus-nia/courses", icon: BookOpen },
     ] : []),
     ...(profile?.role === "operator_les" ? [
+      { name: "NAST 2027 Tournament", href: "/operator-les/nast", icon: Trophy },
       { name: "Classroom Manager", href: "/operator-les/classroom-manager", icon: Users },
       { name: "Jadwal Les (Center)", href: "/operator-les/center-schedules", icon: BookOpen },
       { name: "E-Modul (Center)", href: "/operator-les/e-modules", icon: BookOpen },

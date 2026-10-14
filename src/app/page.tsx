@@ -38,7 +38,8 @@ import {
   X,
   Play,
   RotateCcw,
-  MousePointer2
+  MousePointer2,
+  Trophy
 } from "lucide-react";
 import Link from "next/link";
 import Image from "next/image";
@@ -219,12 +220,21 @@ export default function RootPage() {
           </Link>
 
           {/* Desktop Navigation */}
-          <nav className="hidden lg:flex items-center gap-8 text-sm font-black text-slate-600">
+          <nav className="hidden lg:flex items-center gap-7 text-sm font-black text-slate-600">
             <a href="#launcher" className="hover:text-emerald-900 transition-colors">Portal Akses</a>
             <a href="#ekosistem" className="hover:text-emerald-900 transition-colors">Dua Sayap</a>
             <a href="#fitur" className="hover:text-emerald-900 transition-colors">Fitur Unggulan</a>
-            <a href="#prestasi" className="hover:text-emerald-900 transition-colors">Kisah Sukses</a>
             <a href="#faq" className="hover:text-emerald-900 transition-colors">FAQ</a>
+            <Link 
+              href="/nast" 
+              className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-full bg-gradient-to-r from-amber-400/20 via-orange-500/20 to-emerald-500/20 border-2 border-amber-500/40 text-amber-950 font-black hover:border-amber-500 hover:scale-105 transition-all shadow-sm"
+            >
+              <Trophy className="w-3.5 h-3.5 text-amber-600 animate-bounce" />
+              <span>NAST 2027</span>
+              <span className="text-[9px] bg-gradient-to-r from-amber-500 to-orange-500 text-white font-black px-1.5 py-0.5 rounded-full uppercase tracking-wider">
+                Event
+              </span>
+            </Link>
           </nav>
 
           {/* Dual Action Login Portals */}
@@ -304,6 +314,25 @@ export default function RootPage() {
               >
                 Kisah Sukses Siswa
               </a>
+
+              <Link
+                href="/nast"
+                onClick={() => setMobileMenuOpen(false)}
+                className="p-3.5 rounded-2xl bg-gradient-to-r from-amber-500/15 via-orange-500/15 to-emerald-500/15 border-2 border-amber-500/30 flex items-center justify-between"
+              >
+                <div className="flex items-center gap-2.5">
+                  <div className="w-8 h-8 rounded-xl bg-amber-500 text-white flex items-center justify-center font-black">
+                    <Trophy className="w-4 h-4" />
+                  </div>
+                  <div>
+                    <div className="text-xs font-black text-slate-900">NAST 2027 Tournament</div>
+                    <div className="text-[10px] text-slate-500 font-bold">Pendaftaran & Portal Peserta</div>
+                  </div>
+                </div>
+                <span className="text-[10px] font-black uppercase tracking-wider px-2 py-0.5 rounded-full bg-amber-500 text-white">
+                  Buka
+                </span>
+              </Link>
 
               <div className="pt-4 border-t border-amber-900/10 flex flex-col gap-3">
                 {user ? (
@@ -680,6 +709,31 @@ export default function RootPage() {
                       </motion.div>
                     )}
                   </AnimatePresence>
+
+                  {/* 🏆 NAST 2027 Tournament Banner Card */}
+                  <div className="mt-5 p-3.5 sm:p-4 rounded-2xl bg-gradient-to-r from-cyan-950 via-slate-900 to-emerald-950 text-white border-2 border-cyan-500/30 shadow-lg relative overflow-hidden group">
+                    <div className="absolute -right-6 -bottom-6 w-24 h-24 bg-cyan-500/20 rounded-full blur-xl pointer-events-none group-hover:scale-150 transition-transform" />
+                    <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 relative z-10">
+                      <div className="flex items-center gap-3">
+                        <div className="w-10 h-10 rounded-xl bg-gradient-to-tr from-amber-400 to-orange-500 text-white flex items-center justify-center font-black shadow-md flex-shrink-0">
+                          <Trophy className="w-5 h-5" />
+                        </div>
+                        <div>
+                          <div className="flex items-center gap-2">
+                            <span className="text-xs font-black tracking-wide text-cyan-300 uppercase">Turnamen Akbar</span>
+                            <span className="text-[10px] bg-red-500 text-white font-bold px-1.5 py-0.2 rounded-full animate-pulse">Pendaftaran Dibuka</span>
+                          </div>
+                          <div className="text-sm font-black text-white">NAST 2027 (NIA Academic Skill Tournament)</div>
+                        </div>
+                      </div>
+                      <Link href="/nast" className="w-full sm:w-auto">
+                        <button className="w-full sm:w-auto px-4 py-2 rounded-xl bg-gradient-to-r from-cyan-400 to-emerald-400 hover:from-cyan-300 hover:to-emerald-300 text-slate-950 font-black text-xs shadow-md transition-all flex items-center justify-center gap-1.5 active:scale-95">
+                          <span>Portal NAST</span>
+                          <ArrowRight className="w-3.5 h-3.5" />
+                        </button>
+                      </Link>
+                    </div>
+                  </div>
 
                   {/* PWA Helper Prompt */}
                   <div className="mt-5 pt-4 border-t border-slate-100">

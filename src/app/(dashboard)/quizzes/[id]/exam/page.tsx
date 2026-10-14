@@ -1203,7 +1203,7 @@ export default function ExamPage({ params }: { params: Promise<{ id: string }> }
                         {String.fromCharCode(65 + i)}
                       </div>
                       <span className={`text-lg font-medium flex-1 ${textColorClass}`}>
-                        {opt.text}
+                        <MathRenderer htmlContent={opt.text} inline />
                       </span>
                       {isRevealed && opt.is_correct && <CheckCircle2 className="w-6 h-6 text-green-500" />}
                     </button>
@@ -1265,7 +1265,7 @@ export default function ExamPage({ params }: { params: Promise<{ id: string }> }
                         {(isSelected || (isRevealed && opt.is_correct)) && <CheckCircle2 className="w-4 h-4" />}
                       </div>
                       <span className={`text-lg font-medium flex-1 ${textColorClass}`}>
-                        {opt.text}
+                        <MathRenderer htmlContent={opt.text} inline />
                       </span>
                     </button>
                   );

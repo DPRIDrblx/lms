@@ -7,6 +7,7 @@ import { X, Check, ArrowRight, Loader2, Trophy, Heart, Flame, Clock, BookOpen } 
 import { CenterLoader } from "@/components/ui/center-loader";
 import { useParams, useRouter } from "next/navigation";
 import toast from "react-hot-toast";
+import { MathRenderer } from "@/components/ui/math-renderer";
 
 export default function StudentDrillExecutionPage() {
   const { id } = useParams() as { id: string };
@@ -242,9 +243,9 @@ export default function StudentDrillExecutionPage() {
 
       {/* Question Area */}
       <div className="flex-1 max-w-3xl mx-auto w-full px-6 flex flex-col">
-        <h2 className="text-3xl font-black text-slate-800 mb-10 leading-tight">
-          {currentQ.question}
-        </h2>
+        <div className="text-3xl font-black text-slate-800 mb-10 leading-tight">
+          <MathRenderer htmlContent={currentQ.question} />
+        </div>
         
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           {currentQ.options.map((opt: string, i: number) => {
@@ -270,7 +271,7 @@ export default function StudentDrillExecutionPage() {
                 onClick={() => setSelectedOption(i)}
                 className={`p-6 rounded-2xl font-bold text-lg text-left transition-all ${btnClass}`}
               >
-                {opt}
+                <MathRenderer htmlContent={opt} inline />
               </button>
             );
           })}

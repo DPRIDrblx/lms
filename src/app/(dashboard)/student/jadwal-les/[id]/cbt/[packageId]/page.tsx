@@ -7,6 +7,7 @@ import { ChevronLeft, ChevronRight, CheckCircle2, Clock, Star, Brain, ArrowLeft,
 import { useRouter } from 'next/navigation';
 import toast from 'react-hot-toast';
 import { awardCbtStars } from '@/app/actions/cbt';
+import { MathRenderer } from '@/components/ui/math-renderer';
 export default function StudentCbtPage({ 
   params 
 }: { 
@@ -253,9 +254,9 @@ export default function StudentCbtPage({
                     </span>
                   </div>
                 
-                  <h2 className="text-2xl md:text-3xl font-bold text-slate-800 mb-10 leading-snug whitespace-pre-wrap">
-                    {currentQ.question_text}
-                  </h2>
+                  <div className="text-2xl md:text-3xl font-bold text-slate-800 mb-10 leading-snug whitespace-pre-wrap">
+                    <MathRenderer htmlContent={currentQ.question_text} />
+                  </div>
                   
                   {/* Options / Essay Input */}
                   <div className="space-y-4">
@@ -288,8 +289,8 @@ export default function StudentCbtPage({
                           }`}>
                             {String.fromCharCode(65 + i)}
                           </div>
-                          <span className={`text-lg pt-1.5 leading-relaxed ${isSelected ? 'text-indigo-900 font-bold' : 'text-slate-600 font-medium'}`}>
-                            {opt.text}
+                          <span className={`text-lg pt-1.5 leading-relaxed flex-1 ${isSelected ? 'text-indigo-900 font-bold' : 'text-slate-600 font-medium'}`}>
+                            <MathRenderer htmlContent={opt.text} inline />
                           </span>
                         </button>
                       );
