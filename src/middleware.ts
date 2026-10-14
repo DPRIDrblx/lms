@@ -28,9 +28,17 @@ export async function middleware(request: NextRequest) {
   const isAuthPage =
     request.nextUrl.pathname.startsWith("/login") ||
     request.nextUrl.pathname.startsWith("/auth") ||
-    request.nextUrl.pathname.startsWith("/app");
+    request.nextUrl.pathname.startsWith("/app") ||
+    request.nextUrl.pathname.startsWith("/nast/login") ||
+    request.nextUrl.pathname.startsWith("/nast/register");
+
+  const isNastPublic = 
+    request.nextUrl.pathname === "/nast" ||
+    request.nextUrl.pathname === "/nast/" ||
+    (request.nextUrl.pathname.startsWith("/nast") && !request.nextUrl.pathname.startsWith("/nast/dashboard"));
 
   const isPublicRoute = 
+    isNastPublic ||
     request.nextUrl.pathname.startsWith("/bayarnia") || 
     request.nextUrl.pathname.startsWith("/api/ai/") || 
     request.nextUrl.pathname.startsWith("/f/") || 
@@ -66,8 +74,12 @@ export async function middleware(request: NextRequest) {
   if (error || !user) {
     // If we're here, it means NO access token exists OR getUser failed definitively
     const url = request.nextUrl.clone();
-    url.pathname = "/login";
-    if (error) url.searchParams.set("error", "session_expired");
+    if (request.nextUrl.pathname.startsWith("/nast")) {
+      url.pathname = "/nast/login";
+    } else {
+      url.pathname = "/login";
+      if (error) url.searchParams.set("error", "session_expired");
+    }
     
     const response = NextResponse.redirect(url);
     response.cookies.delete("sb-access-token");
