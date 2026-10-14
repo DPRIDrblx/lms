@@ -17,14 +17,24 @@ import {
 } from "lucide-react";
 import toast from "react-hot-toast";
 
+import { useAuth } from "@/lib/auth-context";
+
 export default function NastLoginPage() {
   const router = useRouter();
   const supabase = createClient();
+  const { user, loading: authLoading } = useAuth();
 
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
+
+  // If already logged in, redirect directly to NAST dashboard
+  React.useEffect(() => {
+    if (!authLoading && user) {
+      window.location.href = "/nast/dashboard";
+    }
+  }, [user, authLoading]);
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -42,12 +52,22 @@ export default function NastLoginPage() {
 
       if (error) throw error;
 
+      // Synchronize cookies explicitly so server and client are in sync
+      if (data?.session) {
+        const expires = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toUTCString();
+        if (data.session.access_token) {
+          document.cookie = `sb-access-token=${data.session.access_token}; Path=/; Secure; SameSite=Lax; Expires=${expires}`;
+        }
+        if (data.session.refresh_token) {
+          document.cookie = `sb-refresh-token=${data.session.refresh_token}; Path=/; Secure; SameSite=Lax; Expires=${expires}`;
+        }
+      }
+
       toast.success("Login berhasil! Membuka Dasbor NAST 2027...");
-      router.push("/nast/dashboard");
+      window.location.href = "/nast/dashboard";
     } catch (err: any) {
       console.error("Login error:", err);
       toast.error(err.message || "Email atau password salah");
-    } finally {
       setLoading(false);
     }
   };

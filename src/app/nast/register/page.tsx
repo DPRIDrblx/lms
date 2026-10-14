@@ -180,8 +180,19 @@ export default function NastRegisterPage() {
         colors: ["#0EA5E9", "#F97316", "#10B981", "#EAB308", "#8B5CF6"]
       });
 
+      // Synchronize cookies explicitly
+      if (authData?.session) {
+        const expires = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toUTCString();
+        if (authData.session.access_token) {
+          document.cookie = `sb-access-token=${authData.session.access_token}; Path=/; Secure; SameSite=Lax; Expires=${expires}`;
+        }
+        if (authData.session.refresh_token) {
+          document.cookie = `sb-refresh-token=${authData.session.refresh_token}; Path=/; Secure; SameSite=Lax; Expires=${expires}`;
+        }
+      }
+
       toast.success("Pendaftaran Berhasil! Akun otomatis bergabung ke kelas NAST2026JHS.");
-      router.push("/nast/dashboard");
+      window.location.href = "/nast/dashboard";
 
     } catch (err: any) {
       console.error("Gagal mendaftar:", err);

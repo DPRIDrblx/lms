@@ -29,16 +29,9 @@ export async function middleware(request: NextRequest) {
     request.nextUrl.pathname.startsWith("/login") ||
     request.nextUrl.pathname.startsWith("/auth") ||
     request.nextUrl.pathname.startsWith("/app") ||
-    request.nextUrl.pathname.startsWith("/nast/login") ||
-    request.nextUrl.pathname.startsWith("/nast/register");
-
-  const isNastPublic = 
-    request.nextUrl.pathname === "/nast" ||
-    request.nextUrl.pathname === "/nast/" ||
-    (request.nextUrl.pathname.startsWith("/nast") && !request.nextUrl.pathname.startsWith("/nast/dashboard"));
+    request.nextUrl.pathname.startsWith("/nast");
 
   const isPublicRoute = 
-    isNastPublic ||
     request.nextUrl.pathname.startsWith("/bayarnia") || 
     request.nextUrl.pathname.startsWith("/api/ai/") || 
     request.nextUrl.pathname.startsWith("/f/") || 

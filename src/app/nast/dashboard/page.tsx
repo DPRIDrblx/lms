@@ -68,7 +68,11 @@ export default function NastParticipantDashboard() {
 
   useEffect(() => {
     if (!authLoading && !user) {
-      router.push("/nast/login");
+      supabase.auth.getSession().then((res: any) => {
+        if (!res?.data?.session) {
+          router.push("/nast/login");
+        }
+      });
       return;
     }
 
