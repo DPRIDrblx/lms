@@ -1,14 +1,12 @@
 import { NextResponse } from "next/server";
-import { GoogleGenerativeAI } from "@google/generative-ai";
+import { askVikey, parseAiJsonResponse, getVikeyApiKey } from "@/lib/vikey";
 
-const apiKey = process.env.GEMINI_API_KEY;
-const genAI = apiKey ? new GoogleGenerativeAI(apiKey) : null;
 export const maxDuration = 60; // Set max duration for AI Chat
 
 export async function POST(req: Request) {
   try {
-    if (!genAI) {
-      return NextResponse.json({ error: "Gemini API key not configured" }, { status: 500 });
+    if (!getVikeyApiKey()) {
+      return NextResponse.json({ error: "VIKEY_API_KEY belum dikonfigurasi di .env.local" }, { status: 500 });
     }
 
     const body = await req.json();
@@ -17,9 +15,6 @@ export async function POST(req: Request) {
     if (!subject || !topic) {
       return NextResponse.json({ error: "Mata pelajaran dan topik wajib diisi" }, { status: 400 });
     }
-
-    // Use a fast model suitable for structured JSON generation
-    const model = genAI.getGenerativeModel({ model: "gemini-3.5-flash" });
 
     const systemPrompt = `Anda adalah seorang ahli pembuat soal ujian untuk siswa sekolah di Indonesia.
 Tugas Anda adalah membuat soal pilihan ganda (4 opsi: A, B, C, D) berdasarkan parameter berikut:
@@ -35,6 +30,7 @@ Syarat Soal:
 3. Berikan jawaban yang benar (correctAnswer) berupa indeks array dari pilihan (0 untuk A, 1 untuk B, 2 untuk C, 3 untuk D).
 4. Berikan pembahasan (explanation) yang jelas, mendidik, dan mudah dipahami siswa.
 5. Cantumkan nama "subtopic" yang relevan untuk soal tersebut (berguna untuk evaluasi).
+6. Jika suatu soal membutuhkan ilustrasi/gambar matematika/sains (misal segitiga siku-siku, grafik fungsi, kubus, atau diagram), sertakan elemen SVG bersih (misal <svg viewBox="0 0 260 160" ...>...</svg>) langsung di dalam string "question".
 
 KEMBALIKAN HANYA ARRAY JSON TANPA MARKDOWN ATAU TEKS TAMBAHAN. 
 Format yang diharapkan:
@@ -46,18 +42,22 @@ Format yang diharapkan:
     "explanation": "Pembahasan rinci...",
     "subtopic": "Nama Subtopik"
   }
-]
-`;
+]`;
 
-    const result = await model.generateContent(systemPrompt);
-    const text = result.response.text();
-    
-    // Clean up potential markdown formatting from AI output
-    const cleanText = text.replace(/```json/g, '').replace(/```/g, '').trim();
-    
+    const text = await askVikey({
+      messages: [
+        { role: "system", content: "Anda adalah pembuat soal ujian pilihan ganda presisi berformat JSON." },
+        { role: "user", content: systemPrompt }
+      ],
+      temperature: 0.6
+    });
+
     let questions;
     try {
-      questions = JSON.parse(cleanText);
+      questions = parseAiJsonResponse(text);
+      if (!Array.isArray(questions) && questions.questions) {
+        questions = questions.questions;
+      }
     } catch (parseError) {
       console.error("Failed to parse JSON from AI:", text);
       return NextResponse.json({ error: "Gagal memproses respons dari AI. Silakan coba lagi." }, { status: 500 });

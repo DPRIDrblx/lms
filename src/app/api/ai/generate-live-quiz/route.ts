@@ -1,14 +1,12 @@
 import { NextResponse } from 'next/server';
-import { GoogleGenerativeAI } from '@google/generative-ai';
+import { askVikey, parseAiJsonResponse, getVikeyApiKey } from '@/lib/vikey';
 
-const apiKey = process.env.GEMINI_API_KEY;
-const genAI = apiKey ? new GoogleGenerativeAI(apiKey) : null;
 export const maxDuration = 60;
 
 export async function POST(req: Request) {
   try {
-    if (!genAI) {
-      return NextResponse.json({ error: "Gemini API key not configured" }, { status: 500 });
+    if (!getVikeyApiKey()) {
+      return NextResponse.json({ error: "VIKEY_API_KEY belum dikonfigurasi di .env.local" }, { status: 500 });
     }
 
     const { jenjang, mapel, topik, subtopik, tipeKuis } = await req.json();
@@ -25,6 +23,8 @@ Tugas Anda adalah membuat 1 buah soal kuis interaktif yang sangat menarik dan me
 - Subtopik: ${subtopik || 'Umum / Keseluruhan Topik'}
 - Tipe Kuis: ${tipeKuis} (Fokuskan format soal pada tipe ini)
 
+Jika soal memerlukan diagram visual/gambar (matematika, geometri, fisika, biologi), Anda bisa menyertakan elemen SVG bersih langsung di dalam "question".
+
 KEMBALIKAN HANYA FORMAT JSON TANPA MARKDOWN ATAU TEKS TAMBAHAN.
 STRUKTUR JSON YANG DIHARAPKAN:
 {
@@ -34,15 +34,18 @@ STRUKTUR JSON YANG DIHARAPKAN:
   "explanation": "Penjelasan detail kenapa jawaban tersebut benar."
 }`;
 
-    const model = genAI.getGenerativeModel({ model: "gemini-3.5-flash" });
-    const result = await model.generateContent(prompt);
-    const text = result.response.text();
+    const text = await askVikey({
+      messages: [
+        { role: 'system', content: 'Anda adalah asisten pembuat kuis interaktif berformat JSON.' },
+        { role: 'user', content: prompt }
+      ],
+      temperature: 0.6,
+      response_format: { type: 'json_object' }
+    });
 
     let quizData;
     try {
-      // Remove any potential markdown code blocks if the AI misbehaves
-      const cleanText = text.replace(/```json/g, '').replace(/```/g, '').trim();
-      quizData = JSON.parse(cleanText);
+      quizData = parseAiJsonResponse(text);
     } catch (parseError) {
       console.error('Failed to parse AI response:', text);
       return NextResponse.json({ error: 'Gagal memproses format dari AI. Coba lagi.' }, { status: 500 });

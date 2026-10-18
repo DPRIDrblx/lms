@@ -77,8 +77,8 @@ export default function QuizReviewPage({ params }: { params: Promise<{ id: strin
       } else {
         const errData = await res.json().catch(() => ({}));
         let errMsg = "Maaf, sistem AI sedang sibuk atau kuota API habis. Silakan coba beberapa saat lagi.";
-        if (errData.error?.includes("429") || errData.error?.includes("Quota") || errData.error?.includes("Too Many Requests")) {
-           errMsg = "Maaf, kuota API Gemini Anda sudah habis atau limit terlampaui. Silakan tunggu beberapa saat atau ganti API Key Anda.";
+        if (errData.error?.includes("429") || errData.error?.includes("Quota") || errData.error?.includes("Too Many Requests") || errData.error?.includes("balance")) {
+           errMsg = "Maaf, kuota atau saldo API AI Anda sudah habis. Silakan periksa saldo di dashboard Vikey atau tunggu beberapa saat.";
         }
         setChatMessages([...newMessages, { role: 'model', content: errMsg }]);
       }

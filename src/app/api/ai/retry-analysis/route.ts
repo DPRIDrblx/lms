@@ -1,8 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { GoogleGenerativeAI } from '@google/generative-ai';
+import { askVikey, parseAiJsonResponse, getVikeyApiKey } from '@/lib/vikey';
 import { createClient } from '@supabase/supabase-js';
 
-const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY || '');
 const supabase = createClient(process.env.NEXT_PUBLIC_SUPABASE_URL || '', process.env.SUPABASE_SERVICE_ROLE_KEY || '');
 
 export const maxDuration = 60;
@@ -10,8 +9,8 @@ export const runtime = 'edge';
 
 export async function POST(req: NextRequest) {
   try {
-    if (!process.env.GEMINI_API_KEY) {
-      return NextResponse.json({ error: 'Gemini API key is not configured.' }, { status: 500 });
+    if (!getVikeyApiKey()) {
+      return NextResponse.json({ error: 'VIKEY_API_KEY belum dikonfigurasi di .env.local' }, { status: 500 });
     }
 
     const { quizTitle, questions, responses, studentName, scoreId, currentMetadata } = await req.json();
@@ -19,8 +18,6 @@ export async function POST(req: NextRequest) {
     if (!scoreId) {
       return NextResponse.json({ error: 'Score ID is required' }, { status: 400 });
     }
-
-    const model = genAI.getGenerativeModel({ model: 'gemini-3.5-flash' });
 
     let promptText = `Anda adalah asisten AI guru yang ahli. Anda bertugas mengoreksi jawaban essay dan memberikan analisis hasil belajar siswa.
 Nama Siswa: ${studentName || 'Siswa'}
@@ -75,22 +72,25 @@ Berikan jawaban HANYA dalam format JSON dengan struktur berikut (jangan tambahka
     "Berikan saya 1 contoh soal tentang Y beserta pembahasannya"
   ],
   "essayScores": {
-    "question_id_disini": nilai_dalam_angka
+    "question_id_disini": 10
   },
   "essayFeedback": {
     "question_id_disini": "Penjelasan mengapa nilai tersebut diberikan..."
   }
 }`;
 
-    const result = await model.generateContent({
-      contents: [{ role: 'user', parts: [{ text: promptText }] }],
-      generationConfig: { responseMimeType: 'application/json' }
+    const text = await askVikey({
+      messages: [
+        { role: 'system', content: 'Anda adalah asisten AI penilai ujian yang objektif dan menghasilkan JSON valid.' },
+        { role: 'user', content: promptText }
+      ],
+      temperature: 0.3,
+      response_format: { type: 'json_object' }
     });
 
-    const text = result.response.text();
     let aiData;
     try {
-      aiData = JSON.parse(text);
+      aiData = parseAiJsonResponse(text);
     } catch (e) {
       return NextResponse.json({ error: 'AI returned invalid JSON format' }, { status: 500 });
     }
@@ -113,8 +113,6 @@ Berikan jawaban HANYA dalam format JSON dengan struktur berikut (jangan tambahka
       });
     }
 
-    // We do NOT update the total score here to avoid side effects on actual grading,
-    // we only update metadata (analysis and feedback).
     const { error: updateError } = await supabase
       .from('student_scores')
       .update({ metadata: updatedMetadata })

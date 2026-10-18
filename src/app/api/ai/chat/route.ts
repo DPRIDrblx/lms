@@ -1,21 +1,17 @@
 import { NextResponse } from "next/server";
-import { GoogleGenerativeAI } from "@google/generative-ai";
+import { askVikey, getVikeyApiKey, VikeyMessage } from "@/lib/vikey";
 
-const apiKey = process.env.GEMINI_API_KEY;
-const genAI = apiKey ? new GoogleGenerativeAI(apiKey) : null;
 export const maxDuration = 60; // Set max duration for AI Chat
 export const runtime = 'edge';
 
 export async function POST(req: Request) {
   try {
-    if (!genAI) {
-      return NextResponse.json({ error: "Gemini API key not configured" }, { status: 500 });
+    if (!getVikeyApiKey()) {
+      return NextResponse.json({ error: "VIKEY_API_KEY belum dikonfigurasi di .env.local" }, { status: 500 });
     }
 
     const body = await req.json();
-    const { questionContext, context, messages, botPersonality } = body;
-    
-    const model = genAI.getGenerativeModel({ model: "gemini-3.5-flash" });
+    const { questionContext, context, messages = [], botPersonality } = body;
 
     let promptInfo = '';
     if (questionContext) {
@@ -42,28 +38,22 @@ Tugas Anda:
 ${botPersonality ? `INSTRUKSI KEPRIBADIAN KHUSUS:\n${botPersonality}` : ''}
 `;
 
-    const historyMsgs = messages.slice(0, -1).map((m: any) => ({
-      role: m.role === 'user' ? 'user' : 'model',
-      parts: [{ text: m.content }]
-    }));
+    const chatMessages: VikeyMessage[] = [
+      { role: 'system', content: systemPrompt }
+    ];
 
-    const chatSession = model.startChat({
-      history: [
-        {
-          role: "user",
-          parts: [{ text: "Ini adalah instruksi rahasia untukmu:\n" + systemPrompt }]
-        },
-        {
-          role: "model",
-          parts: [{ text: "Baik, saya mengerti. Saya siap membantu siswa." }]
-        },
-        ...historyMsgs
-      ],
+    // Append history and current user message
+    messages.forEach((m: any) => {
+      chatMessages.push({
+        role: m.role === 'user' ? 'user' : 'assistant',
+        content: m.content || ''
+      });
     });
 
-    const lastMessage = messages[messages.length - 1].content;
-    const result = await chatSession.sendMessage(lastMessage);
-    const text = result.response.text();
+    const text = await askVikey({
+      messages: chatMessages,
+      temperature: 0.7
+    });
 
     return NextResponse.json({ message: text });
   } catch (error: any) {

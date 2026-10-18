@@ -1,25 +1,21 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { GoogleGenerativeAI } from '@google/generative-ai';
-
-// Initialize Gemini
-const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY || '');
+import { askVikey, parseAiJsonResponse, getVikeyApiKey } from '@/lib/vikey';
 
 export const maxDuration = 60; // Set max duration for AI Chat
 export const runtime = 'edge';
 
 export async function POST(req: NextRequest) {
   try {
-    if (!process.env.GEMINI_API_KEY) {
+    if (!getVikeyApiKey()) {
       return NextResponse.json(
-        { error: 'Gemini API key is not configured.' },
+        { error: 'VIKEY_API_KEY belum dikonfigurasi di .env.local' },
         { status: 500 }
       );
     }
 
     const { quizTitle, questions, responses, studentName } = await req.json();
-    const model = genAI.getGenerativeModel({ model: 'gemini-3.5-flash' });
 
-    // Format the questions and answers for Gemini
+    // Format the questions and answers for AI
     let promptText = `Anda adalah asisten AI guru yang ahli. Anda bertugas mengoreksi jawaban essay dan memberikan analisis hasil belajar siswa.
 Nama Siswa: ${studentName || 'Siswa'}
 Nama Ujian: ${quizTitle}
@@ -75,7 +71,7 @@ Berikan jawaban HANYA dalam format JSON dengan struktur berikut (jangan tambahka
     "Berikan saya 1 contoh soal tentang Y beserta pembahasannya"
   ],
   "essayScores": {
-    "question_id_disini": nilai_dalam_angka
+    "question_id_disini": 10
   },
   "essayFeedback": {
     "question_id_disini": "Penjelasan mengapa nilai tersebut diberikan..."
@@ -83,29 +79,28 @@ Berikan jawaban HANYA dalam format JSON dengan struktur berikut (jangan tambahka
 }
 Pastikan ID soal yang ada di essayScores dan essayFeedback cocok dengan ID di atas. Jika tidak ada soal essay, biarkan objek essayScores dan essayFeedback kosong.`;
 
-    const result = await model.generateContent({
-      contents: [{ role: 'user', parts: [{ text: promptText }] }],
-      generationConfig: {
-        responseMimeType: 'application/json',
-      }
+    const text = await askVikey({
+      messages: [
+        { role: 'system', content: 'Anda adalah asisten AI penilai ujian yang objektif dan mengembalikan format JSON valid.' },
+        { role: 'user', content: promptText }
+      ],
+      temperature: 0.3,
+      response_format: { type: 'json_object' }
     });
-
-    const response = await result.response;
-    const text = response.text();
     
     // Parse JSON safely
     let parsedResult;
     try {
-      parsedResult = JSON.parse(text);
+      parsedResult = parseAiJsonResponse(text);
     } catch (e) {
-      console.error("Failed to parse Gemini response:", text);
+      console.error("Failed to parse Vikey response:", text);
       return NextResponse.json({ error: 'AI returned invalid JSON format' }, { status: 500 });
     }
 
     return NextResponse.json(parsedResult);
 
   } catch (error: any) {
-    console.error('Error grading with Gemini:', error);
+    console.error('Error grading with AI:', error);
     return NextResponse.json(
       { error: error.message || 'Internal Server Error' },
       { status: 500 }

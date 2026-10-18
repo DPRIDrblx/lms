@@ -1,15 +1,13 @@
 import { NextResponse } from "next/server";
-import { GoogleGenerativeAI } from "@google/generative-ai";
+import { askVikey, parseAiJsonResponse, getVikeyApiKey } from "@/lib/vikey";
 
-const apiKey = process.env.GEMINI_API_KEY;
-const genAI = apiKey ? new GoogleGenerativeAI(apiKey) : null;
 export const maxDuration = 60; // Set max duration for AI Chat
 export const runtime = 'edge';
 
 export async function POST(req: Request) {
   try {
-    if (!genAI) {
-      return NextResponse.json({ error: "Gemini API key not configured" }, { status: 500 });
+    if (!getVikeyApiKey()) {
+      return NextResponse.json({ error: "VIKEY_API_KEY belum dikonfigurasi di .env.local" }, { status: 500 });
     }
 
     const { jenjang, mapel, topik, subtopik, materiLainnya, tujuanPembelajaran, metodePembelajaran } = await req.json();
@@ -17,8 +15,6 @@ export async function POST(req: Request) {
     if (!jenjang || !mapel) {
       return NextResponse.json({ error: "Jenjang dan Mapel harus diisi" }, { status: 400 });
     }
-
-    const model = genAI.getGenerativeModel({ model: "gemini-3.5-flash" }); // using latest 3.5 flash model
 
     const subtopicsStr = Array.isArray(subtopik) ? subtopik.join(", ") : subtopik;
     const topicStr = topik === "Lainnya" ? materiLainnya : `${topik} - ${subtopicsStr}`;
@@ -41,18 +37,20 @@ Tolong berikan balasan MURNI dalam format JSON (tanpa tag markdown \`\`\`json) d
 
 Pastikan isinya sangat berkualitas, sesuai dengan kurikulum nasional Indonesia untuk jenjang tersebut, dan bahasanya profesional namun mudah dipahami siswa.`;
 
-    const result = await model.generateContent(prompt);
-    const response = await result.response;
-    const text = response.text();
-    
-    // Clean up potential markdown formatting if the AI still returned it
-    const cleanJson = text.replace(/```json/g, "").replace(/```/g, "").trim();
+    const text = await askVikey({
+      messages: [
+        { role: 'system', content: 'Anda adalah asisten kurikulum akademik yang menghasilkan rencana pembelajaran terstruktur dalam JSON.' },
+        { role: 'user', content: prompt }
+      ],
+      temperature: 0.6,
+      response_format: { type: 'json_object' }
+    });
     
     try {
-      const parsedData = JSON.parse(cleanJson);
+      const parsedData = parseAiJsonResponse(text);
       return NextResponse.json(parsedData);
     } catch (e) {
-      console.error("Failed to parse AI response JSON:", cleanJson);
+      console.error("Failed to parse AI response JSON:", text);
       return NextResponse.json({ error: "AI menghasilkan respons yang tidak valid." }, { status: 500 });
     }
 
