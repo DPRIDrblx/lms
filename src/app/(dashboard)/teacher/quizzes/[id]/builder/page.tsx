@@ -6,6 +6,7 @@ import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { 
+  BookOpen,
   ChevronLeft, 
   Plus, 
   Trash2, 
@@ -14,7 +15,7 @@ import {
   CheckSquare,
   Square,
   GripVertical, 
-  Save,
+  Save, 
   HelpCircle,
   Link as LinkIcon,
   Settings,
@@ -29,7 +30,15 @@ import {
   Upload,
   Loader2,
   Type,
-  X
+  X,
+  MonitorCheck,
+  Camera,
+  Key,
+  Zap,
+  Volume2,
+  Music,
+  Calendar,
+  ShieldAlert
 } from "lucide-react";
 import Link from "next/link";
 import { useParams, useRouter } from "next/navigation";
@@ -37,6 +46,14 @@ import { useEffect, useState, useRef } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { RichTextEditor } from "@/components/ui/rich-text-editor";
 import { MathRenderer } from "@/components/ui/math-renderer";
+import { CbtAudioPlayer } from "@/components/cbt/cbt-audio-player";
+import { 
+  parseCbtConfig, 
+  serializeCbtPayload, 
+  getCleanDescription, 
+  CbtExamConfig, 
+  DEFAULT_CBT_CONFIG 
+} from "@/lib/cbt-config";
 
 interface Question {
   id: string;
@@ -47,6 +64,11 @@ interface Question {
   order_index: number;
   criteria?: { minLength?: number; maxLength?: number; cols?: string[]; min?: number; max?: number; minLabel?: string; maxLabel?: string } | null;
   explanation?: string | null;
+  audio_url?: string | null;
+  image_url?: string | null;
+  points_correct?: number | null;
+  penalty_wrong?: number | null;
+  metadata?: any;
 }
 
 export default function CBTBuilderPage() {
@@ -56,6 +78,9 @@ export default function CBTBuilderPage() {
   const router = useRouter();
 
   const [quiz, setQuiz] = useState<any>(null);
+  const [cbtConfig, setCbtConfig] = useState<CbtExamConfig>(DEFAULT_CBT_CONFIG);
+  const [cleanDesc, setCleanDesc] = useState<string>("");
+  const [availableClasses, setAvailableClasses] = useState<{ id: string; name: string }[]>([]);
   const [questions, setQuestions] = useState<Question[]>([]);
   const [reports, setReports] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
@@ -84,7 +109,11 @@ export default function CBTBuilderPage() {
       points: item.points,
       order_index: questions.length + i,
       criteria: item.criteria,
-      explanation: item.explanation
+      explanation: item.explanation,
+      points_correct: item.points || cbtConfig.points_correct,
+      penalty_wrong: cbtConfig.penalty_wrong,
+      audio_url: item.audio_url || null,
+      image_url: item.image_url || null,
     }));
     setQuestions([...questions, ...importedQuestions]);
     setShowBankModal(false);
@@ -92,21 +121,32 @@ export default function CBTBuilderPage() {
 
   useEffect(() => {
     const fetchData = async () => {
-      const { data: quizData } = await supabase.from("quizzes").select("*, courses(title)").eq("id", id).single();
-      const { data: qData } = await supabase.from("questions").select("*").eq("quiz_id", id).order("order_index", { ascending: true });
-      
-      if (quizData) {
-        // Initialize new fields if they don't exist
+      const [quizRes, qRes, classesRes] = await Promise.all([
+        supabase.from("quizzes").select("*, courses(title)").eq("id", id).single(),
+        supabase.from("questions").select("*").eq("quiz_id", id).order("order_index", { ascending: true }),
+        supabase.from("classes").select("id, name").order("name", { ascending: true })
+      ]);
+
+      if (classesRes.data) {
+        setAvailableClasses(classesRes.data);
+      }
+
+      if (quizRes.data) {
+        const quizData = quizRes.data;
+        const parsed = parseCbtConfig(quizData);
+        setCbtConfig(parsed);
+        setCleanDesc(getCleanDescription(quizData.description));
+
         setQuiz({
           ...quizData,
-          time_limit: quizData.time_limit || 0,
+          time_limit: quizData.time_limit || quizData.time_limit_minutes || 60,
           max_score: quizData.max_score || 100,
           allow_leave_exam: quizData.allow_leave_exam ?? true,
           min_time_to_submit: quizData.min_time_to_submit || 0,
           shuffle_questions: quizData.shuffle_questions ?? false,
-          show_score: quizData.show_score ?? true,
+          show_score: parsed.show_score,
           show_answers: quizData.show_answers ?? true,
-          show_explanation: quizData.show_explanation ?? false,
+          show_explanation: parsed.show_explanation,
           allow_practice_mode: quizData.allow_practice_mode ?? false,
           practice_time_limit_minutes: quizData.practice_time_limit_minutes ?? 0,
           save_practice_scores: quizData.save_practice_scores ?? false,
@@ -116,20 +156,33 @@ export default function CBTBuilderPage() {
           theme_color: quizData.theme_color || "blue",
           icon_url: quizData.icon_url || ""
         });
+
         if (quizData.icon_url) {
           setIconPreview(quizData.icon_url);
         }
       }
-      if (qData) {
-        setQuestions(qData as Question[]);
+
+      if (qRes.data) {
+        const mappedQuestions = (qRes.data as any[]).map((q) => ({
+          ...q,
+          points_correct: q.points_correct ?? q.metadata?.points_correct ?? q.points ?? 4,
+          penalty_wrong: q.penalty_wrong ?? q.metadata?.penalty_wrong ?? 1,
+          audio_url: q.audio_url || q.metadata?.audio_url || null,
+          image_url: q.image_url || q.metadata?.image_url || null,
+          explanation: q.explanation || q.metadata?.explanation || null,
+        }));
+        setQuestions(mappedQuestions);
+
         const { data: rData } = await supabase
           .from("question_reports")
           .select("*, profiles(full_name)")
-          .in("question_id", qData.map((q: any) => q.id));
+          .in("question_id", qRes.data.map((q: any) => q.id));
         if (rData) setReports(rData);
       }
+
       setLoading(false);
     };
+
     fetchData();
   }, [id, supabase]);
 
@@ -138,19 +191,26 @@ export default function CBTBuilderPage() {
       id: `temp-${Date.now()}`,
       question_text: "",
       question_type: type,
-      points: type === "linear_scale" ? 0 : 10,
+      points: type === "linear_scale" ? 0 : (cbtConfig.points_correct || 4),
+      points_correct: cbtConfig.points_correct || 4,
+      penalty_wrong: cbtConfig.penalty_wrong || 1,
       order_index: questions.length,
       options: type === "mcq" || type === "complex_mcq" ? [
-        { text: "Option 1", is_correct: type === "mcq" ? true : false },
-        { text: "Option 2", is_correct: false },
+        { text: "Pilihan A", is_correct: type === "mcq" ? true : false },
+        { text: "Pilihan B", is_correct: false },
+        { text: "Pilihan C", is_correct: false },
+        { text: "Pilihan D", is_correct: false },
       ] : type === "matching" ? [
-        { text: "Term 1", match_pair: "Definition 1" },
-        { text: "Term 2", match_pair: "Definition 2" }
+        { text: "Istilah 1", match_pair: "Definisi 1" },
+        { text: "Istilah 2", match_pair: "Definisi 2" }
       ] : type === "matrix" ? [
         { text: "Pernyataan 1", match_pairs: ["Benar"] },
         { text: "Pernyataan 2", match_pairs: ["Salah"] }
       ] : null,
-      criteria: type === "essay" ? { minLength: 250 } : type === "matrix" ? { cols: ["Benar", "Salah"] } : type === "linear_scale" ? { min: 1, max: 5, minLabel: "Sangat Kurang", maxLabel: "Sangat Baik" } : null
+      criteria: type === "essay" ? { minLength: 200 } : type === "matrix" ? { cols: ["Benar", "Salah"] } : type === "linear_scale" ? { min: 1, max: 5, minLabel: "Sangat Kurang", maxLabel: "Sangat Baik" } : null,
+      explanation: "",
+      audio_url: null,
+      image_url: null,
     };
     setQuestions([...questions, newQ]);
   };
@@ -163,10 +223,54 @@ export default function CBTBuilderPage() {
     setQuestions(questions.map(q => q.id === qId ? { ...q, ...updates } : q));
   };
 
+  // Upload handler for question audio
+  const handleUploadQuestionAudio = async (qId: string, file: File) => {
+    try {
+      const fileExt = file.name.split('.').pop();
+      const fileName = `cbt-audio-${qId}-${Date.now()}.${fileExt}`;
+      const { error: uploadError } = await supabase.storage.from("social_media").upload(fileName, file);
+      if (uploadError) {
+        alert("Gagal mengunggah audio: " + uploadError.message);
+        return;
+      }
+      const { data } = supabase.storage.from("social_media").getPublicUrl(fileName);
+      updateQuestion(qId, { audio_url: data.publicUrl });
+    } catch (e: any) {
+      alert("Error: " + e.message);
+    }
+  };
+
+  // Upload handler for question image
+  const handleUploadQuestionImage = async (qId: string, file: File) => {
+    try {
+      const fileExt = file.name.split('.').pop();
+      const fileName = `cbt-img-${qId}-${Date.now()}.${fileExt}`;
+      const { error: uploadError } = await supabase.storage.from("social_media").upload(fileName, file);
+      if (uploadError) {
+        alert("Gagal mengunggah gambar: " + uploadError.message);
+        return;
+      }
+      const { data } = supabase.storage.from("social_media").getPublicUrl(fileName);
+      updateQuestion(qId, { image_url: data.publicUrl });
+    } catch (e: any) {
+      alert("Error: " + e.message);
+    }
+  };
+
+  const toggleTargetClass = (clsName: string) => {
+    setCbtConfig((prev) => {
+      const exists = prev.target_classes.includes(clsName);
+      const updated = exists
+        ? prev.target_classes.filter((c) => c !== clsName)
+        : [...prev.target_classes, clsName];
+      return { ...prev, target_classes: updated };
+    });
+  };
+
   const handleSave = async () => {
     setSaving(true);
     
-    const calculatedMaxScore = questions.reduce((sum, q) => sum + (q.points || 0), 0);
+    const calculatedMaxScore = questions.reduce((sum, q) => sum + (q.points_correct ?? q.points ?? 0), 0);
 
     let finalIconUrl = quiz.icon_url;
 
@@ -181,37 +285,41 @@ export default function CBTBuilderPage() {
       }
     }
 
+    // Serialize CBT Config into payload
+    const cbtPayload = serializeCbtPayload(cleanDesc, cbtConfig);
+
     // Save quiz settings
     const { error: quizError } = await supabase
       .from("quizzes")
       .update({ 
         time_limit: quiz.time_limit || null, 
+        time_limit_minutes: quiz.time_limit || quiz.time_limit_minutes || 60,
         max_score: quiz.is_form ? 0 : calculatedMaxScore,
         allow_leave_exam: quiz.allow_leave_exam,
         min_time_to_submit: quiz.min_time_to_submit,
         shuffle_questions: quiz.shuffle_questions,
-        show_score: quiz.is_form ? false : quiz.show_score,
-        show_answers: quiz.is_form ? false : quiz.show_answers,
-        show_explanation: quiz.show_explanation,
-        allow_practice_mode: quiz.is_form ? false : quiz.allow_practice_mode,
+        show_score: cbtConfig.show_score,
+        show_answers: quiz.show_answers,
+        show_explanation: cbtConfig.show_explanation,
+        allow_practice_mode: quiz.allow_practice_mode,
         practice_time_limit_minutes: quiz.practice_time_limit_minutes,
         save_practice_scores: quiz.save_practice_scores,
         is_form: quiz.is_form,
         is_one_page_layout: quiz.is_one_page_layout,
-        description: quiz.description,
+        description: cbtPayload.description,
         theme_color: quiz.theme_color,
         icon_url: finalIconUrl
       })
       .eq("id", id);
 
     if (quizError) {
-      alert(quizError.message);
+      alert("Gagal menyimpan quiz: " + quizError.message);
       setSaving(false);
       return;
     }
 
     // Filter ids to keep
-    const questionIdsToKeep = questions.map(q => q.id).filter(id => !id.startsWith('temp-'));
+    const questionIdsToKeep = questions.map(q => q.id).filter(qid => !qid.startsWith('temp-'));
     
     // Delete removed questions
     if (questionIdsToKeep.length > 0) {
@@ -221,27 +329,41 @@ export default function CBTBuilderPage() {
     }
     
     const questionsToSave = questions.map((q, idx) => {
+      const qCorrect = Number(q.points_correct ?? q.points ?? cbtConfig.points_correct ?? 4);
+      const qPenalty = Number(q.penalty_wrong ?? cbtConfig.penalty_wrong ?? 1);
+
+      const metadataObj = {
+        ...(q.metadata || {}),
+        points_correct: qCorrect,
+        penalty_wrong: qPenalty,
+        audio_url: q.audio_url || null,
+        image_url: q.image_url || null,
+        explanation: q.explanation || null,
+      };
+
       const payload: any = {
         quiz_id: id,
         question_text: q.question_text,
         question_type: q.question_type,
         options: q.options,
-        points: q.points,
+        points: qCorrect,
         order_index: idx,
         criteria: q.criteria || {},
-        explanation: q.explanation || null
+        explanation: q.explanation || null,
+        metadata: metadataObj
       };
+
       if (!q.id.startsWith('temp-')) {
-        payload.id = q.id; // Preserve existing UUID
+        payload.id = q.id;
       } else {
-        payload.id = crypto.randomUUID(); // Assign new UUID
+        payload.id = crypto.randomUUID();
       }
       return payload;
     });
 
     if (questionsToSave.length > 0) {
       const { error } = await supabase.from("questions").upsert(questionsToSave);
-      if (error) alert(error.message);
+      if (error) alert("Gagal menyimpan soal: " + error.message);
       else router.push("/teacher/quizzes");
     } else {
       router.push("/teacher/quizzes");
@@ -250,294 +372,293 @@ export default function CBTBuilderPage() {
     setSaving(false);
   };
 
-  if (loading) return <div className="h-64 flex items-center justify-center"><Loader2 className="animate-spin" /></div>;
+  if (loading) return <div className="h-64 flex items-center justify-center"><Loader2 className="animate-spin text-blue-600" /></div>;
 
   return (
-    <div className="max-w-5xl mx-auto space-y-6 pb-20 p-6">
-      <div className="flex items-center justify-between border-b border-[var(--border)] pb-6">
+    <div className="max-w-6xl mx-auto space-y-6 pb-24 p-4 sm:p-6 font-sans">
+      
+      {/* Top Header */}
+      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 border-b border-[var(--border)] pb-6">
         <div className="flex items-center gap-4">
-          <Link href="/teacher/quizzes" className="p-2 border border-[var(--border)] rounded-md hover:bg-[var(--bg-secondary)] transition-colors">
+          <Link href="/teacher/quizzes" className="p-2 border border-[var(--border)] rounded-xl hover:bg-[var(--bg-secondary)] transition-colors">
             <ChevronLeft className="h-5 w-5 text-[var(--text-secondary)]" />
           </Link>
           <div>
-            <h1 className="text-2xl font-serif text-[var(--text-primary)]">Edit Assessment: {quiz?.title}</h1>
-            <p className="text-sm text-[var(--text-secondary)] mt-1">{quiz?.courses?.title}</p>
+            <div className="flex items-center gap-2">
+              <h1 className="text-xl sm:text-2xl font-bold text-[var(--text-primary)]">{quiz?.title}</h1>
+              {cbtConfig.is_cbt_v2 && (
+                <span className="px-2.5 py-0.5 rounded-full bg-blue-100 text-blue-700 text-xs font-black uppercase tracking-wider">
+                  CBT MMIS v2
+                </span>
+              )}
+            </div>
+            <p className="text-xs text-[var(--text-secondary)] mt-1">
+              Course: <span className="font-semibold">{quiz?.courses?.title || "Umum"}</span> • {questions.length} Soal
+            </p>
           </div>
         </div>
-        <Button onClick={handleSave} disabled={saving} className="bg-[var(--accent)] hover:bg-[var(--accent-hover)] text-white shadow-sm">
-          {saving ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : <Save className="h-4 w-4 mr-2" />}
-          Save Assessment
-        </Button>
+
+        <div className="flex items-center gap-3 self-end sm:self-center">
+          <Button 
+            onClick={handleSave} 
+            loading={saving} 
+            className="bg-blue-600 hover:bg-blue-700 text-white font-bold shadow-md"
+            icon={<Save className="h-4 w-4" />}
+          >
+            Simpan Perubahan
+          </Button>
+        </div>
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
-        {/* Sidebar: Settings & Controls */}
+        
+        {/* Left Sidebar: CBT MMIS v2 & Quiz Settings */}
         <div className="lg:col-span-1 space-y-6 sticky top-6 self-start">
-          <Card className="p-5 border-[var(--border)] shadow-sm bg-[var(--bg-primary)] rounded-md">
-            <div className="flex items-center gap-2 mb-4 text-[var(--text-primary)] font-semibold border-b border-[var(--border)] pb-2">
-              <Settings className="h-4 w-4" />
-              <h2>Assessment Settings</h2>
+          
+          {/* CBT MMIS v2 Settings Card */}
+          <Card className="p-5 border-2 border-blue-200 bg-gradient-to-b from-blue-50/50 to-white rounded-2xl shadow-sm space-y-4">
+            <div className="flex items-center gap-2 pb-2 border-b border-blue-100">
+              <div className="w-8 h-8 rounded-lg bg-blue-600 text-white flex items-center justify-center font-bold">
+                <MonitorCheck className="w-4 h-4 text-amber-300" />
+              </div>
+              <div>
+                <h3 className="text-sm font-black text-blue-950">Pengaturan CBT MMIS v2</h3>
+                <p className="text-[10px] text-blue-600 font-medium">Platform Ujian Siswa</p>
+              </div>
             </div>
-            
-            <div className="space-y-4">
-              <div className="space-y-2 border-b border-[var(--border)] pb-4 mb-2">
-                <label className="block text-sm font-medium text-[var(--text-primary)] mb-1.5">Update Quiz Icon</label>
-                <div className="flex items-center gap-4">
-                  <div 
-                    className="w-12 h-12 rounded-xl border-2 border-dashed border-[var(--border)] flex items-center justify-center bg-[var(--bg-secondary)] overflow-hidden cursor-pointer hover:border-[var(--accent)] transition-colors shrink-0"
-                    onClick={() => fileInputRef.current?.click()}
-                  >
-                    {iconPreview ? (
-                      <img src={iconPreview} alt="Icon preview" className="w-full h-full object-cover" />
-                    ) : (
-                      <ImageIcon className="h-5 w-5 text-[var(--text-tertiary)]" />
-                    )}
-                  </div>
-                  <div className="flex-1">
-                    <input
-                      type="file"
-                      accept="image/*"
-                      className="hidden"
-                      ref={fileInputRef}
-                      onChange={(e) => {
-                        const file = e.target.files?.[0];
-                        if (file) {
-                          setIconFile(file);
-                          setIconPreview(URL.createObjectURL(file));
-                        }
-                      }}
-                    />
-                    <Button 
-                      type="button" 
-                      variant="secondary" 
-                      size="sm"
-                      onClick={() => fileInputRef.current?.click()}
-                      className="text-xs"
-                    >
-                      <Upload className="h-3 w-3 mr-2" /> Upload Icon
-                    </Button>
-                  </div>
-                </div>
-              </div>
 
-              <div className="flex items-center justify-between border-b border-[var(--border)] pb-4 mb-2">
-                <div className="flex items-center gap-2">
-                  <label className="text-sm font-medium text-[var(--text-primary)]" title="Jadikan CBT ini sebagai Form (Tanpa sistem nilai & batas waktu)">Jadikan Form</label>
-                  <Badge variant="info" className="text-[10px]">Baru</Badge>
-                </div>
-                <input 
-                  type="checkbox" 
-                  checked={quiz.is_form} 
-                  onChange={(e) => setQuiz({ ...quiz, is_form: e.target.checked })}
-                  className="h-4 w-4 text-[var(--accent)]"
-                />
-              </div>
+            {/* Enable CBT MMIS v2 Toggle */}
+            <div className="flex items-center justify-between">
+              <label className="text-xs font-bold text-slate-800">Mode CBT MMIS v2</label>
+              <input
+                type="checkbox"
+                checked={cbtConfig.is_cbt_v2}
+                onChange={(e) => setCbtConfig({ ...cbtConfig, is_cbt_v2: e.target.checked })}
+                className="w-4 h-4 rounded text-blue-600 cursor-pointer"
+              />
+            </div>
 
-              {quiz.is_form && (
-                <div className="space-y-4 border-b border-[var(--border)] pb-4 mb-2">
-                  <div className="flex items-center justify-between">
-                    <label className="text-sm font-medium text-[var(--text-primary)]" title="Tampilkan semua soal dalam 1 halaman">Tampilan Satu Halaman</label>
-                    <input 
-                      type="checkbox" 
-                      checked={quiz.is_one_page_layout} 
-                      onChange={(e) => setQuiz({ ...quiz, is_one_page_layout: e.target.checked })}
-                      className="h-4 w-4 text-[var(--accent)]"
-                    />
-                  </div>
-                  <div className="space-y-2">
-                    <label className="text-sm font-medium text-[var(--text-primary)]">Deskripsi Formulir</label>
-                    <textarea
-                      placeholder="Masukkan kata pengantar form..."
-                      className="w-full text-sm bg-white dark:bg-[var(--bg-secondary)] border border-[var(--border)] rounded px-3 py-2 focus:ring-1 focus:ring-[var(--accent)] focus:outline-none min-h-[80px]"
-                      value={quiz.description || ""}
-                      onChange={(e) => setQuiz({ ...quiz, description: e.target.value })}
-                    />
-                  </div>
-                  <div className="space-y-2">
-                    <label className="text-sm font-medium text-[var(--text-primary)]">Warna Tema</label>
-                    <select
-                      className="w-full text-sm bg-white dark:bg-[var(--bg-secondary)] border border-[var(--border)] rounded px-3 py-2 focus:ring-1 focus:ring-[var(--accent)] focus:outline-none"
-                      value={quiz.theme_color || "blue"}
-                      onChange={(e) => setQuiz({ ...quiz, theme_color: e.target.value })}
-                    >
-                      <option value="blue">Biru (Default)</option>
-                      <option value="green">Hijau</option>
-                      <option value="purple">Ungu</option>
-                      <option value="rose">Merah Muda</option>
-                      <option value="orange">Oranye</option>
-                      <option value="slate">Abu-abu</option>
-                    </select>
-                  </div>
-                </div>
-              )}
-
-              {!quiz.is_form && (
-                <div className="space-y-2 border-b border-[var(--border)] pb-4 mb-2">
-                  <label className="flex items-center gap-2 text-sm font-medium text-[var(--text-secondary)]">
-                    <Clock className="h-4 w-4 text-[var(--text-tertiary)]" />
-                    Time Limit (minutes)
+            {cbtConfig.is_cbt_v2 && (
+              <div className="space-y-4 pt-2 border-t border-blue-100">
+                
+                {/* Jadwal Tayang */}
+                <div className="space-y-2">
+                  <label className="text-xs font-bold text-slate-700 flex items-center gap-1">
+                    <Calendar className="w-3.5 h-3.5 text-blue-600" />
+                    Waktu Mulai Tayang
                   </label>
                   <input
-                    type="number"
-                    placeholder="0 for unlimited"
-                    className="w-full text-sm bg-white dark:bg-[var(--bg-secondary)] border border-[var(--border)] rounded px-3 py-2 focus:ring-1 focus:ring-[var(--accent)] focus:outline-none"
-                    value={quiz.time_limit || ""}
-                    onChange={(e) => setQuiz({ ...quiz, time_limit: parseInt(e.target.value) || 0 })}
+                    type="datetime-local"
+                    value={cbtConfig.schedule_start ? cbtConfig.schedule_start.slice(0, 16) : ""}
+                    onChange={(e) => setCbtConfig({ ...cbtConfig, schedule_start: e.target.value ? new Date(e.target.value).toISOString() : null })}
+                    className="w-full h-8 px-2 rounded-lg bg-white border border-slate-300 text-xs text-slate-800"
                   />
-                  <p className="text-xs text-[var(--text-tertiary)]">Leave 0 for no time limit.</p>
                 </div>
-              )}
 
-              {!quiz.is_form && (
-                <div className="space-y-2 border-b border-[var(--border)] pb-4 mb-2">
-                  <label className="flex items-center gap-2 text-sm font-medium text-[var(--text-secondary)]">
-                    <Award className="h-4 w-4 text-[var(--text-tertiary)]" />
-                    Total Poin Soal (Otomatis)
+                <div className="space-y-2">
+                  <label className="text-xs font-bold text-slate-700 flex items-center gap-1">
+                    <Clock className="w-3.5 h-3.5 text-rose-600" />
+                    Waktu Selesai Tayang
                   </label>
-                  <div className="text-2xl font-black text-[var(--accent)]">
-                    {questions.reduce((sum, q) => sum + (q.points || 0), 0)}
+                  <input
+                    type="datetime-local"
+                    value={cbtConfig.schedule_end ? cbtConfig.schedule_end.slice(0, 16) : ""}
+                    onChange={(e) => setCbtConfig({ ...cbtConfig, schedule_end: e.target.value ? new Date(e.target.value).toISOString() : null })}
+                    className="w-full h-8 px-2 rounded-lg bg-white border border-slate-300 text-xs text-slate-800"
+                  />
+                </div>
+
+                {/* Target Classes */}
+                <div className="space-y-1.5">
+                  <label className="text-xs font-bold text-slate-700">Target Kelas</label>
+                  <div className="flex flex-wrap gap-1 max-h-24 overflow-y-auto p-1.5 bg-white border border-slate-200 rounded-lg">
+                    {availableClasses.map((cls) => {
+                      const isSelected = cbtConfig.target_classes.includes(cls.name);
+                      return (
+                        <button
+                          key={cls.id}
+                          type="button"
+                          onClick={() => toggleTargetClass(cls.name)}
+                          className={`px-2 py-0.5 rounded text-[10px] font-bold border transition-colors ${
+                            isSelected ? "bg-blue-600 text-white border-blue-600" : "bg-slate-50 text-slate-600 border-slate-200"
+                          }`}
+                        >
+                          {cls.name}
+                        </button>
+                      );
+                    })}
                   </div>
                 </div>
-              )}
 
-              <div className="space-y-2 border-b border-[var(--border)] pb-4 mb-2">
-                <label className="flex items-center gap-2 text-sm font-medium text-[var(--text-secondary)]">
-                  Minimum Time to Submit (minutes)
-                </label>
+                {/* Scoring Defaults */}
+                <div className="grid grid-cols-2 gap-2">
+                  <div>
+                    <label className="text-[11px] font-bold text-emerald-700 flex items-center gap-1">
+                      <Zap className="w-3 h-3" /> Poin Benar (+)
+                    </label>
+                    <input
+                      type="number"
+                      step="any"
+                      value={cbtConfig.points_correct}
+                      onChange={(e) => setCbtConfig({ ...cbtConfig, points_correct: Number(e.target.value) })}
+                      className="w-full h-8 px-2 rounded-lg bg-white border border-emerald-300 text-xs font-bold text-emerald-700"
+                    />
+                  </div>
+                  <div>
+                    <label className="text-[11px] font-bold text-rose-700 flex items-center gap-1">
+                      <Zap className="w-3 h-3" /> Minus Salah (-)
+                    </label>
+                    <input
+                      type="number"
+                      step="any"
+                      value={cbtConfig.penalty_wrong}
+                      onChange={(e) => setCbtConfig({ ...cbtConfig, penalty_wrong: Number(e.target.value) })}
+                      className="w-full h-8 px-2 rounded-lg bg-white border border-rose-300 text-xs font-bold text-rose-700"
+                    />
+                  </div>
+                </div>
+
+                {/* Webcam Proctoring */}
+                <div className="flex items-center justify-between pt-2 border-t border-blue-100">
+                  <label className="text-xs font-bold text-slate-800 flex items-center gap-1">
+                    <Camera className="w-3.5 h-3.5 text-purple-600" />
+                    Wajibkan Webcam
+                  </label>
+                  <input
+                    type="checkbox"
+                    checked={cbtConfig.require_webcam}
+                    onChange={(e) => setCbtConfig({ ...cbtConfig, require_webcam: e.target.checked })}
+                    className="w-4 h-4 rounded text-blue-600 cursor-pointer"
+                  />
+                </div>
+
+                {/* Token Masuk */}
+                <div className="space-y-1.5 pt-2 border-t border-blue-100">
+                  <div className="flex items-center justify-between">
+                    <label className="text-xs font-bold text-slate-800 flex items-center gap-1">
+                      <Key className="w-3.5 h-3.5 text-amber-600" />
+                      Gunakan Token
+                    </label>
+                    <input
+                      type="checkbox"
+                      checked={cbtConfig.token_enabled}
+                      onChange={(e) => setCbtConfig({ ...cbtConfig, token_enabled: e.target.checked })}
+                      className="w-4 h-4 rounded text-blue-600 cursor-pointer"
+                    />
+                  </div>
+                  {cbtConfig.token_enabled && (
+                    <input
+                      type="text"
+                      value={cbtConfig.token_code}
+                      onChange={(e) => setCbtConfig({ ...cbtConfig, token_code: e.target.value.toUpperCase() })}
+                      placeholder="Kode Token (e.g. MMIS2026)"
+                      className="w-full h-8 px-2 uppercase font-mono tracking-wider rounded-lg bg-white border border-slate-300 text-xs text-slate-800"
+                    />
+                  )}
+                </div>
+
+                {/* Peraturan Ujian */}
+                <div className="space-y-1.5">
+                  <label className="text-xs font-bold text-slate-700">Tata Tertib Ujian (Pop-up Siswa)</label>
+                  <textarea
+                    rows={3}
+                    value={cbtConfig.exam_rules}
+                    onChange={(e) => setCbtConfig({ ...cbtConfig, exam_rules: e.target.value })}
+                    className="w-full p-2 rounded-lg bg-white border border-slate-300 text-xs text-slate-800"
+                  />
+                </div>
+
+                {/* Kotak Pernyataan Siswa */}
+                <div className="space-y-1.5">
+                  <label className="text-xs font-bold text-slate-700">Kotak Pernyataan Persetujuan Siswa</label>
+                  <textarea
+                    rows={3}
+                    value={cbtConfig.statement_text}
+                    onChange={(e) => setCbtConfig({ ...cbtConfig, statement_text: e.target.value })}
+                    className="w-full p-2 rounded-lg bg-white border border-slate-300 text-xs text-slate-800"
+                  />
+                </div>
+
+                {/* Result Visibility */}
+                <div className="space-y-2 pt-2 border-t border-blue-100">
+                  <div className="flex items-center justify-between">
+                    <label className="text-[11px] font-bold text-slate-700">Siswa Boleh Lihat Skor</label>
+                    <input
+                      type="checkbox"
+                      checked={cbtConfig.show_score}
+                      onChange={(e) => setCbtConfig({ ...cbtConfig, show_score: e.target.checked })}
+                      className="w-4 h-4 rounded text-blue-600 cursor-pointer"
+                    />
+                  </div>
+
+                  <div className="flex items-center justify-between">
+                    <label className="text-[11px] font-bold text-slate-700">Siswa Boleh Lihat Pembahasan</label>
+                    <input
+                      type="checkbox"
+                      checked={cbtConfig.show_explanation}
+                      onChange={(e) => setCbtConfig({ ...cbtConfig, show_explanation: e.target.checked })}
+                      className="w-4 h-4 rounded text-blue-600 cursor-pointer"
+                    />
+                  </div>
+                </div>
+
+              </div>
+            )}
+          </Card>
+
+          {/* Standard Settings Card */}
+          <Card className="p-5 border-[var(--border)] shadow-sm bg-[var(--bg-primary)] rounded-md space-y-4">
+            <div className="flex items-center gap-2 text-[var(--text-primary)] font-semibold border-b border-[var(--border)] pb-2">
+              <Settings className="h-4 w-4" />
+              <h2>Pengaturan Dasar</h2>
+            </div>
+            
+            <div className="space-y-3 text-xs">
+              <div>
+                <label className="font-semibold text-slate-600 block mb-1">Durasi Ujian (Menit)</label>
                 <input
                   type="number"
-                  className="w-full text-sm bg-white dark:bg-[var(--bg-secondary)] border border-[var(--border)] rounded px-3 py-2 focus:ring-1 focus:ring-[var(--accent)] focus:outline-none"
-                  value={quiz.min_time_to_submit}
-                  onChange={(e) => setQuiz({ ...quiz, min_time_to_submit: parseInt(e.target.value) || 0 })}
+                  min={1}
+                  className="w-full h-8 px-2 border border-slate-300 rounded text-xs"
+                  value={quiz.time_limit}
+                  onChange={(e) => setQuiz({ ...quiz, time_limit: parseInt(e.target.value) || 60 })}
                 />
               </div>
 
-              <div className="flex items-center justify-between">
-                <label className="text-sm font-medium text-[var(--text-secondary)]">Allow Leaving Exam Page</label>
-                <input 
-                  type="checkbox" 
-                  checked={quiz.allow_leave_exam} 
-                  onChange={(e) => setQuiz({ ...quiz, allow_leave_exam: e.target.checked })}
-                  className="h-4 w-4 text-[var(--accent)]"
+              <div>
+                <label className="font-semibold text-slate-600 block mb-1">Deskripsi Umum Ujian</label>
+                <textarea
+                  rows={2}
+                  value={cleanDesc}
+                  onChange={(e) => setCleanDesc(e.target.value)}
+                  placeholder="Deskripsi singkat..."
+                  className="w-full p-2 border border-slate-300 rounded text-xs"
                 />
               </div>
-
-              <div className="flex items-center justify-between">
-                <label className="text-sm font-medium text-[var(--text-secondary)]">Shuffle Questions</label>
-                <input 
-                  type="checkbox" 
-                  checked={quiz.shuffle_questions} 
-                  onChange={(e) => setQuiz({ ...quiz, shuffle_questions: e.target.checked })}
-                  className="h-4 w-4 text-[var(--accent)]"
-                />
-              </div>
-
-              {!quiz.is_form && (
-                <>
-                  <div className="flex items-center justify-between">
-                    <label className="text-sm font-medium text-[var(--text-secondary)]" title="Siswa dapat melihat nilai akhir setelah ujian">Tampilkan Nilai Akhir</label>
-                    <input 
-                      type="checkbox" 
-                      checked={quiz.show_score} 
-                      onChange={(e) => setQuiz({ ...quiz, show_score: e.target.checked })}
-                      className="h-4 w-4 text-[var(--accent)]"
-                    />
-                  </div>
-
-                  <div className="flex items-center justify-between">
-                    <label className="text-sm font-medium text-[var(--text-secondary)]" title="Siswa dapat melihat kunci jawaban yang benar setelah ujian">Tampilkan Kunci Jawaban</label>
-                    <input 
-                      type="checkbox" 
-                      checked={quiz.show_answers} 
-                      onChange={(e) => setQuiz({ ...quiz, show_answers: e.target.checked })}
-                      className="h-4 w-4 text-[var(--accent)]"
-                    />
-                  </div>
-                </>
-              )}
-
-              <div className="flex items-center justify-between">
-                <label className="text-sm font-medium text-[var(--text-secondary)]" title="Siswa dapat melihat pembahasan soal setelah ujian">Tampilkan Pembahasan</label>
-                <input 
-                  type="checkbox" 
-                  checked={quiz.show_explanation} 
-                  onChange={(e) => setQuiz({ ...quiz, show_explanation: e.target.checked })}
-                  className="h-4 w-4 text-[var(--accent)]"
-                />
-              </div>
-
-              {!quiz.is_form && (
-                <>
-                  <div className="flex items-center justify-between border-t border-[var(--border)] pt-4 mt-2">
-                    <label className="text-sm font-medium text-[var(--text-secondary)]">Sediakan Mode Latihan</label>
-                    <input 
-                      type="checkbox" 
-                      checked={quiz.allow_practice_mode} 
-                      onChange={(e) => setQuiz({ ...quiz, allow_practice_mode: e.target.checked })}
-                      className="h-4 w-4 text-[var(--accent)]"
-                    />
-                  </div>
-
-                  {quiz.allow_practice_mode && (
-                    <div className="space-y-4 bg-slate-50 dark:bg-slate-900 p-3 rounded border border-slate-200 dark:border-slate-800">
-                      <div className="space-y-2">
-                        <label className="flex items-center gap-2 text-sm font-medium text-[var(--text-secondary)]">
-                          <Clock className="h-4 w-4 text-[var(--text-tertiary)]" />
-                          Waktu Latihan (menit)
-                        </label>
-                        <input
-                          type="number"
-                          placeholder="0 for unlimited"
-                          className="w-full text-sm bg-white dark:bg-[var(--bg-secondary)] border border-[var(--border)] rounded px-3 py-2 focus:ring-1 focus:ring-[var(--accent)] focus:outline-none"
-                          value={quiz.practice_time_limit_minutes || ""}
-                          onChange={(e) => setQuiz({ ...quiz, practice_time_limit_minutes: parseInt(e.target.value) || 0 })}
-                        />
-                        <p className="text-xs text-[var(--text-tertiary)]">Isi 0 jika tanpa batas waktu.</p>
-                      </div>
-                      <div className="flex items-center justify-between">
-                        <label className="text-sm font-medium text-[var(--text-secondary)]" title="Jika aktif, nilai saat latihan akan menggantikan nilai utama siswa">Simpan Nilai Latihan</label>
-                        <input 
-                          type="checkbox" 
-                          checked={quiz.save_practice_scores} 
-                          onChange={(e) => setQuiz({ ...quiz, save_practice_scores: e.target.checked })}
-                          className="h-4 w-4 text-emerald-500"
-                        />
-                      </div>
-                    </div>
-                  )}
-                </>
-              )}
             </div>
           </Card>
 
+          {/* Add Question Button Panel */}
           <Card className="p-5 border-[var(--border)] shadow-sm bg-[var(--bg-primary)] rounded-md">
-            <h2 className="text-sm font-semibold text-[var(--text-primary)] border-b border-[var(--border)] pb-2 mb-4">Add Question</h2>
+            <h2 className="text-sm font-semibold text-[var(--text-primary)] border-b border-[var(--border)] pb-2 mb-4">Tambah Soal Baru</h2>
             <div className="flex flex-col gap-2">
-              <Button variant="secondary" className="justify-start border-[var(--border)] bg-white dark:bg-[var(--bg-secondary)] shadow-sm" onClick={() => addQuestion("mcq")}>
+              <Button variant="secondary" className="justify-start border-[var(--border)] bg-white dark:bg-[var(--bg-secondary)] shadow-sm text-xs" onClick={() => addQuestion("mcq")}>
                 <Plus className="h-4 w-4 mr-2 text-[var(--accent)]" />
-                Multiple Choice
+                Pilihan Ganda (MCQ)
               </Button>
-              <Button variant="secondary" className="justify-start border-[var(--border)] bg-white dark:bg-[var(--bg-secondary)] shadow-sm" onClick={() => addQuestion("complex_mcq")}>
+              <Button variant="secondary" className="justify-start border-[var(--border)] bg-white dark:bg-[var(--bg-secondary)] shadow-sm text-xs" onClick={() => addQuestion("complex_mcq")}>
                 <Plus className="h-4 w-4 mr-2 text-[var(--accent)]" />
-                Complex PG
+                Pilihan Ganda Kompleks
               </Button>
-              <Button variant="secondary" className="justify-start border-[var(--border)] bg-white dark:bg-[var(--bg-secondary)] shadow-sm" onClick={() => addQuestion("matching")}>
+              <Button variant="secondary" className="justify-start border-[var(--border)] bg-white dark:bg-[var(--bg-secondary)] shadow-sm text-xs" onClick={() => addQuestion("matching")}>
                 <Plus className="h-4 w-4 mr-2 text-[var(--accent)]" />
-                Matching
+                Menjodohkan (Matching)
               </Button>
-              <Button variant="secondary" className="justify-start border-[var(--border)] bg-white dark:bg-[var(--bg-secondary)] shadow-sm" onClick={() => addQuestion("essay")}>
+              <Button variant="secondary" className="justify-start border-[var(--border)] bg-white dark:bg-[var(--bg-secondary)] shadow-sm text-xs" onClick={() => addQuestion("essay")}>
                 <Plus className="h-4 w-4 mr-2 text-[var(--accent)]" />
-                Essay
+                Uraian / Essay
               </Button>
-              <Button variant="secondary" className="justify-start border-[var(--border)] bg-white dark:bg-[var(--bg-secondary)] shadow-sm" onClick={() => addQuestion("matrix")}>
-                <Plus className="h-4 w-4 mr-2 text-[var(--accent)]" />
-                Matrix / Tabel
-              </Button>
-              <Button variant="secondary" className="justify-start border-[var(--border)] bg-white dark:bg-[var(--bg-secondary)] shadow-sm" onClick={() => addQuestion("linear_scale")}>
-                <Plus className="h-4 w-4 mr-2 text-[var(--accent)]" />
-                Skala Linier
-              </Button>
-              <Button variant="secondary" className="justify-start border-blue-200 bg-blue-50 text-blue-700 hover:bg-blue-100 hover:text-blue-800 mt-4 shadow-sm" onClick={openBankModal}>
+              <Button variant="secondary" className="justify-start border-blue-200 bg-blue-50 text-blue-700 hover:bg-blue-100 mt-2 text-xs" onClick={openBankModal}>
                 <Download className="h-4 w-4 mr-2" />
                 Impor dari Bank Soal
               </Button>
@@ -548,478 +669,413 @@ export default function CBTBuilderPage() {
         {/* Main Content: Questions List */}
         <div className="lg:col-span-3 space-y-6">
           <AnimatePresence>
-            {questions.map((q, idx) => (
-              <motion.div key={q.id} initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, x: -20 }}>
-                <Card className="relative group border border-[var(--border)] shadow-sm bg-white dark:bg-[var(--bg-primary)] rounded-md overflow-hidden">
-                  <div className="bg-[var(--bg-secondary)] px-4 py-3 border-b border-[var(--border)] flex items-center justify-between">
-                    <div className="flex items-center gap-3">
-                      <div className="cursor-grab text-[var(--text-tertiary)] hover:text-[var(--text-secondary)]">
-                        <GripVertical className="h-4 w-4" />
-                      </div>
-                      <span className="font-semibold text-sm text-[var(--text-primary)]">Question {idx + 1}</span>
-                      <Badge variant="info" className="bg-white dark:bg-[var(--bg-tertiary)] text-[var(--text-secondary)] border-[var(--border)] flex items-center gap-1 font-normal">
-                        {q.question_type === "mcq" && <HelpCircle className="h-3 w-3" />}
-                        {q.question_type === "complex_mcq" && <CheckSquare className="h-3 w-3" />}
-                        {q.question_type === "matching" && <LinkIcon className="h-3 w-3" />}
-                        {q.question_type === "matrix" && <LayoutGrid className="h-3 w-3" />}
-                        {q.question_type === "essay" && <Type className="h-3 w-3" />}
-                        {q.question_type === "linear_scale" && <Circle className="h-3 w-3" />}
-                        {q.question_type.toUpperCase().replace("_", " ")}
-                      </Badge>
-                      {reports.filter(r => r.question_id === q.id).length > 0 && (
-                        <Badge variant="error" className="bg-[var(--error)] text-white border-[var(--error)] flex items-center gap-1 font-normal ml-2">
-                          <Flag className="h-3 w-3" />
-                          {reports.filter(r => r.question_id === q.id).length} Laporan
+            {questions.map((q, idx) => {
+              const qCorrect = q.points_correct ?? q.points ?? cbtConfig.points_correct ?? 4;
+              const qPenalty = q.penalty_wrong ?? cbtConfig.penalty_wrong ?? 1;
+
+              return (
+                <motion.div key={q.id} initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, x: -20 }}>
+                  <Card className="relative group border border-slate-200 shadow-sm bg-white rounded-2xl overflow-hidden">
+                    
+                    {/* Question Header */}
+                    <div className="bg-slate-50 px-4 py-3 border-b border-slate-200 flex flex-wrap items-center justify-between gap-3">
+                      <div className="flex items-center gap-3">
+                        <div className="cursor-grab text-slate-400 hover:text-slate-600">
+                          <GripVertical className="h-4 w-4" />
+                        </div>
+                        <span className="font-bold text-sm text-slate-800">Nomor {idx + 1}</span>
+                        <Badge variant="info" className="bg-white text-slate-600 border-slate-200 font-normal text-xs">
+                          {q.question_type.toUpperCase().replace("_", " ")}
                         </Badge>
-                      )}
-                    </div>
-                    <div className="flex items-center gap-4">
-                      <div className="flex items-center gap-2">
-                        <span className="text-xs font-medium text-[var(--text-secondary)]">Points:</span>
-                        <input
-                          type="number"
-                          className="w-16 px-2 py-1 text-center text-sm border border-[var(--border)] rounded focus:ring-1 focus:ring-[var(--accent)] focus:outline-none disabled:bg-slate-100 disabled:text-slate-400"
-                          value={q.points}
-                          disabled={q.question_type === 'linear_scale'}
-                          onChange={(e) => updateQuestion(q.id, { points: parseInt(e.target.value) || 0 })}
-                        />
                       </div>
-                      <button onClick={() => removeQuestion(q.id)} className="text-[var(--error)] hover:bg-[var(--error-light)] p-1.5 rounded transition-colors" title="Remove question">
-                        <Trash2 className="h-4 w-4" />
-                      </button>
-                    </div>
-                  </div>
-                  
-                  <div className="p-6 space-y-6">
-                    <div className="space-y-2">
-                      <label className="text-sm font-semibold text-[var(--text-primary)]">Question Text</label>
-                      <RichTextEditor 
-                        value={q.question_text} 
-                        onChange={(val) => updateQuestion(q.id, { question_text: val })} 
-                      />
-                      {q.question_text && (q.question_text.includes('$') || q.question_text.includes('\\(')) && (
-                        <div className="mt-2 p-3 bg-[var(--bg-tertiary)] border border-[var(--border)] rounded-md">
-                          <p className="text-xs font-semibold text-[var(--text-tertiary)] mb-2 uppercase tracking-wider">Math Preview</p>
-                          <MathRenderer className="prose prose-sm max-w-none text-[var(--text-primary)]" htmlContent={q.question_text} />
+
+                      {/* Positive & Negative Points Controls */}
+                      <div className="flex items-center gap-3">
+                        <div className="flex items-center gap-1.5 bg-emerald-50 px-2 py-1 rounded-lg border border-emerald-200">
+                          <span className="text-[11px] font-bold text-emerald-700">+Benar:</span>
+                          <input
+                            type="number"
+                            step="any"
+                            className="w-12 px-1 text-center text-xs font-bold text-emerald-800 bg-white border border-emerald-300 rounded focus:outline-none"
+                            value={qCorrect}
+                            onChange={(e) => updateQuestion(q.id, { points_correct: Number(e.target.value), points: Number(e.target.value) })}
+                          />
                         </div>
-                      )}
+
+                        <div className="flex items-center gap-1.5 bg-rose-50 px-2 py-1 rounded-lg border border-rose-200">
+                          <span className="text-[11px] font-bold text-rose-700">-Salah:</span>
+                          <input
+                            type="number"
+                            step="any"
+                            className="w-12 px-1 text-center text-xs font-bold text-rose-800 bg-white border border-rose-300 rounded focus:outline-none"
+                            value={qPenalty}
+                            onChange={(e) => updateQuestion(q.id, { penalty_wrong: Number(e.target.value) })}
+                          />
+                        </div>
+
+                        <button onClick={() => removeQuestion(q.id)} className="text-rose-500 hover:bg-rose-50 p-1.5 rounded-lg transition-colors" title="Hapus Soal">
+                          <Trash2 className="h-4 w-4" />
+                        </button>
+                      </div>
                     </div>
-
-                    {reports.filter(r => r.question_id === q.id).length > 0 && (
-                      <div className="bg-red-50 border border-red-200 p-4 rounded-md space-y-3">
-                        <h4 className="text-sm font-bold text-red-700 flex items-center gap-2">
-                          <Flag className="h-4 w-4" /> Laporan dari Siswa
-                        </h4>
-                        <div className="space-y-2">
-                          {reports.filter(r => r.question_id === q.id).map(r => (
-                            <div key={r.id} className="bg-white p-3 rounded border border-red-100 text-sm">
-                              <p className="font-semibold text-slate-700 mb-1">{r.profiles?.full_name || 'Siswa'}</p>
-                              <p className="text-slate-600">{r.description}</p>
-                            </div>
-                          ))}
+                    
+                    <div className="p-6 space-y-6">
+                      
+                      {/* Media Bar: Image & Audio Attachments */}
+                      <div className="p-3 bg-slate-50 border border-slate-200 rounded-xl space-y-3">
+                        <div className="flex items-center justify-between">
+                          <span className="text-xs font-bold uppercase tracking-wider text-slate-500 flex items-center gap-1.5">
+                            <Upload className="w-3.5 h-3.5 text-blue-600" />
+                            Media Soal (Gambar & Audio / Musik)
+                          </span>
                         </div>
-                      </div>
-                    )}
 
-                    {/* Multiple Choice & Complex MCQ */}
-                    {(q.question_type === "mcq" || q.question_type === "complex_mcq") && q.options && (
-                      <div className="space-y-3 bg-[var(--bg-tertiary)] p-4 rounded border border-[var(--border)]">
-                        <label className="text-sm font-semibold text-[var(--text-primary)] block mb-2">Answers</label>
-                        {q.options.map((opt, oIdx) => (
-                          <div key={oIdx} className="flex items-start gap-3 bg-white dark:bg-[var(--bg-secondary)] p-3 rounded border border-[var(--border)] shadow-sm">
-                            <button 
-                              onClick={() => {
-                                const newOpts = q.options!.map((o, i) => {
-                                  if (q.question_type === "mcq") {
-                                    return { ...o, is_correct: i === oIdx };
-                                  } else {
-                                    if (i === oIdx) return { ...o, is_correct: !o.is_correct };
-                                    return o;
-                                  }
-                                });
-                                updateQuestion(q.id, { options: newOpts });
-                              }}
-                              className={`mt-1 ${opt.is_correct ? "text-[var(--success)]" : "text-[var(--text-tertiary)] hover:text-[var(--text-secondary)]"}`}
-                              title={opt.is_correct ? "Correct answer" : "Mark as correct"}
-                            >
-                              {q.question_type === "mcq" ? (
-                                opt.is_correct ? <CheckCircle2 className="h-5 w-5" /> : <Circle className="h-5 w-5" />
-                              ) : (
-                                opt.is_correct ? <CheckSquare className="h-5 w-5" /> : <Square className="h-5 w-5" />
-                              )}
-                            </button>
-                            <input
-                              className="flex-1 text-sm bg-transparent border-none p-1 focus:ring-0 focus:outline-none text-[var(--text-primary)]"
-                              value={opt.text}
-                              placeholder="Enter option text"
-                              onChange={(e) => {
-                                const newOpts = [...q.options!];
-                                newOpts[oIdx].text = e.target.value;
-                                updateQuestion(q.id, { options: newOpts });
-                              }}
-                            />
-                            {q.options!.length > 2 && (
-                              <button 
-                                onClick={() => {
-                                  const newOpts = q.options!.filter((_, i) => i !== oIdx);
-                                  updateQuestion(q.id, { options: newOpts });
-                                }}
-                                className="text-[var(--text-tertiary)] hover:text-[var(--error)] p-1"
-                              >
-                                <X className="h-4 w-4" />
-                              </button>
-                            )}
-                          </div>
-                        ))}
-                        <Button 
-                          variant="secondary" 
-                          size="sm" 
-                          className="mt-2 bg-white dark:bg-[var(--bg-secondary)] border-[var(--border)]"
-                          onClick={() => {
-                            updateQuestion(q.id, { options: [...q.options!, { text: `Option ${q.options!.length + 1}`, is_correct: false }] });
-                          }}
-                        >
-                          <Plus className="h-3 w-3 mr-1" /> Add Option
-                        </Button>
-                      </div>
-                    )}
-
-                    {/* Matching Option */}
-                    {q.question_type === "matching" && q.options && (
-                      <div className="space-y-3 bg-[var(--bg-tertiary)] p-4 rounded border border-[var(--border)]">
-                        <label className="text-sm font-semibold text-[var(--text-primary)] block mb-2">Matching Pairs</label>
-                        <div className="grid grid-cols-[1fr_auto_1fr_auto] gap-3 items-center mb-1 px-1">
-                          <span className="text-xs font-semibold uppercase text-[var(--text-secondary)]">Premise (Term)</span>
-                          <span className="w-4"></span>
-                          <span className="text-xs font-semibold uppercase text-[var(--text-secondary)]">Response (Definition)</span>
-                          <span className="w-6"></span>
-                        </div>
-                        {q.options.map((opt, oIdx) => (
-                          <div key={oIdx} className="grid grid-cols-[1fr_auto_1fr_auto] gap-3 items-center bg-white dark:bg-[var(--bg-secondary)] p-2 rounded border border-[var(--border)] shadow-sm">
-                            <input
-                              className="w-full text-sm bg-transparent border-none p-2 focus:ring-0 focus:outline-none text-[var(--text-primary)]"
-                              value={opt.text}
-                              onChange={(e) => {
-                                const newOpts = [...q.options!];
-                                newOpts[oIdx].text = e.target.value;
-                                updateQuestion(q.id, { options: newOpts });
-                              }}
-                              placeholder="e.g. Mitochondria"
-                            />
-                            <LinkIcon className="h-4 w-4 text-[var(--text-tertiary)]" />
-                            <input
-                              className="w-full text-sm bg-transparent border-none p-2 focus:ring-0 focus:outline-none text-[var(--text-primary)]"
-                              value={opt.match_pair || ""}
-                              onChange={(e) => {
-                                const newOpts = [...q.options!];
-                                newOpts[oIdx].match_pair = e.target.value;
-                                updateQuestion(q.id, { options: newOpts });
-                              }}
-                              placeholder="e.g. Powerhouse of the cell"
-                            />
-                            {q.options!.length > 2 ? (
-                              <button 
-                                onClick={() => {
-                                  const newOpts = q.options!.filter((_, i) => i !== oIdx);
-                                  updateQuestion(q.id, { options: newOpts });
-                                }}
-                                className="text-[var(--text-tertiary)] hover:text-[var(--error)] p-1 justify-self-end"
-                              >
-                                <X className="h-4 w-4" />
-                              </button>
-                            ) : <span className="w-6"></span>}
-                          </div>
-                        ))}
-                        <Button 
-                          variant="secondary" 
-                          size="sm" 
-                          className="mt-2 bg-white dark:bg-[var(--bg-secondary)] border-[var(--border)]"
-                          onClick={() => {
-                            updateQuestion(q.id, { options: [...q.options!, { text: `Term ${q.options!.length + 1}`, match_pair: `Definition ${q.options!.length + 1}` }] });
-                          }}
-                        >
-                          <Plus className="h-3 w-3 mr-1" /> Add Pair
-                        </Button>
-                      </div>
-                    )}
-
-                    {/* Matrix Option */}
-                    {q.question_type === "matrix" && q.options && (
-                      <div className="space-y-4 bg-[var(--bg-tertiary)] p-4 rounded border border-[var(--border)]">
-                        <div>
-                          <label className="text-sm font-semibold text-[var(--text-primary)] block mb-2">Kolom Pilihan (Opsi per baris)</label>
-                          <div className="flex flex-wrap gap-2">
-                            {q.criteria?.cols?.map((col, cIdx) => (
-                              <div key={cIdx} className="flex items-center gap-1 bg-white border border-[var(--border)] rounded px-2 py-1">
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                          
+                          {/* Image Upload / Link */}
+                          <div className="space-y-1.5">
+                            <label className="text-xs font-semibold text-slate-700 flex items-center gap-1">
+                              <ImageIcon className="w-3.5 h-3.5 text-blue-600" />
+                              Gambar Soal
+                            </label>
+                            <div className="flex items-center gap-2">
+                              <input
+                                type="text"
+                                placeholder="URL Gambar..."
+                                value={q.image_url || ""}
+                                onChange={(e) => updateQuestion(q.id, { image_url: e.target.value })}
+                                className="flex-1 h-8 px-2 text-xs bg-white border border-slate-300 rounded"
+                              />
+                              <label className="px-2.5 py-1.5 bg-white border border-slate-300 hover:bg-slate-100 text-slate-700 text-xs font-semibold rounded cursor-pointer shrink-0">
+                                Upload
                                 <input
-                                  className="text-sm border-none bg-transparent focus:ring-0 p-1 w-24"
-                                  value={col}
+                                  type="file"
+                                  accept="image/*"
+                                  className="hidden"
                                   onChange={(e) => {
-                                    const newCols = [...(q.criteria?.cols || [])];
-                                    newCols[cIdx] = e.target.value;
-                                    updateQuestion(q.id, { criteria: { ...q.criteria, cols: newCols } });
+                                    const file = e.target.files?.[0];
+                                    if (file) handleUploadQuestionImage(q.id, file);
                                   }}
                                 />
-                                {q.criteria!.cols!.length > 2 && (
-                                  <button onClick={() => {
-                                    const newCols = q.criteria!.cols!.filter((_, i) => i !== cIdx);
-                                    // Remove the deleted col from match_pairs as well
-                                    const newOpts = q.options!.map(opt => ({
-                                      ...opt,
-                                      match_pairs: (opt.match_pairs || []).filter(mp => mp !== col)
-                                    }));
-                                    updateQuestion(q.id, { criteria: { ...q.criteria, cols: newCols }, options: newOpts });
-                                  }} className="text-[var(--text-tertiary)] hover:text-red-500">
-                                    <X className="w-4 h-4" />
-                                  </button>
-                                )}
-                              </div>
-                            ))}
-                            <Button size="sm" variant="secondary" className="h-8 border-[var(--border)]" onClick={() => {
-                              const newCols = [...(q.criteria?.cols || []), `Kolom ${q.criteria!.cols!.length + 1}`];
-                              updateQuestion(q.id, { criteria: { ...q.criteria, cols: newCols } });
-                            }}>
-                              <Plus className="w-3 h-3 mr-1" /> Kolom
-                            </Button>
+                              </label>
+                              {q.image_url && (
+                                <button
+                                  type="button"
+                                  onClick={() => updateQuestion(q.id, { image_url: null })}
+                                  className="text-rose-500 p-1 hover:bg-rose-50 rounded"
+                                  title="Hapus Gambar"
+                                >
+                                  <X className="w-4 h-4" />
+                                </button>
+                              )}
+                            </div>
+                            {q.image_url && (
+                              <img src={q.image_url} alt="Preview" className="h-20 w-auto object-contain rounded border border-slate-200 mt-1" />
+                            )}
                           </div>
-                        </div>
 
-                        <div>
-                          <label className="text-sm font-semibold text-[var(--text-primary)] block mb-2">Baris Pernyataan & Kunci Jawaban</label>
-                          <p className="text-xs text-[var(--text-tertiary)] mb-3">Pilih kolom yang benar untuk setiap pernyataan (bisa lebih dari satu opsi yang benar per baris).</p>
-                          <div className="space-y-2">
-                            {q.options.map((opt, oIdx) => (
-                              <div key={oIdx} className="flex flex-col gap-2 bg-white dark:bg-[var(--bg-secondary)] p-3 rounded border border-[var(--border)] shadow-sm">
-                                <div className="flex items-center gap-2">
+                          {/* Audio / Music Upload / Link */}
+                          <div className="space-y-1.5">
+                            <label className="text-xs font-semibold text-slate-700 flex items-center gap-1">
+                              <Music className="w-3.5 h-3.5 text-indigo-600" />
+                              Audio / Musik Soal
+                            </label>
+                            <div className="flex items-center gap-2">
+                              <input
+                                type="text"
+                                placeholder="URL Audio MP3..."
+                                value={q.audio_url || ""}
+                                onChange={(e) => updateQuestion(q.id, { audio_url: e.target.value })}
+                                className="flex-1 h-8 px-2 text-xs bg-white border border-slate-300 rounded"
+                              />
+                              <label className="px-2.5 py-1.5 bg-white border border-slate-300 hover:bg-slate-100 text-slate-700 text-xs font-semibold rounded cursor-pointer shrink-0">
+                                Upload
+                                <input
+                                  type="file"
+                                  accept="audio/*"
+                                  className="hidden"
+                                  onChange={(e) => {
+                                    const file = e.target.files?.[0];
+                                    if (file) handleUploadQuestionAudio(q.id, file);
+                                  }}
+                                />
+                              </label>
+                              {q.audio_url && (
+                                <button
+                                  type="button"
+                                  onClick={() => updateQuestion(q.id, { audio_url: null })}
+                                  className="text-rose-500 p-1 hover:bg-rose-50 rounded"
+                                  title="Hapus Audio"
+                                >
+                                  <X className="w-4 h-4" />
+                                </button>
+                              )}
+                            </div>
+                            {q.audio_url && (
+                              <div className="mt-1">
+                                <CbtAudioPlayer src={q.audio_url} title={`Audio Soal ${idx + 1}`} />
+                              </div>
+                            )}
+                          </div>
+
+                        </div>
+                      </div>
+
+                      {/* Question Text Rich Editor */}
+                      <div className="space-y-2">
+                        <div className="flex items-center justify-between">
+                          <label className="text-sm font-semibold text-slate-800">
+                            Teks Pertanyaan (Mendukung LaTeX / KaTeX $...$ &amp; $$...$$)
+                          </label>
+                        </div>
+                        <RichTextEditor 
+                          value={q.question_text} 
+                          onChange={(val) => updateQuestion(q.id, { question_text: val })} 
+                        />
+                        {q.question_text && (q.question_text.includes('$') || q.question_text.includes('\\(')) && (
+                          <div className="mt-2 p-3 bg-blue-50/70 border border-blue-200 rounded-xl">
+                            <p className="text-[10px] font-bold text-blue-600 mb-1.5 uppercase tracking-wider">Preview Formula Matematika (KaTeX)</p>
+                            <MathRenderer className="prose prose-sm max-w-none text-slate-800" htmlContent={q.question_text} />
+                          </div>
+                        )}
+                      </div>
+
+                      {/* Multiple Choice & Complex MCQ Options */}
+                      {(q.question_type === "mcq" || q.question_type === "complex_mcq") && q.options && (
+                        <div className="space-y-3 bg-slate-50 p-4 rounded-xl border border-slate-200">
+                          <label className="text-sm font-semibold text-slate-800 block mb-2">
+                            Pilihan Jawaban (Tandai yang Benar)
+                          </label>
+                          {q.options.map((opt, oIdx) => {
+                            const letter = String.fromCharCode(65 + oIdx);
+                            const hasMath = opt.text && (opt.text.includes('$') || opt.text.includes('\\('));
+
+                            return (
+                              <div key={oIdx} className="space-y-1 bg-white p-3 rounded-xl border border-slate-200 shadow-xs">
+                                <div className="flex items-center gap-3">
+                                  <button 
+                                    type="button"
+                                    onClick={() => {
+                                      const newOpts = q.options!.map((o, i) => {
+                                        if (q.question_type === "mcq") {
+                                          return { ...o, is_correct: i === oIdx };
+                                        } else {
+                                          if (i === oIdx) return { ...o, is_correct: !o.is_correct };
+                                          return o;
+                                        }
+                                      });
+                                      updateQuestion(q.id, { options: newOpts });
+                                    }}
+                                    className={`shrink-0 ${opt.is_correct ? "text-emerald-600" : "text-slate-400 hover:text-slate-600"}`}
+                                    title={opt.is_correct ? "Kunci Benar" : "Tandai sebagai kunci benar"}
+                                  >
+                                    {q.question_type === "mcq" ? (
+                                      opt.is_correct ? <CheckCircle2 className="h-5 w-5 fill-emerald-100" /> : <Circle className="h-5 w-5" />
+                                    ) : (
+                                      opt.is_correct ? <CheckSquare className="h-5 w-5 fill-emerald-100" /> : <Square className="h-5 w-5" />
+                                    )}
+                                  </button>
+
+                                  <span className="w-6 font-bold text-xs text-slate-500">{letter}.</span>
+
                                   <input
-                                    className="flex-1 text-sm bg-slate-50 border border-[var(--border)] rounded p-2 focus:ring-1 focus:ring-[var(--accent)] outline-none"
+                                    className="flex-1 text-sm bg-transparent border-none p-1 focus:ring-0 focus:outline-none text-slate-900"
                                     value={opt.text}
-                                    placeholder="Masukkan pernyataan..."
+                                    placeholder="Ketik pilihan jawaban (misal: $x = \\frac{-b}{2a}$)..."
                                     onChange={(e) => {
                                       const newOpts = [...q.options!];
                                       newOpts[oIdx].text = e.target.value;
                                       updateQuestion(q.id, { options: newOpts });
                                     }}
                                   />
-                                  {q.options!.length > 1 && (
+
+                                  {q.options!.length > 2 && (
                                     <button 
+                                      type="button"
                                       onClick={() => {
                                         const newOpts = q.options!.filter((_, i) => i !== oIdx);
                                         updateQuestion(q.id, { options: newOpts });
                                       }}
-                                      className="text-[var(--text-tertiary)] hover:text-[var(--error)] p-2"
+                                      className="text-slate-400 hover:text-rose-600 p-1"
                                     >
-                                      <Trash2 className="h-4 w-4" />
+                                      <X className="h-4 w-4" />
                                     </button>
                                   )}
                                 </div>
-                                <div className="flex flex-wrap gap-2 px-1 mt-1">
-                                  <span className="text-xs font-semibold text-[var(--text-secondary)] mt-1.5 mr-2">Kunci:</span>
-                                  {q.criteria?.cols?.map((col, cIdx) => {
-                                    const isSelected = (opt.match_pairs || []).includes(col);
-                                    return (
-                                      <label key={cIdx} className="flex items-center gap-1.5 text-sm cursor-pointer hover:bg-slate-50 px-2 py-1 rounded">
-                                        <input 
-                                          type="checkbox" 
-                                          checked={isSelected}
-                                          onChange={(e) => {
-                                            const newOpts = [...q.options!];
-                                            let currentPairs = [...(opt.match_pairs || [])];
-                                            if (e.target.checked) {
-                                              currentPairs.push(col);
-                                            } else {
-                                              currentPairs = currentPairs.filter(p => p !== col);
-                                            }
-                                            newOpts[oIdx].match_pairs = currentPairs;
-                                            updateQuestion(q.id, { options: newOpts });
-                                          }}
-                                          className="w-4 h-4 text-[var(--accent)] rounded border-slate-300" 
-                                        />
-                                        <span>{col}</span>
-                                      </label>
-                                    );
-                                  })}
-                                </div>
+
+                                {/* Option Math Preview if LaTeX is used */}
+                                {hasMath && (
+                                  <div className="pl-14 text-xs text-blue-700 bg-blue-50/60 p-1.5 rounded-lg border border-blue-100">
+                                    <MathRenderer inline={true} htmlContent={opt.text} />
+                                  </div>
+                                )}
                               </div>
-                            ))}
-                            <Button 
-                              variant="secondary" 
-                              size="sm" 
-                              className="mt-2 bg-white dark:bg-[var(--bg-secondary)] border-[var(--border)]"
-                              onClick={() => {
-                                updateQuestion(q.id, { options: [...q.options!, { text: `Pernyataan ${q.options!.length + 1}`, match_pairs: [] }] });
-                              }}
-                            >
-                              <Plus className="h-3 w-3 mr-1" /> Tambah Baris
-                            </Button>
-                          </div>
-                        </div>
-                      </div>
-                    )}
+                            );
+                          })}
 
-                    {/* Essay Options */}
-                    {q.question_type === "essay" && (
-                      <div className="space-y-3 bg-[var(--bg-tertiary)] p-4 rounded border border-[var(--border)]">
-                        <label className="text-sm font-semibold text-[var(--text-primary)] block mb-2">Essay Criteria</label>
-                        <div className="flex items-center gap-3 bg-white dark:bg-[var(--bg-secondary)] p-3 rounded border border-[var(--border)] shadow-sm">
-                          <label className="text-sm text-[var(--text-secondary)]">Min Characters:</label>
-                          <input
-                            type="number"
-                            className="w-20 px-2 py-1 text-sm border border-[var(--border)] rounded focus:ring-1 focus:ring-[var(--accent)] focus:outline-none"
-                            value={q.criteria?.minLength || 0}
-                            onChange={(e) => {
-                              updateQuestion(q.id, { 
-                                criteria: { ...q.criteria, minLength: parseInt(e.target.value) || 0 } 
-                              });
+                          <Button 
+                            variant="secondary" 
+                            size="sm" 
+                            className="mt-2 bg-white border-slate-300 text-xs"
+                            onClick={() => {
+                              updateQuestion(q.id, { options: [...q.options!, { text: `Pilihan ${String.fromCharCode(65 + q.options!.length)}`, is_correct: false }] });
                             }}
-                          />
-                          <label className="text-sm text-[var(--text-secondary)] ml-4">Max Characters:</label>
-                          <input
-                            type="number"
-                            className="w-20 px-2 py-1 text-sm border border-[var(--border)] rounded focus:ring-1 focus:ring-[var(--accent)] focus:outline-none"
-                            value={q.criteria?.maxLength || 0}
-                            onChange={(e) => {
-                              updateQuestion(q.id, { 
-                                criteria: { ...q.criteria, maxLength: parseInt(e.target.value) || 0 } 
-                              });
-                            }}
-                          />
-                        </div>
-                      </div>
-                    )}
-
-                    {/* Linear Scale Options */}
-                    {q.question_type === "linear_scale" && (
-                      <div className="space-y-3 bg-[var(--bg-tertiary)] p-4 rounded border border-[var(--border)]">
-                        <label className="text-sm font-semibold text-[var(--text-primary)] block mb-2">Pengaturan Skala Linier</label>
-                        <div className="grid grid-cols-2 gap-4">
-                          <div className="space-y-2">
-                            <label className="text-xs text-[var(--text-secondary)]">Nilai Minimum (Mulai dari)</label>
-                            <input
-                              type="number"
-                              className="w-full px-2 py-1 text-sm border border-[var(--border)] rounded focus:ring-1 focus:ring-[var(--accent)] focus:outline-none"
-                              value={q.criteria?.min ?? 1}
-                              onChange={(e) => {
-                                updateQuestion(q.id, { 
-                                  criteria: { ...q.criteria, min: parseInt(e.target.value) || 0 } 
-                                });
-                              }}
-                            />
-                            <label className="text-xs text-[var(--text-secondary)] mt-2 block">Label Kiri (Opsional)</label>
-                            <input
-                              type="text"
-                              placeholder="Misal: Sangat Kurang"
-                              className="w-full px-2 py-1 text-sm border border-[var(--border)] rounded focus:ring-1 focus:ring-[var(--accent)] focus:outline-none"
-                              value={q.criteria?.minLabel || ""}
-                              onChange={(e) => {
-                                updateQuestion(q.id, { 
-                                  criteria: { ...q.criteria, minLabel: e.target.value } 
-                                });
-                              }}
-                            />
-                          </div>
-                          <div className="space-y-2">
-                            <label className="text-xs text-[var(--text-secondary)]">Nilai Maksimum (Hingga)</label>
-                            <input
-                              type="number"
-                              className="w-full px-2 py-1 text-sm border border-[var(--border)] rounded focus:ring-1 focus:ring-[var(--accent)] focus:outline-none"
-                              value={q.criteria?.max ?? 5}
-                              onChange={(e) => {
-                                updateQuestion(q.id, { 
-                                  criteria: { ...q.criteria, max: parseInt(e.target.value) || 0 } 
-                                });
-                              }}
-                            />
-                            <label className="text-xs text-[var(--text-secondary)] mt-2 block">Label Kanan (Opsional)</label>
-                            <input
-                              type="text"
-                              placeholder="Misal: Sangat Baik"
-                              className="w-full px-2 py-1 text-sm border border-[var(--border)] rounded focus:ring-1 focus:ring-[var(--accent)] focus:outline-none"
-                              value={q.criteria?.maxLabel || ""}
-                              onChange={(e) => {
-                                updateQuestion(q.id, { 
-                                  criteria: { ...q.criteria, maxLabel: e.target.value } 
-                                });
-                              }}
-                            />
-                          </div>
-                        </div>
-                      </div>
-                    )}
-
-                    <div className="space-y-2 pt-2 border-t border-[var(--border)]">
-                      <label className="text-sm font-semibold text-[var(--text-primary)]">Pembahasan (Opsional)</label>
-                      <RichTextEditor 
-                        value={q.explanation || ""} 
-                        onChange={(val) => updateQuestion(q.id, { explanation: val })} 
-                      />
-                      {q.explanation && (q.explanation.includes('$') || q.explanation.includes('\\(')) && (
-                        <div className="mt-2 p-3 bg-blue-50 border border-blue-100 rounded-md">
-                          <p className="text-xs font-semibold text-blue-400 mb-2 uppercase tracking-wider">Math Preview</p>
-                          <MathRenderer className="prose prose-sm max-w-none text-blue-900" htmlContent={q.explanation} />
+                          >
+                            <Plus className="h-3 w-3 mr-1" /> Tambah Pilihan
+                          </Button>
                         </div>
                       )}
+
+                      {/* Matching Options */}
+                      {q.question_type === "matching" && q.options && (
+                        <div className="space-y-3 bg-slate-50 p-4 rounded-xl border border-slate-200">
+                          <label className="text-sm font-semibold text-slate-800 block mb-2">Pasangan Menjodohkan</label>
+                          {q.options.map((opt, oIdx) => (
+                            <div key={oIdx} className="grid grid-cols-[1fr_auto_1fr_auto] gap-3 items-center bg-white p-2.5 rounded-xl border border-slate-200 shadow-xs">
+                              <input
+                                className="w-full text-sm bg-transparent border-none p-1 focus:ring-0 focus:outline-none"
+                                value={opt.text}
+                                onChange={(e) => {
+                                  const newOpts = [...q.options!];
+                                  newOpts[oIdx].text = e.target.value;
+                                  updateQuestion(q.id, { options: newOpts });
+                                }}
+                                placeholder="Istilah / Pertanyaan..."
+                              />
+                              <LinkIcon className="h-4 w-4 text-slate-400" />
+                              <input
+                                className="w-full text-sm bg-transparent border-none p-1 focus:ring-0 focus:outline-none"
+                                value={opt.match_pair || ""}
+                                onChange={(e) => {
+                                  const newOpts = [...q.options!];
+                                  newOpts[oIdx].match_pair = e.target.value;
+                                  updateQuestion(q.id, { options: newOpts });
+                                }}
+                                placeholder="Pasangan / Jawaban..."
+                              />
+                              {q.options!.length > 2 ? (
+                                <button 
+                                  type="button"
+                                  onClick={() => {
+                                    const newOpts = q.options!.filter((_, i) => i !== oIdx);
+                                    updateQuestion(q.id, { options: newOpts });
+                                  }}
+                                  className="text-slate-400 hover:text-rose-600 p-1"
+                                >
+                                  <X className="h-4 w-4" />
+                                </button>
+                              ) : <span className="w-6"></span>}
+                            </div>
+                          ))}
+                        </div>
+                      )}
+
+                      {/* Essay Criteria */}
+                      {q.question_type === "essay" && (
+                        <div className="space-y-3 bg-slate-50 p-4 rounded-xl border border-slate-200">
+                          <label className="text-sm font-semibold text-slate-800 block mb-1">Kriteria Essay</label>
+                          <div className="flex items-center gap-4 text-xs text-slate-700">
+                            <label>Min Karakter:</label>
+                            <input
+                              type="number"
+                              className="w-20 px-2 py-1 text-xs border border-slate-300 rounded bg-white"
+                              value={q.criteria?.minLength || 0}
+                              onChange={(e) => updateQuestion(q.id, { criteria: { ...q.criteria, minLength: parseInt(e.target.value) || 0 } })}
+                            />
+                            <label>Max Karakter:</label>
+                            <input
+                              type="number"
+                              className="w-20 px-2 py-1 text-xs border border-slate-300 rounded bg-white"
+                              value={q.criteria?.maxLength || 0}
+                              onChange={(e) => updateQuestion(q.id, { criteria: { ...q.criteria, maxLength: parseInt(e.target.value) || 0 } })}
+                            />
+                          </div>
+                        </div>
+                      )}
+
+                      {/* Pembahasan / Solution Editor */}
+                      <div className="space-y-2 pt-4 border-t border-slate-200">
+                        <label className="text-sm font-bold text-blue-900 flex items-center gap-1.5">
+                          <BookOpen className="w-4 h-4 text-blue-600" />
+                          Pembahasan Soal (Mendukung KaTeX LaTeX &amp; Gambar)
+                        </label>
+                        <p className="text-xs text-slate-500">
+                          Pembahasan ini akan muncul di ulasan siswa jika fitur ulasan diaktifkan.
+                        </p>
+                        <RichTextEditor 
+                          value={q.explanation || ""} 
+                          onChange={(val) => updateQuestion(q.id, { explanation: val })} 
+                        />
+                        {q.explanation && (q.explanation.includes('$') || q.explanation.includes('\\(')) && (
+                          <div className="mt-2 p-3 bg-blue-50/70 border border-blue-200 rounded-xl">
+                            <p className="text-[10px] font-bold text-blue-600 mb-1 uppercase tracking-wider">Preview Formula Pembahasan</p>
+                            <MathRenderer className="prose prose-sm max-w-none text-slate-800" htmlContent={q.explanation} />
+                          </div>
+                        )}
+                      </div>
+
                     </div>
-                  </div>
-                </Card>
-              </motion.div>
-            ))}
+                  </Card>
+                </motion.div>
+              );
+            })}
             
             {questions.length === 0 && (
-              <div className="text-center py-16 border-2 border-dashed border-[var(--border)] rounded-lg text-[var(--text-tertiary)] bg-[var(--bg-tertiary)]">
-                <HelpCircle className="h-12 w-12 mx-auto mb-3 opacity-20" />
-                <p className="text-lg font-medium">No questions added yet.</p>
-                <p className="text-sm mt-1">Use the panel on the left to add questions to your assessment.</p>
+              <div className="text-center py-16 border-2 border-dashed border-slate-300 rounded-2xl text-slate-400 bg-white">
+                <HelpCircle className="h-12 w-12 mx-auto mb-3 opacity-30" />
+                <p className="text-base font-bold text-slate-700">Belum ada soal ditambahkan.</p>
+                <p className="text-xs text-slate-500 mt-1">Gunakan panel di sebelah kiri untuk menambah soal pilihan ganda, essay, atau impor dari bank soal.</p>
               </div>
             )}
           </AnimatePresence>
         </div>
+
       </div>
 
+      {/* Modal: Bank Soal */}
       <AnimatePresence>
         {showBankModal && (
-          <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-slate-900/40 backdrop-blur-sm">
+          <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/50 backdrop-blur-sm">
             <motion.div 
-              initial={{ scale: 0.9, opacity: 0 }} 
+              initial={{ scale: 0.95, opacity: 0 }} 
               animate={{ scale: 1, opacity: 1 }} 
-              exit={{ scale: 0.9, opacity: 0 }}
-              className="bg-white max-w-2xl w-full rounded-2xl shadow-xl flex flex-col max-h-[80vh] overflow-hidden"
+              exit={{ scale: 0.95, opacity: 0 }}
+              className="bg-white max-w-2xl w-full rounded-3xl shadow-2xl flex flex-col max-h-[80vh] overflow-hidden border border-slate-200"
             >
-              <div className="p-4 border-b border-slate-100 flex items-center justify-between bg-slate-50">
-                <h2 className="font-bold text-lg text-slate-800 flex items-center gap-2">
+              <div className="p-5 border-b border-slate-100 flex items-center justify-between bg-slate-50">
+                <h2 className="font-bold text-base text-slate-800 flex items-center gap-2">
                   <Library className="w-5 h-5 text-blue-600" /> Impor dari Bank Soal Pusat
                 </h2>
-                <button onClick={() => setShowBankModal(false)} className="text-slate-400 hover:text-red-500">
+                <button onClick={() => setShowBankModal(false)} className="text-slate-400 hover:text-slate-700">
                   <X className="w-5 h-5" />
                 </button>
               </div>
               
-              <div className="p-4 overflow-y-auto flex-1 bg-slate-50/50">
+              <div className="p-5 overflow-y-auto flex-1 space-y-3">
                 {loadingBanks ? (
-                  <div className="py-12 flex justify-center"><Loader2 className="w-8 h-8 animate-spin text-blue-500" /></div>
+                  <div className="py-12 flex justify-center"><Loader2 className="w-8 h-8 animate-spin text-blue-600" /></div>
                 ) : banks.length === 0 ? (
-                  <div className="py-12 text-center text-slate-500 text-sm">Tidak ada bank soal yang tersedia. Hubungi Kepala Departemen Asesmen (ACE).</div>
+                  <div className="py-12 text-center text-slate-500 text-sm">Tidak ada bank soal yang tersedia.</div>
                 ) : (
-                  <div className="grid gap-4">
-                    {banks.map(bank => (
-                      <div key={bank.id} className="bg-white p-4 rounded-xl border border-slate-200 shadow-sm flex items-center justify-between hover:border-blue-300 transition-colors">
-                        <div>
-                          <h3 className="font-bold text-slate-800">{bank.title}</h3>
-                          <p className="text-xs text-slate-500 line-clamp-1">{bank.description}</p>
-                          <p className="text-[10px] font-bold text-blue-500 mt-2">{bank.items?.length || 0} SOAL TERSEDIA</p>
-                        </div>
-                        <Button onClick={() => importFromBank(bank)} variant="primary" className="bg-blue-600 hover:bg-blue-700">
-                          Impor Soal
-                        </Button>
+                  banks.map(bank => (
+                    <div key={bank.id} className="bg-slate-50 p-4 rounded-2xl border border-slate-200 flex items-center justify-between hover:border-blue-300 transition-colors">
+                      <div>
+                        <h4 className="font-bold text-slate-900 text-sm">{bank.title}</h4>
+                        <p className="text-xs text-slate-500 line-clamp-1">{bank.description}</p>
+                        <p className="text-[10px] font-bold text-blue-600 mt-1">{bank.items?.length || 0} SOAL TERSEDIA</p>
                       </div>
-                    ))}
-                  </div>
+                      <Button onClick={() => importFromBank(bank)} className="bg-blue-600 hover:bg-blue-700 text-xs">
+                        Impor Soal
+                      </Button>
+                    </div>
+                  ))
                 )}
               </div>
             </motion.div>
           </div>
         )}
       </AnimatePresence>
+
     </div>
   );
 }

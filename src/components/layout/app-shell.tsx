@@ -26,6 +26,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
   const { uiMode, setUiMode } = useTheme();
   const supabase = createClient();
   const isExam = pathname?.includes("/exam");
+  const isCbt = pathname?.startsWith("/student/cbt");
   const isSkillUpHub = pathname?.includes("/skill-up-hub");
   const [isUpdatingCenter, setIsUpdatingCenter] = useState(false);
   const [updateProgress, setUpdateProgress] = useState(0);
@@ -91,7 +92,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
     );
   }
 
-  if (isExam) {
+  if (isExam || isCbt) {
     return (
       <div className="min-h-screen bg-slate-100 flex flex-col">
         <main className="flex-1">

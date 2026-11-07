@@ -3,7 +3,7 @@
 import { useState, useEffect } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Home, Shield, Swords, User, Compass, Users, MessageCircle, ShoppingBag, Tent, ShoppingCart, Map, Menu, X, Sparkles, Timer, Notebook, Trophy, PawPrint, Medal, Target } from "lucide-react";
+import { Home, Shield, Swords, User, Compass, Users, MessageCircle, ShoppingBag, Tent, ShoppingCart, Map, Menu, X, Sparkles, Timer, Notebook, Trophy, PawPrint, Medal, Target, MonitorCheck } from "lucide-react";
 import { cn, showLogo } from "@/lib/utils";
 import { motion, AnimatePresence } from "framer-motion";
 import { useAuth } from "@/lib/auth-context";
@@ -47,6 +47,7 @@ export function StudentSidebar() {
 
   let navItems = [
     { name: "Learn", href: "/dashboard", icon: Home },
+    { name: "CBT MMIS v2", href: "/student/cbt", icon: MonitorCheck, isHighlight: true },
     { name: "Quests", href: "/student/quests", icon: Swords },
     { name: "Skill Up", href: "/student/skill-up-hub", icon: SkillUpIcon },
     { name: "Faksi & Asrama", href: "/student/faction", icon: Shield },
@@ -198,7 +199,12 @@ export function StudentSidebar() {
                     )} 
                     strokeWidth={isActive ? (uiMode === 'clean' ? 2.5 : 2.5) : 2} 
                   />
-                  {!isCollapsed && <span className="truncate">{item.name}</span>}
+                  {!isCollapsed && <span className="truncate flex-1">{item.name}</span>}
+                  {!isCollapsed && (item as any).isHighlight && (
+                    <span className="text-[10px] bg-blue-600 text-white font-black px-1.5 py-0.5 rounded-full shrink-0 shadow-xs">
+                      UJIAN
+                    </span>
+                  )}
                 </div>
               </Link>
             );

@@ -1,7 +1,7 @@
 "use client";
 
 import { useAuth } from "@/lib/auth-context";
-import { Flame, Diamond, Heart, LogOut, Gem, User, Bell } from "lucide-react";
+import { Flame, Diamond, Heart, LogOut, Gem, User, Bell, MonitorCheck } from "lucide-react";
 import { useEffect, useState, useRef } from "react";
 import { createClient } from "@/lib/supabase";
 import { getInitials, cn, showLogo } from "@/lib/utils";
@@ -101,7 +101,18 @@ export function StudentTopBar() {
             </nav>
           </div>
 
-          <div className="flex items-center gap-4 relative" ref={dropdownRef}>
+          <div className="flex items-center gap-3 relative" ref={dropdownRef}>
+            {/* Mode Switcher to CBT MMIS v2 */}
+            <Link
+              href="/student/cbt"
+              className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-gradient-to-r from-blue-600 via-indigo-600 to-indigo-700 hover:from-blue-700 hover:to-indigo-800 text-white font-bold text-xs shadow-xs hover:shadow transition-all border border-blue-400/30 group"
+              title="Beralih ke Mode Ujian CBT MMIS v2"
+            >
+              <MonitorCheck className="w-4 h-4 text-amber-300 group-hover:scale-110 transition-transform" />
+              <span className="hidden sm:inline">Mode UJIAN:</span>
+              <span className="text-amber-300 font-black">CBT MMIS v2</span>
+            </Link>
+
             <Link 
               href="/student/notifications"
               className="w-10 h-10 rounded-full bg-slate-100 flex items-center justify-center hover:bg-slate-200 transition-colors text-slate-600 relative"
@@ -223,7 +234,17 @@ export function StudentTopBar() {
             </div>
 
             {/* User Menu */}
-            <div className="ml-2 lg:ml-6 relative flex items-center" ref={dropdownRef}>
+            <div className="ml-2 lg:ml-6 relative flex items-center gap-2" ref={dropdownRef}>
+              {/* Mode Switcher to CBT MMIS v2 */}
+              <Link
+                href="/student/cbt"
+                className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-gradient-to-r from-blue-600 via-indigo-600 to-indigo-700 hover:from-blue-700 hover:to-indigo-800 text-white font-bold text-xs shadow-xs hover:shadow transition-all border border-blue-400/30 group"
+                title="Beralih ke Mode Ujian CBT MMIS v2"
+              >
+                <MonitorCheck className="w-4 h-4 text-amber-300 group-hover:scale-110 transition-transform" />
+                <span className="hidden sm:inline">Mode UJIAN:</span>
+                <span className="text-amber-300 font-black">CBT MMIS v2</span>
+              </Link>
               {profile?.active_title && (
                 <div className="hidden md:flex flex-col items-end mr-3">
                   <span className="text-[10px] uppercase tracking-widest text-slate-400 font-black">Gelar</span>
