@@ -7,11 +7,11 @@ import { Button } from "@/components/ui/button";
 import { ChevronLeft, Save, MonitorCheck, Camera, Key, Zap, ShieldAlert, Clock, Calendar, CheckSquare } from "lucide-react";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, Suspense } from "react";
 import { Upload, Image as ImageIcon } from "lucide-react";
 import { DEFAULT_CBT_CONFIG, serializeCbtPayload } from "@/lib/cbt-config";
 
-export default function CreateQuizPage() {
+function CreateQuizForm() {
   const { profile } = useAuth();
   const supabase = createClient();
   const router = useRouter();
@@ -408,5 +408,19 @@ export default function CreateQuizPage() {
         </form>
       </Card>
     </div>
+  );
+}
+
+export default function CreateQuizPage() {
+  return (
+    <Suspense
+      fallback={
+        <div className="min-h-[400px] flex items-center justify-center">
+          <div className="w-8 h-8 border-4 border-blue-600 border-t-transparent rounded-full animate-spin" />
+        </div>
+      }
+    >
+      <CreateQuizForm />
+    </Suspense>
   );
 }
