@@ -11,7 +11,6 @@ import {
   ChevronRight, 
   CheckCircle2, 
   AlertTriangle, 
-  AlertCircle, 
   ShieldAlert,
   LayoutGrid, 
   X, 
@@ -19,8 +18,11 @@ import {
   Volume2,
   Award,
   ArrowRight,
-  FileText,
-  RotateCcw
+  Maximize2,
+  Minimize2,
+  Trash2,
+  Keyboard,
+  Info
 } from "lucide-react";
 import { MathRenderer } from "@/components/ui/math-renderer";
 import { CbtAudioPlayer } from "@/components/cbt/cbt-audio-player";
@@ -48,6 +50,7 @@ export default function CbtExamPage({ params }: { params: Promise<{ id: string }
   const [isFinished, setIsFinished] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [fontSize, setFontSize] = useState<"normal" | "large" | "xlarge">("normal");
+  const [isFullscreen, setIsFullscreen] = useState(false);
 
   // Anti-cheat 3x tab blur state
   const [blurCount, setBlurCount] = useState(0);
@@ -343,9 +346,70 @@ export default function CbtExamPage({ params }: { params: Promise<{ id: string }
     setResponses((prev) => ({ ...prev, [qId]: value }));
   };
 
+  const handleClearAnswer = (qId: string) => {
+    setResponses((prev) => {
+      const next = { ...prev };
+      delete next[qId];
+      return next;
+    });
+  };
+
   const handleToggleFlag = (qId: string) => {
     setFlags((prev) => ({ ...prev, [qId]: !prev[qId] }));
   };
+
+  const toggleFullscreen = () => {
+    if (!document.fullscreenElement) {
+      document.documentElement.requestFullscreen().then(() => setIsFullscreen(true)).catch(() => {});
+    } else {
+      document.exitFullscreen().then(() => setIsFullscreen(false)).catch(() => {});
+    }
+  };
+
+  // Keyboard Shortcuts (A-E for options, Left/Right for questions, R for flag)
+  useEffect(() => {
+    if (loading || isFinished) return;
+
+    const handleKeyDown = (e: KeyboardEvent) => {
+      // Ignore if typing inside textarea
+      if (e.target instanceof HTMLTextAreaElement || e.target instanceof HTMLInputElement) {
+        return;
+      }
+
+      const currentQ = questions[currentIndex];
+      if (!currentQ) return;
+
+      const key = e.key.toUpperCase();
+
+      // Options A-E
+      if (currentQ.question_type === "mcq" && currentQ.options) {
+        const optionKeys = ["A", "B", "C", "D", "E"];
+        const numKeys = ["1", "2", "3", "4", "5"];
+
+        let optIdx = optionKeys.indexOf(key);
+        if (optIdx === -1) optIdx = numKeys.indexOf(e.key);
+
+        if (optIdx !== -1 && currentQ.options[optIdx]) {
+          handleSelectOption(currentQ.id, currentQ.options[optIdx].text);
+        }
+      }
+
+      // Flag / Ragu-ragu (key R)
+      if (key === "R") {
+        handleToggleFlag(currentQ.id);
+      }
+
+      // Navigation: Left & Right arrow
+      if (e.key === "ArrowLeft") {
+        setCurrentIndex((prev) => Math.max(0, prev - 1));
+      } else if (e.key === "ArrowRight") {
+        setCurrentIndex((prev) => Math.min(questions.length - 1, prev + 1));
+      }
+    };
+
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, [loading, isFinished, currentIndex, questions]);
 
   const formatTimer = (totalSecs: number) => {
     const hours = Math.floor(totalSecs / 3600);
@@ -359,9 +423,11 @@ export default function CbtExamPage({ params }: { params: Promise<{ id: string }
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-slate-900 flex flex-col items-center justify-center text-white">
+      <div className="min-h-screen bg-[#0B0F19] flex flex-col items-center justify-center text-white font-sans">
         <div className="w-12 h-12 border-4 border-blue-500 border-t-transparent rounded-full animate-spin mb-4" />
-        <p className="text-sm font-bold tracking-wider uppercase text-blue-300">Menyiapkan Ruang Ujian CBT MMIS v2...</p>
+        <p className="text-sm font-black tracking-widest uppercase text-blue-400">
+          Menyiapkan Lembar Ujian CBT MMIS v2...
+        </p>
       </div>
     );
   }
@@ -372,67 +438,71 @@ export default function CbtExamPage({ params }: { params: Promise<{ id: string }
     const showExplanation = config?.show_explanation ?? false;
 
     return (
-      <div className="min-h-screen bg-slate-100 flex items-center justify-center p-4">
-        <div className="max-w-xl w-full bg-white rounded-3xl shadow-xl border border-slate-200 overflow-hidden text-center p-8 space-y-6 animate-in fade-in zoom-in-95">
+      <div className="min-h-screen bg-[#0B0F19] flex items-center justify-center p-4 font-sans text-slate-100">
+        <div className="max-w-xl w-full bg-slate-900 rounded-3xl shadow-2xl border border-slate-800 overflow-hidden text-center p-8 space-y-6 animate-in fade-in zoom-in-95">
           
-          <div className="w-20 h-20 bg-emerald-100 text-emerald-600 rounded-full flex items-center justify-center mx-auto shadow-inner">
+          <div className="w-20 h-20 bg-emerald-500/10 border border-emerald-500/30 text-emerald-400 rounded-3xl flex items-center justify-center mx-auto shadow-inner">
             <CheckCircle2 className="w-10 h-10" />
           </div>
 
           <div>
-            <span className="px-3 py-1 rounded-full bg-blue-100 text-blue-700 text-xs font-black uppercase tracking-wider">
-              CBT MMIS v2
+            <span className="px-3 py-1 rounded-full bg-blue-500/20 text-blue-400 border border-blue-500/30 text-xs font-black uppercase tracking-wider">
+              CBT MMIS v2.0
             </span>
-            <h2 className="text-2xl font-black text-slate-900 mt-2">Ujian Berhasil Dikumpulkan!</h2>
-            <p className="text-xs text-slate-500 mt-1">
-              Lembar jawaban Anda untuk ujian <strong>{quiz?.title}</strong> telah tersimpan aman di server.
+            <h2 className="text-2xl sm:text-3xl font-black text-white mt-3">Ujian Berhasil Dikumpulkan!</h2>
+            <p className="text-xs sm:text-sm text-slate-400 mt-1 max-w-md mx-auto leading-relaxed">
+              Jawaban Anda untuk paket ujian <strong>{quiz?.title}</strong> telah tersimpan aman dan terenkripsi di server.
             </p>
           </div>
 
           {/* Conditional Score Display based on Teacher's setting */}
           {showScore ? (
-            <div className="bg-slate-50 p-6 rounded-2xl border border-slate-200 space-y-4">
+            <div className="bg-slate-950/80 p-6 rounded-2xl border border-slate-800 space-y-4">
               <div>
-                <p className="text-xs uppercase font-bold text-slate-400 tracking-wider">Skor Akhir Anda</p>
-                <p className="text-5xl font-black text-blue-600 mt-1">
+                <p className="text-xs uppercase font-bold text-slate-400 tracking-wider">Nilai Akhir Anda</p>
+                <p className="text-5xl font-black text-emerald-400 mt-1">
                   {submissionResult.score ?? 0}
                 </p>
               </div>
 
-              {submissionResult.positivePoints !== undefined && (
-                <div className="grid grid-cols-3 gap-2 pt-3 border-t border-slate-200 text-xs">
-                  <div className="p-2 bg-emerald-50 rounded-xl text-emerald-800">
-                    <span className="block font-bold">Benar</span>
-                    <span className="text-sm font-black">{submissionResult.correctCount} (+{submissionResult.positivePoints})</span>
-                  </div>
-                  <div className="p-2 bg-rose-50 rounded-xl text-rose-800">
-                    <span className="block font-bold">Salah</span>
-                    <span className="text-sm font-black">{submissionResult.wrongCount} (-{submissionResult.negativePoints})</span>
-                  </div>
-                  <div className="p-2 bg-slate-100 rounded-xl text-slate-700">
-                    <span className="block font-bold">Kosong</span>
-                    <span className="text-sm font-black">{submissionResult.unansweredCount}</span>
-                  </div>
+              {/* Breakdown Grid */}
+              <div className="grid grid-cols-3 gap-2 pt-4 border-t border-slate-800/80 text-xs">
+                <div className="bg-slate-900 p-2.5 rounded-xl border border-slate-800">
+                  <span className="text-slate-400 block text-[10px] uppercase font-bold">Benar</span>
+                  <span className="text-base font-black text-emerald-400">{submissionResult.correctCount ?? 0}</span>
+                  <span className="text-[10px] text-emerald-400/80 block">(+{submissionResult.positivePoints ?? 0})</span>
                 </div>
-              )}
+                <div className="bg-slate-900 p-2.5 rounded-xl border border-slate-800">
+                  <span className="text-slate-400 block text-[10px] uppercase font-bold">Salah</span>
+                  <span className="text-base font-black text-rose-400">{submissionResult.wrongCount ?? 0}</span>
+                  <span className="text-[10px] text-rose-400/80 block">(-{submissionResult.negativePoints ?? 0})</span>
+                </div>
+                <div className="bg-slate-900 p-2.5 rounded-xl border border-slate-800">
+                  <span className="text-slate-400 block text-[10px] uppercase font-bold">Kosong</span>
+                  <span className="text-base font-black text-slate-300">{submissionResult.unansweredCount ?? 0}</span>
+                  <span className="text-[10px] text-slate-400 block">(0 poin)</span>
+                </div>
+              </div>
             </div>
           ) : (
-            <div className="p-5 rounded-2xl bg-blue-50 border border-blue-200 text-blue-900 text-xs leading-relaxed font-medium">
-              <ShieldAlert className="w-6 h-6 text-blue-600 mx-auto mb-2" />
-              Guru / Pengawas menyetel hasil dan nilai ujian ini <strong>dirahasiakan</strong>. 
-              Nilai resmi akan diumumkan oleh guru bersangkutan.
+            <div className="bg-slate-950/80 p-6 rounded-2xl border border-slate-800 space-y-2">
+              <Award className="w-8 h-8 text-blue-400 mx-auto" />
+              <h4 className="text-sm font-bold text-white">Hasil Ujian Dirahasiakan</h4>
+              <p className="text-xs text-slate-400 max-w-sm mx-auto leading-relaxed">
+                Pengawas atau guru menyetel hasil ujian untuk tidak langsung ditampilkan kepada siswa sampai seluruh rangkaian evaluasi selesai.
+              </p>
             </div>
           )}
 
           {/* Action buttons */}
-          <div className="space-y-2 pt-2">
-            {showScore && showExplanation && (
+          <div className="space-y-2.5 pt-2">
+            {showExplanation && (
               <button
                 type="button"
                 onClick={() => router.push(`/student/cbt/review/${quizId}`)}
-                className="w-full py-3 px-4 rounded-xl bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white font-bold text-sm shadow-md transition-all flex items-center justify-center gap-2"
+                className="w-full py-3 px-4 rounded-xl bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 text-white font-bold text-xs shadow-lg shadow-blue-600/30 transition-all flex items-center justify-center gap-2"
               >
-                <span>Lihat Pembahasan Lengkap</span>
+                <span>Lihat Pembahasan Soal Lengkap</span>
                 <ArrowRight className="w-4 h-4" />
               </button>
             )}
@@ -440,7 +510,7 @@ export default function CbtExamPage({ params }: { params: Promise<{ id: string }
             <button
               type="button"
               onClick={() => router.push("/student/cbt")}
-              className="w-full py-3 px-4 rounded-xl border border-slate-300 hover:bg-slate-50 text-slate-700 font-bold text-sm transition-all"
+              className="w-full py-3 px-4 rounded-xl border border-slate-700 hover:bg-slate-800 text-slate-300 font-bold text-xs transition-all"
             >
               Kembali ke Galeri CBT MMIS v2
             </button>
@@ -456,6 +526,7 @@ export default function CbtExamPage({ params }: { params: Promise<{ id: string }
   const isFlagged = currentQ ? Boolean(flags[currentQ.id]) : false;
   const totalQuestions = questions.length;
   const answeredCount = Object.keys(responses).filter((k) => responses[k] !== undefined && responses[k] !== "").length;
+  const progressPercent = totalQuestions > 0 ? Math.round((answeredCount / totalQuestions) * 100) : 0;
 
   const qCorrectPoints = Number(currentQ?.points_correct ?? currentQ?.metadata?.points_correct ?? currentQ?.points ?? config?.points_correct ?? 4);
   const qPenaltyWrong = Number(currentQ?.penalty_wrong ?? currentQ?.metadata?.penalty_wrong ?? config?.penalty_wrong ?? 1);
@@ -463,7 +534,7 @@ export default function CbtExamPage({ params }: { params: Promise<{ id: string }
   const qImageUrl = currentQ?.image_url || currentQ?.metadata?.image_url;
 
   return (
-    <div className="min-h-screen bg-slate-100 flex flex-col font-sans select-none">
+    <div className="min-h-screen bg-[#0B0F19] text-slate-100 flex flex-col font-sans select-none">
       
       {/* Floating Webcam Proctor Widget */}
       {config?.require_webcam && (
@@ -471,33 +542,33 @@ export default function CbtExamPage({ params }: { params: Promise<{ id: string }
       )}
 
       {/* Top Header Bar */}
-      <header className="sticky top-0 z-30 bg-white border-b border-slate-200 px-4 sm:px-8 py-3 shadow-xs">
+      <header className="sticky top-0 z-30 bg-[#0B0F19]/95 backdrop-blur-md border-b border-slate-800 px-4 sm:px-8 py-3 shadow-md">
         <div className="max-w-7xl mx-auto flex items-center justify-between gap-4">
           
           {/* Identity & Exam info */}
           <div className="flex items-center gap-3">
-            <div className="w-9 h-9 rounded-xl bg-blue-600 text-white flex items-center justify-center font-black text-sm shadow-xs">
+            <div className="w-9 h-9 rounded-xl bg-gradient-to-tr from-blue-600 to-indigo-600 text-white flex items-center justify-center font-black text-xs shadow-md shadow-blue-500/20">
               v2
             </div>
             <div>
-              <h1 className="text-sm font-black text-slate-900 truncate max-w-[200px] sm:max-w-sm">
+              <h1 className="text-xs sm:text-sm font-black text-white truncate max-w-[180px] sm:max-w-md">
                 {quiz?.title}
               </h1>
-              <p className="text-[11px] text-slate-500 font-medium">
+              <p className="text-[11px] text-slate-400 font-medium">
                 {profile?.full_name} • Kelas {profile?.class_name || "Siswa"}
               </p>
             </div>
           </div>
 
-          {/* Center Timer */}
+          {/* Center Timer Display */}
           <div className="flex items-center gap-2">
             <div
-              className={`flex items-center gap-2 px-3.5 py-1.5 rounded-xl font-mono text-sm font-black shadow-xs transition-colors ${
+              className={`flex items-center gap-2 px-4 py-1.5 rounded-2xl font-mono text-sm font-black border transition-all ${
                 timeLeft < 300
-                  ? "bg-rose-100 text-rose-700 border border-rose-300 animate-pulse"
+                  ? "bg-rose-950/80 text-rose-300 border-rose-500/60 shadow-lg shadow-rose-900/30 animate-pulse"
                   : timeLeft < 600
-                  ? "bg-amber-100 text-amber-800 border border-amber-300"
-                  : "bg-slate-100 text-slate-800 border border-slate-200"
+                  ? "bg-amber-950/80 text-amber-300 border-amber-500/60"
+                  : "bg-slate-900 text-slate-200 border-slate-800 shadow-inner"
               }`}
             >
               <Clock className="w-4 h-4 text-current" />
@@ -505,16 +576,17 @@ export default function CbtExamPage({ params }: { params: Promise<{ id: string }
             </div>
           </div>
 
-          {/* Right Controls: Tab Alert Pill & Font Size */}
+          {/* Right Controls: Tab Anti-Cheat Pill, Font Size, Fullscreen & Mobile Drawer */}
           <div className="flex items-center gap-2">
+            
             {/* Tab violation counter pill */}
             <div
-              className={`hidden sm:flex items-center gap-1.5 px-2.5 py-1 rounded-xl text-xs font-bold border ${
+              className={`hidden sm:flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold border ${
                 blurCount === 0
-                  ? "bg-emerald-50 text-emerald-700 border-emerald-200"
+                  ? "bg-emerald-950/60 text-emerald-400 border-emerald-800/60"
                   : blurCount === 1
-                  ? "bg-amber-50 text-amber-700 border-amber-300"
-                  : "bg-rose-50 text-rose-700 border-rose-300 animate-pulse"
+                  ? "bg-amber-950/80 text-amber-300 border-amber-700/60"
+                  : "bg-rose-950/90 text-rose-300 border-rose-500 animate-pulse"
               }`}
             >
               <ShieldAlert className="w-3.5 h-3.5" />
@@ -522,33 +594,54 @@ export default function CbtExamPage({ params }: { params: Promise<{ id: string }
             </div>
 
             {/* Font Size Adjuster */}
-            <div className="hidden md:flex items-center gap-1 bg-slate-100 p-1 rounded-xl border border-slate-200 text-xs">
+            <div className="hidden md:flex items-center gap-1 bg-slate-900 p-1 rounded-xl border border-slate-800 text-xs">
               <button
                 type="button"
                 onClick={() => setFontSize("normal")}
-                className={`px-2 py-0.5 rounded-lg font-bold ${fontSize === "normal" ? "bg-white text-blue-600 shadow-xs" : "text-slate-600"}`}
+                className={`px-2 py-0.5 rounded-lg font-bold transition-colors ${fontSize === "normal" ? "bg-blue-600 text-white" : "text-slate-400 hover:text-white"}`}
+                title="Ukuran Font Normal"
               >
                 A
               </button>
               <button
                 type="button"
                 onClick={() => setFontSize("large")}
-                className={`px-2 py-0.5 rounded-lg font-bold text-sm ${fontSize === "large" ? "bg-white text-blue-600 shadow-xs" : "text-slate-600"}`}
+                className={`px-2 py-0.5 rounded-lg font-bold text-sm transition-colors ${fontSize === "large" ? "bg-blue-600 text-white" : "text-slate-400 hover:text-white"}`}
+                title="Ukuran Font Besar"
               >
                 A+
               </button>
             </div>
 
+            {/* Fullscreen Button */}
+            <button
+              type="button"
+              onClick={toggleFullscreen}
+              className="hidden lg:flex p-2 rounded-xl bg-slate-900 hover:bg-slate-800 text-slate-400 hover:text-white border border-slate-800 transition-colors"
+              title={isFullscreen ? "Keluar Layar Penuh" : "Mode Layar Penuh (Fokus)"}
+            >
+              {isFullscreen ? <Minimize2 className="w-4 h-4" /> : <Maximize2 className="w-4 h-4" />}
+            </button>
+
             {/* Mobile Question Grid Toggle */}
             <button
               type="button"
               onClick={() => setShowQuestionGrid(!showQuestionGrid)}
-              className="lg:hidden p-2 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 transition-colors"
+              className="lg:hidden p-2 rounded-xl bg-slate-900 hover:bg-slate-800 text-slate-300 border border-slate-800 transition-colors flex items-center gap-1 text-xs font-bold"
             >
-              <LayoutGrid className="w-5 h-5" />
+              <LayoutGrid className="w-4 h-4" />
+              <span>{currentIndex + 1}/{totalQuestions}</span>
             </button>
           </div>
 
+        </div>
+
+        {/* Global Progress Line Bar */}
+        <div className="w-full bg-slate-800 h-1 mt-2.5 rounded-full overflow-hidden">
+          <div 
+            className="bg-gradient-to-r from-blue-500 via-indigo-500 to-emerald-400 h-full transition-all duration-300"
+            style={{ width: `${progressPercent}%` }}
+          />
         </div>
       </header>
 
@@ -559,38 +652,56 @@ export default function CbtExamPage({ params }: { params: Promise<{ id: string }
         <div className="lg:col-span-3 space-y-4">
           
           {/* Question Card */}
-          <div className="bg-white rounded-3xl border border-slate-200 shadow-xs p-6 sm:p-8 space-y-6">
+          <div className="bg-slate-900 rounded-3xl border border-slate-800 shadow-xl p-6 sm:p-8 space-y-6">
             
             {/* Question Meta Header */}
-            <div className="flex flex-wrap items-center justify-between gap-3 pb-4 border-b border-slate-100">
-              <div className="flex items-center gap-2">
-                <span className="w-8 h-8 rounded-xl bg-blue-600 text-white font-black text-sm flex items-center justify-center shadow-xs">
+            <div className="flex flex-wrap items-center justify-between gap-3 pb-4 border-b border-slate-800">
+              <div className="flex items-center gap-2.5">
+                <span className="w-9 h-9 rounded-xl bg-blue-600 text-white font-black text-sm flex items-center justify-center shadow-md shadow-blue-600/30">
                   {currentIndex + 1}
                 </span>
-                <span className="text-xs font-bold text-slate-500">
+                <span className="text-xs font-bold text-slate-400">
                   dari {totalQuestions} Soal
+                </span>
+                <span className="px-2 py-0.5 rounded-md bg-slate-800 text-slate-400 text-[10px] font-bold uppercase tracking-wider">
+                  {currentQ?.question_type === "mcq" ? "Pilihan Ganda" : currentQ?.question_type === "complex_mcq" ? "Pilihan Kompleks" : "Essay"}
                 </span>
               </div>
 
-              {/* Scoring Info & Flag Toggle */}
+              {/* Scoring Info, Clear Option & Flag Toggle */}
               <div className="flex items-center gap-2">
-                <span className="px-2.5 py-1 rounded-lg bg-emerald-50 text-emerald-700 text-xs font-bold border border-emerald-100">
+                <span className="px-2.5 py-1 rounded-lg bg-emerald-950/80 text-emerald-400 text-xs font-bold border border-emerald-800/60">
                   +{qCorrectPoints} Benar
                 </span>
-                <span className="px-2.5 py-1 rounded-lg bg-rose-50 text-rose-700 text-xs font-bold border border-rose-100">
+                <span className="px-2.5 py-1 rounded-lg bg-rose-950/80 text-rose-400 text-xs font-bold border border-rose-800/60">
                   -{qPenaltyWrong} Salah
                 </span>
 
+                {/* Clear Selected Option button (Crucial for negative scoring) */}
+                {currentAnswer !== undefined && currentAnswer !== null && (
+                  <button
+                    type="button"
+                    onClick={() => currentQ && handleClearAnswer(currentQ.id)}
+                    className="px-2.5 py-1 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-400 hover:text-slate-200 text-xs font-bold flex items-center gap-1 transition-colors border border-slate-700"
+                    title="Kosongkan jawaban untuk menghindari pengurangan poin jika ragu"
+                  >
+                    <Trash2 className="w-3 h-3 text-slate-400" />
+                    <span className="hidden sm:inline">Hapus Jawaban</span>
+                  </button>
+                )}
+
+                {/* Flag / Ragu-ragu Button */}
                 <button
                   type="button"
                   onClick={() => currentQ && handleToggleFlag(currentQ.id)}
                   className={`px-3 py-1 rounded-xl text-xs font-bold flex items-center gap-1.5 transition-all border ${
                     isFlagged
-                      ? "bg-amber-100 text-amber-800 border-amber-300 shadow-xs"
-                      : "bg-slate-100 text-slate-600 hover:bg-slate-200 border-slate-200"
+                      ? "bg-amber-950/80 text-amber-300 border-amber-600 shadow-sm"
+                      : "bg-slate-800 text-slate-400 hover:text-slate-200 hover:bg-slate-700 border-slate-700"
                   }`}
+                  title="Tandai ragu-ragu (Shortcut tombol R)"
                 >
-                  <Flag className={`w-3.5 h-3.5 ${isFlagged ? "fill-amber-500 text-amber-500" : ""}`} />
+                  <Flag className={`w-3.5 h-3.5 ${isFlagged ? "fill-amber-400 text-amber-400" : ""}`} />
                   <span>{isFlagged ? "Ragu-ragu" : "Tandai"}</span>
                 </button>
               </div>
@@ -598,10 +709,10 @@ export default function CbtExamPage({ params }: { params: Promise<{ id: string }
 
             {/* Question Audio / Music Player if present */}
             {qAudioUrl && (
-              <div className="space-y-1">
-                <p className="text-xs font-bold text-slate-500 flex items-center gap-1">
-                  <Volume2 className="w-3.5 h-3.5 text-blue-600" />
-                  Audio Soal:
+              <div className="space-y-1.5 p-4 rounded-2xl bg-slate-950/60 border border-slate-800">
+                <p className="text-xs font-bold text-blue-400 flex items-center gap-1.5">
+                  <Volume2 className="w-4 h-4 text-blue-400" />
+                  Materi Audio / Listening Soal:
                 </p>
                 <CbtAudioPlayer src={qAudioUrl} title={`Audio Soal No. ${currentIndex + 1}`} />
               </div>
@@ -609,33 +720,33 @@ export default function CbtExamPage({ params }: { params: Promise<{ id: string }
 
             {/* Question Image if present */}
             {qImageUrl && (
-              <div className="relative rounded-2xl overflow-hidden border border-slate-200 max-w-md bg-slate-50 group">
+              <div className="relative rounded-2xl overflow-hidden border border-slate-800 max-w-lg bg-slate-950 group">
                 <img
                   src={qImageUrl}
                   alt="Gambar Soal"
-                  className="w-full h-auto object-contain max-h-72 cursor-pointer hover:opacity-95 transition-opacity"
+                  className="w-full h-auto object-contain max-h-80 cursor-pointer hover:opacity-95 transition-opacity"
                   onClick={() => setZoomedImage(qImageUrl)}
                 />
                 <button
                   type="button"
                   onClick={() => setZoomedImage(qImageUrl)}
-                  className="absolute bottom-2 right-2 px-2.5 py-1 rounded-lg bg-black/70 text-white text-xs font-bold backdrop-blur-sm opacity-0 group-hover:opacity-100 transition-opacity flex items-center gap-1"
+                  className="absolute bottom-3 right-3 px-3 py-1.5 rounded-xl bg-slate-900/90 text-white text-xs font-bold backdrop-blur-md opacity-0 group-hover:opacity-100 transition-opacity flex items-center gap-1.5 border border-slate-700"
                 >
-                  <ZoomIn className="w-3.5 h-3.5" /> Perbesar
+                  <ZoomIn className="w-3.5 h-3.5 text-blue-400" /> Perbesar Gambar
                 </button>
               </div>
             )}
 
             {/* Question Text with KaTeX & LaTeX */}
             <div
-              className={`text-slate-800 leading-relaxed ${
-                fontSize === "xlarge" ? "text-lg" : fontSize === "large" ? "text-base" : "text-sm"
+              className={`text-slate-100 leading-relaxed font-normal ${
+                fontSize === "xlarge" ? "text-lg" : fontSize === "large" ? "text-base" : "text-sm sm:text-base"
               }`}
             >
               {currentQ ? (
                 <MathRenderer htmlContent={currentQ.question_text} />
               ) : (
-                <p className="text-slate-400">Soal tidak ditemukan.</p>
+                <p className="text-slate-500">Soal tidak ditemukan.</p>
               )}
             </div>
 
@@ -651,25 +762,25 @@ export default function CbtExamPage({ params }: { params: Promise<{ id: string }
                       key={idx}
                       type="button"
                       onClick={() => handleSelectOption(currentQ.id, opt.text)}
-                      className={`w-full text-left p-4 rounded-2xl border-2 transition-all flex items-start gap-3.5 group cursor-pointer ${
+                      className={`w-full text-left p-4 rounded-2xl border-2 transition-all flex items-start gap-4 group cursor-pointer ${
                         isSelected
-                          ? "border-blue-600 bg-blue-50/70 shadow-xs"
-                          : "border-slate-200 hover:border-blue-300 hover:bg-slate-50/80 bg-white"
+                          ? "border-blue-500 bg-blue-950/40 shadow-lg shadow-blue-500/10"
+                          : "border-slate-800 hover:border-slate-700 hover:bg-slate-800/50 bg-slate-950/40"
                       }`}
                     >
                       {/* Option Letter Pill */}
                       <span
-                        className={`w-8 h-8 rounded-xl font-black text-sm flex items-center justify-center shrink-0 transition-colors ${
+                        className={`w-9 h-9 rounded-xl font-black text-sm flex items-center justify-center shrink-0 transition-colors ${
                           isSelected
-                            ? "bg-blue-600 text-white shadow-xs"
-                            : "bg-slate-100 text-slate-700 group-hover:bg-blue-100 group-hover:text-blue-700"
+                            ? "bg-blue-600 text-white shadow-md shadow-blue-600/30"
+                            : "bg-slate-800 text-slate-300 group-hover:bg-slate-700 group-hover:text-white"
                         }`}
                       >
                         {letter}
                       </span>
 
                       {/* Option Text with LaTeX & KaTeX */}
-                      <div className="flex-1 pt-1 text-slate-800 font-medium">
+                      <div className="flex-1 pt-1.5 text-slate-200 font-medium">
                         <MathRenderer htmlContent={opt.text} />
                       </div>
                     </button>
@@ -681,7 +792,10 @@ export default function CbtExamPage({ params }: { params: Promise<{ id: string }
             {/* Complex MCQ (Multiple Selection) */}
             {currentQ?.question_type === "complex_mcq" && currentQ.options && (
               <div className="space-y-3 pt-2">
-                <p className="text-xs text-slate-500 font-semibold italic">Pilih satu atau lebih jawaban yang benar:</p>
+                <p className="text-xs text-blue-400 font-semibold italic flex items-center gap-1">
+                  <Info className="w-3.5 h-3.5" />
+                  Pilih satu atau lebih pilihan yang benar:
+                </p>
                 {currentQ.options.map((opt: any, idx: number) => {
                   const letter = String.fromCharCode(65 + idx);
                   const selectedArr: string[] = Array.isArray(currentAnswer) ? currentAnswer : [];
@@ -699,23 +813,23 @@ export default function CbtExamPage({ params }: { params: Promise<{ id: string }
                       key={idx}
                       type="button"
                       onClick={toggleComplex}
-                      className={`w-full text-left p-4 rounded-2xl border-2 transition-all flex items-start gap-3.5 group cursor-pointer ${
+                      className={`w-full text-left p-4 rounded-2xl border-2 transition-all flex items-start gap-4 group cursor-pointer ${
                         isSelected
-                          ? "border-indigo-600 bg-indigo-50/70 shadow-xs"
-                          : "border-slate-200 hover:border-indigo-300 hover:bg-slate-50/80 bg-white"
+                          ? "border-indigo-500 bg-indigo-950/40 shadow-lg shadow-indigo-500/10"
+                          : "border-slate-800 hover:border-slate-700 hover:bg-slate-800/50 bg-slate-950/40"
                       }`}
                     >
                       <span
-                        className={`w-8 h-8 rounded-xl font-black text-sm flex items-center justify-center shrink-0 transition-colors ${
+                        className={`w-9 h-9 rounded-xl font-black text-sm flex items-center justify-center shrink-0 transition-colors ${
                           isSelected
-                            ? "bg-indigo-600 text-white shadow-xs"
-                            : "bg-slate-100 text-slate-700 group-hover:bg-indigo-100 group-hover:text-indigo-700"
+                            ? "bg-indigo-600 text-white shadow-md shadow-indigo-600/30"
+                            : "bg-slate-800 text-slate-300 group-hover:bg-slate-700 group-hover:text-white"
                         }`}
                       >
                         {isSelected ? "✓" : letter}
                       </span>
 
-                      <div className="flex-1 pt-1 text-slate-800 font-medium">
+                      <div className="flex-1 pt-1.5 text-slate-200 font-medium">
                         <MathRenderer htmlContent={opt.text} />
                       </div>
                     </button>
@@ -727,83 +841,98 @@ export default function CbtExamPage({ params }: { params: Promise<{ id: string }
             {/* Essay Question */}
             {currentQ?.question_type === "essay" && (
               <div className="space-y-2 pt-2">
-                <label className="text-xs font-bold text-slate-600 uppercase tracking-wider">
-                  Tuliskan Jawaban Essay Anda:
+                <label className="text-xs font-bold text-slate-400 uppercase tracking-wider">
+                  Tuliskan Jawaban Essay Anda Secara Lengkap:
                 </label>
                 <textarea
-                  rows={6}
+                  rows={7}
                   value={typeof currentAnswer === "string" ? currentAnswer : ""}
                   onChange={(e) => handleSelectOption(currentQ.id, e.target.value)}
-                  placeholder="Ketik jawaban Anda di sini..."
-                  className="w-full p-4 rounded-2xl bg-slate-50 border border-slate-300 text-sm text-slate-900 focus:outline-none focus:ring-2 focus:ring-blue-600 transition-all font-sans"
+                  placeholder="Ketik jawaban essay Anda di sini..."
+                  className="w-full p-4 rounded-2xl bg-slate-950 border border-slate-800 text-sm text-slate-100 placeholder:text-slate-600 focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all font-sans"
                 />
               </div>
             )}
 
+            {/* Keyboard shortcut hint strip */}
+            <div className="hidden sm:flex items-center gap-2 pt-2 text-[11px] text-slate-500 font-medium">
+              <Keyboard className="w-3.5 h-3.5 text-slate-500" />
+              <span>Shortcut: Tekan <strong>A - E</strong> untuk opsi jawaban • <strong>← / →</strong> navigasi soal • <strong>R</strong> ragu-ragu</span>
+            </div>
+
           </div>
 
           {/* Navigation Footer */}
-          <div className="flex items-center justify-between gap-3 bg-white p-4 rounded-2xl border border-slate-200 shadow-xs">
+          <div className="flex items-center justify-between gap-3 bg-slate-900 p-4 rounded-2xl border border-slate-800 shadow-md">
             <button
               type="button"
               disabled={currentIndex === 0}
               onClick={() => setCurrentIndex((prev) => Math.max(0, prev - 1))}
-              className={`px-4 py-2.5 rounded-xl font-bold text-xs flex items-center gap-2 transition-all ${
+              className={`px-4 sm:px-5 py-2.5 rounded-xl font-bold text-xs flex items-center gap-2 transition-all ${
                 currentIndex === 0
-                  ? "bg-slate-100 text-slate-400 cursor-not-allowed"
-                  : "bg-slate-100 hover:bg-slate-200 text-slate-700"
+                  ? "bg-slate-800 text-slate-600 cursor-not-allowed"
+                  : "bg-slate-800 hover:bg-slate-700 text-slate-200 cursor-pointer"
               }`}
             >
               <ChevronLeft className="w-4 h-4" />
               <span>Sebelumnya</span>
             </button>
 
+            {/* Center Quick Flag on Mobile */}
             <button
               type="button"
-              onClick={() => setConfirmSubmitModal(true)}
-              className="px-5 py-2.5 rounded-xl bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-700 hover:to-teal-700 text-white font-bold text-xs shadow-md transition-all flex items-center gap-1.5"
-            >
-              <CheckCircle2 className="w-4 h-4" />
-              <span>Kumpulkan Ujian</span>
-            </button>
-
-            <button
-              type="button"
-              disabled={currentIndex >= totalQuestions - 1}
-              onClick={() => setCurrentIndex((prev) => Math.min(totalQuestions - 1, prev + 1))}
-              className={`px-4 py-2.5 rounded-xl font-bold text-xs flex items-center gap-2 transition-all ${
-                currentIndex >= totalQuestions - 1
-                  ? "bg-slate-100 text-slate-400 cursor-not-allowed"
-                  : "bg-blue-600 hover:bg-blue-700 text-white shadow-xs"
+              onClick={() => currentQ && handleToggleFlag(currentQ.id)}
+              className={`sm:hidden px-3 py-2 rounded-xl text-xs font-bold border ${
+                isFlagged ? "bg-amber-950 text-amber-300 border-amber-600" : "bg-slate-800 text-slate-400 border-slate-700"
               }`}
             >
-              <span>Selanjutnya</span>
-              <ChevronRight className="w-4 h-4" />
+              <Flag className={`w-3.5 h-3.5 ${isFlagged ? "fill-amber-400 text-amber-400" : ""}`} />
             </button>
+
+            {/* Next or Finish Button */}
+            {currentIndex >= totalQuestions - 1 ? (
+              <button
+                type="button"
+                onClick={() => setConfirmSubmitModal(true)}
+                className="px-5 sm:px-6 py-2.5 rounded-xl bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white font-bold text-xs shadow-lg shadow-emerald-600/30 transition-all flex items-center gap-2 cursor-pointer"
+              >
+                <CheckCircle2 className="w-4 h-4" />
+                <span>Kumpulkan Ujian</span>
+              </button>
+            ) : (
+              <button
+                type="button"
+                onClick={() => setCurrentIndex((prev) => Math.min(totalQuestions - 1, prev + 1))}
+                className="px-4 sm:px-5 py-2.5 rounded-xl bg-blue-600 hover:bg-blue-500 text-white font-bold text-xs flex items-center gap-2 transition-all shadow-md shadow-blue-600/30 cursor-pointer"
+              >
+                <span>Selanjutnya</span>
+                <ChevronRight className="w-4 h-4" />
+              </button>
+            )}
           </div>
 
         </div>
 
         {/* Right 1 col: Question Number Navigation Grid (Desktop & Mobile Drawer) */}
         <div
-          className={`lg:block bg-white rounded-3xl border border-slate-200 shadow-xs p-6 space-y-4 ${
+          className={`lg:block bg-slate-900 rounded-3xl border border-slate-800 shadow-xl p-6 space-y-4 ${
             showQuestionGrid
-              ? "fixed inset-x-4 top-20 z-40 max-h-[80vh] overflow-y-auto block shadow-2xl"
+              ? "fixed inset-x-4 top-20 z-40 max-h-[80vh] overflow-y-auto block shadow-2xl bg-slate-900 border-slate-700"
               : "hidden"
           }`}
         >
-          <div className="flex items-center justify-between pb-3 border-b border-slate-100">
+          <div className="flex items-center justify-between pb-3 border-b border-slate-800">
             <div>
-              <h3 className="text-sm font-black text-slate-800">Daftar Nomor Soal</h3>
-              <p className="text-xs text-slate-500 font-medium">
-                {answeredCount} dari {totalQuestions} dijawab
+              <h3 className="text-sm font-black text-white">Daftar Nomor Soal</h3>
+              <p className="text-xs text-slate-400 font-medium">
+                {answeredCount} dari {totalQuestions} dijawab ({progressPercent}%)
               </p>
             </div>
             {showQuestionGrid && (
               <button
                 type="button"
                 onClick={() => setShowQuestionGrid(false)}
-                className="w-8 h-8 rounded-full bg-slate-100 flex items-center justify-center text-slate-600"
+                className="w-8 h-8 rounded-full bg-slate-800 flex items-center justify-center text-slate-300 hover:bg-slate-700"
               >
                 <X className="w-4 h-4" />
               </button>
@@ -811,20 +940,20 @@ export default function CbtExamPage({ params }: { params: Promise<{ id: string }
           </div>
 
           {/* Grid of Numbers */}
-          <div className="grid grid-cols-5 gap-2 max-h-[380px] overflow-y-auto pr-1">
+          <div className="grid grid-cols-5 gap-2 max-h-[360px] overflow-y-auto pr-1">
             {questions.map((q, idx) => {
               const ans = responses[q.id];
               const isAns = ans !== undefined && ans !== null && ans !== "" && (Array.isArray(ans) ? ans.length > 0 : true);
               const isFlg = Boolean(flags[q.id]);
               const isCurrent = currentIndex === idx;
 
-              let btnClass = "bg-slate-100 text-slate-700 border-slate-200";
+              let btnClass = "bg-slate-950 text-slate-400 border-slate-800 hover:bg-slate-800";
               if (isCurrent) {
-                btnClass = "ring-2 ring-blue-600 bg-blue-600 text-white font-black shadow-xs";
+                btnClass = "ring-2 ring-blue-500 bg-blue-600 text-white font-black shadow-md shadow-blue-500/30";
               } else if (isFlg) {
-                btnClass = "bg-amber-100 text-amber-900 border-amber-300 font-bold";
+                btnClass = "bg-amber-950/90 text-amber-300 border-amber-600 font-bold";
               } else if (isAns) {
-                btnClass = "bg-blue-50 text-blue-700 border-blue-300 font-bold";
+                btnClass = "bg-emerald-950/80 text-emerald-300 border-emerald-700/80 font-bold";
               }
 
               return (
@@ -839,39 +968,39 @@ export default function CbtExamPage({ params }: { params: Promise<{ id: string }
                 >
                   <span>{idx + 1}</span>
                   {isFlg && (
-                    <span className="w-2 h-2 rounded-full bg-amber-500 absolute top-1 right-1" />
+                    <span className="w-2 h-2 rounded-full bg-amber-400 absolute top-1 right-1" />
                   )}
                 </button>
               );
             })}
           </div>
 
-          {/* Legend */}
-          <div className="pt-3 border-t border-slate-100 space-y-1.5 text-[11px] text-slate-500 font-medium">
+          {/* Color Legend */}
+          <div className="pt-3 border-t border-slate-800 space-y-2 text-[11px] text-slate-400 font-medium">
             <div className="flex items-center gap-2">
-              <span className="w-3 h-3 rounded-md bg-blue-600" />
+              <span className="w-3 h-3 rounded-md bg-blue-600 shadow-xs" />
               <span>Soal Sedang Aktif</span>
             </div>
             <div className="flex items-center gap-2">
-              <span className="w-3 h-3 rounded-md bg-blue-100 border border-blue-300" />
-              <span>Sudah Dijawab</span>
+              <span className="w-3 h-3 rounded-md bg-emerald-950 border border-emerald-700" />
+              <span>Sudah Dijawab ({answeredCount})</span>
             </div>
             <div className="flex items-center gap-2">
-              <span className="w-3 h-3 rounded-md bg-amber-100 border border-amber-300" />
-              <span>Ragu-ragu / Ditandai</span>
+              <span className="w-3 h-3 rounded-md bg-amber-950 border border-amber-600" />
+              <span>Ragu-ragu ({Object.values(flags).filter(Boolean).length})</span>
             </div>
             <div className="flex items-center gap-2">
-              <span className="w-3 h-3 rounded-md bg-slate-100 border border-slate-200" />
-              <span>Belum Dijawab</span>
+              <span className="w-3 h-3 rounded-md bg-slate-950 border border-slate-800" />
+              <span>Belum Dijawab ({totalQuestions - answeredCount})</span>
             </div>
           </div>
 
           {/* Direct Submit Action */}
-          <div className="pt-3 border-t border-slate-100">
+          <div className="pt-3 border-t border-slate-800">
             <button
               type="button"
               onClick={() => setConfirmSubmitModal(true)}
-              className="w-full py-2.5 px-4 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs transition-colors shadow-xs"
+              className="w-full py-2.5 px-4 rounded-xl bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white font-bold text-xs transition-all shadow-md shadow-emerald-600/20 cursor-pointer"
             >
               Kumpulkan Ujian Sekarang
             </button>
@@ -883,34 +1012,34 @@ export default function CbtExamPage({ params }: { params: Promise<{ id: string }
 
       {/* MODAL: ANTI-CHEAT TAB BLUR ALERT */}
       {blurModal.show && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/80 backdrop-blur-md">
-          <div className="max-w-md w-full bg-white rounded-3xl p-6 shadow-2xl border border-slate-200 text-center space-y-4 animate-in zoom-in-95">
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/85 backdrop-blur-md">
+          <div className="max-w-md w-full bg-slate-900 rounded-3xl p-6 sm:p-7 shadow-2xl border border-slate-800 text-center space-y-4 animate-in zoom-in-95">
             <div
-              className={`w-16 h-16 rounded-full flex items-center justify-center mx-auto ${
+              className={`w-16 h-16 rounded-2xl flex items-center justify-center mx-auto ${
                 blurModal.type === "auto_submit"
-                  ? "bg-rose-100 text-rose-600"
+                  ? "bg-rose-500/20 text-rose-400 border border-rose-500/40"
                   : blurModal.type === "warning_2"
-                  ? "bg-amber-100 text-amber-600 animate-bounce"
-                  : "bg-amber-100 text-amber-500"
+                  ? "bg-amber-500/20 text-amber-400 border border-amber-500/40 animate-bounce"
+                  : "bg-amber-500/20 text-amber-400 border border-amber-500/40"
               }`}
             >
               <AlertTriangle className="w-8 h-8" />
             </div>
 
             <div>
-              <span className="text-xs font-black uppercase tracking-wider text-rose-600 bg-rose-50 px-2.5 py-0.5 rounded-full border border-rose-200">
+              <span className="text-[10px] font-black uppercase tracking-wider text-rose-400 bg-rose-950/80 px-3 py-1 rounded-full border border-rose-800/80">
                 {blurModal.type === "auto_submit"
                   ? "Batas Keluar Tab Habis (3/3)"
                   : blurModal.type === "warning_2"
                   ? "Peringatan Terakhir (2/3)"
                   : "Peringatan Keluar Tab (1/3)"}
               </span>
-              <h3 className="text-xl font-black text-slate-900 mt-2">
+              <h3 className="text-lg sm:text-xl font-black text-white mt-3">
                 {blurModal.type === "auto_submit"
                   ? "Ujian Di-Submit Otomatis!"
-                  : "Pelanggaran Pengawasan!"}
+                  : "Pelanggaran Pengawasan CBT!"}
               </h3>
-              <p className="text-xs text-slate-600 mt-2 leading-relaxed">
+              <p className="text-xs text-slate-300 mt-2 leading-relaxed">
                 {blurModal.message}
               </p>
             </div>
@@ -919,7 +1048,7 @@ export default function CbtExamPage({ params }: { params: Promise<{ id: string }
               <button
                 type="button"
                 onClick={() => setBlurModal({ show: false, type: "warning_1", message: "" })}
-                className="w-full py-2.5 px-4 rounded-xl bg-slate-900 hover:bg-slate-800 text-white font-bold text-xs shadow-md transition-colors"
+                className="w-full py-2.5 px-4 rounded-xl bg-blue-600 hover:bg-blue-500 text-white font-bold text-xs shadow-md transition-colors cursor-pointer"
               >
                 Saya Mengerti & Kembali ke Ujian
               </button>
@@ -930,36 +1059,43 @@ export default function CbtExamPage({ params }: { params: Promise<{ id: string }
 
       {/* MODAL: CONFIRM SUBMISSION */}
       {confirmSubmitModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/70 backdrop-blur-md">
-          <div className="max-w-md w-full bg-white rounded-3xl p-6 shadow-2xl border border-slate-200 text-center space-y-4 animate-in zoom-in-95">
-            <div className="w-16 h-16 bg-blue-50 text-blue-600 rounded-full flex items-center justify-center mx-auto">
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/85 backdrop-blur-md">
+          <div className="max-w-md w-full bg-slate-900 rounded-3xl p-6 sm:p-7 shadow-2xl border border-slate-800 text-center space-y-5 animate-in zoom-in-95">
+            <div className="w-16 h-16 bg-blue-500/20 text-blue-400 border border-blue-500/30 rounded-2xl flex items-center justify-center mx-auto">
               <CheckCircle2 className="w-8 h-8" />
             </div>
 
             <div>
-              <h3 className="text-xl font-black text-slate-900">Kumpulkan Ujian?</h3>
-              <p className="text-xs text-slate-500 mt-1">
-                Pastikan Anda telah memeriksa semua jawaban sebelum menyelesaikan ujian.
+              <h3 className="text-xl font-black text-white">Kumpulkan Lembar Ujian?</h3>
+              <p className="text-xs text-slate-400 mt-1">
+                Pastikan Anda telah memeriksa semua nomor soal sebelum mengakhiri ujian ini.
               </p>
             </div>
 
-            <div className="bg-slate-50 p-4 rounded-2xl border border-slate-200 grid grid-cols-2 gap-2 text-xs">
-              <div className="text-left">
-                <span className="text-slate-500">Sudah Dijawab:</span>
-                <p className="text-base font-black text-blue-600">{answeredCount} Soal</p>
+            <div className="bg-slate-950 p-4 rounded-2xl border border-slate-800 grid grid-cols-2 gap-2 text-xs">
+              <div className="text-left bg-slate-900/60 p-2.5 rounded-xl border border-slate-800">
+                <span className="text-slate-400 block text-[10px] uppercase font-bold">Sudah Dijawab</span>
+                <p className="text-lg font-black text-emerald-400 mt-0.5">{answeredCount} Soal</p>
               </div>
-              <div className="text-left">
-                <span className="text-slate-500">Belum Dijawab:</span>
-                <p className="text-base font-black text-slate-600">{totalQuestions - answeredCount} Soal</p>
+              <div className="text-left bg-slate-900/60 p-2.5 rounded-xl border border-slate-800">
+                <span className="text-slate-400 block text-[10px] uppercase font-bold">Belum Dijawab</span>
+                <p className="text-lg font-black text-rose-400 mt-0.5">{totalQuestions - answeredCount} Soal</p>
               </div>
             </div>
 
-            <div className="flex items-center gap-3 pt-2">
+            {totalQuestions - answeredCount > 0 && (
+              <div className="p-3 rounded-xl bg-amber-950/40 border border-amber-800/40 text-[11px] text-amber-300 font-medium text-left flex items-start gap-2">
+                <AlertTriangle className="w-4 h-4 text-amber-400 shrink-0 mt-0.5" />
+                <span>Masih terdapat {totalQuestions - answeredCount} soal yang belum Anda jawab. Jawaban kosong tidak mendapatkan pengurangan skor (0).</span>
+              </div>
+            )}
+
+            <div className="flex items-center gap-3 pt-1">
               <button
                 type="button"
                 onClick={() => setConfirmSubmitModal(false)}
                 disabled={isSubmitting}
-                className="flex-1 py-2.5 px-4 rounded-xl border border-slate-300 text-slate-700 font-bold text-xs hover:bg-slate-50 transition-colors"
+                className="flex-1 py-2.5 px-4 rounded-xl border border-slate-700 text-slate-300 font-bold text-xs hover:bg-slate-800 transition-colors cursor-pointer"
               >
                 Periksa Lagi
               </button>
@@ -968,7 +1104,7 @@ export default function CbtExamPage({ params }: { params: Promise<{ id: string }
                 type="button"
                 onClick={() => handleFinalSubmit(false, "user_submitted")}
                 disabled={isSubmitting}
-                className="flex-1 py-2.5 px-4 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs shadow-md transition-all flex items-center justify-center gap-2"
+                className="flex-1 py-2.5 px-4 rounded-xl bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white font-bold text-xs shadow-lg shadow-emerald-600/30 transition-all flex items-center justify-center gap-2 cursor-pointer"
               >
                 {isSubmitting ? (
                   <span>Menyimpan...</span>
@@ -987,15 +1123,15 @@ export default function CbtExamPage({ params }: { params: Promise<{ id: string }
       {/* ZOOMED IMAGE MODAL */}
       {zoomedImage && (
         <div
-          className="fixed inset-0 z-50 bg-black/90 flex items-center justify-center p-4 cursor-zoom-out"
+          className="fixed inset-0 z-50 bg-black/95 flex items-center justify-center p-4 cursor-zoom-out"
           onClick={() => setZoomedImage(null)}
         >
           <div className="relative max-w-4xl max-h-[90vh]">
-            <img src={zoomedImage} alt="Zoomed" className="w-full h-auto object-contain rounded-xl" />
+            <img src={zoomedImage} alt="Zoomed" className="w-full h-auto object-contain rounded-2xl border border-slate-800" />
             <button
               type="button"
               onClick={() => setZoomedImage(null)}
-              className="absolute top-3 right-3 w-8 h-8 rounded-full bg-black/60 text-white flex items-center justify-center"
+              className="absolute top-3 right-3 w-8 h-8 rounded-full bg-slate-900/80 text-white flex items-center justify-center border border-slate-700"
             >
               <X className="w-5 h-5" />
             </button>
@@ -1006,4 +1142,3 @@ export default function CbtExamPage({ params }: { params: Promise<{ id: string }
     </div>
   );
 }
-

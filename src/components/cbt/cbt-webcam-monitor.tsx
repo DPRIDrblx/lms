@@ -177,32 +177,32 @@ export function CbtWebcamMonitor({
 
   // Pre-exam modal preview card
   return (
-    <div className={`p-4 rounded-2xl border ${isActive ? "border-emerald-300 bg-emerald-50/50" : "border-slate-200 bg-slate-50"} ${className}`}>
+    <div className={`p-4 rounded-2xl border ${isActive ? "border-emerald-500/50 bg-emerald-950/20" : "border-slate-800 bg-slate-900/60"} ${className}`}>
       <div className="flex items-center justify-between mb-3">
         <div className="flex items-center gap-2">
-          <div className={`w-8 h-8 rounded-xl flex items-center justify-center ${isActive ? "bg-emerald-100 text-emerald-600" : "bg-slate-200 text-slate-600"}`}>
+          <div className={`w-8 h-8 rounded-xl flex items-center justify-center ${isActive ? "bg-emerald-950 text-emerald-400 border border-emerald-700/60" : "bg-slate-800 text-slate-400"}`}>
             <Camera className="w-4 h-4" />
           </div>
           <div>
-            <h4 className="text-sm font-bold text-slate-800">Pemeriksaan Webcam</h4>
-            <p className="text-xs text-slate-500">
+            <h4 className="text-xs sm:text-sm font-bold text-white">Pemeriksaan Kamera Pengawas</h4>
+            <p className="text-[11px] text-slate-400">
               {isRequired ? "Wajib aktif untuk mengikuti ujian ini" : "Opsional (Tidak diwajibkan guru)"}
             </p>
           </div>
         </div>
 
         {isActive ? (
-          <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-bold bg-emerald-100 text-emerald-700">
-            <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" /> Terhubung
+          <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] font-bold bg-emerald-950 text-emerald-300 border border-emerald-700/60">
+            <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" /> Terhubung & Siap
           </span>
         ) : (
-          <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-bold bg-slate-200 text-slate-700">
+          <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[11px] font-bold bg-slate-800 text-slate-400 border border-slate-700">
             Belum Aktif
           </span>
         )}
       </div>
 
-      <div className="relative aspect-video max-w-sm mx-auto rounded-xl overflow-hidden bg-slate-900 flex items-center justify-center shadow-inner">
+      <div className="relative aspect-video max-w-sm mx-auto rounded-2xl overflow-hidden bg-black flex items-center justify-center border border-slate-800 shadow-inner">
         <video
           ref={videoRef}
           autoPlay
@@ -212,43 +212,43 @@ export function CbtWebcamMonitor({
         />
 
         {!isActive && !loading && !error && (
-          <div className="flex flex-col items-center justify-center text-slate-400 p-4 text-center">
-            <Camera className="w-10 h-10 mb-2 opacity-50" />
-            <p className="text-xs font-medium">Klik tombol di bawah untuk menyalakan kamera</p>
+          <div className="flex flex-col items-center justify-center text-slate-500 p-4 text-center">
+            <Camera className="w-10 h-10 mb-2 opacity-40 text-blue-400" />
+            <p className="text-xs font-medium text-slate-400">Klik tombol di bawah untuk menyalakan kamera</p>
           </div>
         )}
 
         {loading && (
           <div className="flex flex-col items-center justify-center text-white p-4">
-            <RefreshCw className="w-7 h-7 text-indigo-400 animate-spin mb-2" />
-            <p className="text-xs">Menghubungkan ke kamera...</p>
+            <RefreshCw className="w-7 h-7 text-blue-400 animate-spin mb-2" />
+            <p className="text-xs font-medium text-slate-300">Menghubungkan ke kamera...</p>
           </div>
         )}
 
         {error && (
-          <div className="flex flex-col items-center justify-center p-4 text-center text-red-300">
-            <AlertCircle className="w-8 h-8 text-red-400 mb-2" />
-            <p className="text-xs">{error}</p>
+          <div className="flex flex-col items-center justify-center p-4 text-center text-rose-300">
+            <AlertCircle className="w-8 h-8 text-rose-400 mb-2" />
+            <p className="text-xs leading-relaxed">{error}</p>
           </div>
         )}
       </div>
 
-      <div className="mt-3 flex justify-center">
+      <div className="mt-3.5 flex justify-center">
         {!isActive ? (
           <button
             type="button"
             onClick={startWebcam}
             disabled={loading}
-            className="px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl text-xs font-bold shadow-md hover:shadow-lg transition-all flex items-center gap-2"
+            className="px-5 py-2.5 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 text-white rounded-xl text-xs font-bold shadow-md shadow-blue-600/30 transition-all flex items-center gap-2 cursor-pointer"
           >
-            {loading ? <RefreshCw className="w-3.5 h-3.5 animate-spin" /> : <Camera className="w-3.5 h-3.5" />}
-            Izinkan & Nyalakan Kamera
+            {loading ? <RefreshCw className="w-3.5 h-3.5 animate-spin" /> : <Camera className="w-3.5 h-3.5 text-amber-300" />}
+            <span>Izinkan & Nyalakan Kamera</span>
           </button>
         ) : (
           <button
             type="button"
             onClick={stopWebcam}
-            className="px-3 py-1.5 bg-slate-200 hover:bg-slate-300 text-slate-700 rounded-lg text-xs font-semibold transition-colors"
+            className="px-4 py-2 bg-slate-800 hover:bg-slate-700 text-slate-300 rounded-xl text-xs font-semibold transition-colors border border-slate-700 cursor-pointer"
           >
             Matikan Kamera
           </button>
