@@ -86,6 +86,11 @@ export default function CbtExamPage({ params }: { params: Promise<{ id: string }
       }
 
       const parsedConfig = parseCbtConfig(quizRes.data);
+      if (!parsedConfig.is_cbt_v2 || quizRes.data.is_form) {
+        alert("Paket ini bukan paket ujian CBT MMIS v2.");
+        router.push("/student/cbt");
+        return;
+      }
       setQuiz(quizRes.data);
       setConfig(parsedConfig);
 
