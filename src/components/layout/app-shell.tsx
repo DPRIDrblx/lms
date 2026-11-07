@@ -94,7 +94,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
 
   if (isExam || isCbt) {
     return (
-      <div className="min-h-screen bg-[#0B0F19] flex flex-col text-slate-100">
+      <div className="min-h-screen bg-slate-50 flex flex-col text-slate-900">
         <main className="flex-1">
           {children}
         </main>

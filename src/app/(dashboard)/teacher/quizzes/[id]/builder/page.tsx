@@ -52,7 +52,9 @@ import {
   serializeCbtPayload, 
   getCleanDescription, 
   CbtExamConfig, 
-  DEFAULT_CBT_CONFIG 
+  DEFAULT_CBT_CONFIG,
+  isoToDateTimeLocal,
+  dateTimeLocalToIso
 } from "@/lib/cbt-config";
 
 interface Question {
@@ -289,28 +291,52 @@ export default function CBTBuilderPage() {
     const cbtPayload = serializeCbtPayload(cleanDesc, cbtConfig);
 
     // Save quiz settings
-    const { error: quizError } = await supabase
+    const baseQuizUpdate = { 
+      time_limit: quiz.time_limit || null, 
+      time_limit_minutes: quiz.time_limit || quiz.time_limit_minutes || 60,
+      max_score: quiz.is_form ? 0 : calculatedMaxScore,
+      allow_leave_exam: quiz.allow_leave_exam,
+      min_time_to_submit: quiz.min_time_to_submit,
+      shuffle_questions: quiz.shuffle_questions,
+      show_score: cbtConfig.show_score,
+      show_answers: quiz.show_answers,
+      show_explanation: cbtConfig.show_explanation,
+      allow_practice_mode: quiz.allow_practice_mode,
+      practice_time_limit_minutes: quiz.practice_time_limit_minutes,
+      save_practice_scores: quiz.save_practice_scores,
+      is_form: quiz.is_form,
+      is_one_page_layout: quiz.is_one_page_layout,
+      description: cbtPayload.description,
+      theme_color: quiz.theme_color,
+      icon_url: finalIconUrl
+    };
+
+    const fullQuizUpdate = {
+      ...baseQuizUpdate,
+      is_cbt_v2: Boolean(cbtConfig.is_cbt_v2),
+      target_classes: cbtConfig.target_classes,
+      schedule_start: cbtConfig.schedule_start,
+      schedule_end: cbtConfig.schedule_end,
+      token_enabled: cbtConfig.token_enabled,
+      token_code: cbtConfig.token_code,
+      require_webcam: cbtConfig.require_webcam,
+      points_correct: cbtConfig.points_correct,
+      penalty_wrong: cbtConfig.penalty_wrong,
+      exam_rules: cbtConfig.exam_rules,
+      statement_text: cbtConfig.statement_text,
+      cbt_config: cbtConfig,
+    };
+
+    let { error: quizError } = await supabase
       .from("quizzes")
-      .update({ 
-        time_limit: quiz.time_limit || null, 
-        time_limit_minutes: quiz.time_limit || quiz.time_limit_minutes || 60,
-        max_score: quiz.is_form ? 0 : calculatedMaxScore,
-        allow_leave_exam: quiz.allow_leave_exam,
-        min_time_to_submit: quiz.min_time_to_submit,
-        shuffle_questions: quiz.shuffle_questions,
-        show_score: cbtConfig.show_score,
-        show_answers: quiz.show_answers,
-        show_explanation: cbtConfig.show_explanation,
-        allow_practice_mode: quiz.allow_practice_mode,
-        practice_time_limit_minutes: quiz.practice_time_limit_minutes,
-        save_practice_scores: quiz.save_practice_scores,
-        is_form: quiz.is_form,
-        is_one_page_layout: quiz.is_one_page_layout,
-        description: cbtPayload.description,
-        theme_color: quiz.theme_color,
-        icon_url: finalIconUrl
-      })
+      .update(fullQuizUpdate)
       .eq("id", id);
+
+    if (quizError && (quizError.message.includes("column") || quizError.code === "PGRST204" || quizError.code === "42703")) {
+      console.warn("Retrying quiz update with base payload (migration columns missing)...", quizError.message);
+      const retry = await supabase.from("quizzes").update(baseQuizUpdate).eq("id", id);
+      quizError = retry.error;
+    }
 
     if (quizError) {
       alert("Gagal menyimpan quiz: " + quizError.message);
@@ -449,8 +475,8 @@ export default function CBTBuilderPage() {
                   </label>
                   <input
                     type="datetime-local"
-                    value={cbtConfig.schedule_start ? cbtConfig.schedule_start.slice(0, 16) : ""}
-                    onChange={(e) => setCbtConfig({ ...cbtConfig, schedule_start: e.target.value ? new Date(e.target.value).toISOString() : null })}
+                    value={isoToDateTimeLocal(cbtConfig.schedule_start)}
+                    onChange={(e) => setCbtConfig({ ...cbtConfig, schedule_start: dateTimeLocalToIso(e.target.value) })}
                     className="w-full h-8 px-2 rounded-lg bg-white border border-slate-300 text-xs text-slate-800"
                   />
                 </div>
@@ -462,8 +488,8 @@ export default function CBTBuilderPage() {
                   </label>
                   <input
                     type="datetime-local"
-                    value={cbtConfig.schedule_end ? cbtConfig.schedule_end.slice(0, 16) : ""}
-                    onChange={(e) => setCbtConfig({ ...cbtConfig, schedule_end: e.target.value ? new Date(e.target.value).toISOString() : null })}
+                    value={isoToDateTimeLocal(cbtConfig.schedule_end)}
+                    onChange={(e) => setCbtConfig({ ...cbtConfig, schedule_end: dateTimeLocalToIso(e.target.value) })}
                     className="w-full h-8 px-2 rounded-lg bg-white border border-slate-300 text-xs text-slate-800"
                   />
                 </div>

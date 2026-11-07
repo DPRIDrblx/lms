@@ -69,32 +69,34 @@ export function parseCbtConfig(quiz: any): CbtExamConfig {
   }
 
   // Combine with explicit database columns if they exist
-  const isCbtV2 = 
-    quiz.is_cbt_v2 !== undefined 
-      ? Boolean(quiz.is_cbt_v2) 
-      : embeddedConfig.is_cbt_v2 !== undefined 
-        ? Boolean(embeddedConfig.is_cbt_v2) 
-        : false;
+  let isCbtV2 = false;
+  if (quiz.is_cbt_v2 === true || quiz.is_cbt_v2 === "true" || quiz.is_cbt_v2 === 1) {
+    isCbtV2 = true;
+  } else if (embeddedConfig.is_cbt_v2 !== undefined) {
+    isCbtV2 = Boolean(embeddedConfig.is_cbt_v2);
+  } else if (quiz.is_cbt_v2 !== undefined) {
+    isCbtV2 = Boolean(quiz.is_cbt_v2);
+  }
 
   const targetClasses = 
-    Array.isArray(quiz.target_classes) 
+    Array.isArray(quiz.target_classes) && quiz.target_classes.length > 0
       ? quiz.target_classes 
       : Array.isArray(embeddedConfig.target_classes) 
         ? embeddedConfig.target_classes 
         : [];
 
-  const scheduleStart = quiz.schedule_start || embeddedConfig.schedule_start || null;
-  const scheduleEnd = quiz.schedule_end || embeddedConfig.schedule_end || null;
-  const tokenEnabled = quiz.token_enabled ?? embeddedConfig.token_enabled ?? false;
-  const tokenCode = quiz.token_code ?? embeddedConfig.token_code ?? "";
-  const requireWebcam = quiz.require_webcam ?? embeddedConfig.require_webcam ?? false;
-  const examRules = quiz.exam_rules ?? embeddedConfig.exam_rules ?? DEFAULT_CBT_CONFIG.exam_rules;
-  const statementText = quiz.statement_text ?? embeddedConfig.statement_text ?? DEFAULT_CBT_CONFIG.statement_text;
-  const pointsCorrect = Number(quiz.points_correct ?? embeddedConfig.points_correct ?? 4);
-  const penaltyWrong = Number(quiz.penalty_wrong ?? embeddedConfig.penalty_wrong ?? 1);
-  const showScore = quiz.show_score ?? embeddedConfig.show_score ?? true;
-  const showExplanation = quiz.show_explanation ?? embeddedConfig.show_explanation ?? false;
-  const maxTabExits = Number(quiz.max_tab_exits ?? embeddedConfig.max_tab_exits ?? 3);
+  const scheduleStart = embeddedConfig.schedule_start ?? quiz.schedule_start ?? null;
+  const scheduleEnd = embeddedConfig.schedule_end ?? quiz.schedule_end ?? null;
+  const tokenEnabled = embeddedConfig.token_enabled ?? quiz.token_enabled ?? false;
+  const tokenCode = embeddedConfig.token_code ?? quiz.token_code ?? "";
+  const requireWebcam = embeddedConfig.require_webcam ?? quiz.require_webcam ?? false;
+  const examRules = embeddedConfig.exam_rules ?? quiz.exam_rules ?? DEFAULT_CBT_CONFIG.exam_rules;
+  const statementText = embeddedConfig.statement_text ?? quiz.statement_text ?? DEFAULT_CBT_CONFIG.statement_text;
+  const pointsCorrect = Number(embeddedConfig.points_correct ?? quiz.points_correct ?? 4);
+  const penaltyWrong = Number(embeddedConfig.penalty_wrong ?? quiz.penalty_wrong ?? 1);
+  const showScore = embeddedConfig.show_score ?? quiz.show_score ?? true;
+  const showExplanation = embeddedConfig.show_explanation ?? quiz.show_explanation ?? false;
+  const maxTabExits = Number(embeddedConfig.max_tab_exits ?? quiz.max_tab_exits ?? 3);
 
   return {
     is_cbt_v2: isCbtV2,
@@ -357,4 +359,45 @@ export function calculateCbtScore(
     questionDetails,
   };
 }
+
+/**
+ * Converts ISO date string or timestamp to HTML datetime-local input format (YYYY-MM-DDTHH:mm)
+ * in user's local browser timezone so no hours are subtracted or added unexpectedly.
+ */
+export function isoToDateTimeLocal(dateString: string | null | undefined): string {
+  if (!dateString) return "";
+  try {
+    // If it's already in pure YYYY-MM-DDTHH:mm format without timezone info
+    if (/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}$/.test(dateString)) {
+      return dateString;
+    }
+    const date = new Date(dateString);
+    if (isNaN(date.getTime())) return "";
+
+    const year = date.getFullYear();
+    const month = String(date.getMonth() + 1).padStart(2, "0");
+    const day = String(date.getDate()).padStart(2, "0");
+    const hours = String(date.getHours()).padStart(2, "0");
+    const minutes = String(date.getMinutes()).padStart(2, "0");
+
+    return `${year}-${month}-${day}T${hours}:${minutes}`;
+  } catch {
+    return "";
+  }
+}
+
+/**
+ * Converts datetime-local input format (YYYY-MM-DDTHH:mm) to UTC ISO string for DB storage.
+ */
+export function dateTimeLocalToIso(localString: string | null | undefined): string | null {
+  if (!localString || !localString.trim()) return null;
+  try {
+    const date = new Date(localString);
+    if (isNaN(date.getTime())) return null;
+    return date.toISOString();
+  } catch {
+    return null;
+  }
+}
+
 
