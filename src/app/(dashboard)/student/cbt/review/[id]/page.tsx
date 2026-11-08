@@ -24,6 +24,25 @@ import { MathRenderer } from "@/components/ui/math-renderer";
 import { CbtAudioPlayer } from "@/components/cbt/cbt-audio-player";
 import { parseCbtConfig } from "@/lib/cbt-config";
 
+function getQuestionTypeLabel(type: string | undefined): string {
+  switch (type) {
+    case "mcq":
+      return "Pilihan Ganda";
+    case "complex_mcq":
+      return "Pilihan Ganda Kompleks";
+    case "matching":
+      return "Menjodohkan";
+    case "matrix":
+      return "Benar / Salah";
+    case "linear_scale":
+      return "Skala Linear";
+    case "essay":
+      return "Uraian / Essay";
+    default:
+      return "Pilihan Ganda";
+  }
+}
+
 export default function CbtReviewPage({ params }: { params: Promise<{ id: string }> }) {
   const { id: quizId } = use(params);
   const { profile } = useAuth();
@@ -57,7 +76,10 @@ export default function CbtReviewPage({ params }: { params: Promise<{ id: string
       }
 
       if (questionsRes.data) {
-        setQuestions(questionsRes.data);
+        setQuestions(questionsRes.data.map((q: any) => ({
+          ...q,
+          question_type: q.question_type || q.metadata?.question_type || "mcq",
+        })));
       }
 
       if (scoreRes.data) {
@@ -122,11 +144,11 @@ export default function CbtReviewPage({ params }: { params: Promise<{ id: string
   const scoreDetails = scoreRecord.metadata?.scoreDetails || null;
 
   // Filter questions based on filterType
-  const filteredQuestions = questions.filter((q, idx) => {
+  const filteredQuestions = questions.filter((q) => {
     if (filterType === "all") return true;
 
     const studentAns = responses[q.id];
-    const isAnswered = studentAns !== undefined && studentAns !== null && studentAns !== "";
+    const isAnswered = studentAns !== undefined && studentAns !== null && studentAns !== "" && (typeof studentAns === "object" ? Object.keys(studentAns).length > 0 : true);
     if (filterType === "unanswered") return !isAnswered;
 
     // Check correctness
@@ -138,6 +160,23 @@ export default function CbtReviewPage({ params }: { params: Promise<{ id: string
       const correctArr = q.options.filter((o: any) => o.is_correct || o.isCorrect).map((o: any) => o.text);
       const studentArr = Array.isArray(studentAns) ? studentAns : [];
       isCorrect = correctArr.length === studentArr.length && correctArr.every((t: string) => studentArr.includes(t));
+    } else if (q.question_type === "matching" && q.options) {
+      const userMatches = studentAns || {};
+      const totalPairs = q.options.length;
+      let matchedCount = 0;
+      q.options.forEach((o: any) => {
+        if (userMatches[o.text] === o.match_pair) matchedCount++;
+      });
+      isCorrect = totalPairs > 0 && matchedCount === totalPairs;
+    } else if (q.question_type === "matrix" && q.options) {
+      const userMatrix = studentAns || {};
+      const totalRows = q.options.length;
+      let correctRows = 0;
+      q.options.forEach((o: any) => {
+        const correctVal = o.match_pairs?.[0] || "Benar";
+        if (userMatrix[o.text] === correctVal) correctRows++;
+      });
+      isCorrect = totalRows > 0 && correctRows === totalRows;
     }
 
     if (filterType === "correct") return isCorrect;
@@ -264,22 +303,37 @@ export default function CbtReviewPage({ params }: { params: Promise<{ id: string
         <div className="space-y-6">
           {filteredQuestions.map((q, idx) => {
             const studentAns = responses[q.id];
-            const isAnswered = studentAns !== undefined && studentAns !== null && studentAns !== "";
+            const isAnswered = studentAns !== undefined && studentAns !== null && studentAns !== "" && (typeof studentAns === "object" ? Object.keys(studentAns).length > 0 : true);
             const qAudioUrl = q.audio_url || q.metadata?.audio_url;
             const qImageUrl = q.image_url || q.metadata?.image_url;
             const qExplanation = q.explanation || q.metadata?.explanation;
 
             let isCorrect = false;
-            let correctOptionText: string | null = null;
 
             if (q.question_type === "mcq" && q.options) {
               const correctOpt = q.options.find((o: any) => o.is_correct || o.isCorrect);
-              if (correctOpt) correctOptionText = correctOpt.text;
               isCorrect = correctOpt && correctOpt.text === studentAns;
             } else if (q.question_type === "complex_mcq" && q.options) {
               const correctArr = q.options.filter((o: any) => o.is_correct || o.isCorrect).map((o: any) => o.text);
               const studentArr = Array.isArray(studentAns) ? studentAns : [];
               isCorrect = correctArr.length === studentArr.length && correctArr.every((t: string) => studentArr.includes(t));
+            } else if (q.question_type === "matching" && q.options) {
+              const userMatches = studentAns || {};
+              const totalPairs = q.options.length;
+              let matchedCount = 0;
+              q.options.forEach((o: any) => {
+                if (userMatches[o.text] === o.match_pair) matchedCount++;
+              });
+              isCorrect = totalPairs > 0 && matchedCount === totalPairs;
+            } else if (q.question_type === "matrix" && q.options) {
+              const userMatrix = studentAns || {};
+              const totalRows = q.options.length;
+              let correctRows = 0;
+              q.options.forEach((o: any) => {
+                const correctVal = o.match_pairs?.[0] || "Benar";
+                if (userMatrix[o.text] === correctVal) correctRows++;
+              });
+              isCorrect = totalRows > 0 && correctRows === totalRows;
             }
 
             return (
@@ -294,7 +348,7 @@ export default function CbtReviewPage({ params }: { params: Promise<{ id: string
                       {idx + 1}
                     </span>
                     <span className="text-xs font-bold text-slate-500">
-                      Soal {q.question_type === "mcq" ? "Pilihan Ganda" : q.question_type === "complex_mcq" ? "Pilihan Ganda Kompleks" : "Essay"}
+                      Soal {getQuestionTypeLabel(q.question_type)}
                     </span>
                   </div>
 
@@ -389,6 +443,162 @@ export default function CbtReviewPage({ params }: { params: Promise<{ id: string
                     })}
                   </div>
                 )}
+
+                {/* Complex MCQ Options in Review */}
+                {q.question_type === "complex_mcq" && q.options && (() => {
+                  const studentArr: string[] = Array.isArray(studentAns) ? studentAns : [];
+
+                  return (
+                    <div className="space-y-2.5 pt-1">
+                      {q.options.map((opt: any, optIdx: number) => {
+                        const letter = String.fromCharCode(65 + optIdx);
+                        const isStudentChoice = studentArr.includes(opt.text);
+                        const isCorrectKey = opt.is_correct || opt.isCorrect;
+
+                        let optClass = "border-slate-200 bg-white text-slate-700";
+                        let badge = null;
+
+                        if (isCorrectKey) {
+                          optClass = "border-emerald-500 bg-emerald-50 text-emerald-900 font-semibold";
+                          badge = <span className="text-[10px] font-bold text-emerald-700 bg-emerald-100 px-2 py-0.5 rounded-md border border-emerald-300 shrink-0">Kunci Jawaban</span>;
+                        } else if (isStudentChoice && !isCorrectKey) {
+                          optClass = "border-rose-400 bg-rose-50 text-rose-900 font-semibold";
+                          badge = <span className="text-[10px] font-bold text-rose-700 bg-rose-100 px-2 py-0.5 rounded-md border border-rose-300 shrink-0">Pilihan Anda (Salah)</span>;
+                        }
+
+                        return (
+                          <div
+                            key={optIdx}
+                            className={`p-3.5 rounded-2xl border-2 flex items-start gap-3.5 ${optClass}`}
+                          >
+                            <span className={`w-8 h-8 rounded-xl font-black text-xs flex items-center justify-center shrink-0 ${
+                              isCorrectKey 
+                                ? "bg-emerald-600 text-white" 
+                                : isStudentChoice 
+                                ? "bg-rose-600 text-white" 
+                                : "bg-slate-100 text-slate-700"
+                            }`}>
+                              {isStudentChoice ? "✓" : letter}
+                            </span>
+                            <div className="flex-1 pt-1 text-xs sm:text-sm">
+                              <MathRenderer htmlContent={opt.text} />
+                            </div>
+                            {badge}
+                          </div>
+                        );
+                      })}
+                    </div>
+                  );
+                })()}
+
+                {/* Matching Options in Review */}
+                {q.question_type === "matching" && q.options && (() => {
+                  const userMatches = (studentAns && typeof studentAns === "object") ? studentAns : {};
+
+                  return (
+                    <div className="space-y-3 pt-1">
+                      <p className="text-xs font-bold text-slate-500 uppercase tracking-wider">Evaluasi Pasangan Menjodohkan:</p>
+                      {q.options.map((opt: any, oIdx: number) => {
+                        const userPair = userMatches[opt.text];
+                        const isPairCorrect = userPair === opt.match_pair;
+
+                        return (
+                          <div 
+                            key={oIdx}
+                            className="p-3.5 rounded-2xl bg-slate-50 border border-slate-200 flex flex-col md:flex-row md:items-center justify-between gap-3"
+                          >
+                            <div className="flex items-center gap-2.5 flex-1">
+                              <span className="w-6 h-6 rounded-lg bg-blue-100 text-blue-700 font-bold text-xs flex items-center justify-center shrink-0">
+                                {oIdx + 1}
+                              </span>
+                              <div className="text-xs sm:text-sm font-semibold text-slate-800">
+                                <MathRenderer htmlContent={opt.text} />
+                              </div>
+                            </div>
+
+                            <div className="flex flex-col sm:flex-row sm:items-center gap-2 shrink-0">
+                              <div className={`px-3 py-1.5 rounded-xl text-xs font-bold border flex items-center gap-1.5 ${
+                                isPairCorrect
+                                  ? "bg-emerald-50 text-emerald-800 border-emerald-300"
+                                  : userPair
+                                  ? "bg-rose-50 text-rose-800 border-rose-300"
+                                  : "bg-slate-100 text-slate-500 border-slate-200"
+                              }`}>
+                                {isPairCorrect ? (
+                                  <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600" />
+                                ) : (
+                                  <XCircle className="w-3.5 h-3.5 text-rose-600" />
+                                )}
+                                <span>Pilihan: <strong>{userPair || "Tidak Dijawab"}</strong></span>
+                              </div>
+
+                              {!isPairCorrect && (
+                                <div className="px-3 py-1.5 rounded-xl text-xs font-bold bg-emerald-100 text-emerald-900 border border-emerald-300">
+                                  Kunci: <strong>{opt.match_pair}</strong>
+                                </div>
+                              )}
+                            </div>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  );
+                })()}
+
+                {/* Matrix Options in Review */}
+                {q.question_type === "matrix" && q.options && (() => {
+                  const userMatrix = (studentAns && typeof studentAns === "object") ? studentAns : {};
+
+                  return (
+                    <div className="space-y-3 pt-1">
+                      <p className="text-xs font-bold text-slate-500 uppercase tracking-wider">Evaluasi Benar / Salah:</p>
+                      {q.options.map((opt: any, oIdx: number) => {
+                        const userVal = userMatrix[opt.text];
+                        const correctVal = opt.match_pairs?.[0] || "Benar";
+                        const isRowCorrect = userVal === correctVal;
+
+                        return (
+                          <div 
+                            key={oIdx}
+                            className="p-3.5 rounded-2xl bg-slate-50 border border-slate-200 flex flex-col md:flex-row md:items-center justify-between gap-3"
+                          >
+                            <div className="flex items-center gap-2.5 flex-1">
+                              <span className="w-6 h-6 rounded-lg bg-blue-100 text-blue-700 font-bold text-xs flex items-center justify-center shrink-0">
+                                {oIdx + 1}
+                              </span>
+                              <div className="text-xs sm:text-sm font-semibold text-slate-800">
+                                <MathRenderer htmlContent={opt.text} />
+                              </div>
+                            </div>
+
+                            <div className="flex flex-col sm:flex-row sm:items-center gap-2 shrink-0">
+                              <div className={`px-3 py-1.5 rounded-xl text-xs font-bold border flex items-center gap-1.5 ${
+                                isRowCorrect
+                                  ? "bg-emerald-50 text-emerald-800 border-emerald-300"
+                                  : userVal
+                                  ? "bg-rose-50 text-rose-800 border-rose-300"
+                                  : "bg-slate-100 text-slate-500 border-slate-200"
+                              }`}>
+                                {isRowCorrect ? (
+                                  <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600" />
+                                ) : (
+                                  <XCircle className="w-3.5 h-3.5 text-rose-600" />
+                                )}
+                                <span>Pilihan: <strong>{userVal || "Tidak Dijawab"}</strong></span>
+                              </div>
+
+                              {!isRowCorrect && (
+                                <div className="px-3 py-1.5 rounded-xl text-xs font-bold bg-emerald-100 text-emerald-900 border border-emerald-300">
+                                  Kunci: <strong>{correctVal}</strong>
+                                </div>
+                              )}
+                            </div>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  );
+                })()}
 
                 {/* Teacher Explanation Card */}
                 {qExplanation && (

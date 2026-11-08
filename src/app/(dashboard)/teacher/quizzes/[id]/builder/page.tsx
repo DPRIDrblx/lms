@@ -167,6 +167,7 @@ export default function CBTBuilderPage() {
       if (qRes.data) {
         const mappedQuestions = (qRes.data as any[]).map((q) => ({
           ...q,
+          question_type: q.question_type || q.metadata?.question_type || "mcq",
           points_correct: q.points_correct ?? q.metadata?.points_correct ?? q.points ?? 4,
           penalty_wrong: q.penalty_wrong ?? q.metadata?.penalty_wrong ?? 1,
           audio_url: q.audio_url || q.metadata?.audio_url || null,
@@ -360,6 +361,7 @@ export default function CBTBuilderPage() {
 
       const metadataObj = {
         ...(q.metadata || {}),
+        question_type: q.question_type,
         points_correct: qCorrect,
         penalty_wrong: qPenalty,
         audio_url: q.audio_url || null,

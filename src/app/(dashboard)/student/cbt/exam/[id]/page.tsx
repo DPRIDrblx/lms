@@ -33,6 +33,32 @@ import {
   CbtExamConfig 
 } from "@/lib/cbt-config";
 
+function getQuestionTypeLabel(type: string | undefined): string {
+  switch (type) {
+    case "mcq":
+      return "Pilihan Ganda";
+    case "complex_mcq":
+      return "Pilihan Ganda Kompleks";
+    case "matching":
+      return "Menjodohkan";
+    case "matrix":
+      return "Benar / Salah";
+    case "linear_scale":
+      return "Skala Linear";
+    case "essay":
+      return "Uraian / Essay";
+    default:
+      return "Pilihan Ganda";
+  }
+}
+
+function isQuestionAnswered(ans: any): boolean {
+  if (ans === undefined || ans === null || ans === "") return false;
+  if (Array.isArray(ans)) return ans.length > 0;
+  if (typeof ans === "object") return Object.keys(ans).length > 0;
+  return true;
+}
+
 export default function CbtExamPage({ params }: { params: Promise<{ id: string }> }) {
   const { id: quizId } = use(params);
   const { profile } = useAuth();
@@ -110,7 +136,10 @@ export default function CbtExamPage({ params }: { params: Promise<{ id: string }
         return;
       }
 
-      const qList = questionsRes.data || [];
+      const qList = (questionsRes.data || []).map((q: any) => ({
+        ...q,
+        question_type: q.question_type || q.metadata?.question_type || "mcq",
+      }));
       setQuestions(qList);
 
       // Initialize persistent blur count from localStorage
@@ -525,7 +554,7 @@ export default function CbtExamPage({ params }: { params: Promise<{ id: string }
   const currentAnswer = currentQ ? responses[currentQ.id] : null;
   const isFlagged = currentQ ? Boolean(flags[currentQ.id]) : false;
   const totalQuestions = questions.length;
-  const answeredCount = Object.keys(responses).filter((k) => responses[k] !== undefined && responses[k] !== "").length;
+  const answeredCount = Object.keys(responses).filter((k) => isQuestionAnswered(responses[k])).length;
   const progressPercent = totalQuestions > 0 ? Math.round((answeredCount / totalQuestions) * 100) : 0;
 
   const qCorrectPoints = Number(currentQ?.points_correct ?? currentQ?.metadata?.points_correct ?? currentQ?.points ?? config?.points_correct ?? 4);
@@ -663,8 +692,8 @@ export default function CbtExamPage({ params }: { params: Promise<{ id: string }
                 <span className="text-xs font-bold text-slate-500">
                   dari {totalQuestions} Soal
                 </span>
-                <span className="px-2 py-0.5 rounded-md bg-slate-100 text-slate-700 text-[10px] font-bold uppercase tracking-wider">
-                  {currentQ?.question_type === "mcq" ? "Pilihan Ganda" : currentQ?.question_type === "complex_mcq" ? "Pilihan Kompleks" : "Essay"}
+                <span className="px-2 py-0.5 rounded-md bg-blue-50 text-blue-700 text-[10px] font-bold uppercase tracking-wider border border-blue-200">
+                  {getQuestionTypeLabel(currentQ?.question_type)}
                 </span>
               </div>
 
@@ -837,6 +866,135 @@ export default function CbtExamPage({ params }: { params: Promise<{ id: string }
                 })}
               </div>
             )}
+
+            {/* Matching Question (Menjodohkan) */}
+            {currentQ?.question_type === "matching" && currentQ.options && (() => {
+              const userMatches: Record<string, string> = (currentAnswer && typeof currentAnswer === "object") ? currentAnswer : {};
+              const availablePairs: string[] = Array.from(new Set(currentQ.options.map((o: any) => o.match_pair).filter(Boolean))) as string[];
+
+              return (
+                <div className="space-y-4 pt-2">
+                  <div className="p-3.5 rounded-2xl bg-blue-50 border border-blue-200 text-xs font-semibold text-blue-900 flex items-center gap-2">
+                    <Info className="w-4 h-4 text-blue-600 shrink-0" />
+                    <span>Jodohkan setiap pernyataan di sisi kiri dengan pasangan jawaban yang tepat di sisi kanan:</span>
+                  </div>
+
+                  <div className="space-y-3">
+                    {currentQ.options.map((opt: any, oIdx: number) => {
+                      const selectedVal = userMatches[opt.text] || "";
+
+                      return (
+                        <div
+                          key={oIdx}
+                          className="p-4 rounded-2xl bg-white border border-slate-200 shadow-xs flex flex-col md:flex-row md:items-center justify-between gap-3 hover:border-slate-300 transition-all"
+                        >
+                          <div className="flex items-start gap-3 flex-1">
+                            <span className="w-7 h-7 rounded-lg bg-blue-100 text-blue-700 font-bold text-xs flex items-center justify-center shrink-0 mt-0.5">
+                              {oIdx + 1}
+                            </span>
+                            <div className="text-sm font-semibold text-slate-800 pt-0.5">
+                              <MathRenderer htmlContent={opt.text} />
+                            </div>
+                          </div>
+
+                          <div className="hidden md:block text-slate-300">
+                            <ChevronRight className="w-5 h-5" />
+                          </div>
+
+                          <div className="w-full md:w-72 shrink-0">
+                            <select
+                              value={selectedVal}
+                              onChange={(e) => {
+                                const val = e.target.value;
+                                const nextMatches = { ...userMatches };
+                                if (val) {
+                                  nextMatches[opt.text] = val;
+                                } else {
+                                  delete nextMatches[opt.text];
+                                }
+                                handleSelectOption(currentQ.id, nextMatches);
+                              }}
+                              className={`w-full h-11 px-3.5 rounded-xl text-xs font-bold border transition-all cursor-pointer focus:outline-none focus:ring-2 focus:ring-blue-600 ${
+                                selectedVal
+                                  ? "bg-blue-50 text-blue-900 border-blue-400 shadow-xs"
+                                  : "bg-slate-50 text-slate-600 border-slate-200 hover:border-slate-300"
+                              }`}
+                            >
+                              <option value="">-- Pilih Pasangan Jawaban --</option>
+                              {availablePairs.map((pair, pIdx) => (
+                                <option key={pIdx} value={pair}>
+                                  {pair}
+                                </option>
+                              ))}
+                            </select>
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                </div>
+              );
+            })()}
+
+            {/* Matrix Question (Benar / Salah) */}
+            {currentQ?.question_type === "matrix" && currentQ.options && (() => {
+              const userMatrix: Record<string, string> = (currentAnswer && typeof currentAnswer === "object") ? currentAnswer : {};
+              const cols: string[] = currentQ.criteria?.cols || ["Benar", "Salah"];
+
+              return (
+                <div className="space-y-4 pt-2">
+                  <div className="p-3.5 rounded-2xl bg-blue-50 border border-blue-200 text-xs font-semibold text-blue-900 flex items-center gap-2">
+                    <Info className="w-4 h-4 text-blue-600 shrink-0" />
+                    <span>Tentukan pilihan jawaban untuk masing-masing baris pernyataan berikut:</span>
+                  </div>
+
+                  <div className="space-y-3">
+                    {currentQ.options.map((opt: any, oIdx: number) => {
+                      const selectedVal = userMatrix[opt.text] || "";
+
+                      return (
+                        <div
+                          key={oIdx}
+                          className="p-4 rounded-2xl bg-white border border-slate-200 shadow-xs flex flex-col md:flex-row md:items-center justify-between gap-3 hover:border-slate-300 transition-all"
+                        >
+                          <div className="flex items-start gap-3 flex-1">
+                            <span className="w-7 h-7 rounded-lg bg-blue-100 text-blue-700 font-bold text-xs flex items-center justify-center shrink-0 mt-0.5">
+                              {oIdx + 1}
+                            </span>
+                            <div className="text-sm font-semibold text-slate-800 pt-0.5">
+                              <MathRenderer htmlContent={opt.text} />
+                            </div>
+                          </div>
+
+                          <div className="flex items-center gap-2 shrink-0">
+                            {cols.map((col: string, cIdx: number) => {
+                              const isChecked = selectedVal === col;
+                              return (
+                                <button
+                                  key={cIdx}
+                                  type="button"
+                                  onClick={() => {
+                                    const nextMatrix = { ...userMatrix, [opt.text]: col };
+                                    handleSelectOption(currentQ.id, nextMatrix);
+                                  }}
+                                  className={`px-4 py-2 rounded-xl text-xs font-bold border transition-all cursor-pointer ${
+                                    isChecked
+                                      ? "bg-blue-600 text-white border-blue-600 shadow-xs"
+                                      : "bg-slate-50 text-slate-700 border-slate-200 hover:bg-slate-100"
+                                  }`}
+                                >
+                                  {col}
+                                </button>
+                              );
+                            })}
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                </div>
+              );
+            })()}
 
             {/* Essay Question */}
             {currentQ?.question_type === "essay" && (

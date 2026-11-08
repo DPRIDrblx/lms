@@ -25,7 +25,12 @@ ADD COLUMN IF NOT EXISTS image_url TEXT DEFAULT NULL,
 ADD COLUMN IF NOT EXISTS points_correct NUMERIC DEFAULT NULL,
 ADD COLUMN IF NOT EXISTS penalty_wrong NUMERIC DEFAULT NULL;
 
--- 3. ENSURE RLS POLICIES FOR CBT SESSIONS
+-- 2.1 UPDATE CHECK CONSTRAINT ON QUESTION TYPE TO SUPPORT 'matching', 'matrix', 'complex_mcq'
+ALTER TABLE public.questions DROP CONSTRAINT IF EXISTS questions_question_type_check;
+ALTER TABLE public.questions ADD CONSTRAINT questions_question_type_check 
+CHECK (question_type IN ('mcq', 'essay', 'complex_mcq', 'matching', 'matrix', 'linear_scale'));
+
+-- 3. ENSURE RLS POLICIES FOR CBT TAB VIOLATIONS
 CREATE TABLE IF NOT EXISTS public.cbt_tab_violations (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     student_id UUID REFERENCES public.profiles(id) ON DELETE CASCADE,
